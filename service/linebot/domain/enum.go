@@ -14,5 +14,4 @@ var (
 	THINGS_EVENT_TYPE        EventType = "things"
 	BEACON_EVENT_TYPE        EventType = "beacon"
 	ACCOUNT_LINK_EVENT_TYPE  EventType = "accountLink"
-	EMPTY_EVENT_TYPE         EventType = ""
 )
