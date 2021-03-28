@@ -99,16 +99,16 @@ func QueryString(uri string, param interface{}) string {
 }
 
 func ResponseParser(resp *http.Response, respP interface{}) ([]byte, error) {
-	httpCode := resp.StatusCode
-	if httpCode != http.StatusOK {
-		return nil, fmt.Errorf("httpcode:%d not 200", httpCode)
-	}
-
 	// 讀取響應body
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	httpCode := resp.StatusCode
+	if httpCode != http.StatusOK {
+		return nil, fmt.Errorf("httpcode:%d not 200, %s", httpCode, string(body))
 	}
 
 	if !IsNilInterfaceObject(respP) {
