@@ -3,7 +3,7 @@ package activity
 import "time"
 
 type ActivityTable struct {
-	ID            int       `gorm:"column:id;type:int;primary_key;not null"`
+	ID            int       `gorm:"column:id;type:serial;primary_key;not null"`
 	Date          time.Time `gorm:"column:date;type:date;not null;index"`
 	Place         string    `gorm:"column:place;type:varchar(50);not null"`
 	CourtsAndTime string    `gorm:"column:courts_and_time;type:varchar(50);not null"`

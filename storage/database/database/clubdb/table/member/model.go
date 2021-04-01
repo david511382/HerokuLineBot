@@ -5,7 +5,7 @@ import (
 )
 
 type MemberTable struct {
-	ID         int        `gorm:"column:id;type:int;primary_key;not null"`
+	ID         int        `gorm:"column:id;type:serial;primary_key;not null"`
 	JoinDate   time.Time  `gorm:"column:join_date;type:date;not null"`
 	LeaveDate  *time.Time `gorm:"column:deleted_at;index"`
 	Department string     `gorm:"column:department;type:varchar(50);not null"`
