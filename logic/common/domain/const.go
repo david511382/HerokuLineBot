@@ -26,3 +26,13 @@ const (
 	TIME_HOUR_MIN_FORMAT     = "15:04"
 	DATE_TIME_RFC3339_FORMAT = "2006-01-02T15:04:05Z07:00"
 )
+
+var WeekDayName = []string{
+	"日",
+	"一",
+	"二",
+	"三",
+	"四",
+	"五",
+	"六",
+}

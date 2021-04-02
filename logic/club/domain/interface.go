@@ -10,7 +10,7 @@ type ICmdHandler interface {
 
 type ICmdLogic interface {
 	Do(text string) error
-	Init(ICmdHandlerContext)
+	Init(ICmdHandlerContext) error
 	GetSingleParam(attr string) string
 	LoadSingleParam(attr, text string) (resultValue interface{}, resultErr error)
 }

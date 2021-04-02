@@ -14,7 +14,7 @@ func GetTextMessage(text string) *model.TextMessage {
 	}
 }
 
-func GetFlexMessage(altText string, content *model.FlexMessagBubbleComponent) *model.FlexMessage {
+func GetFlexMessage(altText string, content interface{}) *model.FlexMessage {
 	return &model.FlexMessage{
 		Type: &model.Type{
 			Type: "flex",
@@ -22,6 +22,16 @@ func GetFlexMessage(altText string, content *model.FlexMessagBubbleComponent) *m
 		AltText:  altText,
 		Contents: content,
 	}
+}
+
+func GetFlexMessageCarouselContent(contents ...*model.FlexMessagBubbleComponent) *model.FlexMessagCarouselComponent {
+	result := &model.FlexMessagCarouselComponent{
+		Type: &model.Type{
+			Type: "carousel",
+		},
+		Contents: contents,
+	}
+	return result
 }
 
 func GetFlexMessageBubbleContent(body *model.FlexMessageBoxComponent, option *model.FlexMessagBubbleComponentOption) *model.FlexMessagBubbleComponent {

@@ -17,7 +17,7 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 	paramJson := ""
 	isSingelParamText := !util.IsJSON(text)
 	switch cmd {
-	case domain.NEW_ACTIVITY_TEXT_CMD:
+	case domain.NEW_ACTIVITY_TEXT_CMD, domain.GET_ACTIVITIES_TEXT_CMD:
 		if err := lineContext.DeleteParam(); redis.IsRedisError(err) {
 			resultErr = err
 		}
@@ -41,7 +41,11 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 		}
 	}
 
-	cmdHandler = getCmdHandler(cmd, lineContext)
+	if handler, err := getCmdHandler(cmd, lineContext); err != nil {
+		return err
+	} else {
+		cmdHandler = handler
+	}
 
 	if redisParamJson := lineContext.GetParam(); redisParamJson != "" {
 		redisCmd := getCmdFromJson(redisParamJson)
@@ -52,12 +56,15 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 			cmdHandler = nil
 		}
 
-		if cmdHandler == nil {
-			cmdHandler = getCmdHandler(redisCmd, lineContext)
+		if cmdHandler == nil || isSingelParamText {
+			if handler, err := getCmdHandler(redisCmd, lineContext); err != nil {
+				return err
+			} else {
+				cmdHandler = handler
+			}
 		}
 
 		if isSingelParamText {
-			cmdHandler = getCmdHandler(redisCmd, lineContext)
 			cmdHandler.SetSingleParamMode()
 		}
 
@@ -89,13 +96,15 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 	return resultErr
 }
 
-func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) domain.ICmdHandler {
+func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (domain.ICmdHandler, error) {
 	var logicHandler domain.ICmdLogic
 	switch cmd {
 	case domain.NEW_ACTIVITY_TEXT_CMD:
 		logicHandler = &newActivity{}
+	case domain.GET_ACTIVITIES_TEXT_CMD:
+		logicHandler = &getActivities{}
 	default:
-		return nil
+		return nil, nil
 	}
 
 	result := &CmdHandler{
@@ -105,8 +114,11 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) domai
 		IContext:  context,
 		ICmdLogic: logicHandler,
 	}
-	logicHandler.Init(result)
-	return result
+	if err := logicHandler.Init(result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func getCmdFromJson(json string) domain.TextCmd {

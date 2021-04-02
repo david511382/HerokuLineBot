@@ -1,5 +1,18 @@
 package util
 
+func InsertAtIndex(datas []interface{}, index int, insertDatas ...interface{}) []interface{} {
+	result := make([]interface{}, 0)
+	tailDatas := datas[index:]
+	if index < len(datas) {
+		result = append(result, datas[:index]...)
+	}
+	result = append(result, insertDatas...)
+	if index < len(datas) {
+		result = append(result, tailDatas...)
+	}
+	return result
+}
+
 func InsertIndex(startIndex, lastIndex int, compareF func(index int) int) int {
 	return insertIndex(startIndex, lastIndex, compareF, false)
 }

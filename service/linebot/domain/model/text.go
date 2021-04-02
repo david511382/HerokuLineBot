@@ -11,8 +11,8 @@ type TextMessage struct {
 
 type FlexMessage struct {
 	*Type
-	AltText  string                     `json:"altText,omitempty"`
-	Contents *FlexMessagBubbleComponent `json:"contents,omitempty"`
+	AltText  string      `json:"altText,omitempty"`
+	Contents interface{} `json:"contents,omitempty"`
 }
 
 type FlexMessageBoxComponentOption struct {
@@ -48,6 +48,11 @@ type FlexMessagBubbleComponent struct {
 	*Type
 	*FlexMessagBubbleComponentOption
 	Body *FlexMessageBoxComponent `json:"body,omitempty"`
+}
+
+type FlexMessagCarouselComponent struct {
+	*Type
+	Contents []*FlexMessagBubbleComponent `json:"contents,omitempty"`
 }
 
 type FlexMessageTextComponent struct {

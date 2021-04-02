@@ -50,7 +50,7 @@ func (b *newActivityCourt) time() string {
 	)
 }
 
-func (b *newActivity) Init(context domain.ICmdHandlerContext) {
+func (b *newActivity) Init(context domain.ICmdHandlerContext) error {
 	nowTime := commonLogic.TimeUtilObj.Now()
 	const PEOPLE_PER_HOUR = 4
 	*b = newActivity{
@@ -79,6 +79,8 @@ func (b *newActivity) Init(context domain.ICmdHandlerContext) {
 		totalHours = commonLogic.FloatPlus(totalHours, court.hours()*float64(court.Count))
 	}
 	b.PeopleLimit = util.GetInt16P(int16(totalHours * float64(PEOPLE_PER_HOUR)))
+
+	return nil
 }
 
 func (b *newActivity) GetSingleParam(attr string) string {
@@ -196,86 +198,60 @@ func (b *newActivity) Do(text string) (resultErr error) {
 	}
 
 	contents := []interface{}{}
+	actions := domain.NewActivityLineTemplate{}
+
 	cmd := domain.DATE_POSTBACK_CMD
 	if js, err := b.context.GetRequireInputCmdText(&cmd, "date", "日期", true); err != nil {
 		return err
 	} else {
-		contents = append(contents,
-			linebot.GetKeyValueEditComponent(
-				"日期",
-				b.Date.Format(commonLogicDomain.DATE_FORMAT),
-				linebot.GetTimeAction(
-					"修改",
-					js,
-					"",
-					"",
-					linebotDomain.DATE_TIME_ACTION_MODE,
-				),
-				nil, nil,
-			),
+		actions.DateAction = linebot.GetTimeAction(
+			"修改",
+			js,
+			"",
+			"",
+			linebotDomain.DATE_TIME_ACTION_MODE,
 		)
 	}
+
 	if js, err := b.context.GetRequireInputCmdText(nil, "ICmdLogic.place", "地點", false); err != nil {
 		return err
 	} else {
-		contents = append(contents,
-			linebot.GetKeyValueEditComponent(
-				"地點",
-				b.Place,
-				linebot.GetPostBackAction(
-					"修改",
-					js,
-				),
-				nil, nil,
-			),
+		actions.PlaceAction = linebot.GetPostBackAction(
+			"修改",
+			js,
 		)
 	}
+
 	if js, err := b.context.GetRequireInputCmdText(nil, "ICmdLogic.club_subsidy", "補助額", false); err != nil {
 		return err
 	} else {
-		contents = append(contents,
-			linebot.GetKeyValueEditComponent(
-				"補助額",
-				strconv.Itoa(int(b.ClubSubsidy)),
-				linebot.GetPostBackAction(
-					"修改",
-					js,
-				),
-				nil, nil,
-			),
+		actions.ClubSubsidyAction = linebot.GetPostBackAction(
+			"修改",
+			js,
 		)
 	}
-	if b.PeopleLimit != nil {
-		if js, err := b.context.GetRequireInputCmdText(nil, "ICmdLogic.people_limit", "人數上限", false); err != nil {
-			return err
-		} else {
-			contents = append(contents,
-				linebot.GetKeyValueEditComponent(
-					"人數上限",
-					strconv.Itoa(int(*b.PeopleLimit)),
-					linebot.GetPostBackAction(
-						"修改",
-						js,
-					),
-					nil, nil,
-				),
-			)
-		}
+
+	if js, err := b.context.GetRequireInputCmdText(nil, "ICmdLogic.people_limit", "人數上限", false); err != nil {
+		return err
+	} else {
+		actions.PeopleLimitAction = linebot.GetPostBackAction(
+			"修改",
+			js,
+		)
 	}
-	contents = append(contents, b.getCourtsBoxComponent())
+
 	if js, err := b.context.GetRequireInputCmdText(nil, "ICmdLogic.courts", "場地", false); err != nil {
 		return err
 	} else {
-		contents = append(contents,
-			linebot.GetButtonComponent(
-				0,
-				linebot.GetPostBackAction(
-					"修改場地",
-					js,
-				),
-			),
+		actions.CourtAction = linebot.GetPostBackAction(
+			"修改場地",
+			js,
 		)
 	}
+
+	lineContents := b.getLineComponents(actions)
+	contents = append(contents, lineContents...)
+
 	contents = append(contents,
 		linebot.GetComfirmComponent(
 			linebot.GetPostBackAction(
@@ -307,6 +283,71 @@ func (b *newActivity) Do(text string) (resultErr error) {
 	}
 
 	return nil
+}
+
+func (b *newActivity) getLineComponents(actions domain.NewActivityLineTemplate) (result []interface{}) {
+	result = []interface{}{}
+	valueText := fmt.Sprintf("%s(%s)", b.Date.Format(commonLogicDomain.DATE_FORMAT), commonLogic.WeekDayName(b.Date.Weekday()))
+	valueTextSize := linebotDomain.MD_FLEX_MESSAGE_SIZE
+	result = append(result,
+		linebot.GetKeyValueEditComponent(
+			"日期",
+			valueText,
+			actions.DateAction,
+			nil, &valueTextSize,
+		),
+	)
+
+	result = append(result,
+		linebot.GetKeyValueEditComponent(
+			"地點",
+			b.Place,
+			actions.PlaceAction,
+			nil, nil,
+		),
+	)
+
+	result = append(result,
+		linebot.GetKeyValueEditComponent(
+			"補助額",
+			strconv.Itoa(int(b.ClubSubsidy)),
+			actions.ClubSubsidyAction,
+			nil, nil,
+		),
+	)
+
+	if b.PeopleLimit != nil {
+		result = append(result,
+			linebot.GetKeyValueEditComponent(
+				"人數上限",
+				strconv.Itoa(int(*b.PeopleLimit)),
+				actions.PeopleLimitAction,
+				nil, nil,
+			),
+		)
+	}
+
+	result = append(result, b.getCourtsBoxComponent(actions.CourtAction))
+
+	return
+}
+
+func (b *newActivity) getCourtFee() float64 {
+	totalFee := 0.0
+	for _, court := range b.Courts {
+		cost := court.cost()
+		totalFee = commonLogic.FloatPlus(totalFee, cost)
+	}
+	return totalFee
+}
+
+func (b *newActivity) getCourtHours() float64 {
+	totalHours := 0.0
+	for _, court := range b.Courts {
+		hours := court.hours()
+		totalHours = commonLogic.FloatPlus(totalHours, hours)
+	}
+	return totalHours
 }
 
 func (b *newActivity) getCourtsStr() string {
@@ -361,11 +402,7 @@ func (b *newActivity) parseCourts(courtsStr string) error {
 	return nil
 }
 
-func (b *newActivity) getCourtsBoxComponent() *linebotModel.FlexMessageBoxComponent {
-	components := []interface{}{}
-	placeFee := 0.0
-	var minTime, maxTime *time.Time
-	mdSize := linebotDomain.MD_FLEX_MESSAGE_SIZE
+func (b *newActivity) getCourtTimeRange() (minTime, maxTime *time.Time) {
 	for _, court := range b.Courts {
 		if minTime == nil || court.FromTime.Before(*minTime) {
 			minTime = &court.FromTime
@@ -373,11 +410,43 @@ func (b *newActivity) getCourtsBoxComponent() *linebotModel.FlexMessageBoxCompon
 		if maxTime == nil || court.ToTime.After(*maxTime) {
 			maxTime = &court.ToTime
 		}
+	}
+	return
+}
 
+func (b *newActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackAction) *linebotModel.FlexMessageBoxComponent {
+	components := []interface{}{}
+
+	headComponents := []interface{}{}
+	titleComponent := linebot.GetFlexMessageTextComponent(
+		0,
+		linebot.GetFlexMessageTextComponentSpan(
+			"場地",
+			linebotDomain.XL_FLEX_MESSAGE_SIZE,
+			linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+		),
+	)
+	headComponents = append(headComponents, titleComponent)
+	if buttonAction != nil {
+		editButtonComponent := linebot.GetButtonComponent(
+			0,
+			buttonAction,
+		)
+		headComponents = append(headComponents, editButtonComponent)
+	}
+	headBoxComponent := linebot.GetFlexMessageBoxComponent(
+		linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+		nil,
+		headComponents...,
+	)
+	components = append(components, headBoxComponent)
+
+	placeFee := 0.0
+	mdSize := linebotDomain.MD_FLEX_MESSAGE_SIZE
+	for index, court := range b.Courts {
 		cost := court.cost()
 		placeFee = commonLogic.FloatPlus(placeFee, cost)
 
-		components = append(components, linebot.GetSeparatorComponent(nil))
 		components = append(components, linebot.GetKeyValueEditComponent(
 			"時間",
 			court.time(),
@@ -409,7 +478,9 @@ func (b *newActivity) getCourtsBoxComponent() *linebotModel.FlexMessageBoxCompon
 
 		components = append(components, courtBoxComponent)
 
-		components = append(components, linebot.GetSeparatorComponent(nil))
+		if index < len(b.Courts)-1 {
+			components = append(components, linebot.GetSeparatorComponent(nil))
+		}
 	}
 
 	return linebot.GetFlexMessageBoxComponent(

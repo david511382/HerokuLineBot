@@ -27,3 +27,7 @@ type ITimeUtil interface {
 func (TimeUtil) Now() time.Time {
 	return time.Now().In(Location)
 }
+
+func WeekDayName(weekDay time.Weekday) string {
+	return domain.WeekDayName[weekDay]
+}
