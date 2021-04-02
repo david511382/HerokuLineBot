@@ -1,6 +1,7 @@
 package clublinebot
 
 import (
+	"fmt"
 	"heroku-line-bot/service/googlescript"
 	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/service/linebot/domain"
@@ -67,6 +68,10 @@ func (b *ClubLineBot) handleEvent(eventJson *util.Json) error {
 }
 
 func (b *ClubLineBot) replyErr(err error, replyToken string) error {
+	messageToAdmin := []string{
+		err.Error(),
+	}
+
 	if _, err := b.ReplyMessage(
 		&lineBotReqs.ReplyMessage{
 			ReplyToken: replyToken,
@@ -74,10 +79,10 @@ func (b *ClubLineBot) replyErr(err error, replyToken string) error {
 				linebot.GetTextMessage("發生錯誤，已通知管理員"),
 			},
 		}); err != nil {
-		return err
+		messageToAdmin = append(messageToAdmin, fmt.Sprintf("reply err:%s", err.Error()))
 	}
 
-	if err := b.pushMessageToAdmin(err.Error()); err != nil {
+	if err := b.pushMessageToAdmin(messageToAdmin...); err != nil {
 		return err
 	}
 
