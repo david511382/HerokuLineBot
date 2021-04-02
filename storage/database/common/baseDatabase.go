@@ -11,6 +11,10 @@ type BaseDatabase struct {
 	Write *gorm.DB
 }
 
+func (d *BaseDatabase) Begin() *gorm.DB {
+	return d.Write.Begin()
+}
+
 func (d *BaseDatabase) SetConnection(maxIdleConns, maxOpenConns int, maxLifetime time.Duration) {
 	if d.Read != nil {
 		d.setConnection(d.Read, maxIdleConns, maxOpenConns, maxLifetime)

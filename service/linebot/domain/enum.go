@@ -15,3 +15,15 @@ var (
 	BEACON_EVENT_TYPE        EventType = "beacon"
 	ACCOUNT_LINK_EVENT_TYPE  EventType = "accountLink"
 )
+
+type JustifyContent string
+
+var (
+	SPACE_EVENLY_JUSTIFY_CONTENT JustifyContent = "space-evenly"
+)
+
+type AlignItems string
+
+var (
+	FLEX_START_ALIGN_ITEMS AlignItems = "flex-start"
+)

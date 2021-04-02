@@ -6,6 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/google/go-querystring v1.0.0
 	github.com/jinzhu/gorm v1.9.16
 	github.com/lib/pq v1.3.0 // indirect
@@ -15,6 +16,7 @@ require (
 	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/tealeg/xlsx v1.0.5
 	github.com/tidwall/gjson v1.6.8
+	github.com/tidwall/sjson v1.1.5
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
