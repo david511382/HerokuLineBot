@@ -52,7 +52,6 @@ func (b *newActivityCourt) time() string {
 
 func (b *newActivity) Init(context domain.ICmdHandlerContext) error {
 	nowTime := commonLogic.TimeUtilObj.Now()
-	const PEOPLE_PER_HOUR = 4
 	*b = newActivity{
 		context:     context,
 		Date:        util.DateOf(nowTime),
@@ -78,7 +77,7 @@ func (b *newActivity) Init(context domain.ICmdHandlerContext) error {
 	for _, court := range b.Courts {
 		totalHours = commonLogic.FloatPlus(totalHours, court.hours()*float64(court.Count))
 	}
-	b.PeopleLimit = util.GetInt16P(int16(totalHours * float64(PEOPLE_PER_HOUR)))
+	b.PeopleLimit = util.GetInt16P(int16(totalHours * float64(domain.PEOPLE_PER_HOUR)))
 
 	return nil
 }
