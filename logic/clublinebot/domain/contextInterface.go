@@ -6,4 +6,5 @@ type IContext interface {
 	GetParam() (json string)
 	Reply(replyMessges []interface{}) error
 	GetUserID() string
+	GetUserName() string
 }

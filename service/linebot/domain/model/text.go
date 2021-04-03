@@ -76,6 +76,12 @@ type PostBackAction struct {
 	Data  string `json:"data,omitempty"`
 }
 
+type MessageAction struct {
+	*Type
+	Label string `json:"label,omitempty"`
+	Text  string `json:"text,omitempty"`
+}
+
 type TimeAction struct {
 	*PostBackAction
 	Mode domain.TimeActionMode `json:"mode,omitempty"`

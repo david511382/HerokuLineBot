@@ -26,6 +26,14 @@ func (c *Context) GetUserID() string {
 	return c.userID
 }
 
+func (c *Context) GetUserName() string {
+	if profile, err := c.lineBot.GetUserProfile(c.userID); err != nil {
+		return ""
+	} else {
+		return profile.DisplayName
+	}
+}
+
 func (c *Context) SaveParam(json string) error {
 	if err := redis.UserUsingStatus.HSet(c.userID, json); redis.IsRedisError(err) {
 		return err

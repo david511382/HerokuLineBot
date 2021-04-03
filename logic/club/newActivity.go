@@ -50,7 +50,7 @@ func (b *newActivityCourt) time() string {
 	)
 }
 
-func (b *newActivity) Init(context domain.ICmdHandlerContext) error {
+func (b *newActivity) Init(context domain.ICmdHandlerContext, initCmdBaseF func(requireRawParamAttr, requireRawParamAttrText string, isInputImmediately bool)) error {
 	nowTime := commonLogic.TimeUtilObj.Now()
 	*b = newActivity{
 		context:     context,
@@ -105,46 +105,44 @@ func (b *newActivity) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *newActivity) LoadSingleParam(attr, text string) (resultValue interface{}, resultErr error) {
+func (b *newActivity) LoadSingleParam(attr, text string) error {
 	switch attr {
 	case "date":
 		t, err := time.Parse(commonLogicDomain.DATE_TIME_RFC3339_FORMAT, text)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		b.Date = t
-		resultValue = b.Date
 	case "ICmdLogic.place":
 		b.Place = text
-		resultValue = b.Place
 	case "ICmdLogic.description":
 		b.Description = text
-		resultValue = b.Description
 	case "ICmdLogic.people_limit":
 		i, err := strconv.Atoi(text)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		b.PeopleLimit = util.GetInt16P(int16(i))
-		resultValue = b.PeopleLimit
 	case "ICmdLogic.club_subsidy":
 		i, err := strconv.Atoi(text)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		b.ClubSubsidy = int16(i)
-		resultValue = b.ClubSubsidy
 	case "ICmdLogic.courts":
 		if isJson := strings.ContainsAny(text, "{"); !isJson {
 			if err := b.parseCourts(text); err != nil {
-				return nil, err
+				return err
 			}
 		}
-		resultValue = b.Courts
 	default:
 	}
 
-	return
+	return nil
+}
+
+func (b *newActivity) GetInputTemplate(requireRawParamAttr string) interface{} {
+	return nil
 }
 
 func (b *newActivity) Do(text string) (resultErr error) {
@@ -251,15 +249,23 @@ func (b *newActivity) Do(text string) (resultErr error) {
 	lineContents := b.getLineComponents(actions)
 	contents = append(contents, lineContents...)
 
+	cancelSignlJs, err := b.context.GetCancelSignl()
+	if err != nil {
+		return err
+	}
+	comfirmSignlJs, err := b.context.GetComfirmSignl()
+	if err != nil {
+		return err
+	}
 	contents = append(contents,
 		linebot.GetComfirmComponent(
 			linebot.GetPostBackAction(
 				"取消",
-				b.context.GetCancelSignl(),
+				cancelSignlJs,
 			),
 			linebot.GetPostBackAction(
 				"新增",
-				b.context.GetComfirmSignl(),
+				comfirmSignlJs,
 			),
 		),
 	)

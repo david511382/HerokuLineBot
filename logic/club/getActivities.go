@@ -20,7 +20,7 @@ type getActivities struct {
 	activities []*newActivity
 }
 
-func (b *getActivities) Init(context domain.ICmdHandlerContext) error {
+func (b *getActivities) Init(context domain.ICmdHandlerContext, initCmdBaseF func(requireRawParamAttr, requireRawParamAttrText string, isInputImmediately bool)) error {
 	*b = getActivities{
 		context:    context,
 		activities: make([]*newActivity, 0),
@@ -58,12 +58,16 @@ func (b *getActivities) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *getActivities) LoadSingleParam(attr, text string) (resultValue interface{}, resultErr error) {
+func (b *getActivities) LoadSingleParam(attr, text string) error {
 	switch attr {
 	default:
 	}
 
-	return
+	return nil
+}
+
+func (b *getActivities) GetInputTemplate(requireRawParamAttr string) interface{} {
+	return nil
 }
 
 func (b *getActivities) Do(text string) (resultErr error) {

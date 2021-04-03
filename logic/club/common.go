@@ -16,12 +16,15 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 	var cmdHandler domain.ICmdHandler
 	paramJson := ""
 	isSingelParamText := !util.IsJSON(text)
-	switch cmd {
-	case domain.NEW_ACTIVITY_TEXT_CMD, domain.GET_ACTIVITIES_TEXT_CMD:
+
+	if handler, err := getCmdHandler(cmd, lineContext); err != nil {
+		return err
+	} else if handler != nil {
+		cmdHandler = handler
 		if err := lineContext.DeleteParam(); redis.IsRedisError(err) {
 			resultErr = err
 		}
-	default:
+	} else {
 		cmd = getCmdFromJson(text)
 		switch cmd {
 		case domain.TIME_POSTBACK_CMD, domain.DATE_TIME_POSTBACK_CMD, domain.DATE_POSTBACK_CMD:
@@ -39,12 +42,6 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 				paramJson = text
 			}
 		}
-	}
-
-	if handler, err := getCmdHandler(cmd, lineContext); err != nil {
-		return err
-	} else {
-		cmdHandler = handler
 	}
 
 	if redisParamJson := lineContext.GetParam(); redisParamJson != "" {
@@ -103,6 +100,8 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		logicHandler = &newActivity{}
 	case domain.GET_ACTIVITIES_TEXT_CMD:
 		logicHandler = &getActivities{}
+	case domain.REGISTER_TEXT_CMD:
+		logicHandler = &register{}
 	default:
 		return nil, nil
 	}
@@ -114,7 +113,14 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		IContext:  context,
 		ICmdLogic: logicHandler,
 	}
-	if err := logicHandler.Init(result); err != nil {
+	if err := logicHandler.Init(
+		result,
+		func(requireRawParamAttr, requireRawParamAttrText string, isInputImmediately bool) {
+			result.RequireRawParamAttr = requireRawParamAttr
+			result.RequireRawParamAttrText = requireRawParamAttrText
+			result.IsInputImmediately = isInputImmediately
+		},
+	); err != nil {
 		return nil, err
 	}
 

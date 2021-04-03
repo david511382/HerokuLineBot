@@ -73,6 +73,16 @@ func GetPostBackAction(text, data string) *model.PostBackAction {
 	}
 }
 
+func GetMessageAction(text string) *model.MessageAction {
+	return &model.MessageAction{
+		Type: &model.Type{
+			Type: "message",
+		},
+		Label: text,
+		Text:  text,
+	}
+}
+
 func GetTimeAction(text, data, max, min string, mode domain.TimeActionMode) *model.TimeAction {
 	return &model.TimeAction{
 		PostBackAction: &model.PostBackAction{

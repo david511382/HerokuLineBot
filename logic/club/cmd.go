@@ -25,11 +25,7 @@ func (b *CmdHandler) IsInputMode() bool {
 	return b.RequireRawParamAttr != ""
 }
 
-func (b *CmdHandler) GetSingleParamText() string {
-	return b.ICmdLogic.GetSingleParam(b.RequireRawParamAttr)
-}
-
-func (b *CmdHandler) LoadSingleParamValue(valueText string) (resultValue interface{}, resultErr error) {
+func (b *CmdHandler) LoadSingleParamValue(valueText string) error {
 	return b.ICmdLogic.LoadSingleParam(b.RequireRawParamAttr, valueText)
 }
 
@@ -40,32 +36,40 @@ func (b *CmdHandler) duplicate() *CmdHandler {
 	return &nb
 }
 
-func (b *CmdHandler) GetCancelSignl() string {
+func (b *CmdHandler) GetCancelSignl() (string, error) {
 	nb := b.duplicate()
 	nb.IsCancel = true
 	js, err := nb.GetRequireInputCmdText(nil, "", "", true)
 	if err != nil {
-		return ""
+		return "", err
 	}
-	return js
+	return js, nil
 }
 
-func (b *CmdHandler) GetComfirmSignl() string {
+func (b *CmdHandler) GetComfirmSignl() (string, error) {
 	nb := b.duplicate()
 	nb.IsComfirm = true
 	js, err := nb.GetRequireInputCmdText(nil, "", "", true)
 	if err != nil {
-		return ""
+		return "", err
 	}
-	return js
+	return js, nil
+}
+
+func (b *CmdHandler) GetCancelInpuingSignl() (string, error) {
+	js, err := b.GetRequireInputCmdText(nil, "", "", false)
+	if err != nil {
+		return "", err
+	}
+	return js, nil
 }
 
 func (b *CmdHandler) GetRequireInputCmdText(cmd *domain.TextCmd, attr, attrText string, isInputImmediately bool) (string, error) {
-	b.RequireRawParamAttr = attr
-	b.RequireRawParamAttrText = attrText
-	b.IsInputImmediately = isInputImmediately
-
 	nb := b.duplicate()
+	nb.RequireRawParamAttr = attr
+	nb.RequireRawParamAttrText = attrText
+	nb.IsInputImmediately = isInputImmediately
+
 	if cmd != nil {
 		nb.Cmd = *cmd
 	} else {
@@ -99,6 +103,53 @@ func (b *CmdHandler) SetSingleParamMode() {
 	b.IsSingleParamMode = true
 }
 
+func (b *CmdHandler) GetInputTemplate(requireRawParamAttr string) interface{} {
+	const altText = "請確認或輸入"
+	valueText := b.ICmdLogic.GetSingleParam(requireRawParamAttr)
+	var text = fmt.Sprintf("%s %s ,確認或請輸入數值", b.RequireRawParamAttrText, valueText)
+
+	cancelRequireInputJs, err := b.GetCancelInpuingSignl()
+	if err != nil {
+		return err
+	}
+
+	return linebot.GetFlexMessage(
+		altText,
+		linebot.GetFlexMessageBubbleContent(
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+				&model.FlexMessageBoxComponentOption{
+					JustifyContent: linebotDomain.SPACE_EVENLY_JUSTIFY_CONTENT,
+				},
+				linebot.GetButtonComponent(
+					0,
+					linebot.GetPostBackAction(
+						"確認",
+						cancelRequireInputJs,
+					),
+				),
+			),
+			&model.FlexMessagBubbleComponentOption{
+				Header: linebot.GetFlexMessageBoxComponent(
+					linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+					nil,
+					linebot.GetTextMessage(text),
+				),
+				Styles: &model.FlexMessagBubbleComponentStyle{
+					Header: &model.Background{
+						BackgroundColor: "#8DFF33",
+					},
+					Body: &model.Background{
+						BackgroundColor: "#FFFFFF",
+						SeparatorColor:  "#000000",
+						Separator:       true,
+					},
+				},
+			},
+		),
+	)
+}
+
 func (b *CmdHandler) Do(text string) error {
 	if b.IsCancel {
 		if err := b.DeleteParam(); err != nil {
@@ -116,11 +167,8 @@ func (b *CmdHandler) Do(text string) error {
 	}
 
 	if b.IsInputMode() {
-		const altText = "請確認或輸入"
-
 		if b.IsSingleParamMode {
-			_, err := b.LoadSingleParamValue(text)
-			if err != nil {
+			if err := b.LoadSingleParamValue(text); err != nil {
 				msg := fmt.Sprintf("參數格式錯誤:%s", err.Error())
 				replyMessges := []interface{}{
 					linebot.GetTextMessage(msg),
@@ -132,12 +180,9 @@ func (b *CmdHandler) Do(text string) error {
 			}
 		}
 
-		valueText := b.GetSingleParamText()
-		var text = fmt.Sprintf("%s %s ,確認或請輸入數值", b.RequireRawParamAttrText, valueText)
-
+		requireRawParamAttr := b.RequireRawParamAttr
 		if b.IsInputImmediately {
 			b.RequireRawParamAttr = ""
-			b.RequireRawParamAttrText = ""
 		}
 
 		if err := b.CacheParams(); err != nil {
@@ -145,47 +190,12 @@ func (b *CmdHandler) Do(text string) error {
 		}
 
 		if !b.IsInputImmediately {
-			cancelRequireInputJs, err := b.GetRequireInputCmdText(nil, "", "", false)
-			if err != nil {
-				return err
+			replyMessge := b.ICmdLogic.GetInputTemplate(requireRawParamAttr)
+			if replyMessge == nil {
+				replyMessge = b.GetInputTemplate(requireRawParamAttr)
 			}
-
 			replyMessges := []interface{}{
-				linebot.GetFlexMessage(
-					altText,
-					linebot.GetFlexMessageBubbleContent(
-						linebot.GetFlexMessageBoxComponent(
-							linebotDomain.VERTICAL_MESSAGE_LAYOUT,
-							&model.FlexMessageBoxComponentOption{
-								JustifyContent: linebotDomain.SPACE_EVENLY_JUSTIFY_CONTENT,
-							},
-							linebot.GetButtonComponent(
-								0,
-								linebot.GetPostBackAction(
-									"確認",
-									cancelRequireInputJs,
-								),
-							),
-						),
-						&model.FlexMessagBubbleComponentOption{
-							Header: linebot.GetFlexMessageBoxComponent(
-								linebotDomain.VERTICAL_MESSAGE_LAYOUT,
-								nil,
-								linebot.GetTextMessage(text),
-							),
-							Styles: &model.FlexMessagBubbleComponentStyle{
-								Header: &model.Background{
-									BackgroundColor: "#8DFF33",
-								},
-								Body: &model.Background{
-									BackgroundColor: "#FFFFFF",
-									SeparatorColor:  "#000000",
-									Separator:       true,
-								},
-							},
-						},
-					),
-				),
+				replyMessge,
 			}
 			if err := b.IContext.Reply(replyMessges); err != nil {
 				return err
