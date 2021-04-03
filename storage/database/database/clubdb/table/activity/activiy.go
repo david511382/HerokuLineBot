@@ -16,11 +16,11 @@ func (t Activity) GetTable() interface{} {
 }
 
 func (t Activity) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
-	arg := argI.(*reqs.Activity)
+	arg := argI.(reqs.Activity)
 	return t.whereArg(dp, arg)
 }
 
-func (t Activity) whereArg(dp *gorm.DB, arg *reqs.Activity) *gorm.DB {
+func (t Activity) whereArg(dp *gorm.DB, arg reqs.Activity) *gorm.DB {
 	if p := arg.Place; p != nil {
 		dp = dp.Where("place = ?", p)
 	}

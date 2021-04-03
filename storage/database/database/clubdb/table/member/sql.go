@@ -5,7 +5,7 @@ import (
 	"heroku-line-bot/storage/database/domain/model/resp"
 )
 
-func (t Member) Role(arg *reqs.Member) ([]*resp.Role, error) {
+func (t Member) Role(arg reqs.Member) ([]*resp.Role, error) {
 	dp := t.DbModel()
 	dp = t.whereArg(dp, arg).Select(
 		`

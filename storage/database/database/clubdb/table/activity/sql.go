@@ -5,7 +5,7 @@ import (
 	"heroku-line-bot/storage/database/domain/model/resp"
 )
 
-func (t Activity) DatePlaceCourtsSubsidyDescriptionPeopleLimit(arg *reqs.Activity) ([]*resp.DatePlaceCourtsSubsidyDescriptionPeopleLimit, error) {
+func (t Activity) DatePlaceCourtsSubsidyDescriptionPeopleLimit(arg reqs.Activity) ([]*resp.DatePlaceCourtsSubsidyDescriptionPeopleLimit, error) {
 	dp := t.DbModel()
 	dp = t.whereArg(dp, arg).Select(
 		`

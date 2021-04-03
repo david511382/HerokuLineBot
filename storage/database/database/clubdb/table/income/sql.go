@@ -5,7 +5,7 @@ import (
 	"heroku-line-bot/storage/database/domain/model/resp"
 )
 
-func (t Income) Income(arg *reqs.Income) ([]*resp.Income, error) {
+func (t Income) Income(arg reqs.Income) ([]*resp.Income, error) {
 	dp := t.DbModel()
 	dp = t.whereArg(dp, arg).Select(
 		`

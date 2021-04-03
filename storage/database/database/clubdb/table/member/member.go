@@ -16,11 +16,11 @@ func (t Member) GetTable() interface{} {
 }
 
 func (t Member) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
-	arg := argI.(*reqs.Member)
+	arg := argI.(reqs.Member)
 	return t.whereArg(dp, arg)
 }
 
-func (t Member) whereArg(dp *gorm.DB, arg *reqs.Member) *gorm.DB {
+func (t Member) whereArg(dp *gorm.DB, arg reqs.Member) *gorm.DB {
 	if arg.IsDelete == nil || *arg.IsDelete {
 		dp = dp.Unscoped()
 

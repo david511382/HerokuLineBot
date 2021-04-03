@@ -25,7 +25,7 @@ func (b *getActivities) Init(context domain.ICmdHandlerContext) error {
 		context:    context,
 		activities: make([]*newActivity, 0),
 	}
-	arg := &dbReqs.Activity{
+	arg := dbReqs.Activity{
 		IsComplete: util.GetBoolP(false),
 	}
 	if dbDatas, err := database.Club.Activity.DatePlaceCourtsSubsidyDescriptionPeopleLimit(arg); err != nil {

@@ -16,11 +16,11 @@ func (t Income) GetTable() interface{} {
 }
 
 func (t Income) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
-	arg := argI.(*reqs.Income)
+	arg := argI.(reqs.Income)
 	return t.whereArg(dp, arg)
 }
 
-func (t Income) whereArg(dp *gorm.DB, arg *reqs.Income) *gorm.DB {
+func (t Income) whereArg(dp *gorm.DB, arg reqs.Income) *gorm.DB {
 	if p := arg.Type; p != nil {
 		dp = dp.Where("type = ?", p)
 	}
