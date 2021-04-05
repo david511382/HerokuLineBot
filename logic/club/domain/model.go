@@ -1,5 +1,7 @@
 package domain
 
+import linebotDomain "heroku-line-bot/service/linebot/domain"
+
 type CmdBase struct {
 	Cmd                     TextCmd `json:"cmd,omitempty"`
 	RequireRawParamAttr     string  `json:"require_raw_param_attr"`
@@ -14,4 +16,11 @@ type TimePostbackParams struct {
 	Date     string `json:"date"`
 	DateTime string `json:"date_time"`
 	Time     string `json:"time"`
+}
+
+type KeyValueEditComponentOption struct {
+	Indent *int
+	Action interface{}
+	SizeP,
+	ValueSizeP *linebotDomain.MessageSize
 }

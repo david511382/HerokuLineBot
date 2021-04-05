@@ -258,7 +258,7 @@ func (b *newActivity) Do(text string) (resultErr error) {
 		return err
 	}
 	contents = append(contents,
-		linebot.GetComfirmComponent(
+		GetComfirmComponent(
 			linebot.GetPostBackAction(
 				"取消",
 				cancelSignlJs,
@@ -295,39 +295,44 @@ func (b *newActivity) getLineComponents(actions domain.NewActivityLineTemplate) 
 	valueText := fmt.Sprintf("%s(%s)", b.Date.Format(commonLogicDomain.DATE_FORMAT), commonLogic.WeekDayName(b.Date.Weekday()))
 	valueTextSize := linebotDomain.MD_FLEX_MESSAGE_SIZE
 	result = append(result,
-		linebot.GetKeyValueEditComponent(
+		GetKeyValueEditComponent(
 			"日期",
 			valueText,
-			actions.DateAction,
-			nil, &valueTextSize,
+			&domain.KeyValueEditComponentOption{
+				Action:     actions.DateAction,
+				ValueSizeP: &valueTextSize,
+			},
 		),
 	)
 
 	result = append(result,
-		linebot.GetKeyValueEditComponent(
+		GetKeyValueEditComponent(
 			"地點",
 			b.Place,
-			actions.PlaceAction,
-			nil, nil,
+			&domain.KeyValueEditComponentOption{
+				Action: actions.PlaceAction,
+			},
 		),
 	)
 
 	result = append(result,
-		linebot.GetKeyValueEditComponent(
+		GetKeyValueEditComponent(
 			"補助額",
 			strconv.Itoa(int(b.ClubSubsidy)),
-			actions.ClubSubsidyAction,
-			nil, nil,
+			&domain.KeyValueEditComponentOption{
+				Action: actions.ClubSubsidyAction,
+			},
 		),
 	)
 
 	if b.PeopleLimit != nil {
 		result = append(result,
-			linebot.GetKeyValueEditComponent(
+			GetKeyValueEditComponent(
 				"人數上限",
 				strconv.Itoa(int(*b.PeopleLimit)),
-				actions.PeopleLimitAction,
-				nil, nil,
+				&domain.KeyValueEditComponentOption{
+					Action: actions.PeopleLimitAction,
+				},
 			),
 		)
 	}
@@ -425,6 +430,7 @@ func (b *newActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackA
 	headComponents := []interface{}{}
 	titleComponent := linebot.GetFlexMessageTextComponent(
 		0,
+		"",
 		linebot.GetFlexMessageTextComponentSpan(
 			"場地",
 			linebotDomain.XL_FLEX_MESSAGE_SIZE,
@@ -436,6 +442,7 @@ func (b *newActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackA
 		editButtonComponent := linebot.GetButtonComponent(
 			0,
 			buttonAction,
+			&domain.NormalButtonOption,
 		)
 		headComponents = append(headComponents, editButtonComponent)
 	}
@@ -452,28 +459,28 @@ func (b *newActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackA
 		cost := court.cost()
 		placeFee = commonLogic.FloatPlus(placeFee, cost)
 
-		components = append(components, linebot.GetKeyValueEditComponent(
+		components = append(components, GetKeyValueEditComponent(
 			"時間",
 			court.time(),
-			nil,
-			&mdSize,
-			nil,
+			&domain.KeyValueEditComponentOption{
+				SizeP: &mdSize,
+			},
 		))
 
 		courtComponents := []interface{}{}
-		courtComponents = append(courtComponents, linebot.GetKeyValueEditComponent(
+		courtComponents = append(courtComponents, GetKeyValueEditComponent(
 			"場地數",
 			strconv.Itoa(int(court.Count)),
-			nil,
-			&mdSize,
-			nil,
+			&domain.KeyValueEditComponentOption{
+				SizeP: &mdSize,
+			},
 		))
-		courtComponents = append(courtComponents, linebot.GetKeyValueEditComponent(
+		courtComponents = append(courtComponents, GetKeyValueEditComponent(
 			"價錢",
 			strconv.FormatFloat(cost, 'f', 0, 64),
-			nil,
-			&mdSize,
-			nil,
+			&domain.KeyValueEditComponentOption{
+				SizeP: &mdSize,
+			},
 		))
 		courtBoxComponent := linebot.GetFlexMessageBoxComponent(
 			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,

@@ -21,6 +21,10 @@ func (t Activity) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
 }
 
 func (t Activity) whereArg(dp *gorm.DB, arg reqs.Activity) *gorm.DB {
+	if p := arg.ID; p != nil {
+		dp = dp.Where("id = ?", p)
+	}
+
 	if p := arg.Place; p != nil {
 		dp = dp.Where("place = ?", p)
 	}

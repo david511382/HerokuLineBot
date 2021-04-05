@@ -4,6 +4,7 @@ import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/storage/database/conn"
 	"heroku-line-bot/storage/database/database/clubdb"
+	"strings"
 	"time"
 )
 
@@ -29,4 +30,8 @@ func Init(cfg *bootstrap.Config) error {
 
 func Dispose() {
 	Club.Dispose()
+}
+
+func IsUniqErr(err error) bool {
+	return strings.Contains(err.Error(), "unique constraint")
 }

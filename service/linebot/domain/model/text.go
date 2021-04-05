@@ -56,7 +56,7 @@ type FlexMessagCarouselComponent struct {
 }
 
 type FlexMessageTextComponent struct {
-	*Type
+	TextMessage
 	Contents   []*FlexMessageTextComponentSpan `json:"contents,omitempty"`
 	Flex       int                             `json:"flex,omitempty"`
 	AdjustMode domain.AdjustMode               `json:"adjustMode,omitempty"`
@@ -89,11 +89,15 @@ type TimeAction struct {
 	Min  string                `json:"min,omitempty"`
 }
 
+type ButtonOption struct {
+	Color string `json:"color,omitempty"`
+}
+
 type Button struct {
 	*Type
+	*ButtonOption
 	Action     interface{}        `json:"action,omitempty"`
 	Style      string             `json:"style,omitempty"`
-	Color      string             `json:"color,omitempty"`
 	Height     domain.MessageSize `json:"height,omitempty"`
 	Flex       int                `json:"flex,omitempty"`
 	AdjustMode domain.AdjustMode  `json:"adjustMode,omitempty"`
@@ -102,4 +106,9 @@ type Button struct {
 type FlexMessageSeparatorComponent struct {
 	*Type
 	Color string `json:"color,omitempty"`
+}
+
+type FlexMessageFillerComponent struct {
+	*Type
+	Flex int `json:"flex,omitempty"`
 }

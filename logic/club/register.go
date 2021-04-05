@@ -156,6 +156,7 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 					"確認",
 					inputDepartmentJs,
 				),
+				&domain.NormalButtonOption,
 			)
 			buttonComponents = append(buttonComponents, comfirmButtonComponent)
 		}
@@ -172,6 +173,7 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 					"沒有員工編號",
 					inputDepartmentJs,
 				),
+				&domain.NormalButtonOption,
 			),
 		)
 
@@ -230,6 +232,7 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 					"確認",
 					comfirmInputJs,
 				),
+				&domain.NormalButtonOption,
 			)
 			inputButtons = append(inputButtons, comfirmButton)
 		}
@@ -239,12 +242,14 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 			departmentButton := linebot.GetButtonComponent(
 				0,
 				linebot.GetMessageAction(string(clubMemberDepartment)),
+				&domain.NormalButtonOption,
 			)
 			inputButtons = append(inputButtons, departmentButton)
 		}
 		noDepartmentButton := linebot.GetButtonComponent(
 			0,
 			linebot.GetMessageAction("無"),
+			&domain.NormalButtonOption,
 		)
 		inputButtons = append(inputButtons, noDepartmentButton)
 
@@ -296,6 +301,7 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 				"確認",
 				requireDepartmentInputJs,
 			),
+			&domain.NormalButtonOption,
 		)
 
 		return linebot.GetFlexMessage(
@@ -414,11 +420,12 @@ func (b *register) Do(text string) (resultErr error) {
 				js,
 			)
 			contents = append(contents,
-				linebot.GetKeyValueEditComponent(
+				GetKeyValueEditComponent(
 					"員工編號",
 					*b.CompanyID,
-					action,
-					nil, nil,
+					&domain.KeyValueEditComponentOption{
+						Action: action,
+					},
 				),
 			)
 		}
@@ -436,11 +443,12 @@ func (b *register) Do(text string) (resultErr error) {
 			js,
 		)
 		contents = append(contents,
-			linebot.GetKeyValueEditComponent(
+			GetKeyValueEditComponent(
 				"處",
 				string(處),
-				action,
-				nil, nil,
+				&domain.KeyValueEditComponentOption{
+					Action: action,
+				},
 			),
 		)
 	}
@@ -455,11 +463,12 @@ func (b *register) Do(text string) (resultErr error) {
 			js,
 		)
 		contents = append(contents,
-			linebot.GetKeyValueEditComponent(
+			GetKeyValueEditComponent(
 				"部",
 				部,
-				action,
-				nil, nil,
+				&domain.KeyValueEditComponentOption{
+					Action: action,
+				},
 			),
 		)
 	}
@@ -474,11 +483,12 @@ func (b *register) Do(text string) (resultErr error) {
 			js,
 		)
 		contents = append(contents,
-			linebot.GetKeyValueEditComponent(
+			GetKeyValueEditComponent(
 				"組",
 				組,
-				action,
-				nil, nil,
+				&domain.KeyValueEditComponentOption{
+					Action: action,
+				},
 			),
 		)
 	}
@@ -491,11 +501,12 @@ func (b *register) Do(text string) (resultErr error) {
 			js,
 		)
 		contents = append(contents,
-			linebot.GetKeyValueEditComponent(
+			GetKeyValueEditComponent(
 				"暱稱",
 				b.Name,
-				action,
-				nil, nil,
+				&domain.KeyValueEditComponentOption{
+					Action: action,
+				},
 			),
 		)
 	}
@@ -509,7 +520,7 @@ func (b *register) Do(text string) (resultErr error) {
 		return err
 	}
 	contents = append(contents,
-		linebot.GetComfirmComponent(
+		GetComfirmComponent(
 			linebot.GetPostBackAction(
 				"取消",
 				cancelSignlJs,

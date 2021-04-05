@@ -5,4 +5,5 @@ type Activity struct {
 	Place               *string
 	ClubSubsidyNotEqual *int16
 	IsComplete          *bool
+	ID                  *int
 }

@@ -20,6 +20,7 @@ type ICmdHandlerContext interface {
 	clublinebotDomain.IContext
 	IsComfirmed() bool
 	GetRequireInputCmdText(cmd *TextCmd, attr, attrText string, isInputImmediately bool) (string, error)
+	GetInputSignl(pathValueMap map[string]interface{}) (string, error)
 	CacheParams() error
 	GetCancelSignl() (string, error)
 	GetComfirmSignl() (string, error)

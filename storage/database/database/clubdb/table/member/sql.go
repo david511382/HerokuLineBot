@@ -32,3 +32,21 @@ func (t Member) Role(arg reqs.Member) ([]*resp.Role, error) {
 
 	return result, nil
 }
+
+func (t Member) IDNameRole(arg reqs.Member) ([]*resp.IDNameRole, error) {
+	dp := t.DbModel()
+	dp = t.whereArg(dp, arg).Select(
+		`
+		id AS id,
+		name AS name,
+		role AS role
+		`,
+	)
+
+	result := make([]*resp.IDNameRole, 0)
+	if err := dp.Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

@@ -8,6 +8,8 @@ import (
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
+
+	"github.com/tidwall/sjson"
 )
 
 type CmdHandler struct {
@@ -34,6 +36,18 @@ func (b *CmdHandler) duplicate() *CmdHandler {
 	cb := *b.CmdBase
 	nb.CmdBase = &cb
 	return &nb
+}
+
+func (b *CmdHandler) GetInputSignl(pathValueMap map[string]interface{}) (string, error) {
+	js := fmt.Sprintf(`{"%s":"%s"}`, domain.CMD_ATTR, b.Cmd)
+	for path, value := range pathValueMap {
+		var err error
+		if js, err = sjson.Set(js, path, value); err != nil {
+			return "", err
+		}
+	}
+
+	return js, nil
 }
 
 func (b *CmdHandler) GetCancelSignl() (string, error) {
@@ -127,6 +141,7 @@ func (b *CmdHandler) GetInputTemplate(requireRawParamAttr string) interface{} {
 						"確認",
 						cancelRequireInputJs,
 					),
+					&domain.NormalButtonOption,
 				),
 			),
 			&model.FlexMessagBubbleComponentOption{

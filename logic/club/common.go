@@ -37,10 +37,17 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 			text = jr.String()
 			cmd = ""
 			isSingelParamText = true
-		default:
+		case "":
 			if !isSingelParamText {
 				paramJson = text
 			}
+		default:
+			if handler, err := getCmdHandler(cmd, lineContext); err != nil {
+				return err
+			} else if handler != nil {
+				cmdHandler = handler
+			}
+			paramJson = text
 		}
 	}
 
