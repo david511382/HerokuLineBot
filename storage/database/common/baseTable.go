@@ -125,7 +125,7 @@ func (t BaseTable) Delete(trans *gorm.DB, arg interface{}) error {
 	dp = t.table.WhereArg(dp, arg)
 
 	table := t.table.GetTable()
-	if err := dp.Delete(&table).Error; err != nil {
+	if err := dp.Delete(table).Error; err != nil {
 		return err
 	}
 
