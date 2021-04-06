@@ -63,6 +63,14 @@ func (b *ClubLineBot) handleEvent(eventJson *util.Json) error {
 		if err := b.handleMessageEvent(event); err != nil {
 			return err
 		}
+	case domain.FOLLOW_EVENT_TYPE:
+		event := &lineBotModel.FollowEvent{}
+		if err := eventJson.Parse(event); err != nil {
+			return err
+		}
+		if err := b.handleFollowEvent(event); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -20,6 +20,12 @@ type MemberJoinEvent struct {
 	Joined *MemberJoinEventJoined `json:"joined,omitempty"`
 }
 
+type FollowEvent struct {
+	*EventBase
+	Mode      string `json:"mode,omitempty"`
+	Timestamp uint64 `json:"timestamp,omitempty"`
+}
+
 type PostbackEvent struct {
 	*EventBase
 	Postback *PostbackEventPostback `json:"postback,omitempty"`
