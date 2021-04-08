@@ -9,3 +9,8 @@ type IDNameRole struct {
 	ID   int
 	Name string
 }
+
+type IDDepartment struct {
+	Department string
+	ID         int
+}

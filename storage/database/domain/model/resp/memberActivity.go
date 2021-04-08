@@ -4,9 +4,13 @@ type ID struct {
 	ID int
 }
 
+type IDMemberID struct {
+	ID       int
+	MemberID int
+}
+
 type IDMemberIDMemberName struct {
-	ID         int
-	MemberID   int
+	IDMemberID
 	MemberName string
 }
 

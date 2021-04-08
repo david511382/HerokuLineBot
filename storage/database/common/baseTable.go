@@ -39,7 +39,7 @@ func (t BaseTable) Insert(trans *gorm.DB, datas ...interface{}) error {
 		dp = trans
 	}
 	if cap(datas) == 0 || len(datas) == 0 {
-		return domain.DB_NO_AFFECTED_Error
+		return domain.DB_NO_AFFECTED_ERROR
 	} else if len(datas) > 1 {
 		idatas := make([]interface{}, 0)
 		for _, d := range datas {
@@ -50,7 +50,7 @@ func (t BaseTable) Insert(trans *gorm.DB, datas ...interface{}) error {
 		if err != nil {
 			return err
 		} else if count == 0 {
-			return domain.DB_NO_AFFECTED_Error
+			return domain.DB_NO_AFFECTED_ERROR
 		}
 	} else {
 		if err := dp.Create(datas[0]).Error; err != nil {
@@ -127,6 +127,25 @@ func (t BaseTable) Delete(trans *gorm.DB, arg interface{}) error {
 	table := t.table.GetTable()
 	if err := dp.Delete(table).Error; err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (t BaseTable) Update(trans *gorm.DB, arg interface{}, fields map[string]interface{}) error {
+	dp := t.Write
+	if trans != nil {
+		dp = trans
+	}
+
+	table := t.table.GetTable()
+	dp = dp.Model(table)
+	dp = t.table.WhereArg(dp, arg)
+	dp = dp.Update(fields)
+	if err := dp.Error; err != nil {
+		return err
+	} else if dp.RowsAffected == 0 {
+		return domain.DB_NO_AFFECTED_ERROR
 	}
 
 	return nil

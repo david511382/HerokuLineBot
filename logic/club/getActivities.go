@@ -14,7 +14,6 @@ import (
 	"heroku-line-bot/storage/database/database/clubdb/table/memberactivity"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/util"
-	"math"
 	"sort"
 	"strconv"
 	"time"
@@ -195,7 +194,7 @@ func (b *getActivities) listMembers() error {
 	)
 
 	isUsingPeopleLimit := peopleLimit != nil
-	joinedCount, _ := b.getJoinCount(len(memberComponents), peopleLimit)
+	joinedCount, _ := getJoinCount(len(memberComponents), peopleLimit)
 	contents = append(contents, linebot.GetFlexMessageTextComponent(0, "參加人員:"))
 	contents = append(contents, memberComponents[:joinedCount]...)
 	if isUsingPeopleLimit {
@@ -285,19 +284,6 @@ func (b *getActivities) isJoined(activity *getActivitiesActivity) bool {
 		}
 	}
 	return false
-}
-
-func (b *getActivities) getJoinCount(totalCount int, limit *int16) (joinedCount, waitingCount int) {
-	joinedCount = totalCount
-	peopleLimit := 0
-	if limit != nil {
-		peopleLimit = int(*limit)
-		if joinedCount > peopleLimit {
-			waitingCount = joinedCount - peopleLimit
-			joinedCount = peopleLimit
-		}
-	}
-	return
 }
 
 func (b *getActivities) Do(text string) (resultErr error) {
@@ -403,16 +389,6 @@ func (b *getActivities) Do(text string) (resultErr error) {
 		contents = append(contents, ballFeeComponent)
 
 		courtFee := activity.getCourtFee()
-		courtFeeComponent := GetKeyValueEditComponent(
-			"場地費用",
-			strconv.FormatFloat(courtFee, 'f', -1, 64),
-			&domain.KeyValueEditComponentOption{
-				ValueSizeP: &valueSize,
-				SizeP:      &size,
-			},
-		)
-		contents = append(contents, courtFeeComponent)
-
 		estimateActivityFee := commonLogic.FloatPlus(estimateBallFee, courtFee)
 		activityFeeComponent := GetKeyValueEditComponent(
 			"活動費用",
@@ -455,13 +431,10 @@ func (b *getActivities) Do(text string) (resultErr error) {
 
 		if activity.PeopleLimit != nil {
 			people := int(*activity.PeopleLimit)
-			shareMoney := commonLogic.FloatMinus(estimateActivityFee, float64(activity.ClubSubsidy))
-
-			p := people * domain.MONEY_UNIT
-			clubMemberPay := math.Ceil(shareMoney/float64(p)) * domain.MONEY_UNIT
+			_, clubMemberPay, guestPay := calculateActivityPay(people, totalBallConsume, courtFee, float64(activity.ClubSubsidy))
 			clubMemberFeeComponent := GetKeyValueEditComponent(
 				"預估滿人社員費用",
-				strconv.FormatFloat(clubMemberPay, 'f', -1, 64),
+				strconv.Itoa(clubMemberPay),
 				&domain.KeyValueEditComponentOption{
 					ValueSizeP: &valueSize,
 					SizeP:      &size,
@@ -469,10 +442,9 @@ func (b *getActivities) Do(text string) (resultErr error) {
 			)
 			contents = append(contents, clubMemberFeeComponent)
 
-			guestPay := math.Ceil(estimateActivityFee/float64(p)) * domain.MONEY_UNIT
 			guestFeeComponent := GetKeyValueEditComponent(
 				"預估滿人自費費用",
-				strconv.FormatFloat(guestPay, 'f', -1, 64),
+				strconv.Itoa(guestPay),
 				&domain.KeyValueEditComponentOption{
 					ValueSizeP: &valueSize,
 					SizeP:      &size,
@@ -524,6 +496,23 @@ func (b *getActivities) Do(text string) (resultErr error) {
 				)
 				joinButtonComponent := linebot.GetButtonComponent(0, action, &domain.NormalButtonOption)
 				contents = append(contents, joinButtonComponent)
+			}
+		}
+
+		if b.currentUser.Role == domain.CADRE_CLUB_ROLE ||
+			b.currentUser.Role == domain.ADMIN_CLUB_ROLE {
+			cmd := domain.SUBMIT_ACTIVITY_TEXT_CMD
+			pathValueMap := make(map[string]interface{})
+			pathValueMap["ICmdLogic.activity_id"] = activity.ActivityID
+			if js, err := getCmd(cmd, pathValueMap); err != nil {
+				return err
+			} else {
+				action := linebot.GetPostBackAction(
+					"提交",
+					js,
+				)
+				buttonComponent := linebot.GetButtonComponent(0, action, &domain.NormalButtonOption)
+				contents = append(contents, buttonComponent)
 			}
 		}
 

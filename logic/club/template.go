@@ -5,7 +5,27 @@ import (
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
+	linebotModel "heroku-line-bot/service/linebot/domain/model"
 )
+
+func GetDoubleKeyValueComponent(key1, value1, key2, value2 string, option *linebotModel.FlexMessageBoxComponentOption, keyValueEditComponentOption *domain.KeyValueEditComponentOption) *linebotModel.FlexMessageBoxComponent {
+	components := []interface{}{}
+	components = append(components, GetKeyValueEditComponent(
+		key1,
+		value1,
+		keyValueEditComponentOption,
+	))
+	components = append(components, GetKeyValueEditComponent(
+		key2,
+		value2,
+		keyValueEditComponentOption,
+	))
+	return linebot.GetFlexMessageBoxComponent(
+		linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+		option,
+		components...,
+	)
+}
 
 func GetKeyValueEditComponent(name, value string, option *domain.KeyValueEditComponentOption) *model.FlexMessageBoxComponent {
 	size := linebotDomain.XL_FLEX_MESSAGE_SIZE

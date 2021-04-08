@@ -9,4 +9,7 @@ var (
 	AlertButtonOption = linebotModel.ButtonOption{
 		Color: "#dd00dd",
 	}
+	DarkButtonOption = linebotModel.ButtonOption{
+		Color: "#888888",
+	}
 )

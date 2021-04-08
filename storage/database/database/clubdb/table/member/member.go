@@ -29,6 +29,13 @@ func (t Member) whereArg(dp *gorm.DB, arg reqs.Member) *gorm.DB {
 		}
 	}
 
+	if p := arg.ID; p != nil {
+		dp = dp.Where("id = ?", p)
+	}
+	if p := arg.IDs; len(p) > 0 {
+		dp = dp.Where("id IN (?)", p)
+	}
+
 	if p := arg.Name; p != nil {
 		dp = dp.Where("name = ?", p)
 	}

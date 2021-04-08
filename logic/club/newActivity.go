@@ -455,6 +455,9 @@ func (b *newActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackA
 
 	placeFee := 0.0
 	mdSize := linebotDomain.MD_FLEX_MESSAGE_SIZE
+	keyValueEditComponentOption := &domain.KeyValueEditComponentOption{
+		SizeP: &mdSize,
+	}
 	for index, court := range b.Courts {
 		cost := court.cost()
 		placeFee = commonLogic.FloatPlus(placeFee, cost)
@@ -462,38 +465,31 @@ func (b *newActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackA
 		components = append(components, GetKeyValueEditComponent(
 			"時間",
 			court.time(),
-			&domain.KeyValueEditComponentOption{
-				SizeP: &mdSize,
-			},
+			keyValueEditComponentOption,
 		))
 
-		courtComponents := []interface{}{}
-		courtComponents = append(courtComponents, GetKeyValueEditComponent(
+		courtBoxComponent := GetDoubleKeyValueComponent(
 			"場地數",
 			strconv.Itoa(int(court.Count)),
-			&domain.KeyValueEditComponentOption{
-				SizeP: &mdSize,
-			},
-		))
-		courtComponents = append(courtComponents, GetKeyValueEditComponent(
 			"價錢",
 			strconv.FormatFloat(cost, 'f', 0, 64),
-			&domain.KeyValueEditComponentOption{
-				SizeP: &mdSize,
-			},
-		))
-		courtBoxComponent := linebot.GetFlexMessageBoxComponent(
-			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
 			nil,
-			courtComponents...,
+			keyValueEditComponentOption,
 		)
-
 		components = append(components, courtBoxComponent)
 
 		if index < len(b.Courts)-1 {
 			components = append(components, linebot.GetSeparatorComponent(nil))
 		}
 	}
+
+	courtFee := b.getCourtFee()
+	courtFeeComponent := GetKeyValueEditComponent(
+		"場地費用總計",
+		strconv.FormatFloat(courtFee, 'f', -1, 64),
+		keyValueEditComponentOption,
+	)
+	components = append(components, courtFeeComponent)
 
 	return linebot.GetFlexMessageBoxComponent(
 		linebotDomain.VERTICAL_MESSAGE_LAYOUT,

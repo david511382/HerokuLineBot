@@ -3,9 +3,11 @@ package club
 import (
 	"heroku-line-bot/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/logic/clublinebot/domain"
+	commonLogic "heroku-line-bot/logic/common"
 	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/storage/redis"
 	"heroku-line-bot/util"
+	"math"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -109,6 +111,8 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		logicHandler = &getActivities{}
 	case domain.REGISTER_TEXT_CMD:
 		logicHandler = &register{}
+	case domain.SUBMIT_ACTIVITY_TEXT_CMD:
+		logicHandler = &submitActivity{}
 	default:
 		return nil, nil
 	}
@@ -134,7 +138,49 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 	return result, nil
 }
 
+func getCmd(cmd domain.TextCmd, pathValueMap map[string]interface{}) (string, error) {
+	cmdHandler := &CmdHandler{
+		CmdBase: &domain.CmdBase{
+			Cmd: cmd,
+		},
+	}
+	return cmdHandler.GetInputSignl(pathValueMap)
+}
+
 func getCmdFromJson(json string) domain.TextCmd {
 	cmdJs := gjson.Get(json, domain.CMD_ATTR)
 	return domain.TextCmd(cmdJs.String())
+}
+
+func calculateActivity(ballConsume, courtFee float64) (activityFee, ballFee float64) {
+	ballFee = ballConsume * domain.PRICE_PER_BALL
+	return commonLogic.FloatPlus(ballFee, courtFee), ballFee
+}
+
+func calculateActivityPay(people int, ballConsume, courtFee, clubSubsidy float64) (activityFee float64, clubMemberFee, guestFee int) {
+	activityFee, _ = calculateActivity(ballConsume, courtFee)
+	clubMemberFee, guestFee = calculatePay(people, activityFee, clubSubsidy)
+	return
+}
+
+func calculatePay(people int, activityFee, clubSubsidy float64) (clubMemberFee, guestFee int) {
+	shareMoney := commonLogic.FloatMinus(activityFee, clubSubsidy)
+
+	p := people * domain.MONEY_UNIT
+	clubMemberFee = int(math.Ceil(shareMoney/float64(p)) * domain.MONEY_UNIT)
+	guestFee = int(math.Ceil(activityFee/float64(p)) * domain.MONEY_UNIT)
+	return
+}
+
+func getJoinCount(totalCount int, limit *int16) (joinedCount, waitingCount int) {
+	joinedCount = totalCount
+	peopleLimit := 0
+	if limit != nil {
+		peopleLimit = int(*limit)
+		if joinedCount > peopleLimit {
+			waitingCount = joinedCount - peopleLimit
+			joinedCount = peopleLimit
+		}
+	}
+	return
 }
