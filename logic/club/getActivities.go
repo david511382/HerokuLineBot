@@ -39,7 +39,7 @@ type getActivitiesActivityJoinedMembers struct {
 	Name string `json:"name"`
 }
 
-func (b *getActivities) Init(context domain.ICmdHandlerContext, initCmdBaseF func(requireRawParamAttr, requireRawParamAttrText string, isInputImmediately bool)) error {
+func (b *getActivities) Init(context domain.ICmdHandlerContext) error {
 	*b = getActivities{
 		context:    context,
 		activities: make([]*getActivitiesActivity, 0),
@@ -457,7 +457,10 @@ func (b *getActivities) Do(text string) (resultErr error) {
 			pathValueMap := map[string]interface{}{
 				"ICmdLogic.list_members_activity_id": activity.ActivityID,
 			}
-			if js, err := b.context.GetInputSignl(pathValueMap); err != nil {
+			if js, err := b.context.
+				GetCmdInputMode(nil).
+				GetKeyValueInputMode(pathValueMap).
+				GetSignal(); err != nil {
 				return err
 			} else {
 				action := linebot.GetPostBackAction(
@@ -473,7 +476,10 @@ func (b *getActivities) Do(text string) (resultErr error) {
 			pathValueMap := map[string]interface{}{
 				"ICmdLogic.leave_activity_id": activity.ActivityID,
 			}
-			if js, err := b.context.GetInputSignl(pathValueMap); err != nil {
+			if js, err := b.context.
+				GetCmdInputMode(nil).
+				GetKeyValueInputMode(pathValueMap).
+				GetSignal(); err != nil {
 				return err
 			} else {
 				action := linebot.GetPostBackAction(
@@ -487,7 +493,10 @@ func (b *getActivities) Do(text string) (resultErr error) {
 			pathValueMap := map[string]interface{}{
 				"ICmdLogic.join_activity_id": activity.ActivityID,
 			}
-			if js, err := b.context.GetInputSignl(pathValueMap); err != nil {
+			if js, err := b.context.
+				GetCmdInputMode(nil).
+				GetKeyValueInputMode(pathValueMap).
+				GetSignal(); err != nil {
 				return err
 			} else {
 				action := linebot.GetPostBackAction(

@@ -34,7 +34,7 @@ type submitActivityJoinedMembers struct {
 	IsPaid   bool `json:"is_paid"`
 }
 
-func (b *submitActivity) Init(context domain.ICmdHandlerContext, initCmdBaseF func(requireRawParamAttr, requireRawParamAttrText string, isInputImmediately bool)) error {
+func (b *submitActivity) Init(context domain.ICmdHandlerContext) error {
 	*b = submitActivity{
 		context: context,
 	}
@@ -303,7 +303,9 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 
 	contents = append(contents, b.getCourtsBoxComponent(nil))
 
-	if js, err := b.context.GetRequireInputCmdText(nil, "rsl4_consume", "使用羽球數", false); err != nil {
+	if js, err := b.context.
+		GetRequireInputMode("rsl4_consume", "使用羽球數", false).
+		GetSignal(); err != nil {
 		return err
 	} else {
 		action := linebot.GetPostBackAction(
@@ -397,7 +399,9 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 	}
 	contents = append(contents, attendComponents...)
 
-	if js, err := b.context.GetComfirmSignl(); err != nil {
+	if js, err := b.context.
+		GetComfirmMode().
+		GetSignal(); err != nil {
 		return err
 	} else {
 		contents = append(contents,
@@ -454,7 +458,9 @@ func (b *submitActivity) getAttendComponent(members []*submitActivityJoinedMembe
 			"ICmdLogic.attend_index":           id,
 			"ICmdLogic.is_joined_member_index": b.IsJoinedMember,
 		}
-		if js, err := b.context.GetInputSignl(pathValueMap); err != nil {
+		if js, err := b.context.
+			GetKeyValueInputMode(pathValueMap).
+			GetSignal(); err != nil {
 			return nil, err
 		} else {
 			action := linebot.GetPostBackAction(
@@ -477,7 +483,9 @@ func (b *submitActivity) getAttendComponent(members []*submitActivityJoinedMembe
 			"ICmdLogic.is_joined_member_index": b.IsJoinedMember,
 			"ICmdLogic.pay_index":              id,
 		}
-		if js, err := b.context.GetInputSignl(pathValueMap); err != nil {
+		if js, err := b.context.
+			GetKeyValueInputMode(pathValueMap).
+			GetSignal(); err != nil {
 			return nil, err
 		} else {
 			action := linebot.GetPostBackAction(

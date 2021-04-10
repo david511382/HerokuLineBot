@@ -48,5 +48,9 @@ func (t Member) whereArg(dp *gorm.DB, arg reqs.Member) *gorm.DB {
 		dp = dp.Where("line_id = ?", p)
 	}
 
+	if p := arg.CompanyID; p != nil {
+		dp = dp.Where("company_id = ?", p)
+	}
+
 	return dp
 }

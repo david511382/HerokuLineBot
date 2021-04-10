@@ -124,14 +124,7 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		IContext:  context,
 		ICmdLogic: logicHandler,
 	}
-	if err := logicHandler.Init(
-		result,
-		func(requireRawParamAttr, requireRawParamAttrText string, isInputImmediately bool) {
-			result.RequireRawParamAttr = requireRawParamAttr
-			result.RequireRawParamAttrText = requireRawParamAttrText
-			result.IsInputImmediately = isInputImmediately
-		},
-	); err != nil {
+	if err := logicHandler.Init(result); err != nil {
 		return nil, err
 	}
 
@@ -144,7 +137,10 @@ func getCmd(cmd domain.TextCmd, pathValueMap map[string]interface{}) (string, er
 			Cmd: cmd,
 		},
 	}
-	return cmdHandler.GetInputSignl(pathValueMap)
+	return cmdHandler.
+		GetCmdInputMode(nil).
+		GetKeyValueInputMode(pathValueMap).
+		GetSignal()
 }
 
 func getCmdFromJson(json string) domain.TextCmd {

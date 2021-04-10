@@ -3,7 +3,6 @@ package club
 import (
 	"fmt"
 	"heroku-line-bot/logic/club/domain"
-	commonLogic "heroku-line-bot/logic/common"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
@@ -63,35 +62,26 @@ func (d *Department) set(處 domain.Department, 部, 組 string) {
 }
 
 type register struct {
-	context       domain.ICmdHandlerContext `json:"-"`
-	Department    Department                `json:"department"`
-	Name          string                    `json:"name"`
-	CompanyID     *string                   `json:"company_id"`
-	isAlreadyExit bool
+	context                   domain.ICmdHandlerContext `json:"-"`
+	Department                Department                `json:"department"`
+	Name                      string                    `json:"name"`
+	CompanyID                 *string                   `json:"company_id"`
+	IsRequireDbCheckCompanyID bool                      `json:"is_require_db_check_company_id"`
+	Role                      domain.ClubRole           `json:"role"`
+	MemberID                  int                       `json:"member_id"`
 }
 
-func (b *register) Init(context domain.ICmdHandlerContext, initCmdBaseF func(requireRawParamAttr, requireRawParamAttrText string, isInputImmediately bool)) error {
-	lineID := context.GetUserID()
-	isAlreadyExit := false
-	arg := dbReqs.Member{
-		LineID: &lineID,
-	}
-	if count, err := database.Club.Member.Count(arg); err != nil {
-		return err
-	} else if count > 0 {
-		isAlreadyExit = true
-	} else {
-		initCmdBaseF(
-			"company_id",
-			"員工編號",
-			false,
-		)
+func (b *register) Init(context domain.ICmdHandlerContext) error {
+	*b = register{
+		context: context,
+		Role:    domain.GUEST_CLUB_ROLE,
 	}
 
-	*b = register{
-		context:       context,
-		isAlreadyExit: isAlreadyExit,
-	}
+	b.context.SetRequireInputMode(
+		"company_id",
+		"員工編號",
+		false,
+	)
 
 	return nil
 }
@@ -138,44 +128,59 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 	switch requireRawParamAttr {
 	case "company_id":
 		const altText = "請確認或輸入"
-		buttonComponents := []interface{}{}
-		titleMessages := []interface{}{}
-
-		inputDepartmentJs, err := b.context.GetRequireInputCmdText(nil, "處", "處", false)
-		if err != nil {
-			return err
+		bodyComponents := []interface{}{
+			linebot.GetTextMessage("成為社員必須要員工編號喔！"),
 		}
+		titleMessages := []interface{}{}
 
 		text1 := "請輸入員工編號"
 		if b.CompanyID != nil {
-			text1 = fmt.Sprintf("確認員工編號為: %s ,或繼續輸入", *b.CompanyID)
+			text1 = fmt.Sprintf("確認員工編號為: %s", *b.CompanyID)
 
+			pathValueMap := map[string]interface{}{
+				"ICmdLogic.is_require_db_check_company_id": true,
+			}
+			checkCompanyIDJs, err := b.context.
+				GetCancelInputMode().
+				GetKeyValueInputMode(pathValueMap).
+				GetSignal()
+			if err != nil {
+				return err
+			}
 			comfirmButtonComponent := linebot.GetButtonComponent(
 				0,
 				linebot.GetPostBackAction(
 					"確認",
-					inputDepartmentJs,
+					checkCompanyIDJs,
 				),
 				&domain.NormalButtonOption,
 			)
-			buttonComponents = append(buttonComponents, comfirmButtonComponent)
+			bodyComponents = append(bodyComponents, comfirmButtonComponent)
+		} else {
+			lineID := b.context.GetUserID()
+			arg := dbReqs.Member{
+				LineID: &lineID,
+			}
+			if count, err := database.Club.Member.Count(arg); err == nil && count > 0 {
+				return linebot.GetFlexMessage(
+					"通知",
+					linebot.GetFlexMessageBubbleContent(
+						linebot.GetFlexMessageBoxComponent(
+							linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+							&model.FlexMessageBoxComponentOption{
+								JustifyContent: linebotDomain.SPACE_EVENLY_JUSTIFY_CONTENT,
+							},
+							linebot.GetTextMessage("您已經註冊過了!"),
+						),
+						nil,
+					),
+				)
+			}
 		}
 		titleMessages = append(titleMessages, linebot.GetTextMessage(text1))
-		if b.CompanyID == nil {
-			const text2 = "成為社員必須要員工編號喔！"
-			titleMessages = append(titleMessages, linebot.GetTextMessage(text2))
+		if b.CompanyID != nil {
+			titleMessages = append(titleMessages, linebot.GetTextMessage("或繼續輸入"))
 		}
-
-		buttonComponents = append(buttonComponents,
-			linebot.GetButtonComponent(
-				0,
-				linebot.GetPostBackAction(
-					"沒有員工編號",
-					inputDepartmentJs,
-				),
-				&domain.NormalButtonOption,
-			),
-		)
 
 		return linebot.GetFlexMessage(
 			altText,
@@ -185,7 +190,7 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 					&model.FlexMessageBoxComponentOption{
 						JustifyContent: linebotDomain.SPACE_EVENLY_JUSTIFY_CONTENT,
 					},
-					buttonComponents...,
+					bodyComponents...,
 				),
 				&model.FlexMessagBubbleComponentOption{
 					Header: linebot.GetFlexMessageBoxComponent(
@@ -215,12 +220,16 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 		if 處 != "" {
 			text = fmt.Sprintf("確認處為: %s 嗎？", 處)
 
-			comfirmInputJs, err := b.context.GetRequireInputCmdText(nil, "部", "部門", false)
+			comfirmInputJs, err := b.context.
+				GetRequireInputMode("部", "部門", false).
+				GetSignal()
 			if err != nil {
 				return err
 			}
 			if requireRawParamAttr == "處single" {
-				comfirmInputJs, err = b.context.GetCancelInpuingSignl()
+				comfirmInputJs, err = b.context.
+					GetCancelInputMode().
+					GetSignal()
 				if err != nil {
 					return err
 				}
@@ -291,7 +300,9 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 			text = fmt.Sprintf("確認部為: %s 嗎？", 部)
 		}
 
-		requireDepartmentInputJs, err := b.context.GetRequireInputCmdText(nil, "組", "組", false)
+		requireDepartmentInputJs, err := b.context.
+			GetRequireInputMode("組", "組", false).
+			GetSignal()
 		if err != nil {
 			return err
 		}
@@ -345,15 +356,44 @@ func (b *register) init() {
 }
 
 func (b *register) Do(text string) (resultErr error) {
-	if b.isAlreadyExit {
-		replyMessges := []interface{}{
-			linebot.GetTextMessage("您已經註冊過了!"),
+	if b.IsRequireDbCheckCompanyID {
+		b.IsRequireDbCheckCompanyID = false
+		b.MemberID = 0
+		if err := b.context.CacheParams(); err != nil {
+			return err
 		}
-		if resultErr = b.context.Reply(replyMessges); resultErr != nil {
-			return resultErr
+		arg := dbReqs.Member{
+			CompanyID: b.CompanyID,
 		}
+		if dbDatas, err := database.Club.Member.IDNameRoleDepartment(arg); err != nil {
+			return err
+		} else if len(dbDatas) == 0 {
+			if 處, _, _ := b.Department.Split(); 處 == "" {
+				b.context.SetRequireInputMode("處", "處", false)
+				if err := b.context.CacheParams(); err != nil {
+					return err
+				}
 
-		return nil
+				replyMessge := b.GetInputTemplate("處")
+				replyMessges := []interface{}{
+					replyMessge,
+				}
+				if err := b.context.Reply(replyMessges); err != nil {
+					return err
+				}
+
+				return nil
+			}
+		} else {
+			v := dbDatas[0]
+			if v.Name != "" {
+				b.Name = v.Name
+			}
+
+			b.MemberID = v.ID
+			b.Department = Department(v.Department)
+			b.Role = domain.ClubRole(v.Role.Role)
+		}
 	}
 
 	b.init()
@@ -370,26 +410,45 @@ func (b *register) Do(text string) (resultErr error) {
 				}
 			}
 
-			if resultErr = transaction.Rollback().Error; resultErr != nil {
+			if err := transaction.Rollback().Error; err != nil {
+				if resultErr == nil {
+					resultErr = err
+				}
 				return
 			}
 		}()
 
-		role := domain.GUEST_CLUB_ROLE
-		if b.CompanyID != nil && b.Department.IsClubMember() {
+		role := b.Role
+		if b.CompanyID != nil &&
+			role == domain.GUEST_CLUB_ROLE &&
+			b.Department.IsClubMember() {
 			role = domain.MEMBER_CLUB_ROLE
 		}
-		nowTime := commonLogic.TimeUtilObj.Now()
-		data := &memberDb.MemberTable{
-			JoinDate:   util.DateOf(nowTime),
-			Department: string(b.Department),
-			Name:       b.Name,
-			CompanyID:  b.CompanyID,
-			Role:       int16(role),
-			LineID:     util.GetStringP(b.context.GetUserID()),
-		}
-		if resultErr = database.Club.Member.BaseTable.Insert(transaction, data); resultErr != nil {
-			return
+		if b.MemberID > 0 {
+			arg := dbReqs.Member{
+				ID: &b.MemberID,
+			}
+			fields := map[string]interface{}{
+				"department": string(b.Department),
+				"name":       b.Name,
+				"company_id": b.CompanyID,
+				"role":       int16(role),
+				"line_id":    util.GetStringP(b.context.GetUserID()),
+			}
+			if resultErr = database.Club.Member.Update(transaction, arg, fields); resultErr != nil {
+				return
+			}
+		} else {
+			data := &memberDb.MemberTable{
+				Department: string(b.Department),
+				Name:       b.Name,
+				CompanyID:  b.CompanyID,
+				Role:       int16(role),
+				LineID:     util.GetStringP(b.context.GetUserID()),
+			}
+			if resultErr = database.Club.Member.BaseTable.Insert(transaction, data); resultErr != nil {
+				return
+			}
 		}
 
 		if resultErr = b.context.DeleteParam(); resultErr != nil {
@@ -411,8 +470,11 @@ func (b *register) Do(text string) (resultErr error) {
 	}
 
 	contents := []interface{}{}
+	size := linebotDomain.MD_FLEX_MESSAGE_SIZE
 	if b.CompanyID != nil {
-		if js, err := b.context.GetRequireInputCmdText(nil, "company_id", "員工編號", false); err != nil {
+		if js, err := b.context.
+			GetRequireInputMode("company_id", "員工編號", false).
+			GetSignal(); err != nil {
 			return err
 		} else {
 			action := linebot.GetPostBackAction(
@@ -425,6 +487,7 @@ func (b *register) Do(text string) (resultErr error) {
 					*b.CompanyID,
 					&domain.KeyValueEditComponentOption{
 						Action: action,
+						SizeP:  &size,
 					},
 				),
 			)
@@ -435,7 +498,9 @@ func (b *register) Do(text string) (resultErr error) {
 	if 處 == "" {
 		處 = "無"
 	}
-	if js, err := b.context.GetRequireInputCmdText(nil, "處single", "處", false); err != nil {
+	if js, err := b.context.
+		GetRequireInputMode("處single", "處", false).
+		GetSignal(); err != nil {
 		return err
 	} else {
 		action := linebot.GetPostBackAction(
@@ -448,6 +513,7 @@ func (b *register) Do(text string) (resultErr error) {
 				string(處),
 				&domain.KeyValueEditComponentOption{
 					Action: action,
+					SizeP:  &size,
 				},
 			),
 		)
@@ -455,7 +521,9 @@ func (b *register) Do(text string) (resultErr error) {
 	if 部 == "" {
 		部 = "無"
 	}
-	if js, err := b.context.GetRequireInputCmdText(nil, "部single", "部門", false); err != nil {
+	if js, err := b.context.
+		GetRequireInputMode("部single", "部門", false).
+		GetSignal(); err != nil {
 		return err
 	} else {
 		action := linebot.GetPostBackAction(
@@ -468,6 +536,7 @@ func (b *register) Do(text string) (resultErr error) {
 				部,
 				&domain.KeyValueEditComponentOption{
 					Action: action,
+					SizeP:  &size,
 				},
 			),
 		)
@@ -475,7 +544,9 @@ func (b *register) Do(text string) (resultErr error) {
 	if 組 == "" {
 		組 = "無"
 	}
-	if js, err := b.context.GetRequireInputCmdText(nil, "組single", "組", false); err != nil {
+	if js, err := b.context.
+		GetRequireInputMode("組single", "組", false).
+		GetSignal(); err != nil {
 		return err
 	} else {
 		action := linebot.GetPostBackAction(
@@ -488,12 +559,15 @@ func (b *register) Do(text string) (resultErr error) {
 				組,
 				&domain.KeyValueEditComponentOption{
 					Action: action,
+					SizeP:  &size,
 				},
 			),
 		)
 	}
 
-	if js, err := b.context.GetRequireInputCmdText(nil, "name", "暱稱", false); err != nil {
+	if js, err := b.context.
+		GetRequireInputMode("name", "暱稱", false).
+		GetSignal(); err != nil {
 		return err
 	} else {
 		action := linebot.GetPostBackAction(
@@ -506,16 +580,21 @@ func (b *register) Do(text string) (resultErr error) {
 				b.Name,
 				&domain.KeyValueEditComponentOption{
 					Action: action,
+					SizeP:  &size,
 				},
 			),
 		)
 	}
 
-	cancelSignlJs, err := b.context.GetCancelSignl()
+	cancelSignlJs, err := b.context.
+		GetCancelMode().
+		GetSignal()
 	if err != nil {
 		return err
 	}
-	comfirmSignlJs, err := b.context.GetComfirmSignl()
+	comfirmSignlJs, err := b.context.
+		GetComfirmMode().
+		GetSignal()
 	if err != nil {
 		return err
 	}

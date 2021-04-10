@@ -10,7 +10,7 @@ type ICmdHandler interface {
 
 type ICmdLogic interface {
 	Do(text string) error
-	Init(ICmdHandlerContext, func(requireRawParamAttr, requireRawParamAttrText string, isInputImmediately bool)) error
+	Init(ICmdHandlerContext) error
 	GetSingleParam(attr string) string
 	LoadSingleParam(attr, text string) error
 	GetInputTemplate(requireRawParamAttr string) interface{}
@@ -19,10 +19,17 @@ type ICmdLogic interface {
 type ICmdHandlerContext interface {
 	clublinebotDomain.IContext
 	IsComfirmed() bool
-	GetRequireInputCmdText(cmd *TextCmd, attr, attrText string, isInputImmediately bool) (string, error)
-	GetInputSignl(pathValueMap map[string]interface{}) (string, error)
 	CacheParams() error
-	GetCancelSignl() (string, error)
-	GetComfirmSignl() (string, error)
-	GetCancelInpuingSignl() (string, error)
+	ICmdHandlerSignal
+	SetRequireInputMode(attr, attrText string, isInputImmediately bool)
+}
+
+type ICmdHandlerSignal interface {
+	GetKeyValueInputMode(pathValueMap map[string]interface{}) ICmdHandlerSignal
+	GetCancelMode() ICmdHandlerSignal
+	GetComfirmMode() ICmdHandlerSignal
+	GetCancelInputMode() ICmdHandlerSignal
+	GetRequireInputMode(attr, attrText string, isInputImmediately bool) ICmdHandlerSignal
+	GetCmdInputMode(cmdP *TextCmd) ICmdHandlerSignal
+	GetSignal() (string, error)
 }

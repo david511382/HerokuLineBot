@@ -14,3 +14,8 @@ type IDDepartment struct {
 	Department string
 	ID         int
 }
+
+type IDNameRoleDepartment struct {
+	IDNameRole
+	Department string
+}

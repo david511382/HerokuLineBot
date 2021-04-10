@@ -8,8 +8,6 @@ import (
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
-
-	"github.com/tidwall/sjson"
 )
 
 type CmdHandler struct {
@@ -17,6 +15,7 @@ type CmdHandler struct {
 	*domain.TimePostbackParams
 	clublinebotDomain.IContext `json:"-"`
 	domain.ICmdLogic
+	pathValueMap map[string]interface{}
 }
 
 func (b *CmdHandler) ReadParam(jsonBytes []byte) error {
@@ -27,74 +26,14 @@ func (b *CmdHandler) IsInputMode() bool {
 	return b.RequireRawParamAttr != ""
 }
 
+func (b *CmdHandler) SetRequireInputMode(attr, attrText string, isInputImmediately bool) {
+	b.RequireRawParamAttr = attr
+	b.RequireRawParamAttrText = attrText
+	b.IsInputImmediately = isInputImmediately
+}
+
 func (b *CmdHandler) LoadSingleParamValue(valueText string) error {
 	return b.ICmdLogic.LoadSingleParam(b.RequireRawParamAttr, valueText)
-}
-
-func (b *CmdHandler) duplicate() *CmdHandler {
-	nb := *b
-	cb := *b.CmdBase
-	nb.CmdBase = &cb
-	return &nb
-}
-
-func (b *CmdHandler) GetInputSignl(pathValueMap map[string]interface{}) (string, error) {
-	js := fmt.Sprintf(`{"%s":"%s"}`, domain.CMD_ATTR, b.Cmd)
-	for path, value := range pathValueMap {
-		var err error
-		if js, err = sjson.Set(js, path, value); err != nil {
-			return "", err
-		}
-	}
-
-	return js, nil
-}
-
-func (b *CmdHandler) GetCancelSignl() (string, error) {
-	nb := b.duplicate()
-	nb.IsCancel = true
-	js, err := nb.GetRequireInputCmdText(nil, "", "", true)
-	if err != nil {
-		return "", err
-	}
-	return js, nil
-}
-
-func (b *CmdHandler) GetComfirmSignl() (string, error) {
-	nb := b.duplicate()
-	nb.IsComfirm = true
-	js, err := nb.GetRequireInputCmdText(nil, "", "", true)
-	if err != nil {
-		return "", err
-	}
-	return js, nil
-}
-
-func (b *CmdHandler) GetCancelInpuingSignl() (string, error) {
-	js, err := b.GetRequireInputCmdText(nil, "", "", false)
-	if err != nil {
-		return "", err
-	}
-	return js, nil
-}
-
-func (b *CmdHandler) GetRequireInputCmdText(cmd *domain.TextCmd, attr, attrText string, isInputImmediately bool) (string, error) {
-	nb := b.duplicate()
-	nb.RequireRawParamAttr = attr
-	nb.RequireRawParamAttrText = attrText
-	nb.IsInputImmediately = isInputImmediately
-
-	if cmd != nil {
-		nb.Cmd = *cmd
-	} else {
-		nb.Cmd = ""
-	}
-	if jsBytes, err := json.Marshal(nb.CmdBase); err != nil {
-		return "", err
-	} else {
-		js := string(jsBytes)
-		return js, nil
-	}
 }
 
 func (b *CmdHandler) CacheParams() error {
@@ -122,7 +61,7 @@ func (b *CmdHandler) GetInputTemplate(requireRawParamAttr string) interface{} {
 	valueText := b.ICmdLogic.GetSingleParam(requireRawParamAttr)
 	var text = fmt.Sprintf("%s %s ,確認或請輸入數值", b.RequireRawParamAttrText, valueText)
 
-	cancelRequireInputJs, err := b.GetCancelInpuingSignl()
+	cancelRequireInputJs, err := b.GetCancelInputMode().GetSignal()
 	if err != nil {
 		return err
 	}

@@ -50,7 +50,7 @@ func (b *newActivityCourt) time() string {
 	)
 }
 
-func (b *newActivity) Init(context domain.ICmdHandlerContext, initCmdBaseF func(requireRawParamAttr, requireRawParamAttrText string, isInputImmediately bool)) error {
+func (b *newActivity) Init(context domain.ICmdHandlerContext) error {
 	nowTime := commonLogic.TimeUtilObj.Now()
 	*b = newActivity{
 		context:     context,
@@ -198,7 +198,10 @@ func (b *newActivity) Do(text string) (resultErr error) {
 	actions := domain.NewActivityLineTemplate{}
 
 	cmd := domain.DATE_POSTBACK_CMD
-	if js, err := b.context.GetRequireInputCmdText(&cmd, "date", "日期", true); err != nil {
+	if js, err := b.context.
+		GetCmdInputMode(&cmd).
+		GetRequireInputMode("date", "日期", true).
+		GetSignal(); err != nil {
 		return err
 	} else {
 		actions.DateAction = linebot.GetTimeAction(
@@ -210,7 +213,9 @@ func (b *newActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.context.GetRequireInputCmdText(nil, "ICmdLogic.place", "地點", false); err != nil {
+	if js, err := b.context.
+		GetRequireInputMode("ICmdLogic.place", "地點", false).
+		GetSignal(); err != nil {
 		return err
 	} else {
 		actions.PlaceAction = linebot.GetPostBackAction(
@@ -219,7 +224,9 @@ func (b *newActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.context.GetRequireInputCmdText(nil, "ICmdLogic.club_subsidy", "補助額", false); err != nil {
+	if js, err := b.context.
+		GetRequireInputMode("ICmdLogic.club_subsidy", "補助額", false).
+		GetSignal(); err != nil {
 		return err
 	} else {
 		actions.ClubSubsidyAction = linebot.GetPostBackAction(
@@ -228,7 +235,9 @@ func (b *newActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.context.GetRequireInputCmdText(nil, "ICmdLogic.people_limit", "人數上限", false); err != nil {
+	if js, err := b.context.
+		GetRequireInputMode("ICmdLogic.people_limit", "人數上限", false).
+		GetSignal(); err != nil {
 		return err
 	} else {
 		actions.PeopleLimitAction = linebot.GetPostBackAction(
@@ -237,7 +246,9 @@ func (b *newActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.context.GetRequireInputCmdText(nil, "ICmdLogic.courts", "場地", false); err != nil {
+	if js, err := b.context.
+		GetRequireInputMode("ICmdLogic.courts", "場地", false).
+		GetSignal(); err != nil {
 		return err
 	} else {
 		actions.CourtAction = linebot.GetPostBackAction(
@@ -249,11 +260,15 @@ func (b *newActivity) Do(text string) (resultErr error) {
 	lineContents := b.getLineComponents(actions)
 	contents = append(contents, lineContents...)
 
-	cancelSignlJs, err := b.context.GetCancelSignl()
+	cancelSignlJs, err := b.context.
+		GetCancelMode().
+		GetSignal()
 	if err != nil {
 		return err
 	}
-	comfirmSignlJs, err := b.context.GetComfirmSignl()
+	comfirmSignlJs, err := b.context.
+		GetComfirmMode().
+		GetSignal()
 	if err != nil {
 		return err
 	}
