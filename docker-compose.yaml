@@ -1,0 +1,52 @@
+version: '3.3'
+services:
+  db:
+    container_name: heroku-line-bot-db
+    image: postgres:13.2
+    environment:
+     - POSTGRES_USER=root
+     - POSTGRES_PASSWORD=root
+    ports:
+      - "5432:5432"
+    volumes:
+      - heroku-line-bot-db-volume:/var/lib/postgresql/data
+
+  adminer:
+    container_name: heroku-line-bot-adminer
+    image: adminer:latest
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - 8882:8080
+
+  redis:
+    container_name: heroku-line-bot-redis
+    image: redis
+    ports:
+      - "6379:6379"
+
+  redis-commander:
+    container_name: heroku-line-bot-redis-commander
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+
+  api:
+    container_name: heroku-line-bot-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "9487:80"
+
+volumes:
+  heroku-line-bot-db-volume:
