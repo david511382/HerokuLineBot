@@ -25,7 +25,7 @@ func Run(f embed.FS) error {
 	}
 	defer storage.Dispose()
 
-	if err := logic.Init(cfg); err != nil {
+	if err := logic.Init(f, cfg); err != nil {
 		return err
 	}
 

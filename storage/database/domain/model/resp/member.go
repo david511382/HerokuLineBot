@@ -4,6 +4,11 @@ type Role struct {
 	Role uint
 }
 
+type NameLineID struct {
+	Name   string
+	LineID *string
+}
+
 type IDNameRole struct {
 	Role
 	ID   int

@@ -1,6 +1,8 @@
 package club
 
 import (
+	"embed"
+	"fmt"
 	"heroku-line-bot/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/logic/clublinebot/domain"
 	commonLogic "heroku-line-bot/logic/common"
@@ -12,6 +14,36 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )
+
+var (
+	adminRichMenuImg,
+	cadreRichMenuImg,
+	guestRichMenuImg []byte
+)
+
+func Init(f embed.FS) error {
+	if bs, err := readImg(f, "adminRichMenu.png"); err != nil {
+		return err
+	} else {
+		adminRichMenuImg = bs
+	}
+	if bs, err := readImg(f, "cadreRichMenu.png"); err != nil {
+		return err
+	} else {
+		cadreRichMenuImg = bs
+	}
+	if bs, err := readImg(f, "guestRichMenu.png"); err != nil {
+		return err
+	} else {
+		guestRichMenuImg = bs
+	}
+	return nil
+}
+
+func readImg(f embed.FS, fileName string) ([]byte, error) {
+	fileName = fmt.Sprintf("resource/img/%s", fileName)
+	return f.ReadFile(fileName)
+}
 
 func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (resultErr error) {
 	cmd := domain.TextCmd(text)
@@ -113,6 +145,8 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		logicHandler = &register{}
 	case domain.SUBMIT_ACTIVITY_TEXT_CMD:
 		logicHandler = &submitActivity{}
+	case domain.RICH_MENU_TEXT_CMD:
+		logicHandler = &richMenu{}
 	default:
 		return nil, nil
 	}

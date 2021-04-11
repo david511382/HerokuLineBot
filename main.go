@@ -5,7 +5,7 @@ import (
 	"heroku-line-bot/entry"
 )
 
-//go:embed config/*
+//go:embed resource/*
 var f embed.FS
 
 func main() {

@@ -1,6 +1,7 @@
 package clublinebot
 
 import (
+	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/storage/redis"
 )
 
@@ -55,4 +56,8 @@ func (c *Context) GetParam() (json string) {
 
 func (c *Context) Reply(replyMessges []interface{}) error {
 	return c.lineBot.tryReply(c.replyToken, replyMessges)
+}
+
+func (c *Context) GetBot() *linebot.LineBot {
+	return c.lineBot.LineBot
 }
