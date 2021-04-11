@@ -9,6 +9,7 @@ type Config struct {
 	Server       Server       `yaml:"server"`
 	LineBot      LineBot      `yaml:"line_bot"`
 	GoogleScript GoogleScript `yaml:"google_script"`
+	Heroku       Heroku       `yaml:"heroku"`
 	DbConfig     DbConfig     `yaml:"db"`
 	ClubDb       Db           `yaml:"club_db"`
 	RedisConfig  DbConfig     `yaml:"redis"`
@@ -32,6 +33,11 @@ type LineBot struct {
 
 type GoogleScript struct {
 	Url string `yaml:"url"`
+}
+
+type Heroku struct {
+	Url  string `yaml:"url"`
+	Spec string `yaml:"spec"`
 }
 
 type DbConfig struct {
