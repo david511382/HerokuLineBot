@@ -27,7 +27,7 @@ func LoadConfig(f embed.FS, fileName string) *Config {
 
 // ReadConfig read config from filepath
 func ReadConfig(f embed.FS, fileName string) error {
-	fileName = fmt.Sprintf("config/%s.yml", fileName)
+	fileName = fmt.Sprintf("resource/config/%s.yml", fileName)
 	cfgBytes, err := f.ReadFile(fileName)
 	if err != nil {
 		return err

@@ -2,6 +2,7 @@ package entry
 
 import (
 	"embed"
+	"heroku-line-bot/background"
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/logic"
 	"heroku-line-bot/server"
@@ -25,12 +26,15 @@ func Run(f embed.FS) error {
 	}
 	defer storage.Dispose()
 
-	if err := logic.Init(cfg); err != nil {
+	if err := logic.Init(f, cfg); err != nil {
+		return err
+	}
+
+	if err := background.Init(cfg); err != nil {
 		return err
 	}
 
 	server.Init(cfg)
-
 	if err := server.Run(); err != nil {
 		return err
 	}

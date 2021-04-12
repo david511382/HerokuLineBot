@@ -39,19 +39,19 @@ func (b *CmdHandler) GetCmdInputMode(cmdP *domain.TextCmd) domain.ICmdHandlerSig
 		cmd = *cmdP
 	}
 	nb.setPathValue(string(domain.CMD_ATTR), cmd)
-	return nb.GetRequireInputMode("", "", true)
+	return nb
 }
 
 func (b *CmdHandler) GetCancelMode() domain.ICmdHandlerSignal {
 	nb := b.duplicate()
 	nb.setPathValue("is_cancel", true)
-	return nb.GetRequireInputMode("", "", true)
+	return nb
 }
 
 func (b *CmdHandler) GetComfirmMode() domain.ICmdHandlerSignal {
 	nb := b.duplicate()
 	nb.setPathValue("is_comfirm", true)
-	return nb.GetRequireInputMode("", "", true)
+	return nb
 }
 
 func (b *CmdHandler) GetCancelInputMode() domain.ICmdHandlerSignal {

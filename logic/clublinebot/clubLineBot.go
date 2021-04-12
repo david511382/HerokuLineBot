@@ -146,3 +146,7 @@ func (b *ClubLineBot) tryLine(tryF func() error, replyToken string) error {
 	}
 	return nil
 }
+
+func (b *ClubLineBot) GetBot() *linebot.LineBot {
+	return b.LineBot
+}

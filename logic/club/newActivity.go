@@ -5,6 +5,7 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
+	"heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
@@ -146,6 +147,15 @@ func (b *newActivity) GetInputTemplate(requireRawParamAttr string) interface{} {
 }
 
 func (b *newActivity) Do(text string) (resultErr error) {
+	if u, err := lineuser.Get(b.context.GetUserID()); err != nil {
+		return err
+	} else {
+		if u.Role != domain.ADMIN_CLUB_ROLE &&
+			u.Role != domain.CADRE_CLUB_ROLE {
+			return domain.NO_AUTH_ERROR
+		}
+	}
+
 	courtsStr := b.getCourtsStr()
 	if b.context.IsComfirmed() {
 		transaction := database.Club.Begin()

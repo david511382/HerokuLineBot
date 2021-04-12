@@ -162,6 +162,10 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 				LineID: &lineID,
 			}
 			if count, err := database.Club.Member.Count(arg); err == nil && count > 0 {
+				if err := b.context.DeleteParam(); err != nil {
+					return err
+				}
+
 				return linebot.GetFlexMessage(
 					"通知",
 					linebot.GetFlexMessageBubbleContent(
