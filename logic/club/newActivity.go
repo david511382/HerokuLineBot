@@ -169,7 +169,10 @@ func (b *newActivity) Do(text string) (resultErr error) {
 				}
 			}
 
-			if resultErr = transaction.Rollback().Error; resultErr != nil {
+			if err := transaction.Rollback().Error; err != nil {
+				if resultErr == nil {
+					resultErr = err
+				}
 				return
 			}
 		}()
