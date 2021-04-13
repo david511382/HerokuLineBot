@@ -37,7 +37,7 @@ func (b *ClubLineBot) handleMemberJoinedEvent(event *lineBotModel.MemberJoinEven
 			}
 
 			replyMessges := []interface{}{
-				linebot.GetTextMessage("歡迎加入，跟我加入好友可以獲取更多社團的資訊喔!，點擊連結加入好友 https://line.me/R/ti/p/%4001"),
+				linebot.GetTextMessage("歡迎加入，跟我加入好友可以獲取更多社團的資訊喔!"),
 			}
 			replyReqs := &lineBotReqs.ReplyMessage{
 				ReplyToken: replyToken,

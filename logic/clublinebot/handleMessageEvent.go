@@ -34,7 +34,12 @@ func (b *ClubLineBot) handleTextMessageEvent(event *lineBotModel.MessageEvent) e
 		return err
 	}
 	userID := event.Source.UserID
+	groupID := event.Source.GroupID
 	text := strings.Trim(message.Text, " ")
+
+	if groupID == Bot.lineRoomID {
+		return nil
+	}
 
 	c := newContext(userID, replyToken, b)
 

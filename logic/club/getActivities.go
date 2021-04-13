@@ -102,6 +102,9 @@ func (b *getActivities) init() error {
 			}
 		}
 
+		sort.Slice(dbDatas, func(i, j int) bool {
+			return dbDatas[i].Date.Before(dbDatas[j].Date)
+		})
 		for _, v := range dbDatas {
 			activity := &getActivitiesActivity{
 				newActivity: newActivity{
