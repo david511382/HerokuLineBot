@@ -1,7 +1,6 @@
 package conn
 
 import (
-	"crypto/tls"
 	"heroku-line-bot/bootstrap"
 	"strconv"
 
@@ -18,9 +17,6 @@ func Connect(cfg bootstrap.Db) (*rds.Client, error) {
 	rdsOpt := &rds.Options{
 		Addr: addr,
 		DB:   db,
-		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
 	}
 	if password := cfg.Password; password != "" {
 		rdsOpt.Password = cfg.Password
