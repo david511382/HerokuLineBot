@@ -50,7 +50,6 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 	var cmdHandler domain.ICmdHandler
 	paramJson := ""
 	isSingelParamText := !util.IsJSON(text)
-
 	if handler, err := getCmdHandler(cmd, lineContext); err != nil {
 		return err
 	} else if handler != nil {
@@ -60,28 +59,30 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 		}
 	} else {
 		cmd = getCmdFromJson(text)
-		switch cmd {
-		case domain.TIME_POSTBACK_CMD, domain.DATE_TIME_POSTBACK_CMD, domain.DATE_POSTBACK_CMD:
-			if js, err := sjson.Delete(text, domain.CMD_ATTR); err != nil {
-				return err
-			} else {
-				paramJson = js
-			}
-			jr := gjson.Get(text, string(cmd))
-			text = jr.String()
-			cmd = ""
-			isSingelParamText = true
-		case "":
+		if cmd == "" {
 			if !isSingelParamText {
 				paramJson = text
 			}
-		default:
+		} else {
 			if handler, err := getCmdHandler(cmd, lineContext); err != nil {
 				return err
 			} else if handler != nil {
 				cmdHandler = handler
 			}
 			paramJson = text
+		}
+
+		dateTimeCmd := getDateTimeCmdFromJson(text)
+		switch dateTimeCmd {
+		case domain.TIME_POSTBACK_DATE_TIME_CMD, domain.DATE_TIME_POSTBACK_DATE_TIME_CMD, domain.DATE_POSTBACK_DATE_TIME_CMD:
+			if js, err := sjson.Delete(text, domain.DATE_TIME_CMD_ATTR); err != nil {
+				return err
+			} else {
+				paramJson = js
+			}
+			jr := gjson.Get(text, string(dateTimeCmd))
+			text = jr.String()
+			isSingelParamText = true
 		}
 	}
 
@@ -143,6 +144,8 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		logicHandler = &getActivities{}
 	case domain.REGISTER_TEXT_CMD:
 		logicHandler = &register{}
+	case domain.CONFIRM_REGISTER_TEXT_CMD:
+		logicHandler = &confirmRegister{}
 	case domain.SUBMIT_ACTIVITY_TEXT_CMD:
 		logicHandler = &submitActivity{}
 	case domain.RICH_MENU_TEXT_CMD:
@@ -180,6 +183,11 @@ func getCmd(cmd domain.TextCmd, pathValueMap map[string]interface{}) (string, er
 func getCmdFromJson(json string) domain.TextCmd {
 	cmdJs := gjson.Get(json, domain.CMD_ATTR)
 	return domain.TextCmd(cmdJs.String())
+}
+
+func getDateTimeCmdFromJson(json string) domain.DateTimeCmd {
+	cmdJs := gjson.Get(json, domain.DATE_TIME_CMD_ATTR)
+	return domain.DateTimeCmd(cmdJs.String())
 }
 
 func calculateActivity(ballConsume, courtFee float64) (activityFee, ballFee float64) {

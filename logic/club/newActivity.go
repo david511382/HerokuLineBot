@@ -210,10 +210,8 @@ func (b *newActivity) Do(text string) (resultErr error) {
 	contents := []interface{}{}
 	actions := domain.NewActivityLineTemplate{}
 
-	cmd := domain.DATE_POSTBACK_CMD
 	if js, err := b.context.
-		GetCmdInputMode(&cmd).
-		GetRequireInputMode("date", "日期", true).
+		GetDateTimeCmdInputMode(domain.DATE_POSTBACK_DATE_TIME_CMD, "date").
 		GetSignal(); err != nil {
 		return err
 	} else {
