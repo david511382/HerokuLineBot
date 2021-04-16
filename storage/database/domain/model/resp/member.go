@@ -24,3 +24,10 @@ type IDNameRoleDepartment struct {
 	IDNameRole
 	Department string
 }
+
+type NameRoleDepartmentLineIDCompanyID struct {
+	NameLineID
+	Role
+	Department string
+	CompanyID  *string
+}

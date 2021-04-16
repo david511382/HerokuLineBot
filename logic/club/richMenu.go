@@ -150,19 +150,29 @@ func (b *richMenu) Do(text string) (resultErr error) {
 					names = append(names, v.Name)
 				}
 
-				if _, err := b.context.GetBot().SetRichMenuTos(createRichMenuResp.RichMenuID, lineIDs...); err != nil {
-					return err
+				for _, lineID := range lineIDs {
+					if _, err := b.context.GetBot().SetRichMenuTo(createRichMenuResp.RichMenuID, lineID); err != nil {
+						return err
+					}
 				}
 
 				messages = append(messages, linebot.GetTextMessage(
 					fmt.Sprintf("set to %v done", names),
 				))
-
-				if resultErr = b.context.DeleteParam(); resultErr != nil {
-					return
-				}
 			}
+		} else {
+			if _, err := b.context.GetBot().SetDefaultRichMenu(createRichMenuResp.RichMenuID); err != nil {
+				return err
+			}
+			messages = append(messages, linebot.GetTextMessage(
+				"set done",
+			))
 		}
+
+		if resultErr = b.context.DeleteParam(); resultErr != nil {
+			return
+		}
+
 	case domain.SET_DEFAULT_RICH_MENU_METHOD:
 		if _, err := b.context.GetBot().SetDefaultRichMenu(b.RichMenuID); err != nil {
 			return err

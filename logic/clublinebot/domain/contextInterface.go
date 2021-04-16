@@ -7,6 +7,7 @@ type IContext interface {
 	DeleteParam() error
 	GetParam() (json string)
 	Reply(replyMessges []interface{}) error
+	PushAdmin(replyMessges []interface{}) error
 	GetUserID() string
 	GetUserName() string
 	GetBot() *linebot.LineBot

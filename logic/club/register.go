@@ -3,6 +3,7 @@ package club
 import (
 	"fmt"
 	"heroku-line-bot/logic/club/domain"
+	commonLogic "heroku-line-bot/logic/common"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
@@ -422,12 +423,7 @@ func (b *register) Do(text string) (resultErr error) {
 			}
 		}()
 
-		role := b.Role
-		if b.CompanyID != nil &&
-			role == domain.GUEST_CLUB_ROLE &&
-			b.Department.IsClubMember() {
-			role = domain.MEMBER_CLUB_ROLE
-		}
+		lineID := b.context.GetUserID()
 		if b.MemberID > 0 {
 			arg := dbReqs.Member{
 				ID: &b.MemberID,
@@ -436,8 +432,7 @@ func (b *register) Do(text string) (resultErr error) {
 				"department": string(b.Department),
 				"name":       b.Name,
 				"company_id": b.CompanyID,
-				"role":       int16(role),
-				"line_id":    util.GetStringP(b.context.GetUserID()),
+				"line_id":    &lineID,
 			}
 			if resultErr = database.Club.Member.Update(transaction, arg, fields); resultErr != nil {
 				return
@@ -447,16 +442,22 @@ func (b *register) Do(text string) (resultErr error) {
 				Department: string(b.Department),
 				Name:       b.Name,
 				CompanyID:  b.CompanyID,
-				Role:       int16(role),
-				LineID:     util.GetStringP(b.context.GetUserID()),
+				Role:       int16(b.Role),
+				LineID:     &lineID,
 			}
 			if resultErr = database.Club.Member.BaseTable.Insert(transaction, data); resultErr != nil {
 				return
 			}
+			b.MemberID = data.ID
 		}
 
-		if resultErr = b.context.DeleteParam(); resultErr != nil {
-			return
+		adminReplyMessges, err := b.getNotifyRegisterMessage(b.Name, b.MemberID)
+		if err != nil {
+			return err
+		}
+
+		if resultErr = b.context.PushAdmin(adminReplyMessges); resultErr != nil {
+			return resultErr
 		}
 
 		replyMessges := []interface{}{
@@ -464,6 +465,10 @@ func (b *register) Do(text string) (resultErr error) {
 		}
 		if resultErr = b.context.Reply(replyMessges); resultErr != nil {
 			return resultErr
+		}
+
+		if resultErr = b.context.DeleteParam(); resultErr != nil {
+			return
 		}
 
 		return nil
@@ -633,4 +638,52 @@ func (b *register) Do(text string) (resultErr error) {
 	}
 
 	return nil
+}
+
+func (b *register) getNotifyRegisterMessage(name string, memberID int) ([]interface{}, error) {
+	contents := []interface{}{}
+
+	contents = append(contents,
+		GetKeyValueEditComponent(
+			"暱稱",
+			name,
+			nil,
+		),
+	)
+
+	pathValueMap := make(map[string]interface{})
+	pathValueMap["ICmdLogic.member_id"] = b.MemberID
+	pathValueMap["ICmdLogic.date"] = util.DateOf(commonLogic.TimeUtilObj.Now())
+	cmd := domain.CONFIRM_REGISTER_TEXT_CMD
+	if js, err := b.context.
+		GetCmdInputMode(&cmd).
+		GetKeyValueInputMode(pathValueMap).
+		GetSignal(); err != nil {
+		return nil, err
+	} else {
+		contents = append(contents,
+			linebot.GetButtonComponent(
+				0,
+				linebot.GetPostBackAction(
+					"入社",
+					js,
+				),
+				nil,
+			),
+		)
+	}
+
+	return []interface{}{
+		linebot.GetFlexMessage(
+			"新人註冊",
+			linebot.GetFlexMessageBubbleContent(
+				linebot.GetFlexMessageBoxComponent(
+					linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+					nil,
+					contents...,
+				),
+				nil,
+			),
+		),
+	}, nil
 }

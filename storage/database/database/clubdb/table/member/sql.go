@@ -103,3 +103,24 @@ func (t Member) IDNameRoleDepartment(arg reqs.Member) ([]*resp.IDNameRoleDepartm
 
 	return result, nil
 }
+
+func (t Member) NameRoleDepartmentLineIDCompanyID(arg reqs.Member) ([]*resp.NameRoleDepartmentLineIDCompanyID, error) {
+	dp := t.DbModel()
+	dp = t.whereArg(dp, arg).Select(
+		`
+		id AS id,
+		name AS name,
+		role AS role,
+		department AS department,
+		line_id AS line_id,
+		company_id AS company_id
+		`,
+	)
+
+	result := make([]*resp.NameRoleDepartmentLineIDCompanyID, 0)
+	if err := dp.Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

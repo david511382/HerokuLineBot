@@ -42,6 +42,12 @@ func (b *CmdHandler) GetCmdInputMode(cmdP *domain.TextCmd) domain.ICmdHandlerSig
 	return nb
 }
 
+func (b *CmdHandler) GetDateTimeCmdInputMode(timeCmd domain.DateTimeCmd, attr string) domain.ICmdHandlerSignal {
+	nb := b.duplicate()
+	nb.setPathValue(string(domain.DATE_TIME_CMD_ATTR), timeCmd)
+	return nb.GetRequireInputMode(attr, "", true)
+}
+
 func (b *CmdHandler) GetCancelMode() domain.ICmdHandlerSignal {
 	nb := b.duplicate()
 	nb.setPathValue("is_cancel", true)

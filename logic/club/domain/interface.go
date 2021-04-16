@@ -31,5 +31,6 @@ type ICmdHandlerSignal interface {
 	GetCancelInputMode() ICmdHandlerSignal
 	GetRequireInputMode(attr, attrText string, isInputImmediately bool) ICmdHandlerSignal
 	GetCmdInputMode(cmdP *TextCmd) ICmdHandlerSignal
+	GetDateTimeCmdInputMode(timeCmd DateTimeCmd, attr string) ICmdHandlerSignal
 	GetSignal() (string, error)
 }
