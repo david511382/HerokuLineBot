@@ -159,5 +159,17 @@ func (b *CmdHandler) Do(text string) error {
 		}
 	}
 
-	return b.ICmdLogic.Do(text)
+	if err := b.ICmdLogic.Do(text); err == domain.USER_NOT_REGISTERED ||
+		err == domain.NO_AUTH_ERROR {
+		replyMessges := []interface{}{
+			linebot.GetTextMessage(err.Error()),
+		}
+		if err := b.IContext.Reply(replyMessges); err != nil {
+			return err
+		}
+	} else {
+		return err
+	}
+
+	return nil
 }
