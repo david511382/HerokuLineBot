@@ -1,6 +1,7 @@
 package clublinebot
 
 import (
+	"encoding/json"
 	"fmt"
 	"heroku-line-bot/service/linebot"
 	lineBotModel "heroku-line-bot/service/linebot/domain/model"
@@ -12,6 +13,11 @@ func (b *ClubLineBot) handleMemberJoinedEvent(event *lineBotModel.MemberJoinEven
 	replyToken := event.ReplyToken
 	if err := b.tryLine(
 		func() error {
+			groupID := event.Source.GroupID
+			pushMessages := []interface{}{
+				linebot.GetTextMessage("member join group : " + groupID),
+			}
+
 			userInfoMsgs := []string{}
 			for _, source := range event.Joined.Members {
 				userID := source.UserID
@@ -22,12 +28,18 @@ func (b *ClubLineBot) handleMemberJoinedEvent(event *lineBotModel.MemberJoinEven
 				msg := fmt.Sprintf("%s : %s", userInfo.DisplayName, userID)
 				userInfoMsgs = append(userInfoMsgs, msg)
 			}
-			userInfoMsg := strings.Join(userInfoMsgs, "\n")
-			groupID := event.Source.GroupID
-			pushMessages := []interface{}{
-				linebot.GetTextMessage("member join group : " + groupID),
-				linebot.GetTextMessage(userInfoMsg),
+			if len(userInfoMsgs) > 0 {
+				userInfoMsg := strings.Join(userInfoMsgs, "\n")
+				pushMessages = append(pushMessages, linebot.GetTextMessage(userInfoMsg))
+			} else {
+				bs, err := json.Marshal(event)
+				if err != nil {
+					return err
+				}
+				msg := fmt.Sprintf("event:%s", string(bs))
+				pushMessages = append(pushMessages, linebot.GetTextMessage(msg))
 			}
+
 			pushReqs := &lineBotReqs.PushMessage{
 				To:       b.lineAdminID,
 				Messages: pushMessages,
