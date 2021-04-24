@@ -12,7 +12,7 @@ type Context struct {
 	lineBot    *ClubLineBot
 }
 
-func newContext(
+func NewContext(
 	userID string,
 	replyToken string,
 	lineBot *ClubLineBot,
@@ -60,13 +60,27 @@ func (c *Context) Reply(replyMessges []interface{}) error {
 }
 
 func (c *Context) PushAdmin(replyMessges []interface{}) error {
-	return c.lineBot.tryLine(func() error {
-		_, err := c.lineBot.PushMessage(&reqs.PushMessage{
-			To:       c.lineBot.lineAdminID,
-			Messages: replyMessges,
-		})
-		return err
-	},
+	return c.lineBot.tryLine(
+		func() error {
+			_, err := c.lineBot.PushMessage(&reqs.PushMessage{
+				To:       c.lineBot.lineAdminID,
+				Messages: replyMessges,
+			})
+			return err
+		},
+		c.replyToken,
+	)
+}
+
+func (c *Context) PushRoom(replyMessges []interface{}) error {
+	return c.lineBot.tryLine(
+		func() error {
+			_, err := c.lineBot.PushMessage(&reqs.PushMessage{
+				To:       c.lineBot.lineRoomID,
+				Messages: replyMessges,
+			})
+			return err
+		},
 		c.replyToken,
 	)
 }

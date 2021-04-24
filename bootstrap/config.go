@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	databaseDomain "heroku-line-bot/storage/database/domain"
 	"strconv"
 )
@@ -9,7 +10,7 @@ type Config struct {
 	Server       Server       `yaml:"server"`
 	LineBot      LineBot      `yaml:"line_bot"`
 	GoogleScript GoogleScript `yaml:"google_script"`
-	Heroku       Heroku       `yaml:"heroku"`
+	Backgrounds  Backgrounds  `yaml:"backgrounds"`
 	DbConfig     DbConfig     `yaml:"db"`
 	ClubDb       Db           `yaml:"club_db"`
 	RedisConfig  DbConfig     `yaml:"redis"`
@@ -35,9 +36,19 @@ type GoogleScript struct {
 	Url string `yaml:"url"`
 }
 
+type Backgrounds struct {
+	Heroku          Heroku     `yaml:"heroku"`
+	ActivityCreator Background `yaml:"activity_creator"`
+}
+
+type Background struct {
+	Spec       string                     `yaml:"spec"`
+	PeriodType commonLogicDomain.TimeType `yaml:"period_type"`
+}
+
 type Heroku struct {
-	Url  string `yaml:"url"`
-	Spec string `yaml:"spec"`
+	Url        string     `yaml:"url"`
+	Background Background `yaml:"background"`
 }
 
 type DbConfig struct {

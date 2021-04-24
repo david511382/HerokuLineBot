@@ -16,7 +16,7 @@ import (
 
 type submitActivity struct {
 	context domain.ICmdHandlerContext `json:"-"`
-	newActivity
+	NewActivity
 	JoinedMembers  []*submitActivityJoinedMembers `json:"joined_members"`
 	JoinedGuests   []*submitActivityJoinedMembers `json:"joined_guests"`
 	ActivityID     int                            `json:"activity_id"`
@@ -84,8 +84,8 @@ func (b *submitActivity) init() error {
 		return nil
 	} else {
 		v := dbDatas[0]
-		b.newActivity = newActivity{
-			context:     context,
+		b.NewActivity = NewActivity{
+			Context:     context,
 			Date:        v.Date,
 			Place:       v.Place,
 			Description: v.Description,
@@ -93,7 +93,7 @@ func (b *submitActivity) init() error {
 			ClubSubsidy: v.ClubSubsidy,
 			IsComplete:  false,
 		}
-		if err := b.newActivity.parseCourts(v.CourtsAndTime); err != nil {
+		if err := b.NewActivity.ParseCourts(v.CourtsAndTime); err != nil {
 			return err
 		}
 

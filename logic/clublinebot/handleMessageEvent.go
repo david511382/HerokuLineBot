@@ -41,7 +41,7 @@ func (b *ClubLineBot) handleTextMessageEvent(event *lineBotModel.MessageEvent) e
 		return nil
 	}
 
-	c := newContext(userID, replyToken, b)
+	c := NewContext(userID, replyToken, b)
 
 	if err := clubLogic.HandlerTextCmd(text, &c); err != nil {
 		b.pushMessageToAdmin(err.Error())

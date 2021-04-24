@@ -43,6 +43,11 @@ func MonthOf(t time.Time) time.Time {
 	return *GetTimePLoc(t.Location(), y, int(m))
 }
 
+func YearOf(t time.Time) time.Time {
+	y, _, _ := t.Date()
+	return *GetTimePLoc(t.Location(), y)
+}
+
 func GetTime(ts ...int) time.Time {
 	return *GetTimeP(ts...)
 }

@@ -15,35 +15,41 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jinzhu/gorm"
 )
 
-type newActivity struct {
-	context     domain.ICmdHandlerContext `json:"-"`
+type NewActivity struct {
+	Context     domain.ICmdHandlerContext `json:"-"`
 	Date        time.Time                 `json:"date"`
 	Place       string                    `json:"place"`
 	Description string                    `json:"description"`
 	PeopleLimit *int16                    `json:"people_limit"`
 	ClubSubsidy int16                     `json:"club_subsidy"`
 	IsComplete  bool                      `json:"is_complete"`
-	Courts      []*newActivityCourt       `json:"courts"`
+	Courts      []*ActivityCourt          `json:"courts"`
 }
 
-type newActivityCourt struct {
+type ActivityCourt struct {
 	FromTime     time.Time `json:"from_time"`
 	ToTime       time.Time `json:"to_time"`
 	Count        int16     `json:"count"`
-	PricePerHour int16     `json:"price_per_hour"`
+	PricePerHour float64   `json:"price_per_hour"`
 }
 
-func (b *newActivityCourt) cost() float64 {
-	return float64(b.Count) * b.hours() * float64(b.PricePerHour)
+func (b *ActivityCourt) cost() float64 {
+	return b.TotalHours() * b.PricePerHour
 }
 
-func (b *newActivityCourt) hours() float64 {
+func (b *ActivityCourt) hours() float64 {
 	return b.ToTime.Sub(b.FromTime).Hours()
 }
 
-func (b *newActivityCourt) time() string {
+func (b *ActivityCourt) TotalHours() float64 {
+	return b.hours() * float64(b.Count)
+}
+
+func (b *ActivityCourt) time() string {
 	return fmt.Sprintf(
 		"%s~%s",
 		b.FromTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
@@ -51,15 +57,15 @@ func (b *newActivityCourt) time() string {
 	)
 }
 
-func (b *newActivity) Init(context domain.ICmdHandlerContext) error {
+func (b *NewActivity) Init(context domain.ICmdHandlerContext) error {
 	nowTime := commonLogic.TimeUtilObj.Now()
-	*b = newActivity{
-		context:     context,
+	*b = NewActivity{
+		Context:     context,
 		Date:        util.DateOf(nowTime),
 		Place:       "大墩羽球館",
 		Description: "7人出團",
 		IsComplete:  false,
-		Courts: []*newActivityCourt{
+		Courts: []*ActivityCourt{
 			{
 				FromTime:     commonLogic.GetTime(1, 1, 1, 18),
 				ToTime:       commonLogic.GetTime(1, 1, 1, 20, 30),
@@ -76,14 +82,14 @@ func (b *newActivity) Init(context domain.ICmdHandlerContext) error {
 	}
 	totalHours := 0.0
 	for _, court := range b.Courts {
-		totalHours = commonLogic.FloatPlus(totalHours, court.hours()*float64(court.Count))
+		totalHours = commonLogic.FloatPlus(totalHours, court.TotalHours())
 	}
 	b.PeopleLimit = util.GetInt16P(int16(totalHours * float64(domain.PEOPLE_PER_HOUR)))
 
 	return nil
 }
 
-func (b *newActivity) GetSingleParam(attr string) string {
+func (b *NewActivity) GetSingleParam(attr string) string {
 	switch attr {
 	case "date":
 		return b.Date.Format(commonLogicDomain.DATE_FORMAT)
@@ -106,7 +112,7 @@ func (b *newActivity) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *newActivity) LoadSingleParam(attr, text string) error {
+func (b *NewActivity) LoadSingleParam(attr, text string) error {
 	switch attr {
 	case "date":
 		t, err := time.Parse(commonLogicDomain.DATE_TIME_RFC3339_FORMAT, text)
@@ -132,7 +138,7 @@ func (b *newActivity) LoadSingleParam(attr, text string) error {
 		b.ClubSubsidy = int16(i)
 	case "ICmdLogic.courts":
 		if isJson := strings.ContainsAny(text, "{"); !isJson {
-			if err := b.parseCourts(text); err != nil {
+			if err := b.ParseCourts(text); err != nil {
 				return err
 			}
 		}
@@ -142,12 +148,12 @@ func (b *newActivity) LoadSingleParam(attr, text string) error {
 	return nil
 }
 
-func (b *newActivity) GetInputTemplate(requireRawParamAttr string) interface{} {
+func (b *NewActivity) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
-func (b *newActivity) Do(text string) (resultErr error) {
-	if u, err := lineuser.Get(b.context.GetUserID()); err != nil {
+func (b *NewActivity) Do(text string) (resultErr error) {
+	if u, err := lineuser.Get(b.Context.GetUserID()); err != nil {
 		return err
 	} else {
 		if u.Role != domain.ADMIN_CLUB_ROLE &&
@@ -156,8 +162,7 @@ func (b *newActivity) Do(text string) (resultErr error) {
 		}
 	}
 
-	courtsStr := b.getCourtsStr()
-	if b.context.IsComfirmed() {
+	if b.Context.IsComfirmed() {
 		transaction := database.Club.Begin()
 		if err := transaction.Error; err != nil {
 			return err
@@ -176,41 +181,32 @@ func (b *newActivity) Do(text string) (resultErr error) {
 				return
 			}
 		}()
-		data := &activityDb.ActivityTable{
-			Date:          b.Date,
-			Place:         b.Place,
-			CourtsAndTime: courtsStr,
-			ClubSubsidy:   b.ClubSubsidy,
-			Description:   b.Description,
-			PeopleLimit:   b.PeopleLimit,
-			IsComplete:    b.IsComplete,
-		}
-		if resultErr = database.Club.Activity.BaseTable.Insert(transaction, data); resultErr != nil {
+		if resultErr = b.InsertActivity(transaction); resultErr != nil {
 			return
 		}
 
-		if resultErr = b.context.DeleteParam(); resultErr != nil {
+		if resultErr = b.Context.DeleteParam(); resultErr != nil {
 			return
 		}
 
 		replyMessges := []interface{}{
 			linebot.GetTextMessage("完成"),
 		}
-		if resultErr = b.context.Reply(replyMessges); resultErr != nil {
+		if resultErr = b.Context.Reply(replyMessges); resultErr != nil {
 			return resultErr
 		}
 
 		return nil
 	}
 
-	if err := b.context.CacheParams(); err != nil {
+	if err := b.Context.CacheParams(); err != nil {
 		return err
 	}
 
 	contents := []interface{}{}
 	actions := domain.NewActivityLineTemplate{}
 
-	if js, err := b.context.
+	if js, err := b.Context.
 		GetDateTimeCmdInputMode(domain.DATE_POSTBACK_DATE_TIME_CMD, "date").
 		GetSignal(); err != nil {
 		return err
@@ -224,7 +220,7 @@ func (b *newActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.context.
+	if js, err := b.Context.
 		GetRequireInputMode("ICmdLogic.place", "地點", false).
 		GetSignal(); err != nil {
 		return err
@@ -235,7 +231,7 @@ func (b *newActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.context.
+	if js, err := b.Context.
 		GetRequireInputMode("ICmdLogic.club_subsidy", "補助額", false).
 		GetSignal(); err != nil {
 		return err
@@ -246,7 +242,7 @@ func (b *newActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.context.
+	if js, err := b.Context.
 		GetRequireInputMode("ICmdLogic.people_limit", "人數上限", false).
 		GetSignal(); err != nil {
 		return err
@@ -257,7 +253,7 @@ func (b *newActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.context.
+	if js, err := b.Context.
 		GetRequireInputMode("ICmdLogic.courts", "場地", false).
 		GetSignal(); err != nil {
 		return err
@@ -271,13 +267,13 @@ func (b *newActivity) Do(text string) (resultErr error) {
 	lineContents := b.getLineComponents(actions)
 	contents = append(contents, lineContents...)
 
-	cancelSignlJs, err := b.context.
+	cancelSignlJs, err := b.Context.
 		GetCancelMode().
 		GetSignal()
 	if err != nil {
 		return err
 	}
-	comfirmSignlJs, err := b.context.
+	comfirmSignlJs, err := b.Context.
 		GetComfirmMode().
 		GetSignal()
 	if err != nil {
@@ -309,14 +305,53 @@ func (b *newActivity) Do(text string) (resultErr error) {
 			),
 		),
 	}
-	if err := b.context.Reply(replyMessges); err != nil {
+	if err := b.Context.Reply(replyMessges); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (b *newActivity) getLineComponents(actions domain.NewActivityLineTemplate) (result []interface{}) {
+func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErr error) {
+	courtsStr := b.getCourtsStr()
+	if transaction == nil {
+		transaction = database.Club.Begin()
+		if err := transaction.Error; err != nil {
+			return err
+		}
+		defer func() {
+			if resultErr == nil {
+				if resultErr = transaction.Commit().Error; resultErr != nil {
+					return
+				}
+			}
+
+			if err := transaction.Rollback().Error; err != nil {
+				if resultErr == nil {
+					resultErr = err
+				}
+				return
+			}
+		}()
+	}
+
+	data := &activityDb.ActivityTable{
+		Date:          b.Date,
+		Place:         b.Place,
+		CourtsAndTime: courtsStr,
+		ClubSubsidy:   b.ClubSubsidy,
+		Description:   b.Description,
+		PeopleLimit:   b.PeopleLimit,
+		IsComplete:    b.IsComplete,
+	}
+	if resultErr = database.Club.Activity.BaseTable.Insert(transaction, data); resultErr != nil {
+		return
+	}
+
+	return nil
+}
+
+func (b *NewActivity) getLineComponents(actions domain.NewActivityLineTemplate) (result []interface{}) {
 	result = []interface{}{}
 	valueText := fmt.Sprintf("%s(%s)", b.Date.Format(commonLogicDomain.DATE_FORMAT), commonLogic.WeekDayName(b.Date.Weekday()))
 	valueTextSize := linebotDomain.MD_FLEX_MESSAGE_SIZE
@@ -368,7 +403,7 @@ func (b *newActivity) getLineComponents(actions domain.NewActivityLineTemplate) 
 	return
 }
 
-func (b *newActivity) getCourtFee() float64 {
+func (b *NewActivity) getCourtFee() float64 {
 	totalFee := 0.0
 	for _, court := range b.Courts {
 		cost := court.cost()
@@ -377,7 +412,7 @@ func (b *newActivity) getCourtFee() float64 {
 	return totalFee
 }
 
-func (b *newActivity) getCourtHours() float64 {
+func (b *NewActivity) getCourtHours() float64 {
 	totalHours := 0.0
 	for _, court := range b.Courts {
 		hours := court.hours()
@@ -386,11 +421,11 @@ func (b *newActivity) getCourtHours() float64 {
 	return totalHours
 }
 
-func (b *newActivity) getCourtsStr() string {
+func (b *NewActivity) getCourtsStr() string {
 	courtStrs := []string{}
 	for _, court := range b.Courts {
 		courtStr := fmt.Sprintf(
-			"%d-%d-%s~%s",
+			"%d-%.1f-%s~%s",
 			court.Count,
 			court.PricePerHour,
 			court.FromTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
@@ -401,15 +436,15 @@ func (b *newActivity) getCourtsStr() string {
 	return strings.Join(courtStrs, ",")
 }
 
-func (b *newActivity) parseCourts(courtsStr string) error {
-	b.Courts = make([]*newActivityCourt, 0)
+func (b *NewActivity) ParseCourts(courtsStr string) error {
+	b.Courts = make([]*ActivityCourt, 0)
 	courtsStrs := strings.Split(courtsStr, ",")
 	for _, courtsStr := range courtsStrs {
-		court := &newActivityCourt{}
+		court := &ActivityCourt{}
 		timeStr := ""
 		if _, err := fmt.Sscanf(
 			courtsStr,
-			"%d-%d-%s",
+			"%d-%f-%s",
 			&court.Count,
 			&court.PricePerHour,
 			&timeStr); err != nil {
@@ -438,7 +473,7 @@ func (b *newActivity) parseCourts(courtsStr string) error {
 	return nil
 }
 
-func (b *newActivity) getCourtTimeRange() (minTime, maxTime *time.Time) {
+func (b *NewActivity) getCourtTimeRange() (minTime, maxTime *time.Time) {
 	for _, court := range b.Courts {
 		if minTime == nil || court.FromTime.Before(*minTime) {
 			minTime = &court.FromTime
@@ -450,7 +485,7 @@ func (b *newActivity) getCourtTimeRange() (minTime, maxTime *time.Time) {
 	return
 }
 
-func (b *newActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackAction) *linebotModel.FlexMessageBoxComponent {
+func (b *NewActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackAction) *linebotModel.FlexMessageBoxComponent {
 	components := []interface{}{}
 
 	headComponents := []interface{}{}
