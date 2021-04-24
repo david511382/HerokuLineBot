@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-type getActivities struct {
+type GetActivities struct {
 	context               domain.ICmdHandlerContext `json:"-"`
 	activities            []*getActivitiesActivity
 	JoinActivityID        int                       `json:"join_activity_id"`
@@ -29,7 +29,7 @@ type getActivities struct {
 }
 
 type getActivitiesActivity struct {
-	newActivity
+	NewActivity
 	JoinedMembers []*getActivitiesActivityJoinedMembers `json:"joined_members"`
 	ActivityID    int                                   `json:"activity_id"`
 }
@@ -39,8 +39,8 @@ type getActivitiesActivityJoinedMembers struct {
 	Name string `json:"name"`
 }
 
-func (b *getActivities) Init(context domain.ICmdHandlerContext) error {
-	*b = getActivities{
+func (b *GetActivities) Init(context domain.ICmdHandlerContext) error {
+	*b = GetActivities{
 		context:    context,
 		activities: make([]*getActivitiesActivity, 0),
 	}
@@ -48,14 +48,14 @@ func (b *getActivities) Init(context domain.ICmdHandlerContext) error {
 	return nil
 }
 
-func (b *getActivities) GetSingleParam(attr string) string {
+func (b *GetActivities) GetSingleParam(attr string) string {
 	switch attr {
 	default:
 		return ""
 	}
 }
 
-func (b *getActivities) LoadSingleParam(attr, text string) error {
+func (b *GetActivities) LoadSingleParam(attr, text string) error {
 	switch attr {
 	default:
 	}
@@ -63,11 +63,11 @@ func (b *getActivities) LoadSingleParam(attr, text string) error {
 	return nil
 }
 
-func (b *getActivities) GetInputTemplate(requireRawParamAttr string) interface{} {
+func (b *GetActivities) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
-func (b *getActivities) init() error {
+func (b *GetActivities) init() error {
 	context := b.context
 	arg := dbReqs.Activity{
 		IsComplete: util.GetBoolP(false),
@@ -107,8 +107,8 @@ func (b *getActivities) init() error {
 		})
 		for _, v := range dbDatas {
 			activity := &getActivitiesActivity{
-				newActivity: newActivity{
-					context:     context,
+				NewActivity: NewActivity{
+					Context:     context,
 					Date:        v.Date,
 					Place:       v.Place,
 					Description: v.Description,
@@ -119,7 +119,7 @@ func (b *getActivities) init() error {
 				JoinedMembers: activityIDMap[v.ID],
 				ActivityID:    v.ID,
 			}
-			if err := activity.parseCourts(v.CourtsAndTime); err != nil {
+			if err := activity.ParseCourts(v.CourtsAndTime); err != nil {
 				return err
 			}
 			b.activities = append(b.activities, activity)
@@ -128,7 +128,7 @@ func (b *getActivities) init() error {
 	return nil
 }
 
-func (b *getActivities) listMembers() error {
+func (b *GetActivities) listMembers() error {
 	var date time.Time
 	var place string
 	var peopleLimit *int16
@@ -226,7 +226,7 @@ func (b *getActivities) listMembers() error {
 	return nil
 }
 
-func (b *getActivities) joinActivity() error {
+func (b *GetActivities) joinActivity() error {
 	userData := b.currentUser
 
 	insertData := &memberactivity.MemberActivityTable{
@@ -241,7 +241,7 @@ func (b *getActivities) joinActivity() error {
 	return nil
 }
 
-func (b *getActivities) leaveActivity() error {
+func (b *GetActivities) leaveActivity() error {
 	userData := b.currentUser
 
 	deleteData := &memberactivity.MemberActivityTable{}
@@ -265,7 +265,7 @@ func (b *getActivities) leaveActivity() error {
 	return nil
 }
 
-func (b *getActivities) loadCurrentUserID() error {
+func (b *GetActivities) loadCurrentUserID() error {
 	lineID := b.context.GetUserID()
 	userData, err := lineUserLogic.Get(lineID)
 	if err != nil {
@@ -279,7 +279,7 @@ func (b *getActivities) loadCurrentUserID() error {
 	return nil
 }
 
-func (b *getActivities) isJoined(activity *getActivitiesActivity) bool {
+func (b *GetActivities) isJoined(activity *getActivitiesActivity) bool {
 	for _, v := range activity.JoinedMembers {
 		mID := v.ID
 		if b.currentUser.ID == mID {
@@ -289,7 +289,7 @@ func (b *getActivities) isJoined(activity *getActivitiesActivity) bool {
 	return false
 }
 
-func (b *getActivities) Do(text string) (resultErr error) {
+func (b *GetActivities) Do(text string) (resultErr error) {
 	if err := b.loadCurrentUserID(); err != nil {
 		return err
 	}
@@ -330,6 +330,18 @@ func (b *getActivities) Do(text string) (resultErr error) {
 		}
 	}
 
+	replyMessge := b.GetActivitiesMessage("查看活動", true, true)
+	replyMessges := []interface{}{
+		replyMessge,
+	}
+	if err := b.context.Reply(replyMessges); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *GetActivities) GetActivitiesMessage(altText string, isShowCurrentMember, isShowActionButton bool) (replyMessge interface{}) {
 	if err := b.init(); err != nil {
 		return err
 	}
@@ -403,34 +415,36 @@ func (b *getActivities) Do(text string) (resultErr error) {
 		)
 		contents = append(contents, activityFeeComponent)
 
-		joinedCount := len(activity.JoinedMembers)
-		peopleLimit := 0
-		waitingCount := 0
-		if activity.PeopleLimit != nil {
-			peopleLimit = int(*activity.PeopleLimit)
-			if joinedCount > peopleLimit {
-				waitingCount = joinedCount - peopleLimit
-				joinedCount = peopleLimit
+		if isShowCurrentMember {
+			joinedCount := len(activity.JoinedMembers)
+			peopleLimit := 0
+			waitingCount := 0
+			if activity.PeopleLimit != nil {
+				peopleLimit = int(*activity.PeopleLimit)
+				if joinedCount > peopleLimit {
+					waitingCount = joinedCount - peopleLimit
+					joinedCount = peopleLimit
+				}
 			}
+			joinedCountComponent := GetKeyValueEditComponent(
+				"目前參加人數",
+				strconv.Itoa(joinedCount),
+				&domain.KeyValueEditComponentOption{
+					ValueSizeP: &valueSize,
+					SizeP:      &size,
+				},
+			)
+			contents = append(contents, joinedCountComponent)
+			waitingCountComponent := GetKeyValueEditComponent(
+				"目前候補人數",
+				strconv.Itoa(waitingCount),
+				&domain.KeyValueEditComponentOption{
+					ValueSizeP: &valueSize,
+					SizeP:      &size,
+				},
+			)
+			contents = append(contents, waitingCountComponent)
 		}
-		joinedCountComponent := GetKeyValueEditComponent(
-			"目前參加人數",
-			strconv.Itoa(joinedCount),
-			&domain.KeyValueEditComponentOption{
-				ValueSizeP: &valueSize,
-				SizeP:      &size,
-			},
-		)
-		contents = append(contents, joinedCountComponent)
-		waitingCountComponent := GetKeyValueEditComponent(
-			"目前候補人數",
-			strconv.Itoa(waitingCount),
-			&domain.KeyValueEditComponentOption{
-				ValueSizeP: &valueSize,
-				SizeP:      &size,
-			},
-		)
-		contents = append(contents, waitingCountComponent)
 
 		if activity.PeopleLimit != nil {
 			people := int(*activity.PeopleLimit)
@@ -456,75 +470,77 @@ func (b *getActivities) Do(text string) (resultErr error) {
 			contents = append(contents, guestFeeComponent)
 		}
 
-		if len(activity.JoinedMembers) > 0 {
-			pathValueMap := map[string]interface{}{
-				"ICmdLogic.list_members_activity_id": activity.ActivityID,
+		if isShowActionButton {
+			if len(activity.JoinedMembers) > 0 {
+				pathValueMap := map[string]interface{}{
+					"ICmdLogic.list_members_activity_id": activity.ActivityID,
+				}
+				if js, err := b.context.
+					GetCmdInputMode(nil).
+					GetKeyValueInputMode(pathValueMap).
+					GetSignal(); err != nil {
+					return err
+				} else {
+					action := linebot.GetPostBackAction(
+						"查看人員",
+						js,
+					)
+					buttonComponent := linebot.GetButtonComponent(0, action, &domain.NormalButtonOption)
+					contents = append(contents, buttonComponent)
+				}
 			}
-			if js, err := b.context.
-				GetCmdInputMode(nil).
-				GetKeyValueInputMode(pathValueMap).
-				GetSignal(); err != nil {
-				return err
-			} else {
-				action := linebot.GetPostBackAction(
-					"查看人員",
-					js,
-				)
-				buttonComponent := linebot.GetButtonComponent(0, action, &domain.NormalButtonOption)
-				contents = append(contents, buttonComponent)
-			}
-		}
 
-		if b.isJoined(activity) {
-			pathValueMap := map[string]interface{}{
-				"ICmdLogic.leave_activity_id": activity.ActivityID,
-			}
-			if js, err := b.context.
-				GetCmdInputMode(nil).
-				GetKeyValueInputMode(pathValueMap).
-				GetSignal(); err != nil {
-				return err
+			if b.isJoined(activity) {
+				pathValueMap := map[string]interface{}{
+					"ICmdLogic.leave_activity_id": activity.ActivityID,
+				}
+				if js, err := b.context.
+					GetCmdInputMode(nil).
+					GetKeyValueInputMode(pathValueMap).
+					GetSignal(); err != nil {
+					return err
+				} else {
+					action := linebot.GetPostBackAction(
+						"退出",
+						js,
+					)
+					leaveButtonComponent := linebot.GetButtonComponent(0, action, &domain.AlertButtonOption)
+					contents = append(contents, leaveButtonComponent)
+				}
 			} else {
-				action := linebot.GetPostBackAction(
-					"退出",
-					js,
-				)
-				leaveButtonComponent := linebot.GetButtonComponent(0, action, &domain.AlertButtonOption)
-				contents = append(contents, leaveButtonComponent)
+				pathValueMap := map[string]interface{}{
+					"ICmdLogic.join_activity_id": activity.ActivityID,
+				}
+				if js, err := b.context.
+					GetCmdInputMode(nil).
+					GetKeyValueInputMode(pathValueMap).
+					GetSignal(); err != nil {
+					return err
+				} else {
+					action := linebot.GetPostBackAction(
+						"參加",
+						js,
+					)
+					joinButtonComponent := linebot.GetButtonComponent(0, action, &domain.NormalButtonOption)
+					contents = append(contents, joinButtonComponent)
+				}
 			}
-		} else {
-			pathValueMap := map[string]interface{}{
-				"ICmdLogic.join_activity_id": activity.ActivityID,
-			}
-			if js, err := b.context.
-				GetCmdInputMode(nil).
-				GetKeyValueInputMode(pathValueMap).
-				GetSignal(); err != nil {
-				return err
-			} else {
-				action := linebot.GetPostBackAction(
-					"參加",
-					js,
-				)
-				joinButtonComponent := linebot.GetButtonComponent(0, action, &domain.NormalButtonOption)
-				contents = append(contents, joinButtonComponent)
-			}
-		}
 
-		if b.currentUser.Role == domain.CADRE_CLUB_ROLE ||
-			b.currentUser.Role == domain.ADMIN_CLUB_ROLE {
-			cmd := domain.SUBMIT_ACTIVITY_TEXT_CMD
-			pathValueMap := make(map[string]interface{})
-			pathValueMap["ICmdLogic.activity_id"] = activity.ActivityID
-			if js, err := getCmd(cmd, pathValueMap); err != nil {
-				return err
-			} else {
-				action := linebot.GetPostBackAction(
-					"提交",
-					js,
-				)
-				buttonComponent := linebot.GetButtonComponent(0, action, &domain.NormalButtonOption)
-				contents = append(contents, buttonComponent)
+			if b.currentUser.Role == domain.CADRE_CLUB_ROLE ||
+				b.currentUser.Role == domain.ADMIN_CLUB_ROLE {
+				cmd := domain.SUBMIT_ACTIVITY_TEXT_CMD
+				pathValueMap := make(map[string]interface{})
+				pathValueMap["ICmdLogic.activity_id"] = activity.ActivityID
+				if js, err := getCmd(cmd, pathValueMap); err != nil {
+					return err
+				} else {
+					action := linebot.GetPostBackAction(
+						"提交",
+						js,
+					)
+					buttonComponent := linebot.GetButtonComponent(0, action, &domain.NormalButtonOption)
+					contents = append(contents, buttonComponent)
+				}
 			}
 		}
 
@@ -545,21 +561,14 @@ func (b *getActivities) Do(text string) (resultErr error) {
 		)
 	}
 
-	var replyMessge interface{}
 	if len(carouselContents) == 0 {
 		replyMessge = linebot.GetTextMessage("沒有活動")
 	} else {
 		replyMessge = linebot.GetFlexMessage(
-			"查看活動",
+			altText,
 			linebot.GetFlexMessageCarouselContent(carouselContents...),
 		)
 	}
-	replyMessges := []interface{}{
-		replyMessge,
-	}
-	if err := b.context.Reply(replyMessges); err != nil {
-		return err
-	}
 
-	return nil
+	return
 }

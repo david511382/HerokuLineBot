@@ -1,16 +1,5 @@
 package domain
 
-type TimeType uint
-
-const (
-	YEAR_TYPE  TimeType = 1
-	MONTH_TYPE TimeType = 2
-	DAY_TYPE   TimeType = 3
-	HOUR_TYPE  TimeType = 4
-)
-
-const IANA_ZONE = "Asia/Taipei"
-
 const (
 	FLOAT_EXPONENT                         = -8
 	FRONT_END_RTP_SYMBOL_EXPONENT          = -4
@@ -18,6 +7,8 @@ const (
 	FRONT_END_FISH_FLOAT_EXPONENT          = -3
 	FRONT_END_FISH_EXPECTED_FLOAT_EXPONENT = -5
 )
+
+const IANA_ZONE = "Asia/Taipei"
 
 const (
 	DATE_TIME_FORMAT         = "2006-01-02 15:04:05"

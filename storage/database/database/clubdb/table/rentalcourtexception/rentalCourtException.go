@@ -35,5 +35,21 @@ func (t RentalCourtException) whereArg(dp *gorm.DB, arg reqs.RentalCourtExceptio
 		dp = dp.Where("rental_court_id IN (?)", p)
 	}
 
+	if p := arg.ExcludeDate; p != nil {
+		dp = dp.Where("exclude_date = ?", p)
+	}
+	if p := arg.FromExcludeDate; p != nil {
+		dp = dp.Where("exclude_date >= ?", p)
+	}
+	if p := arg.ToExcludeDate; p != nil {
+		dp = dp.Where("exclude_date <= ?", p)
+	}
+	if p := arg.BeforeExcludeDate; p != nil {
+		dp = dp.Where("exclude_date < ?", p)
+	}
+	if p := arg.AfterExcludeDate; p != nil {
+		dp = dp.Where("exclude_date > ?", p)
+	}
+
 	return dp
 }

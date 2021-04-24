@@ -139,9 +139,9 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 	var logicHandler domain.ICmdLogic
 	switch cmd {
 	case domain.NEW_ACTIVITY_TEXT_CMD:
-		logicHandler = &newActivity{}
+		logicHandler = &NewActivity{}
 	case domain.GET_ACTIVITIES_TEXT_CMD:
-		logicHandler = &getActivities{}
+		logicHandler = &GetActivities{}
 	case domain.REGISTER_TEXT_CMD:
 		logicHandler = &register{}
 	case domain.CONFIRM_REGISTER_TEXT_CMD:

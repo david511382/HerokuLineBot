@@ -26,4 +26,10 @@ type RentalCourtException struct {
 	IDs            []int
 	RentalCourtID  *int
 	RentalCourtIDs []int
+
+	ExcludeDate       *time.Time
+	FromExcludeDate   *time.Time
+	AfterExcludeDate  *time.Time
+	ToExcludeDate     *time.Time
+	BeforeExcludeDate *time.Time
 }
