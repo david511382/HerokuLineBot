@@ -30,8 +30,9 @@ type submitActivity struct {
 
 type submitActivityJoinedMembers struct {
 	getActivitiesActivityJoinedMembers
-	IsAttend bool `json:"is_attend"`
-	IsPaid   bool `json:"is_paid"`
+	IsAttend         bool `json:"is_attend"`
+	IsPaid           bool `json:"is_paid"`
+	MemberActivityID int  `json:"id"`
 }
 
 func (b *submitActivity) Init(context domain.ICmdHandlerContext) error {
@@ -108,14 +109,15 @@ func (b *submitActivity) init() error {
 				memberIDs = append(memberIDs, v.MemberID)
 			}
 			arg := dbReqs.Member{
-				IDs: memberIDs,
+				IDs:        memberIDs,
+				ToJoinDate: &v.Date,
 			}
-			memberIDMap := make(map[int]bool)
+			clubMemberIDMap := make(map[int]bool)
 			if dbDatas, err := database.Club.Member.IDDepartment(arg); err != nil {
 				return err
 			} else {
 				for _, v := range dbDatas {
-					memberIDMap[v.ID] = Department(v.Department).IsClubMember()
+					clubMemberIDMap[v.ID] = Department(v.Department).IsClubMember()
 				}
 			}
 
@@ -131,8 +133,9 @@ func (b *submitActivity) init() error {
 						ID:   v.MemberID,
 						Name: v.MemberName,
 					},
+					MemberActivityID: v.ID,
 				}
-				if isClubMember := memberIDMap[memberID]; isClubMember {
+				if isClubMember := clubMemberIDMap[memberID]; isClubMember {
 					b.JoinedMembers = append(b.JoinedMembers, member)
 				} else {
 					b.JoinedGuests = append(b.JoinedGuests, member)
@@ -229,9 +232,22 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 		arg := dbReqs.Activity{
 			ID: &b.ActivityID,
 		}
-		memberCount := b.getJoinedMembersCount()
-		guestCount := b.getJoinedGuestsCount()
 		courtFee := b.getCourtFee()
+		memberActivityIDs := make([]int, 0)
+		memberCount := 0
+		for _, member := range b.JoinedMembers {
+			if member.IsAttend {
+				memberCount++
+				memberActivityIDs = append(memberActivityIDs, member.MemberActivityID)
+			}
+		}
+		guestCount := 0
+		for _, member := range b.JoinedGuests {
+			if member.IsAttend {
+				guestCount++
+				memberActivityIDs = append(memberActivityIDs, member.MemberActivityID)
+			}
+		}
 		peopleCount := memberCount + guestCount
 		_, memberFee, guestFee := calculateActivityPay(peopleCount, float64(b.Rsl4Consume), courtFee, float64(b.ClubSubsidy))
 		updateFields := map[string]interface{}{
@@ -244,6 +260,18 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 		}
 		if resultErr = database.Club.Activity.Update(transaction, arg, updateFields); resultErr != nil {
 			return
+		}
+
+		if len(memberActivityIDs) > 0 {
+			arg := dbReqs.MemberActivity{
+				IDs: memberActivityIDs,
+			}
+			fields := map[string]interface{}{
+				"is_attend": true,
+			}
+			if err := database.Club.MemberActivity.Update(transaction, arg, fields); err != nil && !database.IsUniqErr(err) {
+				return err
+			}
 		}
 
 		if resultErr = b.context.DeleteParam(); resultErr != nil {
