@@ -33,6 +33,18 @@ func (t BaseTable) DbModel() *gorm.DB {
 	return t.Read.Model(table)
 }
 
+func (t BaseTable) Count(arg interface{}) (int, error) {
+	dp := t.DbModel()
+	dp = t.table.WhereArg(dp, arg)
+
+	var result int
+	if err := dp.Count(&result).Error; err != nil {
+		return 0, err
+	}
+
+	return result, nil
+}
+
 func (t BaseTable) Insert(trans *gorm.DB, datas ...interface{}) error {
 	dp := t.Write
 	if trans != nil {

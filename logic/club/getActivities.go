@@ -310,26 +310,60 @@ func (b *GetActivities) Do(text string) (resultErr error) {
 		}
 		return nil
 	} else if isJoin := b.JoinActivityID > 0; isJoin {
-		if err := b.joinActivity(); err != nil {
-			replyMessges := []interface{}{
-				linebot.GetTextMessage("參加發生錯誤，已通知管理員"),
-			}
-			if replyErr := b.context.Reply(replyMessges); replyErr != nil {
-				err = fmt.Errorf("%s---replyErr:%s", err.Error(), replyErr.Error())
-			}
-
+		activityID := b.JoinActivityID
+		arg := dbReqs.Activity{
+			ID:         &activityID,
+			IsComplete: util.GetBoolP(false),
+		}
+		if count, err := database.Club.Activity.Count(arg); err != nil {
 			return err
+		} else if isActivityOpen := count > 0; isActivityOpen {
+			if err := b.joinActivity(); err != nil {
+				replyMessges := []interface{}{
+					linebot.GetTextMessage("參加發生錯誤，已通知管理員"),
+				}
+				if replyErr := b.context.Reply(replyMessges); replyErr != nil {
+					err = fmt.Errorf("%s---replyErr:%s", err.Error(), replyErr.Error())
+				}
+
+				return err
+			}
+		} else {
+			replyMessges := []interface{}{
+				linebot.GetTextMessage("活動已關閉"),
+			}
+			if err := b.context.Reply(replyMessges); err != nil {
+				return err
+			}
+			return nil
 		}
 	} else if isLeave := b.LeaveActivityID > 0; isLeave {
-		if err := b.leaveActivity(); err != nil {
-			replyMessges := []interface{}{
-				linebot.GetTextMessage("退出發生錯誤，已通知管理員"),
-			}
-			if replyErr := b.context.Reply(replyMessges); replyErr != nil {
-				err = fmt.Errorf("%s---replyErr:%s", err.Error(), replyErr.Error())
-			}
-
+		activityID := b.LeaveActivityID
+		arg := dbReqs.Activity{
+			ID:         &activityID,
+			IsComplete: util.GetBoolP(false),
+		}
+		if count, err := database.Club.Activity.Count(arg); err != nil {
 			return err
+		} else if isActivityOpen := count > 0; isActivityOpen {
+			if err := b.leaveActivity(); err != nil {
+				replyMessges := []interface{}{
+					linebot.GetTextMessage("退出發生錯誤，已通知管理員"),
+				}
+				if replyErr := b.context.Reply(replyMessges); replyErr != nil {
+					err = fmt.Errorf("%s---replyErr:%s", err.Error(), replyErr.Error())
+				}
+
+				return err
+			}
+		} else {
+			replyMessges := []interface{}{
+				linebot.GetTextMessage("活動已關閉"),
+			}
+			if err := b.context.Reply(replyMessges); err != nil {
+				return err
+			}
+			return nil
 		}
 	}
 

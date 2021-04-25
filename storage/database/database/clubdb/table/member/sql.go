@@ -5,18 +5,6 @@ import (
 	"heroku-line-bot/storage/database/domain/model/resp"
 )
 
-func (t Member) Count(arg reqs.Member) (int, error) {
-	dp := t.DbModel()
-	dp = t.whereArg(dp, arg)
-
-	var result int
-	if err := dp.Count(&result).Error; err != nil {
-		return 0, err
-	}
-
-	return result, nil
-}
-
 func (t Member) Role(arg reqs.Member) ([]*resp.Role, error) {
 	dp := t.DbModel()
 	dp = t.whereArg(dp, arg).Select(
