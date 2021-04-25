@@ -109,14 +109,15 @@ func (b *submitActivity) init() error {
 				memberIDs = append(memberIDs, v.MemberID)
 			}
 			arg := dbReqs.Member{
-				IDs: memberIDs,
+				IDs:        memberIDs,
+				ToJoinDate: &v.Date,
 			}
-			memberIDMap := make(map[int]bool)
+			clubMemberIDMap := make(map[int]bool)
 			if dbDatas, err := database.Club.Member.IDDepartment(arg); err != nil {
 				return err
 			} else {
 				for _, v := range dbDatas {
-					memberIDMap[v.ID] = Department(v.Department).IsClubMember()
+					clubMemberIDMap[v.ID] = Department(v.Department).IsClubMember()
 				}
 			}
 
@@ -134,7 +135,7 @@ func (b *submitActivity) init() error {
 					},
 					MemberActivityID: v.ID,
 				}
-				if isClubMember := memberIDMap[memberID]; isClubMember {
+				if isClubMember := clubMemberIDMap[memberID]; isClubMember {
 					b.JoinedMembers = append(b.JoinedMembers, member)
 				} else {
 					b.JoinedGuests = append(b.JoinedGuests, member)

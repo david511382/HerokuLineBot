@@ -52,5 +52,21 @@ func (t Member) whereArg(dp *gorm.DB, arg reqs.Member) *gorm.DB {
 		dp = dp.Where("company_id = ?", p)
 	}
 
+	if p := arg.JoinDate; p != nil && !p.IsZero() {
+		dp = dp.Where("join_date = ?", p)
+	}
+	if p := arg.FromJoinDate; p != nil && !p.IsZero() {
+		dp = dp.Where("join_date >= ?", p)
+	}
+	if p := arg.ToJoinDate; p != nil && !p.IsZero() {
+		dp = dp.Where("join_date <= ?", p)
+	}
+	if p := arg.BeforeJoinDate; p != nil && !p.IsZero() {
+		dp = dp.Where("join_date < ?", p)
+	}
+	if p := arg.AfterJoinDate; p != nil && !p.IsZero() {
+		dp = dp.Where("join_date > ?", p)
+	}
+
 	return dp
 }
