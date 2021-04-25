@@ -107,6 +107,68 @@ func IntTime(i int, tt domain.TimeType) time.Time {
 	return GetTime(ts...)
 }
 
+func ClockInt(t time.Time, tt domain.TimeType) int {
+	t = t.In(Location)
+
+	hh := 0
+	mm := 0
+	ss := 0
+	switch tt {
+	case domain.HOUR_TIME_TYPE:
+		hh = 1
+	case domain.MINUTE_TIME_TYPE:
+		hh = 100
+		mm = 1
+	case domain.SECOND_TIME_TYPE:
+		hh = 10000
+		mm = 100
+		ss = 1
+	}
+	h, m, s := t.Clock()
+	return h*hh + m*mm + s*ss
+}
+
+func IntClock(i int, tt domain.TimeType) time.Time {
+	str := strconv.Itoa(i)
+	format := ""
+	var h, m, s string
+	l := 0
+	args := make([]interface{}, 0)
+	switch tt {
+	case domain.HOUR_TIME_TYPE:
+		format = "%2s"
+		l = 2
+		args = append(args, &h)
+	case domain.MINUTE_TIME_TYPE:
+		format = "%2s%2s"
+		l = 4
+		args = append(args, &h, &m)
+	case domain.SECOND_TIME_TYPE:
+		format = "%2s%2s%2s"
+		l = 6
+		args = append(args, &h, &m, &s)
+	}
+
+	if len(str) < l {
+		amount := l - len(str)
+		str = strings.Repeat("0", amount) + str
+	}
+
+	fmt.Sscanf(str, format, args...)
+
+	ts := []int{
+		0, 0, 0,
+	}
+	for _, v := range args {
+		i, err := strconv.Atoi(*v.(*string))
+		if err != nil {
+			panic(err)
+		}
+		ts = append(ts, i)
+	}
+	return GetTime(ts...)
+}
+
 type TimeRange struct {
 	From *time.Time
 	To   *time.Time
