@@ -5,6 +5,7 @@ type MemberActivityTable struct {
 	MemberID   int    `gorm:"column:member_id;type:int;not null;unique_index:uniq_member_activity"`
 	ActivityID int    `gorm:"column:activity_id;type:int;not null;unique_index:uniq_member_activity"`
 	MemberName string `gorm:"column:member_name;type:varchar(50);not null;"`
+	IsAttend   bool   `gorm:"column:is_attend;type:boolean;not null"`
 }
 
 func (MemberActivityTable) TableName() string {

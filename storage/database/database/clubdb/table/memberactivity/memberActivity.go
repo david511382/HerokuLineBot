@@ -39,5 +39,9 @@ func (t MemberActivity) whereArg(dp *gorm.DB, arg reqs.MemberActivity) *gorm.DB 
 		dp = dp.Where("member_id = ?", p)
 	}
 
+	if p := arg.IsAttend; p != nil {
+		dp = dp.Where("is_attend = ?", p)
+	}
+
 	return dp
 }

@@ -6,4 +6,5 @@ type MemberActivity struct {
 	MemberID    *int
 	ActivityID  *int
 	ActivityIDs []int
+	IsAttend    *bool
 }

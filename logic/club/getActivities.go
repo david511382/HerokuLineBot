@@ -228,11 +228,14 @@ func (b *GetActivities) listMembers() error {
 
 func (b *GetActivities) joinActivity() error {
 	userData := b.currentUser
+	activityID := b.JoinActivityID
+	uID := userData.ID
 
 	insertData := &memberactivity.MemberActivityTable{
-		ActivityID: b.JoinActivityID,
-		MemberID:   userData.ID,
+		ActivityID: activityID,
+		MemberID:   uID,
 		MemberName: userData.Name,
+		IsAttend:   false,
 	}
 	if err := database.Club.MemberActivity.Insert(nil, insertData); err != nil && !database.IsUniqErr(err) {
 		return err
