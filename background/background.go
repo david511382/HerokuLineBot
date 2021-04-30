@@ -8,7 +8,7 @@ import (
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	"time"
 
-	cron "gopkg.in/robfig/cron.v2"
+	cron "github.com/robfig/cron"
 )
 
 type Background struct {

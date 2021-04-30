@@ -12,12 +12,12 @@ require (
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/onsi/ginkgo v1.15.2 // indirect
 	github.com/onsi/gomega v1.11.0 // indirect
+	github.com/robfig/cron v1.2.0
 	github.com/shopspring/decimal v1.2.0
 	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/tealeg/xlsx v1.0.5
 	github.com/tidwall/gjson v1.6.8
 	github.com/tidwall/sjson v1.1.5
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
-	gopkg.in/robfig/cron.v2 v2.0.0-20150107220207-be2e0b0deed5
 	gopkg.in/yaml.v2 v2.4.0
 )

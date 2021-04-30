@@ -3,19 +3,21 @@ package background
 import (
 	"heroku-line-bot/background/activitycreator"
 	"heroku-line-bot/bootstrap"
+	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	"strconv"
 	"strings"
 
-	cron "gopkg.in/robfig/cron.v2"
+	"github.com/robfig/cron"
 )
 
 var (
-	cr          = cron.New()
+	cr          *cron.Cron
 	backgrounds []*Background
 )
 
 func Init(totalCfg *bootstrap.Config) error {
+	cr = cron.NewWithLocation(commonLogic.Location)
 	cfg := totalCfg.Backgrounds
 	backgrounds = []*Background{
 		{
@@ -29,7 +31,7 @@ func Init(totalCfg *bootstrap.Config) error {
 			return err
 		}
 
-		if _, err := cr.AddJob(spec, background); err != nil {
+		if err := cr.AddJob(spec, background); err != nil {
 			return err
 		}
 	}
