@@ -64,6 +64,73 @@ func (b *confirmRegister) GetInputTemplate(requireRawParamAttr string) interface
 	}
 }
 
+func (b *confirmRegister) LoadUsers(arg dbReqs.Member) (confirmRegisterUsers []*confirmRegisterUser, resultErr error) {
+	confirmRegisterUsers = make([]*confirmRegisterUser, 0)
+	if dbDatas, err := database.Club.Member.NameRoleDepartmentLineIDCompanyID(arg); err != nil {
+		return nil, err
+	} else {
+		for _, v := range dbDatas {
+			confirmRegisterUser := &confirmRegisterUser{
+				Department: Department(v.Department),
+				Name:       v.Name,
+				CompanyID:  v.CompanyID,
+				Role:       domain.ClubRole(v.Role.Role),
+				LineID:     *v.LineID,
+			}
+
+			confirmRegisterUsers = append(confirmRegisterUsers, confirmRegisterUser)
+		}
+	}
+	return confirmRegisterUsers, nil
+}
+
+func (b *confirmRegister) ComfirmDb() (resultErr error) {
+	isChangeRole := b.isMemberAble() && b.User.Role == domain.GUEST_CLUB_ROLE
+
+	transaction := database.Club.Begin()
+	if err := transaction.Error; err != nil {
+		return err
+	}
+	defer func() {
+		if resultErr == nil {
+			if resultErr = transaction.Commit().Error; resultErr != nil {
+				return
+			}
+
+			if isChangeRole {
+				if _, err := redis.LineUser.Del(b.User.LineID); err != nil {
+					if resultErr == nil {
+						resultErr = err
+					}
+					return
+				}
+			}
+		}
+
+		if err := transaction.Rollback().Error; err != nil {
+			if resultErr == nil {
+				resultErr = err
+			}
+			return
+		}
+	}()
+
+	arg := dbReqs.Member{
+		ID: &b.MemberID,
+	}
+	fields := map[string]interface{}{
+		"join_date": b.Date,
+	}
+	if isChangeRole {
+		fields["role"] = int16(domain.MEMBER_CLUB_ROLE)
+	}
+	if resultErr = database.Club.Member.Update(transaction, arg, fields); resultErr != nil {
+		return
+	}
+
+	return nil
+}
+
 func (b *confirmRegister) Do(text string) (resultErr error) {
 	lineID := b.context.GetUserID()
 	if user, err := lineUserLogic.Get(lineID); err != nil {
@@ -76,64 +143,19 @@ func (b *confirmRegister) Do(text string) (resultErr error) {
 		arg := dbReqs.Member{
 			ID: &b.MemberID,
 		}
-		if dbDatas, err := database.Club.Member.NameRoleDepartmentLineIDCompanyID(arg); err != nil {
+		if confirmRegisterUsers, err := b.LoadUsers(arg); err != nil {
 			return err
-		} else if len(dbDatas) == 0 {
+		} else if len(confirmRegisterUsers) == 0 {
 			return fmt.Errorf("查無用戶")
 		} else {
-			v := dbDatas[0]
-			b.User = &confirmRegisterUser{
-				Department: Department(v.Department),
-				Name:       v.Name,
-				CompanyID:  v.CompanyID,
-				Role:       domain.ClubRole(v.Role.Role),
-				LineID:     *v.LineID,
-			}
+			v := confirmRegisterUsers[0]
+			b.User = v
 		}
 	}
 
 	if b.context.IsComfirmed() {
-		isChangeRole := b.isMemberAble() && b.User.Role == domain.GUEST_CLUB_ROLE
-
-		transaction := database.Club.Begin()
-		if err := transaction.Error; err != nil {
+		if err := b.ComfirmDb(); err != nil {
 			return err
-		}
-		defer func() {
-			if resultErr == nil {
-				if resultErr = transaction.Commit().Error; resultErr != nil {
-					return
-				}
-
-				if isChangeRole {
-					if _, err := redis.LineUser.Del(b.User.LineID); err != nil {
-						if resultErr == nil {
-							resultErr = err
-						}
-						return
-					}
-				}
-			}
-
-			if err := transaction.Rollback().Error; err != nil {
-				if resultErr == nil {
-					resultErr = err
-				}
-				return
-			}
-		}()
-
-		arg := dbReqs.Member{
-			ID: &b.MemberID,
-		}
-		fields := map[string]interface{}{
-			"join_date": b.Date,
-		}
-		if isChangeRole {
-			fields["role"] = int16(domain.MEMBER_CLUB_ROLE)
-		}
-		if resultErr = database.Club.Member.Update(transaction, arg, fields); resultErr != nil {
-			return
 		}
 
 		replyMessges := []interface{}{
