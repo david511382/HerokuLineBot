@@ -44,14 +44,35 @@ func (t Member) whereArg(dp *gorm.DB, arg reqs.Member) *gorm.DB {
 		dp = dp.Where("role = ?", p)
 	}
 
+	if p := arg.LineIDIsNull; p != nil {
+		if *p {
+			dp = dp.Where("line_id IS NULL")
+		} else {
+			dp = dp.Where("line_id IS NOT NULL")
+		}
+	}
 	if p := arg.LineID; p != nil {
 		dp = dp.Where("line_id = ?", p)
 	}
 
+	if p := arg.CompanyIDIsNull; p != nil {
+		if *p {
+			dp = dp.Where("company_id IS NULL")
+		} else {
+			dp = dp.Where("company_id IS NOT NULL")
+		}
+	}
 	if p := arg.CompanyID; p != nil {
 		dp = dp.Where("company_id = ?", p)
 	}
 
+	if p := arg.JoinDateIsNull; p != nil {
+		if *p {
+			dp = dp.Where("join_date IS NULL")
+		} else {
+			dp = dp.Where("join_date IS NOT NULL")
+		}
+	}
 	if p := arg.JoinDate; p != nil && !p.IsZero() {
 		dp = dp.Where("join_date = ?", p)
 	}

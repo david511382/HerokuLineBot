@@ -282,9 +282,9 @@ func (b *richMenu) createRoleRichMenu(role domain.ClubRole) *linebotReqs.CreateR
 			"guest",
 			2498, 1147,
 			2, 3,
-			linebot.GetMessageAction("無功能"),
-			linebot.GetMessageAction("無功能"),
-			linebot.GetMessageAction("查看活動"),
+			linebot.GetMessageAction("社長好強"),
+			linebot.GetMessageAction("經理好棒"),
+			linebot.GetMessageAction(string(domain.GET_ACTIVITIES_TEXT_CMD)),
 		)
 	case domain.CADRE_CLUB_ROLE:
 		return b.createRichMenu(
@@ -292,17 +292,18 @@ func (b *richMenu) createRoleRichMenu(role domain.ClubRole) *linebotReqs.CreateR
 			2498, 1721,
 			3, 3,
 			linebot.GetMessageAction("社長好強"),
-			linebot.GetMessageAction("新增活動"),
-			linebot.GetMessageAction("查看活動"),
+			linebot.GetMessageAction(string(domain.NEW_ACTIVITY_TEXT_CMD)),
+			linebot.GetMessageAction(string(domain.GET_ACTIVITIES_TEXT_CMD)),
 		)
 	case domain.ADMIN_CLUB_ROLE:
 		return b.createRichMenu(
 			"admin",
 			2498, 1721,
 			3, 3,
-			linebot.GetMessageAction("richmenu"),
-			linebot.GetMessageAction("新增活動"),
-			linebot.GetMessageAction("查看活動"),
+			linebot.GetMessageAction(string(domain.RICH_MENU_TEXT_CMD)),
+			linebot.GetMessageAction(string(domain.NEW_ACTIVITY_TEXT_CMD)),
+			linebot.GetMessageAction(string(domain.GET_ACTIVITIES_TEXT_CMD)),
+			linebot.GetMessageAction(string(domain.GET_CONFIRM_REGISTER_TEXT_CMD)),
 		)
 	default:
 		return nil

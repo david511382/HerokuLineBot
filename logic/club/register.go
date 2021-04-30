@@ -451,9 +451,23 @@ func (b *register) Do(text string) (resultErr error) {
 			b.MemberID = data.ID
 		}
 
-		adminReplyMessges, err := b.getNotifyRegisterMessage(b.Name, b.MemberID)
-		if err != nil {
+		var adminReplyMessges []interface{}
+		if adminReplyContents, err := b.GetNotifyRegisterContents(); err != nil {
 			return err
+		} else {
+			adminReplyMessges = []interface{}{
+				linebot.GetFlexMessage(
+					"新人註冊",
+					linebot.GetFlexMessageBubbleContent(
+						linebot.GetFlexMessageBoxComponent(
+							linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+							nil,
+							adminReplyContents...,
+						),
+						nil,
+					),
+				),
+			}
 		}
 
 		if resultErr = b.context.PushAdmin(adminReplyMessges); resultErr != nil {
@@ -640,13 +654,13 @@ func (b *register) Do(text string) (resultErr error) {
 	return nil
 }
 
-func (b *register) getNotifyRegisterMessage(name string, memberID int) ([]interface{}, error) {
+func (b *register) GetNotifyRegisterContents() ([]interface{}, error) {
 	contents := []interface{}{}
 
 	contents = append(contents,
 		GetKeyValueEditComponent(
 			"暱稱",
-			name,
+			b.Name,
 			nil,
 		),
 	)
@@ -673,17 +687,5 @@ func (b *register) getNotifyRegisterMessage(name string, memberID int) ([]interf
 		)
 	}
 
-	return []interface{}{
-		linebot.GetFlexMessage(
-			"新人註冊",
-			linebot.GetFlexMessageBubbleContent(
-				linebot.GetFlexMessageBoxComponent(
-					linebotDomain.VERTICAL_MESSAGE_LAYOUT,
-					nil,
-					contents...,
-				),
-				nil,
-			),
-		),
-	}, nil
+	return contents, nil
 }

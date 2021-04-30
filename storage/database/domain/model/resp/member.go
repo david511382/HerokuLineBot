@@ -9,6 +9,11 @@ type NameLineID struct {
 	LineID *string
 }
 
+type IDName struct {
+	ID   int
+	Name string
+}
+
 type IDNameRole struct {
 	Role
 	ID   int

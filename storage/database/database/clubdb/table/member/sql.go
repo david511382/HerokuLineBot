@@ -38,6 +38,23 @@ func (t Member) NameLineID(arg reqs.Member) ([]*resp.NameLineID, error) {
 	return result, nil
 }
 
+func (t Member) IDName(arg reqs.Member) ([]*resp.IDNameRole, error) {
+	dp := t.DbModel()
+	dp = t.whereArg(dp, arg).Select(
+		`
+		id AS id,
+		name AS name
+		`,
+	)
+
+	result := make([]*resp.IDNameRole, 0)
+	if err := dp.Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (t Member) IDNameRole(arg reqs.Member) ([]*resp.IDNameRole, error) {
 	dp := t.DbModel()
 	dp = t.whereArg(dp, arg).Select(
@@ -96,7 +113,6 @@ func (t Member) NameRoleDepartmentLineIDCompanyID(arg reqs.Member) ([]*resp.Name
 	dp := t.DbModel()
 	dp = t.whereArg(dp, arg).Select(
 		`
-		id AS id,
 		name AS name,
 		role AS role,
 		department AS department,
