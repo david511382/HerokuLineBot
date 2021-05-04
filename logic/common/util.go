@@ -25,3 +25,18 @@ func PageSlice(l int, size, index uint) (from, before int) {
 
 	return
 }
+
+func BatchDo(batchCount, len int, doF func(fromIndex, len int) bool) {
+	for i, dataLen := 0, len; i < dataLen; {
+		last := i + batchCount
+		if last >= dataLen {
+			last = dataLen
+		}
+
+		if !doF(i, last) {
+			break
+		}
+
+		i = last
+	}
+}
