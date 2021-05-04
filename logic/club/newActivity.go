@@ -415,7 +415,7 @@ func (b *NewActivity) getCourtFee() float64 {
 func (b *NewActivity) getCourtHours() float64 {
 	totalHours := 0.0
 	for _, court := range b.Courts {
-		hours := court.hours()
+		hours := court.TotalHours()
 		totalHours = commonLogic.FloatPlus(totalHours, hours)
 	}
 	return totalHours
