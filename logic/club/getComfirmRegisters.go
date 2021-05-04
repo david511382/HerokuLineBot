@@ -2,6 +2,7 @@ package club
 
 import (
 	"heroku-line-bot/logic/club/domain"
+	commonLogic "heroku-line-bot/logic/common"
 	lineUserLogic "heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
@@ -82,10 +83,11 @@ func (b *GetComfirmRegisters) Do(text string) (resultErr error) {
 		return err
 	}
 
-	replyMessge := b.GetConfirmRegisterUsersMessage("待確認入社社員")
-	replyMessges := []interface{}{
-		replyMessge,
+	replyMessges, err := b.GetConfirmRegisterUsersMessages("待確認入社社員")
+	if err != nil {
+		return err
 	}
+
 	if err := b.context.Reply(replyMessges); err != nil {
 		return err
 	}
@@ -93,43 +95,56 @@ func (b *GetComfirmRegisters) Do(text string) (resultErr error) {
 	return nil
 }
 
-func (b *GetComfirmRegisters) GetConfirmRegisterUsersMessage(altText string) (replyMessge interface{}) {
-	carouselContents := []*linebotModel.FlexMessagBubbleComponent{}
-	for _, confirmRegistersUser := range b.confirmRegistersUsers {
-		registerHandler := &register{
-			context:  b.context,
-			Name:     confirmRegistersUser.Name,
-			MemberID: confirmRegistersUser.MemberID,
-		}
-		contents, err := registerHandler.GetNotifyRegisterContents()
-		if err != nil {
-			return err
-		}
-
-		carouselContents = append(
-			carouselContents,
-			linebot.GetFlexMessageBubbleContent(
-				linebot.GetFlexMessageBoxComponent(
-					linebotDomain.VERTICAL_MESSAGE_LAYOUT,
-					nil,
-					linebot.GetFlexMessageBoxComponent(
-						linebotDomain.VERTICAL_MESSAGE_LAYOUT,
-						nil,
-						contents...,
-					),
-				),
-				nil,
-			),
-		)
+func (b *GetComfirmRegisters) GetConfirmRegisterUsersMessages(altText string) (replyMessges []interface{}, resultErr error) {
+	replyMessges = make([]interface{}, 0)
+	if len(b.confirmRegistersUsers) == 0 {
+		replyMessges = append(replyMessges, linebot.GetTextMessage("沒有資料"))
+		return
 	}
 
-	if len(carouselContents) == 0 {
-		replyMessge = linebot.GetTextMessage("沒有資料")
-	} else {
-		replyMessge = linebot.GetFlexMessage(
-			altText,
-			linebot.GetFlexMessageCarouselContent(carouselContents...),
-		)
+	commonLogic.BatchDo(
+		linebotDomain.CAROUSEL_CONTENTS_LIMIT,
+		len(b.confirmRegistersUsers),
+		func(i, last int) bool {
+			carouselContents := []*linebotModel.FlexMessagBubbleComponent{}
+			for _, confirmRegistersUser := range b.confirmRegistersUsers[i:last] {
+				registerHandler := &register{
+					context:  b.context,
+					Name:     confirmRegistersUser.Name,
+					MemberID: confirmRegistersUser.MemberID,
+				}
+				contents, err := registerHandler.GetNotifyRegisterContents()
+				if err != nil {
+					resultErr = err
+					return false
+				}
+
+				carouselContents = append(
+					carouselContents,
+					linebot.GetFlexMessageBubbleContent(
+						linebot.GetFlexMessageBoxComponent(
+							linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+							nil,
+							linebot.GetFlexMessageBoxComponent(
+								linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+								nil,
+								contents...,
+							),
+						),
+						nil,
+					),
+				)
+			}
+
+			replyMessges = append(replyMessges, linebot.GetFlexMessage(
+				altText,
+				linebot.GetFlexMessageCarouselContent(carouselContents...),
+			))
+			return true
+		},
+	)
+	if resultErr != nil {
+		return nil, resultErr
 	}
 
 	return

@@ -15,6 +15,8 @@ func Get(lineID string) (*domain.Model, error) {
 		result, err := GetDb(lineID)
 		if err != nil {
 			return nil, err
+		} else if result == nil {
+			return nil, nil
 		}
 
 		if bs, err := json.Marshal(result); err == nil {
