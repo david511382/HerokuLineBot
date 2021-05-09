@@ -10,6 +10,7 @@ import (
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
+	linebotReqs "heroku-line-bot/service/linebot/domain/model/reqs"
 	"heroku-line-bot/storage/database"
 	"heroku-line-bot/storage/database/database/clubdb/table/memberactivity"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
@@ -285,22 +286,106 @@ func (b *GetActivities) joinActivity() error {
 func (b *GetActivities) leaveActivity() error {
 	userData := b.currentUser
 
-	deleteData := &memberactivity.MemberActivityTable{}
-	arg := dbReqs.MemberActivity{
-		MemberID:   util.GetIntP(userData.ID),
-		ActivityID: util.GetIntP(b.LeaveActivityID),
+	var peopleLimit *int16
+	activityPlace := ""
+	var activityDate *time.Time
+	activityArg := dbReqs.Activity{
+		ID: util.GetIntP(b.LeaveActivityID),
 	}
-	if dbDatas, err := database.Club.MemberActivity.ID(arg); err != nil {
+	if dbDatas, err := database.Club.Activity.DatePlacePeopleLimit(activityArg); err != nil {
 		return err
 	} else if len(dbDatas) == 0 {
 		return nil
 	} else {
 		v := dbDatas[0]
-		deleteData.ID = v.ID
+		peopleLimit = v.PeopleLimit
+		activityPlace = v.Place
+		activityDate = &v.Date
 	}
 
+	var notifyWaitingMemberID *int
+	deleteMemberActivityID := 0
+	arg := dbReqs.MemberActivity{
+		ActivityID: util.GetIntP(b.LeaveActivityID),
+	}
+	if dbDatas, err := database.Club.MemberActivity.IDMemberID(arg); err != nil {
+		return err
+	} else if len(dbDatas) == 0 {
+		return nil
+	} else {
+		sort.Slice(dbDatas, func(i, j int) bool {
+			return dbDatas[i].ID < dbDatas[j].ID
+		})
+
+		for i, v := range dbDatas {
+			if v.MemberID == userData.ID {
+				deleteMemberActivityID = v.ID
+
+				if peopleLimit != nil {
+					limitCount := int(*peopleLimit)
+					if len(dbDatas) > limitCount && i < limitCount {
+						notifyWaitingMemberID = &dbDatas[limitCount].MemberID
+					}
+				}
+
+				break
+			}
+		}
+	}
+
+	arg = dbReqs.MemberActivity{
+		ID: &deleteMemberActivityID,
+	}
 	if err := database.Club.MemberActivity.Delete(nil, arg); err != nil {
 		return err
+	}
+
+	if isNotifyWaitingPerson := notifyWaitingMemberID != nil; isNotifyWaitingPerson {
+		memberArg := dbReqs.Member{
+			ID: notifyWaitingMemberID,
+		}
+		if dbDatas, err := database.Club.Member.LineID(memberArg); err != nil {
+			return err
+		} else if len(dbDatas) > 0 {
+			lineID := dbDatas[0].LineID
+			if lineID == nil {
+				return nil
+			}
+
+			pushParam := &linebotReqs.PushMessage{
+				To: *lineID,
+				Messages: []interface{}{
+					linebot.GetFlexMessage(
+						"活動正取通知",
+						linebot.GetFlexMessageBubbleContent(
+							linebot.GetFlexMessageBoxComponent(
+								linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+								nil,
+								linebot.GetTextMessage("你已排上活動正取!!"),
+								linebot.GetTextMessage(
+									fmt.Sprintf("活動 %s(%s) %s",
+										activityDate.Format(commonLogicDomain.MONTH_DATE_SLASH_FORMAT),
+										commonLogic.WeekDayName(activityDate.Weekday()),
+										activityPlace,
+									),
+								),
+								linebot.GetTextMessage("若無法參加麻煩要退出活動喔~"),
+							),
+							nil,
+						),
+					),
+				},
+			}
+			if _, err := b.context.GetBot().PushMessage(pushParam); err != nil {
+				if err := b.context.PushAdmin(
+					[]interface{}{
+						linebot.GetTextMessage(fmt.Sprintf("leaveActivity notifyLineID:%s, %s", *lineID, err.Error())),
+					},
+				); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	return nil
