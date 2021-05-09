@@ -303,13 +303,11 @@ func (b *confirmRegister) getTemplateMessage() ([]interface{}, error) {
 		return nil, err
 	}
 	contents = append(contents,
-		linebot.GetButtonComponent(
-			0,
+		linebot.GetClassButtonComponent(
 			linebot.GetPostBackAction(
 				"確認",
 				comfirmSignlJs,
 			),
-			nil,
 		),
 	)
 

@@ -1,15 +1,27 @@
 package domain
 
-import linebotModel "heroku-line-bot/service/linebot/domain/model"
+import (
+	linebotDomain "heroku-line-bot/service/linebot/domain"
+	linebotModel "heroku-line-bot/service/linebot/domain/model"
+)
 
 var (
 	NormalButtonOption = linebotModel.ButtonOption{
-		Color: "#00dd00",
+		Color:      "#00dd00",
+		Style:      "primary",
+		Height:     linebotDomain.SM_FLEX_MESSAGE_SIZE,
+		AdjustMode: linebotDomain.SHRINK_TO_FIT_ADJUST_MODE,
 	}
 	AlertButtonOption = linebotModel.ButtonOption{
-		Color: "#dd00dd",
+		Color:      "#dd00dd",
+		Style:      "primary",
+		Height:     linebotDomain.SM_FLEX_MESSAGE_SIZE,
+		AdjustMode: linebotDomain.SHRINK_TO_FIT_ADJUST_MODE,
 	}
 	DarkButtonOption = linebotModel.ButtonOption{
-		Color: "#888888",
+		Color:      "#888888",
+		Style:      "primary",
+		Height:     linebotDomain.SM_FLEX_MESSAGE_SIZE,
+		AdjustMode: linebotDomain.SHRINK_TO_FIT_ADJUST_MODE,
 	}
 )

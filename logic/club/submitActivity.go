@@ -1,12 +1,14 @@
 package club
 
 import (
+	"fmt"
 	"heroku-line-bot/logic/club/domain"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
+	commonLogic "heroku-line-bot/logic/common"
 	lineUserLogic "heroku-line-bot/logic/redis/lineuser"
 	lineUserLogicDomain "heroku-line-bot/logic/redis/lineuser/domain"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
+	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/util"
@@ -310,180 +312,138 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 		return err
 	}
 
-	mdSize := linebotDomain.MD_FLEX_MESSAGE_SIZE
-	smallKeyValueEditComponentOption := &domain.KeyValueEditComponentOption{
-		SizeP: &mdSize,
+	bodyBox := linebot.GetFlexMessageBoxComponent(
+		linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+		nil,
+		linebot.GetFlexMessageTextComponent(
+			"結算資訊",
+			&linebotModel.FlexMessageTextComponentOption{
+				Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+				Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+				Color:  "#1DB446",
+			},
+		),
+	)
+
+	bodyBox.Contents = append(bodyBox.Contents, b.getPlaceTimeTemplate()...)
+
+	boxComponent := linebot.GetFlexMessageBoxComponent(
+		linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+		&linebotModel.FlexMessageBoxComponentOption{
+			Margin:  linebotDomain.LG_FLEX_MESSAGE_SIZE,
+			Spacing: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+		},
+	)
+	boxComponent.Contents = append(boxComponent.Contents, b.getCourtsContents()...)
+	boxComponent.Contents = append(boxComponent.Contents, b.getAttendInfoContents()...)
+	boxComponent.Contents = append(boxComponent.Contents, b.getFeeContents()...)
+
+	b.IsJoinedMember = true
+	attendComponents, err := b.getAttendComponent("社員", b.JoinedMembers)
+	if err != nil {
+		return err
 	}
-	contents := []interface{}{}
+	boxComponent.Contents = append(boxComponent.Contents, attendComponents...)
 
-	contents = append(contents,
-		GetKeyValueEditComponent(
-			"日期",
-			b.Date.Format(commonLogicDomain.DATE_FORMAT),
-			nil,
-		),
+	b.IsJoinedMember = false
+	attendComponents, err = b.getAttendComponent("自費人員", b.JoinedGuests)
+	if err != nil {
+		return err
+	}
+	boxComponent.Contents = append(boxComponent.Contents, attendComponents...)
+	bodyBox.Contents = append(bodyBox.Contents, boxComponent)
+
+	footerBox := linebot.GetFlexMessageBoxComponent(
+		linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+		nil,
 	)
-
-	contents = append(contents,
-		GetKeyValueEditComponent(
-			"地點",
-			b.Place,
-			nil,
-		),
-	)
-
-	contents = append(contents, b.getCourtsBoxComponent(nil))
 
 	if js, err := b.context.
 		GetRequireInputMode("rsl4_consume", "使用羽球數", false).
 		GetSignal(); err != nil {
 		return err
 	} else {
-		action := linebot.GetPostBackAction(
-			"使用羽球數",
-			js,
-		)
-		contents = append(contents,
-			GetKeyValueEditComponent(
-				"使用羽球數",
-				strconv.Itoa(int(b.Rsl4Consume)),
-				&domain.KeyValueEditComponentOption{
-					Action: action,
+		footerBox.Contents = append(footerBox.Contents,
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+				&linebotModel.FlexMessageBoxComponentOption{
+					BackgroundColor: "#FFBF00",
+					CornerRadius:    "12px",
 				},
+				linebot.GetButtonComponent(
+					linebot.GetPostBackAction(
+						"使用羽球數",
+						js,
+					),
+					&linebotModel.ButtonOption{
+						Color:  "#ffffff",
+						Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					},
+				),
 			),
 		)
 	}
-
-	courtFee := b.getCourtFee()
-
-	activityFee, ballFee := calculateActivity(float64(b.Rsl4Consume), courtFee)
-	ballFeeComponent := GetKeyValueEditComponent(
-		"羽球費用",
-		strconv.FormatFloat(ballFee, 'f', -1, 64),
-		nil,
-	)
-	contents = append(contents, ballFeeComponent)
-	activityFeeComponent := GetKeyValueEditComponent(
-		"活動費用",
-		strconv.FormatFloat(activityFee, 'f', -1, 64),
-		nil,
-	)
-	contents = append(contents, activityFeeComponent)
-
-	contents = append(contents,
-		GetKeyValueEditComponent(
-			"補助額",
-			strconv.Itoa(int(b.ClubSubsidy)),
-			nil,
-		),
-	)
-
-	clubMemberPeople := b.getJoinedMembersCount()
-	guestPeople := b.getJoinedGuestsCount()
-	people := clubMemberPeople + guestPeople
-	contents = append(contents,
-		GetKeyValueEditComponent(
-			"參加人數",
-			strconv.Itoa(people),
-			nil,
-		),
-	)
-
-	component := GetDoubleKeyValueComponent(
-		"社員人數",
-		strconv.Itoa(clubMemberPeople),
-		"自費人數",
-		strconv.Itoa(guestPeople),
-		nil,
-		smallKeyValueEditComponentOption,
-	)
-	contents = append(contents, component)
-
-	if people > 0 {
-		clubMemberPay, guestPay := calculatePay(people, activityFee, float64(b.ClubSubsidy))
-		clubMemberFeeComponent := GetKeyValueEditComponent(
-			"社員費用",
-			strconv.Itoa(clubMemberPay),
-			nil,
-		)
-		contents = append(contents, clubMemberFeeComponent)
-		guestFeeComponent := GetKeyValueEditComponent(
-			"自費費用",
-			strconv.Itoa(guestPay),
-			nil,
-		)
-		contents = append(contents, guestFeeComponent)
-	}
-
-	contents = append(contents, linebot.GetFlexMessageTextComponent(0, "社員:"))
-	b.IsJoinedMember = true
-	attendComponents, err := b.getAttendComponent(b.JoinedMembers)
-	if err != nil {
-		return err
-	}
-	contents = append(contents, attendComponents...)
-	contents = append(contents, linebot.GetFlexMessageTextComponent(0, "自費人員:"))
-	b.IsJoinedMember = false
-	attendComponents, err = b.getAttendComponent(b.JoinedGuests)
-	if err != nil {
-		return err
-	}
-	contents = append(contents, attendComponents...)
 
 	if js, err := b.context.
 		GetComfirmMode().
 		GetSignal(); err != nil {
 		return err
 	} else {
-		contents = append(contents,
-			linebot.GetButtonComponent(0, linebot.GetPostBackAction(
-				"提交",
-				js,
-			), nil),
+		footerBox.Contents = append(footerBox.Contents,
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+				&linebotModel.FlexMessageBoxComponentOption{
+					BackgroundColor: "#1E90FF",
+					CornerRadius:    "12px",
+				},
+				linebot.GetButtonComponent(
+					linebot.GetPostBackAction(
+						"提交",
+						js,
+					),
+					&linebotModel.ButtonOption{
+						Color:  "#ffffff",
+						Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					},
+				),
+			),
 		)
 	}
 
-	replyMessge := linebot.GetFlexMessage(
+	replyMessage := linebot.GetFlexMessage(
 		"查看活動",
 		linebot.GetFlexMessageBubbleContent(
-			linebot.GetFlexMessageBoxComponent(
-				linebotDomain.VERTICAL_MESSAGE_LAYOUT,
-				nil,
-				contents...,
-			),
-			nil,
+			bodyBox,
+			&linebotModel.FlexMessagBubbleComponentOption{
+				Footer: footerBox,
+			},
 		),
 	)
-	replyMessges := []interface{}{
-		replyMessge,
+	replyMessages := []interface{}{
+		replyMessage,
 	}
-	if err := b.context.Reply(replyMessges); err != nil {
+	if err := b.context.Reply(replyMessages); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (b *submitActivity) getAttendComponent(members []*submitActivityJoinedMembers) ([]interface{}, error) {
-	memberComponents := []interface{}{}
-	if len(members) == 0 {
-		memberComponents = append(memberComponents,
-			linebot.GetFlexMessageBoxComponent(
-				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
-				nil,
-				linebot.GetFillerComponent(),
-				linebot.GetFlexMessageTextComponent(0, "無"),
-			),
-		)
-	}
+func (b *submitActivity) getAttendComponent(text string, members []*submitActivityJoinedMembers) ([]interface{}, error) {
+	memberCount := 0
+	memberBoxs := make([]interface{}, 0)
 	for id, member := range members {
-		contents := []interface{}{
-			linebot.GetFillerComponent(),
-			linebot.GetFlexMessageTextComponent(0, member.Name),
+		var attendAction *linebotModel.PostBackAction
+		attendButtonOption := linebotModel.ButtonOption{
+			Color:  domain.DarkButtonOption.Color,
+			Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
 		}
-		attendButtonOption := domain.DarkButtonOption
 		if member.IsAttend {
-			attendButtonOption = domain.NormalButtonOption
+			memberCount++
+			attendButtonOption = linebotModel.ButtonOption{
+				Color:  "#ffffff",
+				Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+			}
 		}
 		pathValueMap := map[string]interface{}{
 			"ICmdLogic.attend_index":           id,
@@ -494,21 +454,22 @@ func (b *submitActivity) getAttendComponent(members []*submitActivityJoinedMembe
 			GetSignal(); err != nil {
 			return nil, err
 		} else {
-			action := linebot.GetPostBackAction(
+			attendAction = linebot.GetPostBackAction(
 				"簽到",
 				js,
 			)
-			contents = append(contents,
-				linebot.GetButtonComponent(
-					0,
-					action,
-					&attendButtonOption,
-				),
-			)
 		}
-		payButtonOption := domain.DarkButtonOption
+
+		var payAction *linebotModel.PostBackAction
+		payButtonOption := linebotModel.ButtonOption{
+			Color:  domain.DarkButtonOption.Color,
+			Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+		}
 		if member.IsPaid {
-			payButtonOption = domain.NormalButtonOption
+			payButtonOption = linebotModel.ButtonOption{
+				Color:  "#ffffff",
+				Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+			}
 		}
 		pathValueMap = map[string]interface{}{
 			"ICmdLogic.is_joined_member_index": b.IsJoinedMember,
@@ -519,26 +480,350 @@ func (b *submitActivity) getAttendComponent(members []*submitActivityJoinedMembe
 			GetSignal(); err != nil {
 			return nil, err
 		} else {
-			action := linebot.GetPostBackAction(
+			payAction = linebot.GetPostBackAction(
 				"收費",
 				js,
 			)
-			contents = append(contents,
-				linebot.GetButtonComponent(
-					0,
-					action,
-					&payButtonOption,
-				),
-			)
 		}
-		memberComponents = append(memberComponents,
+
+		contents := []interface{}{
+			linebot.GetFlexMessageTextComponent(
+				member.Name,
+				&linebotModel.FlexMessageTextComponentOption{
+					Size: linebotDomain.XS_FLEX_MESSAGE_SIZE,
+				},
+			),
 			linebot.GetFlexMessageBoxComponent(
 				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
-				nil,
+				&linebotModel.FlexMessageBoxComponentOption{
+					JustifyContent: linebotDomain.FLEX_END_JUSTIFY_CONTENT,
+					Spacing:        linebotDomain.XS_FLEX_MESSAGE_SIZE,
+				},
+				linebot.GetFlexMessageBoxComponent(
+					linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+					&linebotModel.FlexMessageBoxComponentOption{
+						BackgroundColor: "#00cc99",
+						CornerRadius:    "12px",
+					},
+					linebot.GetButtonComponent(
+						attendAction,
+						&attendButtonOption,
+					),
+				),
+			),
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+				&linebotModel.FlexMessageBoxComponentOption{
+					JustifyContent: linebotDomain.FLEX_END_JUSTIFY_CONTENT,
+					Spacing:        linebotDomain.XS_FLEX_MESSAGE_SIZE,
+				},
+				linebot.GetFlexMessageBoxComponent(
+					linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+					&linebotModel.FlexMessageBoxComponentOption{
+						BackgroundColor: "#00cc99",
+						CornerRadius:    "12px",
+					},
+					linebot.GetButtonComponent(
+						payAction,
+						&payButtonOption,
+					),
+				),
+			),
+		}
+
+		memberBoxs = append(memberBoxs,
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+				&linebotModel.FlexMessageBoxComponentOption{
+					Margin:     linebotDomain.MD_FLEX_MESSAGE_SIZE,
+					AlignItems: linebotDomain.CENTER_ALIGN_ITEMS,
+				},
 				contents...,
 			),
 		)
 	}
 
-	return memberComponents, nil
+	result := []interface{}{
+		linebot.GetFlexMessageBoxComponent(
+			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+			&linebotModel.FlexMessageBoxComponentOption{
+				Margin: linebotDomain.XXL_FLEX_MESSAGE_SIZE,
+			},
+			linebot.GetFlexMessageTextComponent(
+				text,
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:   linebotDomain.MD_FLEX_MESSAGE_SIZE,
+					Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+				},
+			),
+			linebot.GetFlexMessageTextComponent(
+				fmt.Sprintf("%d人", memberCount),
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+					Align:  linebotDomain.END_Align,
+				},
+			),
+		),
+		linebot.GetSeparatorComponent(&linebotModel.FlexMessageSeparatorComponentOption{
+			Margin: linebotDomain.XS_FLEX_MESSAGE_SIZE,
+		}),
+	}
+
+	if len(memberBoxs) > 0 {
+		result = append(result, linebot.GetFlexMessageBoxComponent(
+			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+			&linebotModel.FlexMessageBoxComponentOption{
+				Margin:  linebotDomain.LG_FLEX_MESSAGE_SIZE,
+				Spacing: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+			},
+			memberBoxs...,
+		))
+	}
+
+	return result, nil
+}
+
+func (b *submitActivity) getAttendInfoContents() []interface{} {
+	clubMemberPeople := b.getJoinedMembersCount()
+	guestPeople := b.getJoinedGuestsCount()
+	people := clubMemberPeople + guestPeople
+
+	return []interface{}{
+		linebot.GetFlexMessageBoxComponent(
+			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+			&linebotModel.FlexMessageBoxComponentOption{
+				Margin: linebotDomain.XXL_FLEX_MESSAGE_SIZE,
+			},
+			linebot.GetFlexMessageTextComponent(
+				"參加人數",
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:   linebotDomain.MD_FLEX_MESSAGE_SIZE,
+					Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+					Color:  "#555555",
+				},
+			),
+			linebot.GetFlexMessageTextComponent(
+				fmt.Sprintf("%d人", people),
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+					Align:  linebotDomain.END_Align,
+				},
+			),
+		),
+		linebot.GetSeparatorComponent(&linebotModel.FlexMessageSeparatorComponentOption{
+			Margin: linebotDomain.XS_FLEX_MESSAGE_SIZE,
+		}),
+		linebot.GetFlexMessageBoxComponent(
+			linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+			&linebotModel.FlexMessageBoxComponentOption{
+				Margin:  linebotDomain.LG_FLEX_MESSAGE_SIZE,
+				Spacing: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+			},
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+				nil,
+				linebot.GetFlexMessageTextComponent(
+					"社員",
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color: "#555555",
+					},
+				),
+				linebot.GetFlexMessageTextComponent(
+					fmt.Sprintf("%d人", clubMemberPeople),
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Align: linebotDomain.END_Align,
+						Color: "#111111",
+					},
+				),
+			),
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+				nil,
+				linebot.GetFlexMessageTextComponent(
+					"自費人員",
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color: "#555555",
+					},
+				),
+				linebot.GetFlexMessageTextComponent(
+					fmt.Sprintf("%d人", guestPeople),
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Align: linebotDomain.END_Align,
+						Color: "#111111",
+					},
+				),
+			),
+		),
+	}
+}
+
+func (b *submitActivity) getFeeContents() []interface{} {
+	courtFee := b.getCourtFee()
+	activityFee, ballFee := calculateActivity(float64(b.Rsl4Consume), courtFee)
+	clubMemberPeople := b.getJoinedMembersCount()
+	guestPeople := b.getJoinedGuestsCount()
+	people := clubMemberPeople + guestPeople
+	clubSubsidy := float64(b.ClubSubsidy)
+	shareMoney := commonLogic.FloatMinus(activityFee, clubSubsidy)
+
+	result := []interface{}{
+		linebot.GetFlexMessageBoxComponent(
+			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+			&linebotModel.FlexMessageBoxComponentOption{
+				Margin: linebotDomain.XXL_FLEX_MESSAGE_SIZE,
+			},
+			linebot.GetFlexMessageTextComponent(
+				"費用",
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:   linebotDomain.MD_FLEX_MESSAGE_SIZE,
+					Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+				},
+			),
+			linebot.GetFlexMessageTextComponent(
+				fmt.Sprintf("$%s", strconv.FormatFloat(shareMoney, 'f', 0, 64)),
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+					Align:  linebotDomain.END_Align,
+				},
+			),
+		),
+		linebot.GetSeparatorComponent(&linebotModel.FlexMessageSeparatorComponentOption{
+			Margin: linebotDomain.XS_FLEX_MESSAGE_SIZE,
+		}),
+		linebot.GetFlexMessageBoxComponent(
+			linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+			&linebotModel.FlexMessageBoxComponentOption{
+				Margin:  linebotDomain.LG_FLEX_MESSAGE_SIZE,
+				Spacing: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+			},
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+				nil,
+				linebot.GetFlexMessageTextComponent(
+					"羽球費用",
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color: "#555555",
+					},
+				),
+				linebot.GetFlexMessageTextComponent(
+					fmt.Sprintf("%d顆", int(b.Rsl4Consume)),
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Align: linebotDomain.CENTER_Align,
+						Color: "#111111",
+					},
+				),
+				linebot.GetFlexMessageTextComponent(
+					fmt.Sprintf("$%s", strconv.FormatFloat(ballFee, 'f', -1, 64)),
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Align: linebotDomain.END_Align,
+						Color: "#111111",
+					},
+				),
+			),
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+				nil,
+				linebot.GetFlexMessageTextComponent(
+					"場地費用",
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color: "#555555",
+					},
+				),
+				linebot.GetFlexMessageTextComponent(
+					fmt.Sprintf("$%s", strconv.FormatFloat(courtFee, 'f', -1, 64)),
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Align: linebotDomain.END_Align,
+						Color: "#111111",
+					},
+				),
+			),
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+				nil,
+				linebot.GetFlexMessageTextComponent(
+					"補助額",
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color: "#555555",
+					},
+				),
+				linebot.GetFlexMessageTextComponent(
+					fmt.Sprintf("$-%d", b.ClubSubsidy),
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Align: linebotDomain.END_Align,
+						Color: "#111111",
+					},
+				),
+			),
+		),
+	}
+
+	if people > 0 {
+		clubMemberPay, guestPay := calculatePay(people, activityFee, clubSubsidy)
+		result = append(
+			result,
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+				&linebotModel.FlexMessageBoxComponentOption{
+					Margin:  linebotDomain.LG_FLEX_MESSAGE_SIZE,
+					Spacing: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+				},
+				linebot.GetFlexMessageBoxComponent(
+					linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+					nil,
+					linebot.GetFlexMessageTextComponent(
+						"社員費用",
+						&linebotModel.FlexMessageTextComponentOption{
+							Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+							Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+							Color:  "#555555",
+						},
+					),
+					linebot.GetFlexMessageTextComponent(
+						fmt.Sprintf("$%d/人", clubMemberPay),
+						&linebotModel.FlexMessageTextComponentOption{
+							Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+							Align: linebotDomain.END_Align,
+							Color: "#111111",
+						},
+					),
+				),
+				linebot.GetFlexMessageBoxComponent(
+					linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+					nil,
+					linebot.GetFlexMessageTextComponent(
+						"自費費用",
+						&linebotModel.FlexMessageTextComponentOption{
+							Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+							Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+							Color:  "#555555",
+						},
+					),
+					linebot.GetFlexMessageTextComponent(
+						fmt.Sprintf("$%d/人", guestPay),
+						&linebotModel.FlexMessageTextComponentOption{
+							Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+							Align: linebotDomain.END_Align,
+							Color: "#111111",
+						},
+					),
+				),
+			),
+		)
+	}
+
+	return result
 }

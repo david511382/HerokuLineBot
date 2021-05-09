@@ -75,7 +75,6 @@ func (b *CmdHandler) GetInputTemplate(requireRawParamAttr string) interface{} {
 					JustifyContent: linebotDomain.SPACE_EVENLY_JUSTIFY_CONTENT,
 				},
 				linebot.GetButtonComponent(
-					0,
 					linebot.GetPostBackAction(
 						"確認",
 						cancelRequireInputJs,

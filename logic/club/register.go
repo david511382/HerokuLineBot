@@ -149,7 +149,6 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 				return err
 			}
 			comfirmButtonComponent := linebot.GetButtonComponent(
-				0,
 				linebot.GetPostBackAction(
 					"確認",
 					checkCompanyIDJs,
@@ -241,7 +240,6 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 			}
 
 			comfirmButton := linebot.GetButtonComponent(
-				0,
 				linebot.GetPostBackAction(
 					"確認",
 					comfirmInputJs,
@@ -254,14 +252,12 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 
 		for _, clubMemberDepartment := range domain.ClubMemberDepartments {
 			departmentButton := linebot.GetButtonComponent(
-				0,
 				linebot.GetMessageAction(string(clubMemberDepartment)),
 				&domain.NormalButtonOption,
 			)
 			inputButtons = append(inputButtons, departmentButton)
 		}
 		noDepartmentButton := linebot.GetButtonComponent(
-			0,
 			linebot.GetMessageAction("無"),
 			&domain.NormalButtonOption,
 		)
@@ -312,7 +308,6 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 			return err
 		}
 		comfirmButton := linebot.GetButtonComponent(
-			0,
 			linebot.GetPostBackAction(
 				"確認",
 				requireDepartmentInputJs,
@@ -676,13 +671,11 @@ func (b *register) GetNotifyRegisterContents() ([]interface{}, error) {
 		return nil, err
 	} else {
 		contents = append(contents,
-			linebot.GetButtonComponent(
-				0,
+			linebot.GetClassButtonComponent(
 				linebot.GetPostBackAction(
 					"入社",
 					js,
 				),
-				nil,
 			),
 		)
 	}

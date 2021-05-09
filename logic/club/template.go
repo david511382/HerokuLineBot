@@ -47,16 +47,26 @@ func GetKeyValueEditComponent(name, value string, option *domain.KeyValueEditCom
 
 	contents = append(contents,
 		linebot.GetFlexMessageTextComponent(
-			5,
 			"",
-			linebot.GetFlexMessageTextComponentSpan(name, size, linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT),
-			linebot.GetFlexMessageTextComponentSpan(" : ", size, linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT),
-			linebot.GetFlexMessageTextComponentSpan(value, valueSize, linebotDomain.REGULAR_FLEX_MESSAGE_WEIGHT),
+			&linebotModel.FlexMessageTextComponentOption{
+				Flex: 5,
+				Contents: []*linebotModel.FlexMessageTextComponentSpan{
+					linebot.GetFlexMessageTextComponentSpan(name, size, linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT),
+					linebot.GetFlexMessageTextComponentSpan(" : ", size, linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT),
+					linebot.GetFlexMessageTextComponentSpan(value, valueSize, linebotDomain.REGULAR_FLEX_MESSAGE_WEIGHT),
+				},
+			},
 		),
 	)
 
 	if option != nil && option.Action != nil {
-		contents = append(contents, linebot.GetButtonComponent(2, option.Action, &domain.NormalButtonOption))
+		contents = append(contents, linebot.GetButtonComponent(
+			option.Action,
+			&linebotModel.ButtonOption{
+				Flex:  2,
+				Color: "#00dd00",
+			},
+		))
 	}
 
 	return linebot.GetFlexMessageBoxComponent(
@@ -70,7 +80,7 @@ func GetComfirmComponent(leftAction, rightAction interface{}) *model.FlexMessage
 	return linebot.GetFlexMessageBoxComponent(
 		linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
 		nil,
-		linebot.GetButtonComponent(0, leftAction, &domain.NormalButtonOption),
-		linebot.GetButtonComponent(0, rightAction, &domain.NormalButtonOption),
+		linebot.GetButtonComponent(leftAction, &domain.NormalButtonOption),
+		linebot.GetButtonComponent(rightAction, &domain.NormalButtonOption),
 	)
 }

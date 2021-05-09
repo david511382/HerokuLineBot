@@ -52,12 +52,9 @@ func GetFlexMessageBoxComponent(layout domain.MessageLayout, option *model.FlexM
 		Type: &model.Type{
 			Type: "box",
 		},
-		Layout:   layout,
-		Contents: contents,
-	}
-
-	if option != nil {
-		result.FlexMessageBoxComponentOption = option
+		Layout:                        layout,
+		Contents:                      contents,
+		FlexMessageBoxComponentOption: option,
 	}
 
 	return result
@@ -98,53 +95,63 @@ func GetTimeAction(text, data, max, min string, mode domain.TimeActionMode) *mod
 	}
 }
 
-func GetButtonComponent(flex int, action interface{}, option *model.ButtonOption) *model.Button {
+func GetButtonComponent(action interface{}, option *model.ButtonOption) *model.Button {
 	result := &model.Button{
 		Type: &model.Type{
 			Type: "button",
 		},
 		ButtonOption: option,
 		Action:       action,
-		Style:        "primary",
-		Height:       domain.SM_FLEX_MESSAGE_SIZE,
-		Flex:         flex,
-		AdjustMode:   domain.SHRINK_TO_FIT_ADJUST_MODE,
 	}
 
 	return result
 }
 
-func GetFlexMessageTextComponent(flex int, text string, contents ...*model.FlexMessageTextComponentSpan) *model.FlexMessageTextComponent {
+func GetClassButtonComponent(action interface{}) *model.Button {
+	option := &model.ButtonOption{
+		Style:      "primary",
+		Height:     domain.SM_FLEX_MESSAGE_SIZE,
+		AdjustMode: domain.SHRINK_TO_FIT_ADJUST_MODE,
+	}
+	result := &model.Button{
+		Type: &model.Type{
+			Type: "button",
+		},
+		ButtonOption: option,
+		Action:       action,
+	}
+
+	return result
+}
+
+func GetFlexMessageTextComponent(text string, option *model.FlexMessageTextComponentOption) *model.FlexMessageTextComponent {
 	return &model.FlexMessageTextComponent{
-		TextMessage: *GetTextMessage(text),
-		Contents:    contents,
-		Flex:        flex,
-		AdjustMode:  domain.SHRINK_TO_FIT_ADJUST_MODE,
-		Align:       "start",
+		TextMessage:                    *GetTextMessage(text),
+		FlexMessageTextComponentOption: option,
+		//	AdjustMode:                     domain.SHRINK_TO_FIT_ADJUST_MODE,
+		//	Align:                          "start",
 	}
 }
 
 func GetFlexMessageTextComponentSpan(text string, size domain.MessageSize, weight domain.MessageWeight) *model.FlexMessageTextComponentSpan {
 	return &model.FlexMessageTextComponentSpan{
-		Type: &model.Type{
-			Type: "span",
+		TextMessage: model.TextMessage{
+			Type: &model.Type{
+				Type: "span",
+			},
+			Text: text,
 		},
-		Text:   text,
 		Size:   size,
 		Weight: weight,
 	}
 }
 
-func GetSeparatorComponent(colorP *string) *model.FlexMessageSeparatorComponent {
-	color := "#000000"
-	if colorP != nil {
-		color = *colorP
-	}
+func GetSeparatorComponent(option *model.FlexMessageSeparatorComponentOption) *model.FlexMessageSeparatorComponent {
 	return &model.FlexMessageSeparatorComponent{
 		Type: &model.Type{
 			Type: "separator",
 		},
-		Color: color,
+		FlexMessageSeparatorComponentOption: option,
 	}
 }
 
