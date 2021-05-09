@@ -19,10 +19,9 @@ func (b *ClubLineBot) handleFollowEvent(event *lineBotModel.FollowEvent) error {
 						linebot.GetFlexMessageBoxComponent(
 							domain.VERTICAL_MESSAGE_LAYOUT,
 							nil,
-							linebot.GetFlexMessageTextComponent(0, "麻煩註冊，註冊後就能使用服務喔"),
-							linebot.GetButtonComponent(0,
+							linebot.GetFlexMessageTextComponent("麻煩註冊，註冊後就能使用服務喔", nil),
+							linebot.GetClassButtonComponent(
 								linebot.GetMessageAction(string(clubLogicDomain.REGISTER_TEXT_CMD)),
-								nil,
 							),
 						),
 						nil,

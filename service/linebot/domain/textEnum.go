@@ -23,15 +23,26 @@ const (
 type MessageSize string
 
 const (
-	XL_FLEX_MESSAGE_SIZE MessageSize = "xl"
-	MD_FLEX_MESSAGE_SIZE MessageSize = "md"
-	SM_FLEX_MESSAGE_SIZE MessageSize = "sm"
+	LG_FLEX_MESSAGE_SIZE  MessageSize = "lg"
+	XXL_FLEX_MESSAGE_SIZE MessageSize = "xxl"
+	XL_FLEX_MESSAGE_SIZE  MessageSize = "xl"
+	MD_FLEX_MESSAGE_SIZE  MessageSize = "md"
+	XS_FLEX_MESSAGE_SIZE  MessageSize = "xs"
+	SM_FLEX_MESSAGE_SIZE  MessageSize = "sm"
 )
 
 type AdjustMode string
 
 const (
 	SHRINK_TO_FIT_ADJUST_MODE AdjustMode = "shrink-to-fit"
+)
+
+type Align string
+
+const (
+	START_Align  Align = "start"
+	END_Align    Align = "end"
+	CENTER_Align Align = "center"
 )
 
 type TimeActionMode string

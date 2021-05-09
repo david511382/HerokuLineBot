@@ -21,17 +21,16 @@ func (t MemberActivity) ID(arg reqs.MemberActivity) ([]*resp.ID, error) {
 	return result, nil
 }
 
-func (t MemberActivity) IDMemberIDMemberName(arg reqs.MemberActivity) ([]*resp.IDMemberIDMemberName, error) {
+func (t MemberActivity) IDMemberID(arg reqs.MemberActivity) ([]*resp.IDMemberID, error) {
 	dp := t.DbModel()
 	dp = t.whereArg(dp, arg).Select(
 		`
 		id AS id,
-		member_id AS member_id,
-		member_name AS member_name
+		member_id AS member_id
 		`,
 	)
 
-	result := make([]*resp.IDMemberIDMemberName, 0)
+	result := make([]*resp.IDMemberID, 0)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}
@@ -39,18 +38,17 @@ func (t MemberActivity) IDMemberIDMemberName(arg reqs.MemberActivity) ([]*resp.I
 	return result, nil
 }
 
-func (t MemberActivity) IDMemberIDActivityIDMemberName(arg reqs.MemberActivity) ([]*resp.IDMemberIDActivityIDMemberName, error) {
+func (t MemberActivity) IDMemberIDActivityID(arg reqs.MemberActivity) ([]*resp.IDMemberIDActivityID, error) {
 	dp := t.DbModel()
 	dp = t.whereArg(dp, arg).Select(
 		`
 		id AS id,
 		member_id AS member_id,
-		activity_id AS activity_id,
-		member_name AS member_name
+		activity_id AS activity_id
 		`,
 	)
 
-	result := make([]*resp.IDMemberIDActivityIDMemberName, 0)
+	result := make([]*resp.IDMemberIDActivityID, 0)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}

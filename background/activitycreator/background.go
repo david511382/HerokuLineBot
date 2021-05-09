@@ -119,7 +119,10 @@ func (b *BackGround) Run(runTime time.Time) error {
 	}
 
 	getActivityHandler := &clubLogic.GetActivities{}
-	pushMessage := getActivityHandler.GetActivitiesMessage("開放活動報名", false, false)
+	pushMessage, err := getActivityHandler.GetActivitiesMessage("開放活動報名", false, false)
+	if err != nil {
+		return err
+	}
 	pushMessages := []interface{}{
 		linebot.GetTextMessage("活動開放報名，請私下與我報名"),
 		pushMessage,

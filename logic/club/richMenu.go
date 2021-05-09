@@ -71,7 +71,6 @@ func (b *richMenu) GetInputTemplate(requireRawParamAttr string) interface{} {
 			} else {
 				action := linebot.GetPostBackAction(strconv.Itoa(int(role)), js)
 				button := linebot.GetButtonComponent(
-					0,
 					action,
 					&domain.NormalButtonOption,
 				)
@@ -209,7 +208,6 @@ func (b *richMenu) Do(text string) (resultErr error) {
 			} else {
 				action := linebot.GetPostBackAction(string(method), js)
 				departmentButton := linebot.GetButtonComponent(
-					0,
 					action,
 					&domain.NormalButtonOption,
 				)

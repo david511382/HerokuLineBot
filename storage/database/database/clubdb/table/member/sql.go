@@ -21,6 +21,22 @@ func (t Member) Role(arg reqs.Member) ([]*resp.Role, error) {
 	return result, nil
 }
 
+func (t Member) LineID(arg reqs.Member) ([]*resp.LineID, error) {
+	dp := t.DbModel()
+	dp = t.whereArg(dp, arg).Select(
+		`
+		line_id AS line_id
+		`,
+	)
+
+	result := make([]*resp.LineID, 0)
+	if err := dp.Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (t Member) NameLineID(arg reqs.Member) ([]*resp.NameLineID, error) {
 	dp := t.DbModel()
 	dp = t.whereArg(dp, arg).Select(
@@ -31,6 +47,24 @@ func (t Member) NameLineID(arg reqs.Member) ([]*resp.NameLineID, error) {
 	)
 
 	result := make([]*resp.NameLineID, 0)
+	if err := dp.Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (t Member) IDNameLineID(arg reqs.Member) ([]*resp.IDNameLineID, error) {
+	dp := t.DbModel()
+	dp = t.whereArg(dp, arg).Select(
+		`
+		id AS id,
+		name AS name,
+		line_id AS line_id
+		`,
+	)
+
+	result := make([]*resp.IDNameLineID, 0)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}
@@ -83,6 +117,25 @@ func (t Member) IDDepartment(arg reqs.Member) ([]*resp.IDDepartment, error) {
 	)
 
 	result := make([]*resp.IDDepartment, 0)
+	if err := dp.Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (t Member) IDNameDepartmentJoinDate(arg reqs.Member) ([]*resp.IDNameDepartmentJoinDate, error) {
+	dp := t.DbModel()
+	dp = t.whereArg(dp, arg).Select(
+		`
+		id AS id,
+		name AS name,
+		department AS department,
+		join_date AS join_date
+		`,
+	)
+
+	result := make([]*resp.IDNameDepartmentJoinDate, 0)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}

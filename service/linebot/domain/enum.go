@@ -20,10 +20,12 @@ type JustifyContent string
 
 var (
 	SPACE_EVENLY_JUSTIFY_CONTENT JustifyContent = "space-evenly"
+	FLEX_END_JUSTIFY_CONTENT     JustifyContent = "flex-end"
 )
 
 type AlignItems string
 
 var (
 	FLEX_START_ALIGN_ITEMS AlignItems = "flex-start"
+	CENTER_ALIGN_ITEMS     AlignItems = "center"
 )

@@ -9,12 +9,7 @@ type IDMemberID struct {
 	MemberID int
 }
 
-type IDMemberIDMemberName struct {
+type IDMemberIDActivityID struct {
 	IDMemberID
-	MemberName string
-}
-
-type IDMemberIDActivityIDMemberName struct {
-	IDMemberIDMemberName
 	ActivityID int
 }

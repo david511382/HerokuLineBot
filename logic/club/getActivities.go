@@ -10,6 +10,7 @@ import (
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
+	linebotReqs "heroku-line-bot/service/linebot/domain/model/reqs"
 	"heroku-line-bot/storage/database"
 	"heroku-line-bot/storage/database/database/clubdb/table/memberactivity"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
@@ -84,9 +85,32 @@ func (b *GetActivities) init() error {
 		memberActivityArg := dbReqs.MemberActivity{
 			ActivityIDs: activityIDs,
 		}
-		if dbDatas, err := database.Club.MemberActivity.IDMemberIDActivityIDMemberName(memberActivityArg); err != nil {
+		if dbDatas, err := database.Club.MemberActivity.IDMemberIDActivityID(memberActivityArg); err != nil {
 			return err
-		} else {
+		} else if len(dbDatas) > 0 {
+			memberIDs := make([]int, 0)
+			for _, v := range dbDatas {
+				memberIDs = append(memberIDs, v.MemberID)
+			}
+			type lineName struct {
+				lineID *string
+				name   string
+			}
+			memberIDNameMap := make(map[int]lineName)
+			memberArg := dbReqs.Member{
+				IDs: memberIDs,
+			}
+			if dbDatas, err := database.Club.Member.IDNameLineID(memberArg); err != nil {
+				return err
+			} else {
+				for _, v := range dbDatas {
+					memberIDNameMap[v.ID] = lineName{
+						lineID: v.LineID,
+						name:   v.Name,
+					}
+				}
+			}
+
 			sort.Slice(dbDatas, func(i, j int) bool {
 				return dbDatas[i].ID < dbDatas[j].ID
 			})
@@ -97,7 +121,7 @@ func (b *GetActivities) init() error {
 				}
 				activityIDMap[activityID] = append(activityIDMap[activityID], &getActivitiesActivityJoinedMembers{
 					ID:   v.MemberID,
-					Name: v.MemberName,
+					Name: memberIDNameMap[v.MemberID].name,
 				})
 			}
 		}
@@ -156,9 +180,25 @@ func (b *GetActivities) listMembers() error {
 	memberActivityArg := dbReqs.MemberActivity{
 		ActivityID: &b.ListMembersActivityID,
 	}
-	if dbDatas, err := database.Club.MemberActivity.IDMemberIDMemberName(memberActivityArg); err != nil {
+	if dbDatas, err := database.Club.MemberActivity.IDMemberID(memberActivityArg); err != nil {
 		return err
 	} else {
+		memberIDs := make([]int, 0)
+		for _, v := range dbDatas {
+			memberIDs = append(memberIDs, v.MemberID)
+		}
+		memberIDNameMap := make(map[int]string)
+		memberArg := dbReqs.Member{
+			IDs: memberIDs,
+		}
+		if dbDatas, err := database.Club.Member.IDName(memberArg); err != nil {
+			return err
+		} else {
+			for _, v := range dbDatas {
+				memberIDNameMap[v.ID] = v.Name
+			}
+		}
+
 		keyValueEditComponentOption := &domain.KeyValueEditComponentOption{
 			Indent: util.GetIntP(1),
 		}
@@ -171,7 +211,7 @@ func (b *GetActivities) listMembers() error {
 			memberComponents = append(memberComponents,
 				GetKeyValueEditComponent(
 					idStr,
-					v.MemberName,
+					memberIDNameMap[v.MemberID],
 					keyValueEditComponentOption,
 				),
 			)
@@ -198,10 +238,10 @@ func (b *GetActivities) listMembers() error {
 
 	isUsingPeopleLimit := peopleLimit != nil
 	joinedCount, _ := getJoinCount(len(memberComponents), peopleLimit)
-	contents = append(contents, linebot.GetFlexMessageTextComponent(0, "參加人員:"))
+	contents = append(contents, linebot.GetFlexMessageTextComponent("參加人員:", nil))
 	contents = append(contents, memberComponents[:joinedCount]...)
 	if isUsingPeopleLimit {
-		contents = append(contents, linebot.GetFlexMessageTextComponent(0, "候補人員:"))
+		contents = append(contents, linebot.GetFlexMessageTextComponent("候補人員:", nil))
 		contents = append(contents, memberComponents[joinedCount:]...)
 	}
 
@@ -234,7 +274,6 @@ func (b *GetActivities) joinActivity() error {
 	insertData := &memberactivity.MemberActivityTable{
 		ActivityID: activityID,
 		MemberID:   uID,
-		MemberName: userData.Name,
 		IsAttend:   false,
 	}
 	if err := database.Club.MemberActivity.Insert(nil, insertData); err != nil && !database.IsUniqErr(err) {
@@ -247,22 +286,106 @@ func (b *GetActivities) joinActivity() error {
 func (b *GetActivities) leaveActivity() error {
 	userData := b.currentUser
 
-	deleteData := &memberactivity.MemberActivityTable{}
-	arg := dbReqs.MemberActivity{
-		MemberID:   util.GetIntP(userData.ID),
-		ActivityID: util.GetIntP(b.LeaveActivityID),
+	var peopleLimit *int16
+	activityPlace := ""
+	var activityDate *time.Time
+	activityArg := dbReqs.Activity{
+		ID: util.GetIntP(b.LeaveActivityID),
 	}
-	if dbDatas, err := database.Club.MemberActivity.ID(arg); err != nil {
+	if dbDatas, err := database.Club.Activity.DatePlacePeopleLimit(activityArg); err != nil {
 		return err
 	} else if len(dbDatas) == 0 {
 		return nil
 	} else {
 		v := dbDatas[0]
-		deleteData.ID = v.ID
+		peopleLimit = v.PeopleLimit
+		activityPlace = v.Place
+		activityDate = &v.Date
 	}
 
+	var notifyWaitingMemberID *int
+	deleteMemberActivityID := 0
+	arg := dbReqs.MemberActivity{
+		ActivityID: util.GetIntP(b.LeaveActivityID),
+	}
+	if dbDatas, err := database.Club.MemberActivity.IDMemberID(arg); err != nil {
+		return err
+	} else if len(dbDatas) == 0 {
+		return nil
+	} else {
+		sort.Slice(dbDatas, func(i, j int) bool {
+			return dbDatas[i].ID < dbDatas[j].ID
+		})
+
+		for i, v := range dbDatas {
+			if v.MemberID == userData.ID {
+				deleteMemberActivityID = v.ID
+
+				if peopleLimit != nil {
+					limitCount := int(*peopleLimit)
+					if len(dbDatas) > limitCount && i < limitCount {
+						notifyWaitingMemberID = &dbDatas[limitCount].MemberID
+					}
+				}
+
+				break
+			}
+		}
+	}
+
+	arg = dbReqs.MemberActivity{
+		ID: &deleteMemberActivityID,
+	}
 	if err := database.Club.MemberActivity.Delete(nil, arg); err != nil {
 		return err
+	}
+
+	if isNotifyWaitingPerson := notifyWaitingMemberID != nil; isNotifyWaitingPerson {
+		memberArg := dbReqs.Member{
+			ID: notifyWaitingMemberID,
+		}
+		if dbDatas, err := database.Club.Member.LineID(memberArg); err != nil {
+			return err
+		} else if len(dbDatas) > 0 {
+			lineID := dbDatas[0].LineID
+			if lineID == nil {
+				return nil
+			}
+
+			pushParam := &linebotReqs.PushMessage{
+				To: *lineID,
+				Messages: []interface{}{
+					linebot.GetFlexMessage(
+						"活動正取通知",
+						linebot.GetFlexMessageBubbleContent(
+							linebot.GetFlexMessageBoxComponent(
+								linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+								nil,
+								linebot.GetTextMessage("你已排上活動正取!!"),
+								linebot.GetTextMessage(
+									fmt.Sprintf("活動 %s(%s) %s",
+										activityDate.Format(commonLogicDomain.MONTH_DATE_SLASH_FORMAT),
+										commonLogic.WeekDayName(activityDate.Weekday()),
+										activityPlace,
+									),
+								),
+								linebot.GetTextMessage("若無法參加麻煩要退出活動喔~"),
+							),
+							nil,
+						),
+					),
+				},
+			}
+			if _, err := b.context.GetBot().PushMessage(pushParam); err != nil {
+				if err := b.context.PushAdmin(
+					[]interface{}{
+						linebot.GetTextMessage(fmt.Sprintf("leaveActivity notifyLineID:%s, %s", *lineID, err.Error())),
+					},
+				); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	return nil
@@ -367,7 +490,11 @@ func (b *GetActivities) Do(text string) (resultErr error) {
 		}
 	}
 
-	replyMessge := b.GetActivitiesMessage("查看活動", true, true)
+	replyMessge, err := b.GetActivitiesMessage("查看活動", true, true)
+	if err != nil {
+		return err
+	}
+
 	replyMessges := []interface{}{
 		replyMessge,
 	}
@@ -378,224 +505,19 @@ func (b *GetActivities) Do(text string) (resultErr error) {
 	return nil
 }
 
-func (b *GetActivities) GetActivitiesMessage(altText string, isShowCurrentMember, isShowActionButton bool) (replyMessge interface{}) {
+func (b *GetActivities) GetActivitiesMessage(altText string, isShowCurrentMember, isShowActionButton bool) (replyMessge interface{}, err error) {
 	if err := b.init(); err != nil {
-		return err
+		return nil, err
 	}
-
-	size := linebotDomain.MD_FLEX_MESSAGE_SIZE
-	valueSize := linebotDomain.SM_FLEX_MESSAGE_SIZE
 
 	carouselContents := []*linebotModel.FlexMessagBubbleComponent{}
 	for _, activity := range b.activities {
-		contents := []interface{}{}
-		activityContents := activity.getLineComponents(domain.NewActivityLineTemplate{})
-		contents = append(contents, activityContents...)
-
-		minTime, maxTime := activity.getCourtTimeRange()
-		valueText := fmt.Sprintf("%s~%s", minTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT), maxTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT))
-		valueSize = linebotDomain.MD_FLEX_MESSAGE_SIZE
-		timeContent := GetKeyValueEditComponent(
-			"時間",
-			valueText,
-			&domain.KeyValueEditComponentOption{
-				ValueSizeP: &valueSize,
-			},
-		)
-		contents = util.InsertAtIndex(contents, 1, timeContent)
-
-		estimateTitleComponent := linebot.GetFlexMessageTextComponent(
-			0,
-			"",
-			linebot.GetFlexMessageTextComponentSpan(
-				"預估費用",
-				linebotDomain.XL_FLEX_MESSAGE_SIZE,
-				linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
-			),
-		)
-		contents = append(contents, estimateTitleComponent)
-
-		size = linebotDomain.MD_FLEX_MESSAGE_SIZE
-		valueSize = linebotDomain.SM_FLEX_MESSAGE_SIZE
-		courtHours := activity.getCourtHours()
-		totalBallConsume := domain.ESTIMATE_BALL_CONSUME_PER_HOUR * courtHours
-		ballComponent := GetKeyValueEditComponent(
-			"預估羽球消耗",
-			strconv.FormatFloat(totalBallConsume, 'f', -1, 64)+" 顆",
-			&domain.KeyValueEditComponentOption{
-				ValueSizeP: &valueSize,
-				SizeP:      &size,
-			},
-		)
-		contents = append(contents, ballComponent)
-
-		estimateBallFee := totalBallConsume * domain.PRICE_PER_BALL
-		ballFeeComponent := GetKeyValueEditComponent(
-			"預估羽球費用",
-			strconv.FormatFloat(estimateBallFee, 'f', -1, 64),
-			&domain.KeyValueEditComponentOption{
-				ValueSizeP: &valueSize,
-				SizeP:      &size,
-			},
-		)
-		contents = append(contents, ballFeeComponent)
-
-		courtFee := activity.getCourtFee()
-		estimateActivityFee := commonLogic.FloatPlus(estimateBallFee, courtFee)
-		activityFeeComponent := GetKeyValueEditComponent(
-			"活動費用",
-			strconv.FormatFloat(estimateActivityFee, 'f', -1, 64),
-			&domain.KeyValueEditComponentOption{
-				ValueSizeP: &valueSize,
-				SizeP:      &size,
-			},
-		)
-		contents = append(contents, activityFeeComponent)
-
-		if isShowCurrentMember {
-			joinedCount := len(activity.JoinedMembers)
-			peopleLimit := 0
-			waitingCount := 0
-			if activity.PeopleLimit != nil {
-				peopleLimit = int(*activity.PeopleLimit)
-				if joinedCount > peopleLimit {
-					waitingCount = joinedCount - peopleLimit
-					joinedCount = peopleLimit
-				}
-			}
-			joinedCountComponent := GetKeyValueEditComponent(
-				"目前參加人數",
-				strconv.Itoa(joinedCount),
-				&domain.KeyValueEditComponentOption{
-					ValueSizeP: &valueSize,
-					SizeP:      &size,
-				},
-			)
-			contents = append(contents, joinedCountComponent)
-			waitingCountComponent := GetKeyValueEditComponent(
-				"目前候補人數",
-				strconv.Itoa(waitingCount),
-				&domain.KeyValueEditComponentOption{
-					ValueSizeP: &valueSize,
-					SizeP:      &size,
-				},
-			)
-			contents = append(contents, waitingCountComponent)
+		carouselContent, err := b.GetActivitieMessage(activity, isShowCurrentMember, isShowActionButton)
+		if err != nil {
+			return nil, err
 		}
 
-		if activity.PeopleLimit != nil {
-			people := int(*activity.PeopleLimit)
-			_, clubMemberPay, guestPay := calculateActivityPay(people, totalBallConsume, courtFee, float64(activity.ClubSubsidy))
-			clubMemberFeeComponent := GetKeyValueEditComponent(
-				"預估滿人社員費用",
-				strconv.Itoa(clubMemberPay),
-				&domain.KeyValueEditComponentOption{
-					ValueSizeP: &valueSize,
-					SizeP:      &size,
-				},
-			)
-			contents = append(contents, clubMemberFeeComponent)
-
-			guestFeeComponent := GetKeyValueEditComponent(
-				"預估滿人自費費用",
-				strconv.Itoa(guestPay),
-				&domain.KeyValueEditComponentOption{
-					ValueSizeP: &valueSize,
-					SizeP:      &size,
-				},
-			)
-			contents = append(contents, guestFeeComponent)
-		}
-
-		if isShowActionButton {
-			if len(activity.JoinedMembers) > 0 {
-				pathValueMap := map[string]interface{}{
-					"ICmdLogic.list_members_activity_id": activity.ActivityID,
-				}
-				if js, err := b.context.
-					GetCmdInputMode(nil).
-					GetKeyValueInputMode(pathValueMap).
-					GetSignal(); err != nil {
-					return err
-				} else {
-					action := linebot.GetPostBackAction(
-						"查看人員",
-						js,
-					)
-					buttonComponent := linebot.GetButtonComponent(0, action, &domain.NormalButtonOption)
-					contents = append(contents, buttonComponent)
-				}
-			}
-
-			if b.isJoined(activity) {
-				pathValueMap := map[string]interface{}{
-					"ICmdLogic.leave_activity_id": activity.ActivityID,
-				}
-				if js, err := b.context.
-					GetCmdInputMode(nil).
-					GetKeyValueInputMode(pathValueMap).
-					GetSignal(); err != nil {
-					return err
-				} else {
-					action := linebot.GetPostBackAction(
-						"退出",
-						js,
-					)
-					leaveButtonComponent := linebot.GetButtonComponent(0, action, &domain.AlertButtonOption)
-					contents = append(contents, leaveButtonComponent)
-				}
-			} else {
-				pathValueMap := map[string]interface{}{
-					"ICmdLogic.join_activity_id": activity.ActivityID,
-				}
-				if js, err := b.context.
-					GetCmdInputMode(nil).
-					GetKeyValueInputMode(pathValueMap).
-					GetSignal(); err != nil {
-					return err
-				} else {
-					action := linebot.GetPostBackAction(
-						"參加",
-						js,
-					)
-					joinButtonComponent := linebot.GetButtonComponent(0, action, &domain.NormalButtonOption)
-					contents = append(contents, joinButtonComponent)
-				}
-			}
-
-			if b.currentUser.Role == domain.CADRE_CLUB_ROLE ||
-				b.currentUser.Role == domain.ADMIN_CLUB_ROLE {
-				cmd := domain.SUBMIT_ACTIVITY_TEXT_CMD
-				pathValueMap := make(map[string]interface{})
-				pathValueMap["ICmdLogic.activity_id"] = activity.ActivityID
-				if js, err := getCmd(cmd, pathValueMap); err != nil {
-					return err
-				} else {
-					action := linebot.GetPostBackAction(
-						"提交",
-						js,
-					)
-					buttonComponent := linebot.GetButtonComponent(0, action, &domain.NormalButtonOption)
-					contents = append(contents, buttonComponent)
-				}
-			}
-		}
-
-		carouselContents = append(
-			carouselContents,
-			linebot.GetFlexMessageBubbleContent(
-				linebot.GetFlexMessageBoxComponent(
-					linebotDomain.VERTICAL_MESSAGE_LAYOUT,
-					nil,
-					linebot.GetFlexMessageBoxComponent(
-						linebotDomain.VERTICAL_MESSAGE_LAYOUT,
-						nil,
-						contents...,
-					),
-				),
-				nil,
-			),
-		)
+		carouselContents = append(carouselContents, carouselContent)
 	}
 
 	if len(carouselContents) == 0 {
@@ -604,6 +526,443 @@ func (b *GetActivities) GetActivitiesMessage(altText string, isShowCurrentMember
 		replyMessge = linebot.GetFlexMessage(
 			altText,
 			linebot.GetFlexMessageCarouselContent(carouselContents...),
+		)
+	}
+
+	return
+}
+
+func (b *GetActivities) GetActivitieMessage(
+	activity *getActivitiesActivity,
+	isShowCurrentMember, isShowActionButton bool,
+) (
+	carouselContent *linebotModel.FlexMessagBubbleComponent,
+	err error,
+) {
+	contents := []interface{}{
+		linebot.GetFlexMessageTextComponent(
+			"活動資訊",
+			&linebotModel.FlexMessageTextComponentOption{
+				Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+				Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+				Color:  "#1DB446",
+			},
+		),
+	}
+	contents = append(contents, activity.getPlaceTimeTemplate()...)
+
+	boxComponent := linebot.GetFlexMessageBoxComponent(
+		linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+		&linebotModel.FlexMessageBoxComponentOption{
+			Margin:  linebotDomain.LG_FLEX_MESSAGE_SIZE,
+			Spacing: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+		},
+	)
+	boxComponent.Contents = append(boxComponent.Contents, b.GetActivitieInfoContents(&activity.NewActivity)...)
+	boxComponent.Contents = append(boxComponent.Contents, activity.getCourtsContents()...)
+	boxComponent.Contents = append(boxComponent.Contents, b.GetActivitieEstimateContents(activity, isShowCurrentMember)...)
+	contents = append(contents, boxComponent)
+
+	footerContents := make([]interface{}, 0)
+	if isShowActionButton {
+		if len(activity.JoinedMembers) > 0 {
+			pathValueMap := map[string]interface{}{
+				"ICmdLogic.list_members_activity_id": activity.ActivityID,
+			}
+			if js, err := b.context.
+				GetCmdInputMode(nil).
+				GetKeyValueInputMode(pathValueMap).
+				GetSignal(); err != nil {
+				return nil, err
+			} else {
+				action := linebot.GetPostBackAction(
+					"查看人員",
+					js,
+				)
+				footerContents = append(footerContents,
+					linebot.GetFlexMessageBoxComponent(
+						linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+						&linebotModel.FlexMessageBoxComponentOption{
+							BackgroundColor: "#A9A9A9",
+							CornerRadius:    "12px",
+						},
+						linebot.GetButtonComponent(
+							action,
+							&linebotModel.ButtonOption{
+								Color: "#ffffff",
+							},
+						),
+					),
+				)
+			}
+		}
+
+		if b.isJoined(activity) {
+			pathValueMap := map[string]interface{}{
+				"ICmdLogic.leave_activity_id": activity.ActivityID,
+			}
+			if js, err := b.context.
+				GetCmdInputMode(nil).
+				GetKeyValueInputMode(pathValueMap).
+				GetSignal(); err != nil {
+				return nil, err
+			} else {
+				action := linebot.GetPostBackAction(
+					"退出",
+					js,
+				)
+				footerContents = append(footerContents,
+					linebot.GetFlexMessageBoxComponent(
+						linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+						&linebotModel.FlexMessageBoxComponentOption{
+							BackgroundColor: "#FF6347",
+							CornerRadius:    "12px",
+						},
+						linebot.GetButtonComponent(
+							action,
+							&linebotModel.ButtonOption{
+								Color: "#ffffff",
+							},
+						),
+					),
+				)
+			}
+		} else {
+			pathValueMap := map[string]interface{}{
+				"ICmdLogic.join_activity_id": activity.ActivityID,
+			}
+			if js, err := b.context.
+				GetCmdInputMode(nil).
+				GetKeyValueInputMode(pathValueMap).
+				GetSignal(); err != nil {
+				return nil, err
+			} else {
+				action := linebot.GetPostBackAction(
+					"參加",
+					js,
+				)
+				footerContents = append(footerContents,
+					linebot.GetFlexMessageBoxComponent(
+						linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+						&linebotModel.FlexMessageBoxComponentOption{
+							BackgroundColor: "#00cc99",
+							CornerRadius:    "12px",
+						},
+						linebot.GetButtonComponent(
+							action,
+							&linebotModel.ButtonOption{
+								Color: "#ffffff",
+							},
+						),
+					),
+				)
+			}
+		}
+
+		if b.currentUser.Role == domain.CADRE_CLUB_ROLE ||
+			b.currentUser.Role == domain.ADMIN_CLUB_ROLE {
+			cmd := domain.SUBMIT_ACTIVITY_TEXT_CMD
+			pathValueMap := make(map[string]interface{})
+			pathValueMap["ICmdLogic.activity_id"] = activity.ActivityID
+			if js, err := getCmd(cmd, pathValueMap); err != nil {
+				return nil, err
+			} else {
+				action := linebot.GetPostBackAction(
+					"結算",
+					js,
+				)
+				footerContents = append(footerContents,
+					linebot.GetFlexMessageBoxComponent(
+						linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+						&linebotModel.FlexMessageBoxComponentOption{
+							BackgroundColor: "#1E90FF",
+							CornerRadius:    "12px",
+						},
+						linebot.GetButtonComponent(
+							action,
+							&linebotModel.ButtonOption{
+								Color: "#ffffff",
+							},
+						),
+					),
+				)
+			}
+		}
+	}
+
+	var footer *linebotModel.FlexMessageBoxComponent
+	if len(footerContents) > 0 {
+		footer = linebot.GetFlexMessageBoxComponent(
+			linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+			&linebotModel.FlexMessageBoxComponentOption{
+				Spacing: linebotDomain.MD_FLEX_MESSAGE_SIZE,
+			},
+			footerContents...,
+		)
+	}
+
+	return linebot.GetFlexMessageBubbleContent(
+		linebot.GetFlexMessageBoxComponent(
+			linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+			nil,
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+				nil,
+				contents...,
+			),
+		),
+		&linebotModel.FlexMessagBubbleComponentOption{
+			Footer: footer,
+			Styles: &linebotModel.FlexMessagBubbleComponentStyle{
+				Footer: &linebotModel.Background{
+					Separator: true,
+				},
+			},
+		},
+	), nil
+}
+
+func (b *GetActivities) GetActivitieInfoContents(activity *NewActivity) (contents []interface{}) {
+	contents = []interface{}{
+		linebot.GetFlexMessageTextComponent(
+			"資訊",
+			&linebotModel.FlexMessageTextComponentOption{
+				Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+				Margin: linebotDomain.XXL_FLEX_MESSAGE_SIZE,
+				Size:   linebotDomain.MD_FLEX_MESSAGE_SIZE,
+			},
+		),
+		linebot.GetSeparatorComponent(&linebotModel.FlexMessageSeparatorComponentOption{
+			Margin: linebotDomain.XS_FLEX_MESSAGE_SIZE,
+		}),
+	}
+	component := linebot.GetFlexMessageBoxComponent(
+		linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+		&linebotModel.FlexMessageBoxComponentOption{
+			Margin:  linebotDomain.LG_FLEX_MESSAGE_SIZE,
+			Spacing: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+		},
+		linebot.GetFlexMessageTextComponent(
+			"補助額",
+			&linebotModel.FlexMessageTextComponentOption{
+				Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+				Color: "#555555",
+			},
+		),
+		linebot.GetFlexMessageTextComponent(
+			fmt.Sprintf("$%d", activity.ClubSubsidy),
+			&linebotModel.FlexMessageTextComponentOption{
+				Size:  linebotDomain.XS_FLEX_MESSAGE_SIZE,
+				Color: "#111111",
+				Align: linebotDomain.END_Align,
+			},
+		),
+	)
+	contents = append(contents, component)
+
+	if activity.PeopleLimit != nil {
+		peopleLimitComponent := linebot.GetFlexMessageBoxComponent(
+			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+			&linebotModel.FlexMessageBoxComponentOption{
+				Margin: linebotDomain.MD_FLEX_MESSAGE_SIZE,
+			},
+			linebot.GetFlexMessageTextComponent(
+				"人數上限",
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Color: "#555555",
+				},
+			),
+			linebot.GetFlexMessageTextComponent(
+				strconv.Itoa(int(*activity.PeopleLimit)),
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:  linebotDomain.XS_FLEX_MESSAGE_SIZE,
+					Color: "#111111",
+					Align: linebotDomain.END_Align,
+				},
+			),
+		)
+		contents = append(contents, peopleLimitComponent)
+	}
+	return
+}
+
+func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActivity, isShowCurrentMember bool) (contents []interface{}) {
+	courtHours := activity.getCourtHours()
+	totalBallConsume := domain.ESTIMATE_BALL_CONSUME_PER_HOUR * courtHours
+	estimateBallFee := totalBallConsume * domain.PRICE_PER_BALL
+	courtFee := activity.getCourtFee()
+	estimateActivityFee := commonLogic.FloatPlus(estimateBallFee, courtFee)
+	joinedCount := len(activity.JoinedMembers)
+	peopleLimit := 0
+	waitingCount := 0
+	if activity.PeopleLimit != nil {
+		peopleLimit = int(*activity.PeopleLimit)
+		if joinedCount > peopleLimit {
+			waitingCount = joinedCount - peopleLimit
+			joinedCount = peopleLimit
+		}
+	}
+
+	estimateBox := linebot.GetFlexMessageBoxComponent(
+		linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+		&linebotModel.FlexMessageBoxComponentOption{
+			Margin:  linebotDomain.LG_FLEX_MESSAGE_SIZE,
+			Spacing: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+		},
+		linebot.GetFlexMessageBoxComponent(
+			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+			nil,
+			linebot.GetFlexMessageTextComponent(
+				"羽球費用",
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Color: "#555555",
+				},
+			),
+			linebot.GetFlexMessageTextComponent(
+				fmt.Sprintf("%s顆", strconv.FormatFloat(totalBallConsume, 'f', -1, 64)),
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Color: "#111111",
+					Align: linebotDomain.CENTER_Align,
+				},
+			),
+			linebot.GetFlexMessageTextComponent(
+				fmt.Sprintf("$%s", strconv.FormatFloat(estimateBallFee, 'f', -1, 64)),
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Color: "#111111",
+					Align: linebotDomain.END_Align,
+				},
+			),
+		),
+		linebot.GetFlexMessageBoxComponent(
+			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+			nil,
+			linebot.GetFlexMessageTextComponent(
+				"活動費用",
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Color: "#555555",
+				},
+			),
+			linebot.GetFlexMessageTextComponent(
+				fmt.Sprintf("$%s", strconv.FormatFloat(estimateActivityFee, 'f', -1, 64)),
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Color: "#111111",
+					Align: linebotDomain.END_Align,
+				},
+			),
+		),
+	)
+	contents = []interface{}{
+		linebot.GetFlexMessageTextComponent(
+			"預估費用",
+			&linebotModel.FlexMessageTextComponentOption{
+				Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+				Margin: linebotDomain.XXL_FLEX_MESSAGE_SIZE,
+				Size:   linebotDomain.MD_FLEX_MESSAGE_SIZE,
+			},
+		),
+		linebot.GetSeparatorComponent(&linebotModel.FlexMessageSeparatorComponentOption{
+			Margin: linebotDomain.XS_FLEX_MESSAGE_SIZE,
+		}),
+		estimateBox,
+	}
+
+	if isShowCurrentMember {
+		estimateBox.Contents = append(
+			estimateBox.Contents,
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+				nil,
+				linebot.GetFlexMessageTextComponent(
+					"目前參加人數",
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color: "#555555",
+					},
+				),
+				linebot.GetFlexMessageTextComponent(
+					strconv.Itoa(joinedCount),
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color: "#111111",
+						Align: linebotDomain.END_Align,
+					},
+				),
+			),
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+				nil,
+				linebot.GetFlexMessageTextComponent(
+					"目前候補人數",
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color: "#555555",
+					},
+				),
+				linebot.GetFlexMessageTextComponent(
+					strconv.Itoa(waitingCount),
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color: "#111111",
+						Align: linebotDomain.END_Align,
+					},
+				),
+			),
+		)
+	}
+
+	if activity.PeopleLimit != nil {
+		people := int(*activity.PeopleLimit)
+		_, clubMemberPay, guestPay := calculateActivityPay(people, totalBallConsume, courtFee, float64(activity.ClubSubsidy))
+		estimateBox.Contents = append(
+			estimateBox.Contents,
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+				nil,
+				linebot.GetFlexMessageTextComponent(
+					"人滿社員費用",
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+						Color:  "#555555",
+					},
+				),
+				linebot.GetFlexMessageTextComponent(
+					fmt.Sprintf("$%d", clubMemberPay),
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color:  "#111111",
+						Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+						Align:  linebotDomain.END_Align,
+					},
+				),
+			),
+			linebot.GetFlexMessageBoxComponent(
+				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+				nil,
+				linebot.GetFlexMessageTextComponent(
+					"人滿自費費用",
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color:  "#555555",
+						Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+					},
+				),
+				linebot.GetFlexMessageTextComponent(
+					fmt.Sprintf("$%d", guestPay),
+					&linebotModel.FlexMessageTextComponentOption{
+						Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						Color:  "#111111",
+						Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+						Align:  linebotDomain.END_Align,
+					},
+				),
+			),
 		)
 	}
 

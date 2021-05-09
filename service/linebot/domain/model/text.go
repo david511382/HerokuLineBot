@@ -4,9 +4,7 @@ import "heroku-line-bot/service/linebot/domain"
 
 type TextMessage struct {
 	*Type
-	Text   string               `json:"text,omitempty"`
-	Weight domain.MessageWeight `json:"weight,omitempty"`
-	Size   domain.MessageSize   `json:"size,omitempty"`
+	Text string `json:"text,omitempty"`
 }
 
 type FlexMessage struct {
@@ -16,8 +14,14 @@ type FlexMessage struct {
 }
 
 type FlexMessageBoxComponentOption struct {
-	AlignItems     domain.AlignItems     `json:"alignItems,omitempty"`
-	JustifyContent domain.JustifyContent `json:"justifyContent,omitempty"`
+	AlignItems      domain.AlignItems     `json:"alignItems,omitempty"`
+	JustifyContent  domain.JustifyContent `json:"justifyContent,omitempty"`
+	Margin          domain.MessageSize    `json:"margin,omitempty"`
+	Spacing         domain.MessageSize    `json:"spacing,omitempty"`
+	BackgroundColor string                `json:"backgroundColor,omitempty"`
+	CornerRadius    string                `json:"cornerRadius,omitempty"`
+	Height          string                `json:"height,omitempty"`
+	Width           string                `json:"width,omitempty"`
 }
 
 type FlexMessageBoxComponent struct {
@@ -37,10 +41,12 @@ type Background struct {
 type FlexMessagBubbleComponentStyle struct {
 	Header *Background `json:"header,omitempty"`
 	Body   *Background `json:"body,omitempty"`
+	Footer *Background `json:"footer,omitempty"`
 }
 
 type FlexMessagBubbleComponentOption struct {
 	Header *FlexMessageBoxComponent        `json:"header,omitempty"`
+	Footer *FlexMessageBoxComponent        `json:"footer,omitempty"`
 	Styles *FlexMessagBubbleComponentStyle `json:"styles,omitempty"`
 }
 
@@ -55,19 +61,28 @@ type FlexMessagCarouselComponent struct {
 	Contents []*FlexMessagBubbleComponent `json:"contents,omitempty"`
 }
 
-type FlexMessageTextComponent struct {
-	TextMessage
+type FlexMessageTextComponentOption struct {
 	Contents   []*FlexMessageTextComponentSpan `json:"contents,omitempty"`
+	Weight     domain.MessageWeight            `json:"weight,omitempty"`
+	Color      string                          `json:"color,omitempty"`
+	Size       domain.MessageSize              `json:"size,omitempty"`
 	Flex       int                             `json:"flex,omitempty"`
 	AdjustMode domain.AdjustMode               `json:"adjustMode,omitempty"`
-	Align      string                          `json:"align,omitempty"`
+	Align      domain.Align                    `json:"align,omitempty"`
+	Margin     domain.MessageSize              `json:"margin,omitempty"`
+	Wrap       bool                            `json:"wrap,omitempty"`
+}
+
+type FlexMessageTextComponent struct {
+	TextMessage
+	*FlexMessageTextComponentOption
 }
 
 type FlexMessageTextComponentSpan struct {
-	*Type
-	Text   string               `json:"text,omitempty"`
-	Size   domain.MessageSize   `json:"size,omitempty"`
+	TextMessage
 	Weight domain.MessageWeight `json:"weight,omitempty"`
+	Color  string               `json:"color,omitempty"`
+	Size   domain.MessageSize   `json:"size,omitempty"`
 }
 
 type PostBackAction struct {
@@ -90,22 +105,27 @@ type TimeAction struct {
 }
 
 type ButtonOption struct {
-	Color string `json:"color,omitempty"`
+	Color      string             `json:"color,omitempty"`
+	Flex       int                `json:"flex,omitempty"`
+	Style      string             `json:"style,omitempty"`
+	Height     domain.MessageSize `json:"height,omitempty"`
+	AdjustMode domain.AdjustMode  `json:"adjustMode,omitempty"`
 }
 
 type Button struct {
 	*Type
 	*ButtonOption
-	Action     interface{}        `json:"action,omitempty"`
-	Style      string             `json:"style,omitempty"`
-	Height     domain.MessageSize `json:"height,omitempty"`
-	Flex       int                `json:"flex,omitempty"`
-	AdjustMode domain.AdjustMode  `json:"adjustMode,omitempty"`
+	Action interface{} `json:"action,omitempty"`
+}
+
+type FlexMessageSeparatorComponentOption struct {
+	Color  string             `json:"color,omitempty"`
+	Margin domain.MessageSize `json:"margin,omitempty"`
 }
 
 type FlexMessageSeparatorComponent struct {
 	*Type
-	Color string `json:"color,omitempty"`
+	*FlexMessageSeparatorComponentOption
 }
 
 type FlexMessageFillerComponent struct {

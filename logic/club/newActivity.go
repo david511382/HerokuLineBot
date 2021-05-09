@@ -351,6 +351,41 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErr error) {
 	return nil
 }
 
+func (b *NewActivity) getPlaceTimeTemplate() (result []interface{}) {
+	result = []interface{}{}
+
+	result = append(result,
+		linebot.GetFlexMessageTextComponent(
+			b.Place,
+			&linebotModel.FlexMessageTextComponentOption{
+				Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+				Size:   linebotDomain.XXL_FLEX_MESSAGE_SIZE,
+				Margin: linebotDomain.MD_FLEX_MESSAGE_SIZE,
+			},
+		),
+	)
+
+	minTime, maxTime := b.getCourtTimeRange()
+	valueText := fmt.Sprintf("%s(%s) %s~%s",
+		b.Date.Format(commonLogicDomain.DATE_FORMAT),
+		commonLogic.WeekDayName(b.Date.Weekday()),
+		minTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
+		maxTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
+	)
+	result = append(result,
+		linebot.GetFlexMessageTextComponent(
+			valueText,
+			&linebotModel.FlexMessageTextComponentOption{
+				Size:  linebotDomain.XS_FLEX_MESSAGE_SIZE,
+				Color: "#aaaaaa",
+				Wrap:  true,
+			},
+		),
+	)
+
+	return
+}
+
 func (b *NewActivity) getLineComponents(actions domain.NewActivityLineTemplate) (result []interface{}) {
 	result = []interface{}{}
 	valueText := fmt.Sprintf("%s(%s)", b.Date.Format(commonLogicDomain.DATE_FORMAT), commonLogic.WeekDayName(b.Date.Weekday()))
@@ -490,18 +525,22 @@ func (b *NewActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackA
 
 	headComponents := []interface{}{}
 	titleComponent := linebot.GetFlexMessageTextComponent(
-		0,
 		"",
-		linebot.GetFlexMessageTextComponentSpan(
-			"場地",
-			linebotDomain.XL_FLEX_MESSAGE_SIZE,
-			linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
-		),
+		&linebotModel.FlexMessageTextComponentOption{
+			Contents: []*linebotModel.FlexMessageTextComponentSpan{
+				linebot.GetFlexMessageTextComponentSpan(
+					"場地",
+					linebotDomain.XL_FLEX_MESSAGE_SIZE,
+					linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+				),
+			},
+			AdjustMode: linebotDomain.SHRINK_TO_FIT_ADJUST_MODE,
+			Align:      linebotDomain.START_Align,
+		},
 	)
 	headComponents = append(headComponents, titleComponent)
 	if buttonAction != nil {
 		editButtonComponent := linebot.GetButtonComponent(
-			0,
 			buttonAction,
 			&domain.NormalButtonOption,
 		)
@@ -557,4 +596,85 @@ func (b *NewActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackA
 		nil,
 		components...,
 	)
+}
+
+func (b *NewActivity) getCourtsContents() []interface{} {
+	courtFee := b.getCourtFee()
+	contents := []interface{}{
+		linebot.GetFlexMessageBoxComponent(
+			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+			&linebotModel.FlexMessageBoxComponentOption{
+				Margin: linebotDomain.XXL_FLEX_MESSAGE_SIZE,
+			},
+			linebot.GetFlexMessageTextComponent(
+				"場地",
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:   linebotDomain.MD_FLEX_MESSAGE_SIZE,
+					Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+				},
+			),
+			linebot.GetFlexMessageTextComponent(
+				fmt.Sprintf("$%s", strconv.FormatFloat(courtFee, 'f', -1, 64)),
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
+					Align:  linebotDomain.END_Align,
+				},
+			),
+		),
+		linebot.GetSeparatorComponent(&linebotModel.FlexMessageSeparatorComponentOption{
+			Margin: linebotDomain.XS_FLEX_MESSAGE_SIZE,
+		}),
+	}
+
+	courtContents := make([]interface{}, 0)
+	placeFee := 0.0
+	for _, court := range b.Courts {
+		cost := court.cost()
+		placeFee = commonLogic.FloatPlus(placeFee, cost)
+
+		courtsComponent := linebot.GetFlexMessageBoxComponent(
+			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+			nil,
+			linebot.GetFlexMessageTextComponent(
+				court.time(),
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Color: "#555555",
+					Flex:  0,
+				},
+			),
+			linebot.GetFlexMessageTextComponent(
+				fmt.Sprintf("%d場", court.Count),
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
+					Color: "#111111",
+					Align: linebotDomain.CENTER_Align,
+				},
+			),
+			linebot.GetFlexMessageTextComponent(
+				fmt.Sprintf("$%s", strconv.FormatFloat(cost, 'f', 0, 64)),
+				&linebotModel.FlexMessageTextComponentOption{
+					Size:  linebotDomain.XS_FLEX_MESSAGE_SIZE,
+					Color: "#111111",
+					Align: linebotDomain.END_Align,
+				},
+			),
+		)
+		courtContents = append(courtContents, courtsComponent)
+	}
+
+	contents = append(
+		contents,
+		linebot.GetFlexMessageBoxComponent(
+			linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+			&linebotModel.FlexMessageBoxComponentOption{
+				Margin:  linebotDomain.LG_FLEX_MESSAGE_SIZE,
+				Spacing: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+			},
+			courtContents...,
+		),
+	)
+
+	return contents
 }
