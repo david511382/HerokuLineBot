@@ -585,7 +585,7 @@ func (b *submitActivity) getAttendComponent(text string, members []*submitActivi
 
 	if len(memberBoxs) > 0 {
 		result = append(result, linebot.GetFlexMessageBoxComponent(
-			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
+			linebotDomain.VERTICAL_MESSAGE_LAYOUT,
 			&linebotModel.FlexMessageBoxComponentOption{
 				Margin:  linebotDomain.LG_FLEX_MESSAGE_SIZE,
 				Spacing: linebotDomain.SM_FLEX_MESSAGE_SIZE,
