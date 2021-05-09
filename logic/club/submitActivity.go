@@ -87,6 +87,7 @@ func (b *submitActivity) init() error {
 		return nil
 	} else {
 		v := dbDatas[0]
+		memberJoinDate := v.Date
 		b.NewActivity = NewActivity{
 			Context:     context,
 			Date:        v.Date,
@@ -103,23 +104,34 @@ func (b *submitActivity) init() error {
 		memberActivityArg := dbReqs.MemberActivity{
 			ActivityID: util.GetIntP(b.ActivityID),
 		}
-		if dbDatas, err := database.Club.MemberActivity.IDMemberIDMemberName(memberActivityArg); err != nil {
+		if dbDatas, err := database.Club.MemberActivity.IDMemberID(memberActivityArg); err != nil {
 			return err
 		} else {
+			type isClubMemberName struct {
+				isClubMember bool
+				name         string
+			}
 			memberIDs := []int{}
 			for _, v := range dbDatas {
 				memberIDs = append(memberIDs, v.MemberID)
 			}
 			arg := dbReqs.Member{
-				IDs:        memberIDs,
-				ToJoinDate: &v.Date,
+				IDs: memberIDs,
 			}
-			clubMemberIDMap := make(map[int]bool)
-			if dbDatas, err := database.Club.Member.IDDepartment(arg); err != nil {
+			clubMemberIDMap := make(map[int]isClubMemberName)
+			if dbDatas, err := database.Club.Member.IDNameDepartmentJoinDate(arg); err != nil {
 				return err
 			} else {
 				for _, v := range dbDatas {
-					clubMemberIDMap[v.ID] = Department(v.Department).IsClubMember()
+					isClubMember := false
+					if v.JoinDate != nil && !v.JoinDate.After(memberJoinDate) {
+						isClubMember = Department(v.Department).IsClubMember()
+					}
+
+					clubMemberIDMap[v.ID] = isClubMemberName{
+						name:         v.Name,
+						isClubMember: isClubMember,
+					}
 				}
 			}
 
@@ -130,14 +142,15 @@ func (b *submitActivity) init() error {
 			dbDatas = dbDatas[:peopleLimit]
 			for _, v := range dbDatas {
 				memberID := v.MemberID
+				clubMember := clubMemberIDMap[memberID]
 				member := &submitActivityJoinedMembers{
 					getActivitiesActivityJoinedMembers: getActivitiesActivityJoinedMembers{
 						ID:   v.MemberID,
-						Name: v.MemberName,
+						Name: clubMember.name,
 					},
 					MemberActivityID: v.ID,
 				}
-				if isClubMember := clubMemberIDMap[memberID]; isClubMember {
+				if clubMember.isClubMember {
 					b.JoinedMembers = append(b.JoinedMembers, member)
 				} else {
 					b.JoinedGuests = append(b.JoinedGuests, member)

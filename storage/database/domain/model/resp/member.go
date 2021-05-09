@@ -1,5 +1,7 @@
 package resp
 
+import "time"
+
 type Role struct {
 	Role uint
 }
@@ -7,6 +9,11 @@ type Role struct {
 type NameLineID struct {
 	Name   string
 	LineID *string
+}
+
+type IDNameLineID struct {
+	NameLineID
+	ID int
 }
 
 type IDName struct {
@@ -23,6 +30,12 @@ type IDNameRole struct {
 type IDDepartment struct {
 	Department string
 	ID         int
+}
+
+type IDNameDepartmentJoinDate struct {
+	IDName
+	Department string
+	JoinDate   *time.Time
 }
 
 type IDNameRoleDepartment struct {

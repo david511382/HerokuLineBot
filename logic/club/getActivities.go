@@ -84,9 +84,32 @@ func (b *GetActivities) init() error {
 		memberActivityArg := dbReqs.MemberActivity{
 			ActivityIDs: activityIDs,
 		}
-		if dbDatas, err := database.Club.MemberActivity.IDMemberIDActivityIDMemberName(memberActivityArg); err != nil {
+		if dbDatas, err := database.Club.MemberActivity.IDMemberIDActivityID(memberActivityArg); err != nil {
 			return err
-		} else {
+		} else if len(dbDatas) > 0 {
+			memberIDs := make([]int, 0)
+			for _, v := range dbDatas {
+				memberIDs = append(memberIDs, v.MemberID)
+			}
+			type lineName struct {
+				lineID *string
+				name   string
+			}
+			memberIDNameMap := make(map[int]lineName)
+			memberArg := dbReqs.Member{
+				IDs: memberIDs,
+			}
+			if dbDatas, err := database.Club.Member.IDNameLineID(memberArg); err != nil {
+				return err
+			} else {
+				for _, v := range dbDatas {
+					memberIDNameMap[v.ID] = lineName{
+						lineID: v.LineID,
+						name:   v.Name,
+					}
+				}
+			}
+
 			sort.Slice(dbDatas, func(i, j int) bool {
 				return dbDatas[i].ID < dbDatas[j].ID
 			})
@@ -97,7 +120,7 @@ func (b *GetActivities) init() error {
 				}
 				activityIDMap[activityID] = append(activityIDMap[activityID], &getActivitiesActivityJoinedMembers{
 					ID:   v.MemberID,
-					Name: v.MemberName,
+					Name: memberIDNameMap[v.MemberID].name,
 				})
 			}
 		}
@@ -156,9 +179,25 @@ func (b *GetActivities) listMembers() error {
 	memberActivityArg := dbReqs.MemberActivity{
 		ActivityID: &b.ListMembersActivityID,
 	}
-	if dbDatas, err := database.Club.MemberActivity.IDMemberIDMemberName(memberActivityArg); err != nil {
+	if dbDatas, err := database.Club.MemberActivity.IDMemberID(memberActivityArg); err != nil {
 		return err
 	} else {
+		memberIDs := make([]int, 0)
+		for _, v := range dbDatas {
+			memberIDs = append(memberIDs, v.MemberID)
+		}
+		memberIDNameMap := make(map[int]string)
+		memberArg := dbReqs.Member{
+			IDs: memberIDs,
+		}
+		if dbDatas, err := database.Club.Member.IDName(memberArg); err != nil {
+			return err
+		} else {
+			for _, v := range dbDatas {
+				memberIDNameMap[v.ID] = v.Name
+			}
+		}
+
 		keyValueEditComponentOption := &domain.KeyValueEditComponentOption{
 			Indent: util.GetIntP(1),
 		}
@@ -171,7 +210,7 @@ func (b *GetActivities) listMembers() error {
 			memberComponents = append(memberComponents,
 				GetKeyValueEditComponent(
 					idStr,
-					v.MemberName,
+					memberIDNameMap[v.MemberID],
 					keyValueEditComponentOption,
 				),
 			)
@@ -234,7 +273,6 @@ func (b *GetActivities) joinActivity() error {
 	insertData := &memberactivity.MemberActivityTable{
 		ActivityID: activityID,
 		MemberID:   uID,
-		MemberName: userData.Name,
 		IsAttend:   false,
 	}
 	if err := database.Club.MemberActivity.Insert(nil, insertData); err != nil && !database.IsUniqErr(err) {
