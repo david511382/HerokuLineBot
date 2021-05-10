@@ -589,7 +589,7 @@ func (b *GetActivities) GetActivitieMessage(
 						linebot.GetButtonComponent(
 							action,
 							&linebotModel.ButtonOption{
-								Color: "#ffffff",
+								Color: domain.WHITE_COLOR,
 							},
 						),
 					),
@@ -615,13 +615,13 @@ func (b *GetActivities) GetActivitieMessage(
 					linebot.GetFlexMessageBoxComponent(
 						linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
 						&linebotModel.FlexMessageBoxComponentOption{
-							BackgroundColor: "#FF6347",
+							BackgroundColor: domain.RED_COLOR,
 							CornerRadius:    "12px",
 						},
 						linebot.GetButtonComponent(
 							action,
 							&linebotModel.ButtonOption{
-								Color: "#ffffff",
+								Color: domain.WHITE_COLOR,
 							},
 						),
 					),
@@ -645,13 +645,13 @@ func (b *GetActivities) GetActivitieMessage(
 					linebot.GetFlexMessageBoxComponent(
 						linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
 						&linebotModel.FlexMessageBoxComponentOption{
-							BackgroundColor: "#00cc99",
+							BackgroundColor: domain.BLUE_GREEN_COLOR,
 							CornerRadius:    "12px",
 						},
 						linebot.GetButtonComponent(
 							action,
 							&linebotModel.ButtonOption{
-								Color: "#ffffff",
+								Color: domain.WHITE_COLOR,
 							},
 						),
 					),
@@ -681,7 +681,7 @@ func (b *GetActivities) GetActivitieMessage(
 						linebot.GetButtonComponent(
 							action,
 							&linebotModel.ButtonOption{
-								Color: "#ffffff",
+								Color: domain.WHITE_COLOR,
 							},
 						),
 					),

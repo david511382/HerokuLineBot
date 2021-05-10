@@ -368,7 +368,10 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 
 	footerBox := linebot.GetFlexMessageBoxComponent(
 		linebotDomain.VERTICAL_MESSAGE_LAYOUT,
-		nil,
+		&linebotModel.FlexMessageBoxComponentOption{
+			JustifyContent: linebotDomain.FLEX_END_JUSTIFY_CONTENT,
+			Spacing:        linebotDomain.MD_FLEX_MESSAGE_SIZE,
+		},
 	)
 
 	if js, err := b.context.
@@ -389,7 +392,7 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 						js,
 					),
 					&linebotModel.ButtonOption{
-						Color:  "#ffffff",
+						Color:  domain.WHITE_COLOR,
 						Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
 					},
 				),
@@ -415,7 +418,7 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 						js,
 					),
 					&linebotModel.ButtonOption{
-						Color:  "#ffffff",
+						Color:  domain.WHITE_COLOR,
 						Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
 					},
 				),
@@ -447,16 +450,10 @@ func (b *submitActivity) getAttendComponent(text string, members []*submitActivi
 	memberBoxs := make([]interface{}, 0)
 	for id, member := range members {
 		var attendAction *linebotModel.PostBackAction
-		attendButtonOption := linebotModel.ButtonOption{
-			Color:  domain.DarkButtonOption.Color,
-			Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
-		}
+		attendButtonColor := domain.RED_COLOR
 		if member.IsAttend {
 			memberCount++
-			attendButtonOption = linebotModel.ButtonOption{
-				Color:  "#ffffff",
-				Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
-			}
+			attendButtonColor = domain.BLUE_GREEN_COLOR
 		}
 		pathValueMap := map[string]interface{}{
 			"ICmdLogic.attend_index":           id,
@@ -474,15 +471,9 @@ func (b *submitActivity) getAttendComponent(text string, members []*submitActivi
 		}
 
 		var payAction *linebotModel.PostBackAction
-		payButtonOption := linebotModel.ButtonOption{
-			Color:  domain.DarkButtonOption.Color,
-			Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
-		}
+		payButtonColor := domain.RED_COLOR
 		if member.IsPaid {
-			payButtonOption = linebotModel.ButtonOption{
-				Color:  "#ffffff",
-				Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
-			}
+			payButtonColor = domain.BLUE_GREEN_COLOR
 		}
 		pathValueMap = map[string]interface{}{
 			"ICmdLogic.is_joined_member_index": b.IsJoinedMember,
@@ -515,30 +506,29 @@ func (b *submitActivity) getAttendComponent(text string, members []*submitActivi
 				linebot.GetFlexMessageBoxComponent(
 					linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
 					&linebotModel.FlexMessageBoxComponentOption{
-						BackgroundColor: "#00cc99",
+						BackgroundColor: attendButtonColor,
 						CornerRadius:    "12px",
 					},
 					linebot.GetButtonComponent(
 						attendAction,
-						&attendButtonOption,
+						&linebotModel.ButtonOption{
+							Color:  domain.WHITE_COLOR,
+							Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						},
 					),
 				),
-			),
-			linebot.GetFlexMessageBoxComponent(
-				linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
-				&linebotModel.FlexMessageBoxComponentOption{
-					JustifyContent: linebotDomain.FLEX_END_JUSTIFY_CONTENT,
-					Spacing:        linebotDomain.XS_FLEX_MESSAGE_SIZE,
-				},
 				linebot.GetFlexMessageBoxComponent(
 					linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
 					&linebotModel.FlexMessageBoxComponentOption{
-						BackgroundColor: "#00cc99",
+						BackgroundColor: payButtonColor,
 						CornerRadius:    "12px",
 					},
 					linebot.GetButtonComponent(
 						payAction,
-						&payButtonOption,
+						&linebotModel.ButtonOption{
+							Color:  domain.WHITE_COLOR,
+							Height: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+						},
 					),
 				),
 			),
@@ -588,7 +578,7 @@ func (b *submitActivity) getAttendComponent(text string, members []*submitActivi
 			linebotDomain.VERTICAL_MESSAGE_LAYOUT,
 			&linebotModel.FlexMessageBoxComponentOption{
 				Margin:  linebotDomain.LG_FLEX_MESSAGE_SIZE,
-				Spacing: linebotDomain.SM_FLEX_MESSAGE_SIZE,
+				Spacing: linebotDomain.MD_FLEX_MESSAGE_SIZE,
 			},
 			memberBoxs...,
 		))
