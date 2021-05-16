@@ -10,6 +10,7 @@ const (
 	GET_CONFIRM_REGISTER_TEXT_CMD TextCmd = "入社列表"
 	SUBMIT_ACTIVITY_TEXT_CMD      TextCmd = "提交活動"
 	RICH_MENU_TEXT_CMD            TextCmd = "richmenu"
+	NEW_LOGISTIC_TEXT_CMD         TextCmd = "新增品項紀錄"
 )
 
 type DateTimeCmd string

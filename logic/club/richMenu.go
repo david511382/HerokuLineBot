@@ -302,6 +302,7 @@ func (b *richMenu) createRoleRichMenu(role domain.ClubRole) *linebotReqs.CreateR
 			linebot.GetMessageAction(string(domain.NEW_ACTIVITY_TEXT_CMD)),
 			linebot.GetMessageAction(string(domain.GET_ACTIVITIES_TEXT_CMD)),
 			linebot.GetMessageAction(string(domain.GET_CONFIRM_REGISTER_TEXT_CMD)),
+			linebot.GetMessageAction(string(domain.NEW_LOGISTIC_TEXT_CMD)),
 		)
 	default:
 		return nil

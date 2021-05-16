@@ -13,6 +13,7 @@ func MigrationNotExist() error {
 		database.Club.MemberActivity.BaseTable,
 		database.Club.RentalCourt.BaseTable,
 		database.Club.RentalCourtException.BaseTable,
+		database.Club.Logistic.BaseTable,
 	}
 	for _, table := range tables {
 		if !table.IsExist() {

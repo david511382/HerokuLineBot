@@ -152,6 +152,8 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		logicHandler = &submitActivity{}
 	case domain.RICH_MENU_TEXT_CMD:
 		logicHandler = &richMenu{}
+	case domain.NEW_LOGISTIC_TEXT_CMD:
+		logicHandler = &NewLogistic{}
 	default:
 		return nil, nil
 	}
