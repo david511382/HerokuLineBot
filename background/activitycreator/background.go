@@ -88,14 +88,11 @@ func (b *BackGround) Run(runTime time.Time) error {
 			Courts:      courts,
 		}
 
-		totalHours := 0.0
+		totalCourtCount := 0
 		for _, court := range courts {
-			totalHours = commonLogic.FloatPlus(totalHours, court.TotalHours())
+			totalCourtCount += int(court.Count)
 		}
-		peopleLimit := int16(totalHours * float64(domain.PEOPLE_PER_HOUR))
-
-		///////////////////////////////////////////////// specify
-		peopleLimit = 16
+		peopleLimit := int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2)
 
 		newActivityHandler.PeopleLimit = util.GetInt16P(peopleLimit)
 

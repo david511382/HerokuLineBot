@@ -25,3 +25,9 @@ var (
 		AdjustMode: linebotDomain.SHRINK_TO_FIT_ADJUST_MODE,
 	}
 )
+
+const (
+	RED_COLOR        = "#FF6347"
+	WHITE_COLOR      = "#ffffff"
+	BLUE_GREEN_COLOR = "#00cc99"
+)
