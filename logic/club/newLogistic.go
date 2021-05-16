@@ -31,7 +31,7 @@ func (b *NewLogistic) Init(context domain.ICmdHandlerContext) error {
 	*b = NewLogistic{
 		Context:     context,
 		Date:        util.DateOf(nowTime),
-		Name:        "RSL4",
+		Name:        domain.BALL_NAME,
 		Description: "買球 https://shopee.tw/product/4013408/4461135276",
 		Amount:      180,
 	}

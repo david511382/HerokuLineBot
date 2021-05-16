@@ -10,6 +10,7 @@ import (
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
+	logisticDb "heroku-line-bot/storage/database/database/clubdb/table/logistic"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/util"
 	"sort"
@@ -244,6 +245,17 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 				return
 			}
 		}()
+
+		logisticData := &logisticDb.LogisticTable{
+			Date:        b.Date,
+			Name:        domain.BALL_NAME,
+			Amount:      -b.Rsl4Consume,
+			Description: "打球",
+		}
+		if resultErr = database.Club.Logistic.Insert(transaction, logisticData); resultErr != nil {
+			return
+		}
+
 		arg := dbReqs.Activity{
 			ID: &b.ActivityID,
 		}
@@ -267,7 +279,7 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 		_, memberFee, guestFee := calculateActivityPay(peopleCount, float64(b.Rsl4Consume), courtFee, float64(b.ClubSubsidy))
 		updateFields := map[string]interface{}{
 			"is_complete":  true,
-			"rsl4_count":   b.Rsl4Consume,
+			"logistic_id":  logisticData.ID,
 			"member_count": memberCount,
 			"guest_count":  guestCount,
 			"member_fee":   memberFee,
