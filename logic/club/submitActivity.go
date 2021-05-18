@@ -246,19 +246,21 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 			}
 		}()
 
-		logisticData := &logisticDb.LogisticTable{
-			Date:        b.Date,
-			Name:        domain.BALL_NAME,
-			Amount:      -b.Rsl4Consume,
-			Description: "打球",
-		}
-		if resultErr = database.Club.Logistic.Insert(transaction, logisticData); resultErr != nil {
-			return
+		isConsumeBall := b.Rsl4Consume > 0
+		logisticID := 0
+		if isConsumeBall {
+			logisticData := &logisticDb.LogisticTable{
+				Date:        b.Date,
+				Name:        domain.BALL_NAME,
+				Amount:      -b.Rsl4Consume,
+				Description: "打球",
+			}
+			if resultErr = database.Club.Logistic.Insert(transaction, logisticData); resultErr != nil {
+				return
+			}
+			logisticID = logisticData.ID
 		}
 
-		arg := dbReqs.Activity{
-			ID: &b.ActivityID,
-		}
 		courtFee := b.getCourtFee()
 		memberActivityIDs := make([]int, 0)
 		memberCount := 0
@@ -279,11 +281,16 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 		_, memberFee, guestFee := calculateActivityPay(peopleCount, float64(b.Rsl4Consume), courtFee, float64(b.ClubSubsidy))
 		updateFields := map[string]interface{}{
 			"is_complete":  true,
-			"logistic_id":  logisticData.ID,
 			"member_count": memberCount,
 			"guest_count":  guestCount,
 			"member_fee":   memberFee,
 			"guest_fee":    guestFee,
+		}
+		if isConsumeBall {
+			updateFields["logistic_id"] = logisticID
+		}
+		arg := dbReqs.Activity{
+			ID: &b.ActivityID,
 		}
 		if resultErr = database.Club.Activity.Update(transaction, arg, updateFields); resultErr != nil {
 			return
