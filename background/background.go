@@ -6,6 +6,7 @@ import (
 	"heroku-line-bot/bootstrap"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
+	errLogic "heroku-line-bot/logic/error"
 	"time"
 
 	cron "github.com/robfig/cron"
@@ -21,14 +22,14 @@ type Background struct {
 }
 
 // Init 初始化
-func (b *Background) Init(cfg bootstrap.Backgrounds) (string, error) {
+func (b *Background) Init(cfg bootstrap.Backgrounds) (string, *errLogic.ErrorInfo) {
 	if b.bg == nil {
 		return "", nil
 	}
 
-	name, backgroundCfg, err := b.bg.Init(cfg)
-	if err != nil {
-		return "", nil
+	name, backgroundCfg, errInfo := b.bg.Init(cfg)
+	if errInfo != nil {
+		return "", errInfo
 	}
 
 	spec := backgroundCfg.Spec
@@ -38,9 +39,10 @@ func (b *Background) Init(cfg bootstrap.Backgrounds) (string, error) {
 	b.Spec = spec
 	b.timeType = timeType
 
+	var err error
 	b.schedule, err = cron.Parse(b.Spec)
 	if err != nil {
-		return "", nil
+		return "", errLogic.NewError(err)
 	}
 
 	return spec, nil

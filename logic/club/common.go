@@ -11,6 +11,8 @@ import (
 	"heroku-line-bot/util"
 	"math"
 
+	errLogic "heroku-line-bot/logic/error"
+
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )
@@ -21,19 +23,19 @@ var (
 	guestRichMenuImg []byte
 )
 
-func Init(f embed.FS) error {
+func Init(f embed.FS) *errLogic.ErrorInfo {
 	if bs, err := readImg(f, "adminRichMenu.png"); err != nil {
-		return err
+		return errLogic.NewError(err)
 	} else {
 		adminRichMenuImg = bs
 	}
 	if bs, err := readImg(f, "cadreRichMenu.png"); err != nil {
-		return err
+		return errLogic.NewError(err)
 	} else {
 		cadreRichMenuImg = bs
 	}
 	if bs, err := readImg(f, "guestRichMenu.png"); err != nil {
-		return err
+		return errLogic.NewError(err)
 	} else {
 		guestRichMenuImg = bs
 	}

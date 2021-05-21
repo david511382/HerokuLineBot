@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"embed"
 	"fmt"
+	errLogic "heroku-line-bot/logic/error"
 	"os"
 	"strconv"
 
@@ -39,12 +40,12 @@ func ReadConfig(f embed.FS, fileName string) error {
 	return err
 }
 
-func LoadEnv(cfg *Config) error {
+func LoadEnv(cfg *Config) *errLogic.ErrorInfo {
 	portStr := os.Getenv("PORT")
 	if portStr != "" {
 		port, err := strconv.Atoi(portStr)
 		if err != nil {
-			return err
+			return errLogic.NewError(err)
 		}
 		cfg.Server.Port = port
 	}

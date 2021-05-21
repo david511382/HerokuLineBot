@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	errLogic "heroku-line-bot/logic/error"
+
 	"github.com/robfig/cron"
 )
 
@@ -16,7 +18,7 @@ var (
 	backgrounds []*Background
 )
 
-func Init(totalCfg *bootstrap.Config) error {
+func Init(totalCfg *bootstrap.Config) *errLogic.ErrorInfo {
 	cr = cron.NewWithLocation(commonLogic.Location)
 	cfg := totalCfg.Backgrounds
 	backgrounds = []*Background{
@@ -26,13 +28,13 @@ func Init(totalCfg *bootstrap.Config) error {
 	}
 
 	for _, background := range backgrounds {
-		spec, err := background.Init(cfg)
-		if err != nil {
-			return err
+		spec, errInfo := background.Init(cfg)
+		if errInfo != nil {
+			return errInfo
 		}
 
 		if err := cr.AddJob(spec, background); err != nil {
-			return err
+			return errLogic.NewError(err)
 		}
 	}
 

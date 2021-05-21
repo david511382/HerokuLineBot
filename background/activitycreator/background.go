@@ -8,6 +8,7 @@ import (
 	clubLineBotLogic "heroku-line-bot/logic/clublinebot"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
+	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/storage/database"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
@@ -20,7 +21,7 @@ import (
 
 type BackGround struct{}
 
-func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErr error) {
+func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo *errLogic.ErrorInfo) {
 	return "ActivityCreator", cfg.ActivityCreator, nil
 }
 

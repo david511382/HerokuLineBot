@@ -2,6 +2,7 @@ package redis
 
 import (
 	"heroku-line-bot/bootstrap"
+	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/storage/redis/conn"
 	"heroku-line-bot/storage/redis/domain"
 	"heroku-line-bot/storage/redis/key/lineuser"
@@ -14,12 +15,12 @@ var (
 	LineUser        lineuser.Key
 )
 
-func Init(cfg *bootstrap.Config) error {
+func Init(cfg *bootstrap.Config) *errLogic.ErrorInfo {
 	maxLifeHour := cfg.RedisConfig.MaxLifeHour
 	maxConnAge := time.Hour * time.Duration(maxLifeHour)
 
 	if connection, err := conn.Connect(cfg.ClubRedis); err != nil {
-		return err
+		return errLogic.NewError(err)
 	} else {
 		UserUsingStatus = userusingstatus.New(connection, connection, domain.CLUB_BASE_KEY)
 		UserUsingStatus.SetConnection(maxConnAge)

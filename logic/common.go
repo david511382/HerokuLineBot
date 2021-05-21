@@ -6,15 +6,16 @@ import (
 	"heroku-line-bot/logic/autodbmigration"
 	"heroku-line-bot/logic/club"
 	"heroku-line-bot/logic/clublinebot"
+	errLogic "heroku-line-bot/logic/error"
 )
 
-func Init(f embed.FS, cfg *bootstrap.Config) error {
-	if err := autodbmigration.MigrationNotExist(); err != nil {
-		return err
+func Init(f embed.FS, cfg *bootstrap.Config) *errLogic.ErrorInfo {
+	if errInfo := autodbmigration.MigrationNotExist(); errInfo != nil {
+		return errInfo
 	}
 
-	if err := club.Init(f); err != nil {
-		return err
+	if errInfo := club.Init(f); errInfo != nil {
+		return errInfo
 	}
 
 	clublinebot.Init(cfg)
