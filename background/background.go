@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"heroku-line-bot/background/domain"
 	"heroku-line-bot/bootstrap"
+	"heroku-line-bot/logger"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	errLogic "heroku-line-bot/logic/error"
@@ -53,6 +54,7 @@ func (b *Background) Run() {
 
 	nowTime := commonLogic.TimeUtilObj.Now()
 	runTime := b.timeType.Of(nowTime)
+	b.logF("Run At %s", runTime.String())
 	if err := b.bg.Run(runTime); err != nil {
 		b.logF("%s %s has error :\n%s\n", time.Now(), b.name, err)
 	}
@@ -65,5 +67,15 @@ func (b *Background) recover() {
 }
 
 func (b *Background) logF(format string, a ...interface{}) {
-	fmt.Printf(format, a...)
+	msg := fmt.Sprintf(format, a...)
+	errInfo := errLogic.New(msg, errLogic.INFO)
+	b.logErrInfo(errInfo)
+}
+
+func (b *Background) logErrInfo(errInfo *errLogic.ErrorInfo) {
+	if errInfo == nil {
+		return
+	}
+
+	logger.Log(b.name, errInfo)
 }

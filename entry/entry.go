@@ -4,6 +4,7 @@ import (
 	"embed"
 	"heroku-line-bot/background"
 	"heroku-line-bot/bootstrap"
+	"heroku-line-bot/logger"
 	"heroku-line-bot/logic"
 	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/server"
@@ -19,6 +20,10 @@ func Run(f embed.FS) *errLogic.ErrorInfo {
 
 	cfg := bootstrap.LoadConfig(f, configName)
 	if errInfo := bootstrap.LoadEnv(cfg); errInfo != nil {
+		return errInfo
+	}
+
+	if errInfo := logger.Init(cfg); errInfo != nil {
 		return errInfo
 	}
 

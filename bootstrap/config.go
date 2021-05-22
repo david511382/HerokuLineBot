@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Server       Server       `yaml:"server"`
 	LineBot      LineBot      `yaml:"line_bot"`
+	TelegramBot  LineBot      `yaml:"telegram_bot"`
 	GoogleScript GoogleScript `yaml:"google_script"`
 	Backgrounds  Backgrounds  `yaml:"backgrounds"`
 	DbConfig     DbConfig     `yaml:"db"`
