@@ -1,7 +1,7 @@
 package conn
 
-import "github.com/jinzhu/gorm"
+import "gorm.io/gorm"
 
 type IConnect interface {
-	Connect() (*gorm.DB, error)
+	GetDialector() gorm.Dialector
 }

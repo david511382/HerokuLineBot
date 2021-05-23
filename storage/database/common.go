@@ -7,6 +7,8 @@ import (
 	"heroku-line-bot/storage/database/database/clubdb"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 var (
@@ -23,7 +25,9 @@ func Init(cfg *bootstrap.Config) *errLogic.ErrorInfo {
 		return errLogic.NewError(err)
 	} else {
 		Club = clubdb.New(connection, connection)
-		Club.SetConnection(maxIdleConns, maxOpenConns, maxLifetime)
+		if errInfo := Club.SetConnection(maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
+			return errInfo
+		}
 	}
 
 	return nil
@@ -35,4 +39,12 @@ func Dispose() {
 
 func IsUniqErr(err error) bool {
 	return strings.Contains(err.Error(), "unique constraint")
+}
+
+func CommitTransaction(transaction *gorm.DB, resultErrInfo *errLogic.ErrorInfo) {
+	if resultErrInfo == nil {
+		transaction.Commit()
+	} else {
+		transaction.Rollback()
+	}
 }

@@ -4,7 +4,7 @@ import (
 	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/domain/model/reqs"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type Activity struct {
@@ -21,6 +21,8 @@ func (t Activity) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
 }
 
 func (t Activity) whereArg(dp *gorm.DB, arg reqs.Activity) *gorm.DB {
+	dp = dp.Model(t.GetTable())
+
 	if p := arg.ID; p != nil {
 		dp = dp.Where("id = ?", p)
 	}

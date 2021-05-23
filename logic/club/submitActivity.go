@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"heroku-line-bot/logic/club/domain"
 	commonLogic "heroku-line-bot/logic/common"
+	errLogic "heroku-line-bot/logic/error"
 	lineUserLogic "heroku-line-bot/logic/redis/lineuser"
 	lineUserLogicDomain "heroku-line-bot/logic/redis/lineuser/domain"
 	"heroku-line-bot/service/linebot"
@@ -231,20 +232,13 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 		if err := transaction.Error; err != nil {
 			return err
 		}
+		var resultErrInfo *errLogic.ErrorInfo
 		defer func() {
-			if resultErr == nil {
-				if resultErr = transaction.Commit().Error; resultErr != nil {
-					return
-				}
-			}
-
-			if err := transaction.Rollback().Error; err != nil {
-				if resultErr == nil {
-					resultErr = err
-				}
-				return
+			if resultErrInfo != nil {
+				resultErr = resultErrInfo.Error()
 			}
 		}()
+		defer database.CommitTransaction(transaction, resultErrInfo)
 
 		isConsumeBall := b.Rsl4Consume > 0
 		logisticID := 0
@@ -255,7 +249,8 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 				Amount:      -b.Rsl4Consume,
 				Description: "打球",
 			}
-			if resultErr = database.Club.Logistic.Insert(transaction, logisticData); resultErr != nil {
+			if err := database.Club.Logistic.Insert(transaction, logisticData); err != nil {
+				resultErrInfo = errLogic.NewError(err)
 				return
 			}
 			logisticID = logisticData.ID
@@ -292,7 +287,8 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 		arg := dbReqs.Activity{
 			ID: &b.ActivityID,
 		}
-		if resultErr = database.Club.Activity.Update(transaction, arg, updateFields); resultErr != nil {
+		if err := database.Club.Activity.Update(transaction, arg, updateFields); err != nil {
+			resultErrInfo = errLogic.NewError(err)
 			return
 		}
 
@@ -304,19 +300,22 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 				"is_attend": true,
 			}
 			if err := database.Club.MemberActivity.Update(transaction, arg, fields); err != nil && !database.IsUniqErr(err) {
-				return err
+				resultErrInfo = errLogic.NewError(err)
+				return
 			}
 		}
 
-		if resultErr = b.context.DeleteParam(); resultErr != nil {
+		if err := b.context.DeleteParam(); err != nil {
+			resultErrInfo = errLogic.NewError(err)
 			return
 		}
 
 		replyMessges := []interface{}{
 			linebot.GetTextMessage("完成"),
 		}
-		if resultErr = b.context.Reply(replyMessges); resultErr != nil {
-			return resultErr
+		if err := b.context.Reply(replyMessges); err != nil {
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 
 		return nil

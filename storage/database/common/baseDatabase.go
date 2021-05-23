@@ -3,7 +3,9 @@ package common
 import (
 	"time"
 
-	"github.com/jinzhu/gorm"
+	errLogic "heroku-line-bot/logic/error"
+
+	"gorm.io/gorm"
 )
 
 type BaseDatabase struct {
@@ -15,35 +17,57 @@ func (d *BaseDatabase) Begin() *gorm.DB {
 	return d.Write.Begin()
 }
 
-func (d *BaseDatabase) SetConnection(maxIdleConns, maxOpenConns int, maxLifetime time.Duration) {
+func (d *BaseDatabase) SetConnection(maxIdleConns, maxOpenConns int, maxLifetime time.Duration) *errLogic.ErrorInfo {
 	if d.Read != nil {
-		d.setConnection(d.Read, maxIdleConns, maxOpenConns, maxLifetime)
+		if errInfo := d.setConnection(d.Read, maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
+			return errInfo
+		}
 	}
 	if d.Write != nil {
-		d.setConnection(d.Write, maxIdleConns, maxOpenConns, maxLifetime)
+		if errInfo := d.setConnection(d.Read, maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
+			return errInfo
+		}
 	}
+
+	return nil
 }
 
-func (d *BaseDatabase) setConnection(db *gorm.DB, maxIdleConns, maxOpenConns int, maxLifetime time.Duration) {
-	sqlDB := db.DB()
+func (d *BaseDatabase) setConnection(db *gorm.DB, maxIdleConns, maxOpenConns int, maxLifetime time.Duration) *errLogic.ErrorInfo {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return errLogic.NewError(err)
+	}
+
 	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
 	sqlDB.SetMaxIdleConns(maxIdleConns)
 	// SetMaxOpenConns sets the maximum number of open connections to the database.
 	sqlDB.SetMaxOpenConns(maxOpenConns)
 	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
 	sqlDB.SetConnMaxLifetime(maxLifetime)
+
+	return nil
 }
 
-func (d *BaseDatabase) Dispose() error {
+func (d *BaseDatabase) Dispose() *errLogic.ErrorInfo {
 	if d.Read != nil {
-		if err := d.Read.Close(); err != nil {
-			return err
+		sqlDB, err := d.Read.DB()
+		if err != nil {
+			return errLogic.NewError(err)
+		}
+
+		if err := sqlDB.Close(); err != nil {
+			return errLogic.NewError(err)
 		}
 	}
 
 	if d.Write != nil {
-		if err := d.Write.Close(); err != nil {
-			return err
+		sqlDB, err := d.Write.DB()
+		if err != nil {
+			return errLogic.NewError(err)
+		}
+
+		if err := sqlDB.Close(); err != nil {
+			return errLogic.NewError(err)
 		}
 	}
 

@@ -4,21 +4,20 @@ import (
 	"fmt"
 	"heroku-line-bot/bootstrap"
 
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-type mysql struct {
+type mysqlDb struct {
 	cfg bootstrap.Db
 }
 
-func (d mysql) Connect() (*gorm.DB, error) {
+func (d mysqlDb) GetDialector() gorm.Dialector {
 	addr := d.addr()
-	return gorm.Open("mysql", addr)
+	return mysql.Open(addr)
 }
 
-func (d mysql) addr() string {
+func (d mysqlDb) addr() string {
 	cfg := d.cfg
 	addr := fmt.Sprintf("%s:%s@tcp(%s)/%s?%s",
 		cfg.User,

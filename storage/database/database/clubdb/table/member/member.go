@@ -4,7 +4,7 @@ import (
 	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/domain/model/reqs"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type Member struct {
@@ -21,6 +21,8 @@ func (t Member) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
 }
 
 func (t Member) whereArg(dp *gorm.DB, arg reqs.Member) *gorm.DB {
+	dp = dp.Model(t.GetTable())
+
 	if arg.IsDelete == nil || *arg.IsDelete {
 		dp = dp.Unscoped()
 

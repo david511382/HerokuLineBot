@@ -6,7 +6,7 @@ import (
 	"heroku-line-bot/storage/database/conn/postgre"
 	"heroku-line-bot/storage/database/domain"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 func Connect(cfg bootstrap.Db) (*gorm.DB, error) {
@@ -21,5 +21,6 @@ func Connect(cfg bootstrap.Db) (*gorm.DB, error) {
 		return nil, domain.UNKNOWN_DB_TYPE_ERROR
 	}
 
-	return c.Connect()
+	dialector := c.GetDialector()
+	return gorm.Open(dialector, &gorm.Config{})
 }

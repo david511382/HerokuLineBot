@@ -5,6 +5,7 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
+	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
@@ -16,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type NewActivity struct {
@@ -167,33 +168,29 @@ func (b *NewActivity) Do(text string) (resultErr error) {
 		if err := transaction.Error; err != nil {
 			return err
 		}
+		var resultErrInfo *errLogic.ErrorInfo
 		defer func() {
-			if resultErr == nil {
-				if resultErr = transaction.Commit().Error; resultErr != nil {
-					return
-				}
-			}
-
-			if err := transaction.Rollback().Error; err != nil {
-				if resultErr == nil {
-					resultErr = err
-				}
-				return
+			if resultErrInfo != nil {
+				resultErr = resultErrInfo.Error()
 			}
 		}()
-		if resultErr = b.InsertActivity(transaction); resultErr != nil {
+		defer database.CommitTransaction(transaction, resultErrInfo)
+
+		if resultErrInfo = b.InsertActivity(transaction); resultErrInfo != nil {
 			return
 		}
 
-		if resultErr = b.Context.DeleteParam(); resultErr != nil {
+		if err := b.Context.DeleteParam(); err != nil {
+			resultErrInfo = errLogic.NewError(err)
 			return
 		}
 
 		replyMessges := []interface{}{
 			linebot.GetTextMessage("完成"),
 		}
-		if resultErr = b.Context.Reply(replyMessges); resultErr != nil {
-			return resultErr
+		if err := b.Context.Reply(replyMessges); err != nil {
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 
 		return nil
@@ -312,27 +309,15 @@ func (b *NewActivity) Do(text string) (resultErr error) {
 	return nil
 }
 
-func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErr error) {
+func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo *errLogic.ErrorInfo) {
 	courtsStr := b.getCourtsStr()
 	if transaction == nil {
 		transaction = database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
-		defer func() {
-			if resultErr == nil {
-				if resultErr = transaction.Commit().Error; resultErr != nil {
-					return
-				}
-			}
-
-			if err := transaction.Rollback().Error; err != nil {
-				if resultErr == nil {
-					resultErr = err
-				}
-				return
-			}
-		}()
+		defer database.CommitTransaction(transaction, resultErrInfo)
 	}
 
 	data := &activityDb.ActivityTable{
@@ -344,7 +329,8 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErr error) {
 		PeopleLimit:   b.PeopleLimit,
 		IsComplete:    b.IsComplete,
 	}
-	if resultErr = database.Club.Activity.BaseTable.Insert(transaction, data); resultErr != nil {
+	if err := database.Club.Activity.BaseTable.Insert(transaction, data); err != nil {
+		resultErrInfo = errLogic.NewError(err)
 		return
 	}
 

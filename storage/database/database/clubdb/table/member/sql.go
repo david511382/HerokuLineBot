@@ -1,13 +1,40 @@
 package member
 
 import (
+	"heroku-line-bot/storage/database/domain"
 	"heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/storage/database/domain/model/resp"
+
+	"gorm.io/gorm"
 )
 
+func (t Member) Insert(trans *gorm.DB, datas ...*MemberTable) error {
+	var createValue interface{}
+	if len(datas) == 0 {
+		return domain.DB_NO_AFFECTED_ERROR
+	} else if len(datas) > 1 {
+		createValue = &datas
+	} else if len(datas) == 1 {
+		createValue = datas[0]
+	}
+
+	dp := trans
+	if dp == nil {
+		dp = t.Write
+	}
+
+	return t.BaseTable.Insert(dp, createValue)
+}
+
+func (t Member) MigrationData(datas ...*MemberTable) error {
+	if err := t.MigrationTable(); err != nil {
+		return err
+	}
+	return t.Insert(nil, datas...)
+}
+
 func (t Member) Role(arg reqs.Member) ([]*resp.Role, error) {
-	dp := t.DbModel()
-	dp = t.whereArg(dp, arg).Select(
+	dp := t.whereArg(t.Read, arg).Select(
 		`
 		role AS role
 		`,
@@ -22,8 +49,7 @@ func (t Member) Role(arg reqs.Member) ([]*resp.Role, error) {
 }
 
 func (t Member) LineID(arg reqs.Member) ([]*resp.LineID, error) {
-	dp := t.DbModel()
-	dp = t.whereArg(dp, arg).Select(
+	dp := t.whereArg(t.Read, arg).Select(
 		`
 		line_id AS line_id
 		`,
@@ -38,8 +64,7 @@ func (t Member) LineID(arg reqs.Member) ([]*resp.LineID, error) {
 }
 
 func (t Member) NameLineID(arg reqs.Member) ([]*resp.NameLineID, error) {
-	dp := t.DbModel()
-	dp = t.whereArg(dp, arg).Select(
+	dp := t.whereArg(t.Read, arg).Select(
 		`
 		name AS name,
 		line_id AS line_id
@@ -55,8 +80,7 @@ func (t Member) NameLineID(arg reqs.Member) ([]*resp.NameLineID, error) {
 }
 
 func (t Member) IDNameLineID(arg reqs.Member) ([]*resp.IDNameLineID, error) {
-	dp := t.DbModel()
-	dp = t.whereArg(dp, arg).Select(
+	dp := t.whereArg(t.Read, arg).Select(
 		`
 		id AS id,
 		name AS name,
@@ -73,8 +97,7 @@ func (t Member) IDNameLineID(arg reqs.Member) ([]*resp.IDNameLineID, error) {
 }
 
 func (t Member) IDName(arg reqs.Member) ([]*resp.IDNameRole, error) {
-	dp := t.DbModel()
-	dp = t.whereArg(dp, arg).Select(
+	dp := t.whereArg(t.Read, arg).Select(
 		`
 		id AS id,
 		name AS name
@@ -90,8 +113,7 @@ func (t Member) IDName(arg reqs.Member) ([]*resp.IDNameRole, error) {
 }
 
 func (t Member) IDNameRole(arg reqs.Member) ([]*resp.IDNameRole, error) {
-	dp := t.DbModel()
-	dp = t.whereArg(dp, arg).Select(
+	dp := t.whereArg(t.Read, arg).Select(
 		`
 		id AS id,
 		name AS name,
@@ -108,8 +130,7 @@ func (t Member) IDNameRole(arg reqs.Member) ([]*resp.IDNameRole, error) {
 }
 
 func (t Member) IDDepartment(arg reqs.Member) ([]*resp.IDDepartment, error) {
-	dp := t.DbModel()
-	dp = t.whereArg(dp, arg).Select(
+	dp := t.whereArg(t.Read, arg).Select(
 		`
 		id AS id,
 		department AS department
@@ -125,8 +146,7 @@ func (t Member) IDDepartment(arg reqs.Member) ([]*resp.IDDepartment, error) {
 }
 
 func (t Member) IDNameDepartmentJoinDate(arg reqs.Member) ([]*resp.IDNameDepartmentJoinDate, error) {
-	dp := t.DbModel()
-	dp = t.whereArg(dp, arg).Select(
+	dp := t.whereArg(t.Read, arg).Select(
 		`
 		id AS id,
 		name AS name,
@@ -144,8 +164,7 @@ func (t Member) IDNameDepartmentJoinDate(arg reqs.Member) ([]*resp.IDNameDepartm
 }
 
 func (t Member) IDNameRoleDepartment(arg reqs.Member) ([]*resp.IDNameRoleDepartment, error) {
-	dp := t.DbModel()
-	dp = t.whereArg(dp, arg).Select(
+	dp := t.whereArg(t.Read, arg).Select(
 		`
 		id AS id,
 		name AS name,
@@ -163,8 +182,7 @@ func (t Member) IDNameRoleDepartment(arg reqs.Member) ([]*resp.IDNameRoleDepartm
 }
 
 func (t Member) NameRoleDepartmentLineIDCompanyID(arg reqs.Member) ([]*resp.NameRoleDepartmentLineIDCompanyID, error) {
-	dp := t.DbModel()
-	dp = t.whereArg(dp, arg).Select(
+	dp := t.whereArg(t.Read, arg).Select(
 		`
 		name AS name,
 		role AS role,

@@ -25,7 +25,7 @@ func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg
 	return "ActivityCreator", cfg.ActivityCreator, nil
 }
 
-func (b *BackGround) Run(runTime time.Time) error {
+func (b *BackGround) Run(runTime time.Time) (resultErrInfo *errLogic.ErrorInfo) {
 	createActivityDate := commonLogicDomain.WEEK_TIME_TYPE.Next(
 		commonLogicDomain.DATE_TIME_TYPE.Of(runTime),
 		1,
@@ -38,7 +38,8 @@ func (b *BackGround) Run(runTime time.Time) error {
 		EveryWeekday: util.GetInt16P(weekday),
 	}
 	if dbDatas, err := database.Club.RentalCourt.IDPlaceCourtsAndTimePricePerHour(arg); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	} else {
 		ids := []int{}
 		for _, v := range dbDatas {
@@ -52,7 +53,8 @@ func (b *BackGround) Run(runTime time.Time) error {
 				ExcludeDate:    &createActivityDate,
 			}
 			if dbDatas, err := database.Club.RentalCourtException.RentalCourtID(arg); err != nil {
-				return err
+				resultErrInfo = errLogic.NewError(err)
+				return
 			} else {
 				for _, v := range dbDatas {
 					ignoreIDMap[v.ID] = true
@@ -67,7 +69,8 @@ func (b *BackGround) Run(runTime time.Time) error {
 
 			court, err := b.ParseCourts(v.CourtsAndTime, v.PricePerHour)
 			if err != nil {
-				return err
+				resultErrInfo = errLogic.NewError(err)
+				return
 			}
 			placeCourtsMap[v.Place] = append(placeCourtsMap[v.Place], court)
 		}
@@ -100,26 +103,24 @@ func (b *BackGround) Run(runTime time.Time) error {
 		newActivityHandlers = append(newActivityHandlers, newActivityHandler)
 	}
 
-	transaction := database.Club.Begin()
-	if err := transaction.Error; err != nil {
-		return err
-	}
-	defer func() {
-		transaction.Rollback()
-	}()
-	for _, newActivityHandler := range newActivityHandlers {
-		if err := newActivityHandler.InsertActivity(transaction); err != nil {
-			return err
+	if transaction := database.Club.Begin(); transaction.Error != nil {
+		resultErrInfo = errLogic.NewError(transaction.Error)
+		return
+	} else {
+		defer database.CommitTransaction(transaction, resultErrInfo)
+
+		for _, newActivityHandler := range newActivityHandlers {
+			if resultErrInfo = newActivityHandler.InsertActivity(transaction); resultErrInfo != nil {
+				return
+			}
 		}
-	}
-	if err := transaction.Commit().Error; err != nil {
-		return err
 	}
 
 	getActivityHandler := &clubLogic.GetActivities{}
 	pushMessage, err := getActivityHandler.GetActivitiesMessage("開放活動報名", false, false)
 	if err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	}
 	pushMessages := []interface{}{
 		linebot.GetTextMessage("活動開放報名，請私下與我報名"),
@@ -127,7 +128,8 @@ func (b *BackGround) Run(runTime time.Time) error {
 	}
 	linebotContext := clubLineBotLogic.NewContext("", "", &clubLineBotLogic.Bot)
 	if err := linebotContext.PushRoom(pushMessages); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	}
 
 	return nil
