@@ -2,6 +2,7 @@ package entry
 
 import (
 	"embed"
+	"fmt"
 	"heroku-line-bot/background"
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/logger"
@@ -18,7 +19,12 @@ func Run(f embed.FS) *errLogic.ErrorInfo {
 		configName = "config"
 	}
 
-	cfg := bootstrap.LoadConfig(f, configName)
+	configName = fmt.Sprintf("resource/config/%s.yml", configName)
+	cfg, errInfo := bootstrap.ReadConfig(&f, configName)
+	if errInfo != nil {
+		return errInfo
+	}
+
 	if errInfo := bootstrap.LoadEnv(cfg); errInfo != nil {
 		return errInfo
 	}

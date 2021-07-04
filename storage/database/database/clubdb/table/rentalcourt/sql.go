@@ -4,6 +4,7 @@ import (
 	"heroku-line-bot/storage/database/domain"
 	"heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/storage/database/domain/model/resp"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -44,6 +45,70 @@ func (t RentalCourt) IDPlaceCourtsAndTimePricePerHour(arg reqs.RentalCourt) ([]*
 	)
 
 	result := make([]*resp.IDPlaceCourtsAndTimePricePerHour, 0)
+	if err := dp.Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (t RentalCourt) GetRentalCourts(
+	fromDate, toDate time.Time,
+	place *string,
+	weekday *int16,
+) (
+	[]*resp.IDPlaceCourtsAndTimePricePerHourEverweekdayStartdateEnddate,
+	error,
+) {
+	dp := t.Read
+	dp = t.whereArg(
+		dp,
+		reqs.RentalCourt{},
+	).Or(
+		t.whereArg(
+			dp,
+			reqs.RentalCourt{
+				FromStartDate: &fromDate,
+				ToStartDate:   &toDate,
+				Place:         place,
+				EveryWeekday:  weekday,
+			},
+		),
+	).Or(
+		t.whereArg(
+			dp,
+			reqs.RentalCourt{
+				FromEndDate:  &fromDate,
+				ToEndDate:    &toDate,
+				Place:        place,
+				EveryWeekday: weekday,
+			},
+		),
+	).Or(
+		t.whereArg(
+			dp,
+			reqs.RentalCourt{
+				ToStartDate:  &fromDate,
+				FromEndDate:  &toDate,
+				Place:        place,
+				EveryWeekday: weekday,
+			},
+		),
+	)
+
+	dp = dp.Select(
+		`
+		id AS id,
+		place AS place,
+		courts_and_time AS courts_and_time,
+		price_per_hour AS price_per_hour,
+		every_weekday AS every_weekday,
+		start_date AS start_date,
+		end_date AS end_date
+		`,
+	)
+
+	result := make([]*resp.IDPlaceCourtsAndTimePricePerHourEverweekdayStartdateEnddate, 0)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}

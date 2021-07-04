@@ -1,9 +1,10 @@
 package activitycreator
 
 import (
-	"fmt"
 	"heroku-line-bot/bootstrap"
 	clubLogic "heroku-line-bot/logic/club"
+	clubCourtLogic "heroku-line-bot/logic/club/court"
+	clubCourtLogicDomain "heroku-line-bot/logic/club/court/domain"
 	"heroku-line-bot/logic/club/domain"
 	clubLineBotLogic "heroku-line-bot/logic/clublinebot"
 	commonLogic "heroku-line-bot/logic/common"
@@ -11,11 +12,9 @@ import (
 	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/storage/database"
-	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/util"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -26,81 +25,53 @@ func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg
 }
 
 func (b *BackGround) Run(runTime time.Time) (resultErrInfo *errLogic.ErrorInfo) {
+	defer func() {
+		if resultErrInfo != nil {
+			resultErrInfo = resultErrInfo.NewParent(runTime.String())
+		}
+	}()
+
+	newActivityHandlers := make([]*clubLogic.NewActivity, 0)
 	createActivityDate := commonLogicDomain.WEEK_TIME_TYPE.Next(
 		commonLogicDomain.DATE_TIME_TYPE.Of(runTime),
 		1,
 	)
 	weekday := int16(createActivityDate.Weekday())
-	placeCourtsMap := make(map[string][]*clubLogic.ActivityCourt)
-	arg := dbReqs.RentalCourt{
-		ToStartDate:  &createActivityDate,
-		FromEndDate:  &createActivityDate,
-		EveryWeekday: util.GetInt16P(weekday),
-	}
-	if dbDatas, err := database.Club.RentalCourt.IDPlaceCourtsAndTimePricePerHour(arg); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+	if courtDatas, errInfo := clubCourtLogic.GetRentalCourts(
+		createActivityDate,
+		createActivityDate,
+		nil,
+		&weekday,
+	); errInfo != nil {
+		resultErrInfo = errInfo
 		return
-	} else {
-		ids := []int{}
-		for _, v := range dbDatas {
-			ids = append(ids, v.ID)
-		}
-
-		ignoreIDMap := make(map[int]bool)
-		if len(ids) > 0 {
-			arg := dbReqs.RentalCourtException{
-				RentalCourtIDs: ids,
-				ExcludeDate:    &createActivityDate,
-			}
-			if dbDatas, err := database.Club.RentalCourtException.RentalCourtID(arg); err != nil {
-				resultErrInfo = errLogic.NewError(err)
-				return
-			} else {
-				for _, v := range dbDatas {
-					ignoreIDMap[v.ID] = true
-				}
-			}
-		}
-
-		for _, v := range dbDatas {
-			if ignoreIDMap[v.ID] {
-				continue
-			}
-
-			court, err := b.ParseCourts(v.CourtsAndTime, v.PricePerHour)
-			if err != nil {
-				resultErrInfo = errLogic.NewError(err)
-				return
-			}
-			placeCourtsMap[v.Place] = append(placeCourtsMap[v.Place], court)
-		}
-	}
-
-	if len(placeCourtsMap) == 0 {
+	} else if len(courtDatas) == 0 {
 		return nil
-	}
+	} else {
+		for place, dateMap := range courtDatas {
+			for dateInt, courtData := range dateMap {
+				date := commonLogic.IntTime(dateInt, commonLogicDomain.DATE_TIME_TYPE)
+				courts := b.combineCourts(courtData.Courts)
+				newActivityHandler := &clubLogic.NewActivity{
+					Date:        date,
+					Place:       place,
+					Description: "7人出團",
+					ClubSubsidy: 359,
+					IsComplete:  false,
+					Courts:      courts,
+				}
 
-	newActivityHandlers := make([]*clubLogic.NewActivity, 0)
-	for place, courts := range placeCourtsMap {
-		courts = b.combineCourts(courts)
-		newActivityHandler := &clubLogic.NewActivity{
-			Date:        createActivityDate,
-			Place:       place,
-			Description: "7人出團",
-			ClubSubsidy: 359,
-			IsComplete:  false,
-			Courts:      courts,
+				totalCourtCount := 0
+				for _, court := range newActivityHandler.Courts {
+					totalCourtCount += int(court.Count)
+				}
+				peopleLimit := int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2)
+
+				newActivityHandler.PeopleLimit = util.GetInt16P(peopleLimit)
+
+				newActivityHandlers = append(newActivityHandlers, newActivityHandler)
+			}
 		}
-
-		totalCourtCount := 0
-		for _, court := range courts {
-			totalCourtCount += int(court.Count)
-		}
-		peopleLimit := int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2)
-
-		newActivityHandler.PeopleLimit = util.GetInt16P(peopleLimit)
-
-		newActivityHandlers = append(newActivityHandlers, newActivityHandler)
 	}
 
 	if transaction := database.Club.Begin(); transaction.Error != nil {
@@ -135,45 +106,12 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo *errLogic.ErrorInfo) 
 	return nil
 }
 
-func (b *BackGround) ParseCourts(courtsStr string, pricePerHour float64) (*clubLogic.ActivityCourt, error) {
-	court := &clubLogic.ActivityCourt{
-		PricePerHour: pricePerHour,
-	}
-
-	timeStr := ""
-	if _, err := fmt.Sscanf(
-		courtsStr,
-		"%d-%s",
-		&court.Count,
-		&timeStr); err != nil {
-		return nil, err
-	}
-	times := strings.Split(timeStr, "~")
-	if len(times) != 2 {
-		return nil, fmt.Errorf("時間格式錯誤")
-	}
-	fromTimeStr := times[0]
-	toTimeStr := times[1]
-	if t, err := time.Parse(commonLogicDomain.TIME_HOUR_MIN_FORMAT, fromTimeStr); err != nil {
-		return nil, err
-	} else {
-		court.FromTime = t
-	}
-	if t, err := time.Parse(commonLogicDomain.TIME_HOUR_MIN_FORMAT, toTimeStr); err != nil {
-		return nil, err
-	} else {
-		court.ToTime = t
-	}
-
-	return court, nil
-}
-
 type node struct {
 	fromSideMap map[int]*node
 	toSideMap   map[int]*node
 	fromSides   []int
 	toSides     []int
-	target      *clubLogic.ActivityCourt
+	target      *clubCourtLogicDomain.ActivityCourt
 }
 
 func (m *node) isSorted() bool {
@@ -196,8 +134,8 @@ func (m *node) totalValue() float64 {
 	return m.fromSideMax() + m.value() + m.toSideMax()
 }
 
-func (m *node) takeFromSideMax() []*clubLogic.ActivityCourt {
-	result := make([]*clubLogic.ActivityCourt, 0)
+func (m *node) takeFromSideMax() []*clubCourtLogicDomain.ActivityCourt {
+	result := make([]*clubCourtLogicDomain.ActivityCourt, 0)
 	if m.target == nil {
 		return result
 	}
@@ -217,8 +155,8 @@ func (m *node) takeFromSideMax() []*clubLogic.ActivityCourt {
 	return result
 }
 
-func (m *node) takeToSideMax() []*clubLogic.ActivityCourt {
-	result := make([]*clubLogic.ActivityCourt, 0)
+func (m *node) takeToSideMax() []*clubCourtLogicDomain.ActivityCourt {
+	result := make([]*clubCourtLogicDomain.ActivityCourt, 0)
 	if m.target == nil {
 		return result
 	}
@@ -236,9 +174,9 @@ func (m *node) takeToSideMax() []*clubLogic.ActivityCourt {
 	return result
 }
 
-func (m *node) takeMax() []*clubLogic.ActivityCourt {
+func (m *node) takeMax() []*clubCourtLogicDomain.ActivityCourt {
 	if m.target == nil {
-		return make([]*clubLogic.ActivityCourt, 0)
+		return make([]*clubCourtLogicDomain.ActivityCourt, 0)
 	}
 
 	target := *m.target
@@ -309,14 +247,14 @@ func (m *node) sort() {
 	})
 }
 
-func (b *BackGround) combineCourts(courts []*clubLogic.ActivityCourt) []*clubLogic.ActivityCourt {
-	newCourts := make([]*clubLogic.ActivityCourt, 0)
+func (b *BackGround) combineCourts(courts []*clubCourtLogicDomain.ActivityCourt) []*clubCourtLogicDomain.ActivityCourt {
+	newCourts := make([]*clubCourtLogicDomain.ActivityCourt, 0)
 
-	priceCourtsMap := make(map[float64][]*clubLogic.ActivityCourt)
+	priceCourtsMap := make(map[float64][]*clubCourtLogicDomain.ActivityCourt)
 	for _, court := range courts {
 		price := court.PricePerHour
 		if priceCourtsMap[price] == nil {
-			priceCourtsMap[price] = make([]*clubLogic.ActivityCourt, 0)
+			priceCourtsMap[price] = make([]*clubCourtLogicDomain.ActivityCourt, 0)
 		}
 		priceCourtsMap[price] = append(priceCourtsMap[price], court)
 	}
@@ -327,8 +265,8 @@ func (b *BackGround) combineCourts(courts []*clubLogic.ActivityCourt) []*clubLog
 	return newCourts
 }
 
-func (b *BackGround) combineSamePriceCourts(courts []*clubLogic.ActivityCourt) []*clubLogic.ActivityCourt {
-	newCourts := make([]*clubLogic.ActivityCourt, 0)
+func (b *BackGround) combineSamePriceCourts(courts []*clubCourtLogicDomain.ActivityCourt) []*clubCourtLogicDomain.ActivityCourt {
+	newCourts := make([]*clubCourtLogicDomain.ActivityCourt, 0)
 
 	for _, court := range courts {
 		for c := 1; c < int(court.Count); c++ {
@@ -387,16 +325,16 @@ func (b *BackGround) combineSamePriceCourts(courts []*clubLogic.ActivityCourt) [
 	})
 
 	timeCountMap := make(map[string]int)
-	timeCourtMap := make(map[string]*clubLogic.ActivityCourt)
+	timeCourtMap := make(map[string]*clubCourtLogicDomain.ActivityCourt)
 	for _, m := range nodes {
 		maxNodes := m.takeMax()
-		var newCourt *clubLogic.ActivityCourt
+		var newCourt *clubCourtLogicDomain.ActivityCourt
 		if len(maxNodes) == 1 {
 			newCourt = maxNodes[0]
 		} else if len(maxNodes) == 0 {
 			continue
 		} else {
-			newCourt = &clubLogic.ActivityCourt{
+			newCourt = &clubCourtLogicDomain.ActivityCourt{
 				FromTime:     maxNodes[0].FromTime,
 				ToTime:       maxNodes[len(maxNodes)-1].ToTime,
 				Count:        1,

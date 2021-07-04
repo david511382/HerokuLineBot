@@ -47,3 +47,20 @@ func (t RentalCourtException) RentalCourtID(arg reqs.RentalCourtException) ([]*r
 
 	return result, nil
 }
+
+func (t RentalCourtException) RentalCourtIDExcludeDateReason(arg reqs.RentalCourtException) ([]*resp.IDExcludeDateReasonType, error) {
+	dp := t.whereArg(t.Read, arg).Select(
+		`
+		rental_court_id AS id,
+		exclude_date AS exclude_date,
+		reason_type AS reason_type
+		`,
+	)
+
+	result := make([]*resp.IDExcludeDateReasonType, 0)
+	if err := dp.Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

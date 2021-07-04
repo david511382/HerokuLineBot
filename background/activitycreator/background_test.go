@@ -1,8 +1,7 @@
 package activitycreator
 
 import (
-	"fmt"
-	clubLogic "heroku-line-bot/logic/club"
+	clubCourtLogicDomain "heroku-line-bot/logic/club/court/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	"heroku-line-bot/util"
 	"sort"
@@ -11,19 +10,19 @@ import (
 
 func TestBackGround_combineSamePriceCourts(t *testing.T) {
 	type args struct {
-		courts []*clubLogic.ActivityCourt
+		courts []*clubCourtLogicDomain.ActivityCourt
 	}
 	tests := []struct {
 		name string
 		b    *BackGround
 		args args
-		want []*clubLogic.ActivityCourt
+		want []*clubCourtLogicDomain.ActivityCourt
 	}{
 		{
 			"standard",
 			&BackGround{},
 			args{
-				courts: []*clubLogic.ActivityCourt{
+				courts: []*clubCourtLogicDomain.ActivityCourt{
 					{
 						FromTime:     commonLogic.GetTime(2013, 8, 2, 2),
 						ToTime:       commonLogic.GetTime(2013, 8, 2, 3),
@@ -56,7 +55,7 @@ func TestBackGround_combineSamePriceCourts(t *testing.T) {
 					},
 				},
 			},
-			[]*clubLogic.ActivityCourt{
+			[]*clubCourtLogicDomain.ActivityCourt{
 				{
 					FromTime:     commonLogic.GetTime(2013, 8, 2, 1),
 					ToTime:       commonLogic.GetTime(2013, 8, 2, 3),
@@ -87,9 +86,6 @@ func TestBackGround_combineSamePriceCourts(t *testing.T) {
 			sort.SliceStable(got, func(i, j int) bool {
 				return got[i].FromTime.Before(got[j].FromTime)
 			})
-			for _, g := range got {
-				fmt.Println(g.FromTime.String(), g.ToTime.String())
-			}
 			if ok, msg := util.Comp(got, tt.want); !ok {
 				t.Errorf(msg)
 			}

@@ -30,6 +30,10 @@ func (t RentalCourt) whereArg(dp *gorm.DB, arg reqs.RentalCourt) *gorm.DB {
 		dp = dp.Where("id IN (?)", p)
 	}
 
+	if p := arg.Place; p != nil {
+		dp = dp.Where("place = ?", p)
+	}
+
 	if p := arg.EveryWeekday; p != nil {
 		dp = dp.Where("every_weekday = ?", p)
 	}

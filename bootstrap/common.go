@@ -2,8 +2,8 @@ package bootstrap
 
 import (
 	"embed"
-	"fmt"
 	errLogic "heroku-line-bot/logic/error"
+	"heroku-line-bot/util"
 	"os"
 	"strconv"
 
@@ -18,26 +18,29 @@ func Get() *Config {
 	return cfg
 }
 
-func LoadConfig(f embed.FS, fileName string) *Config {
-	err := ReadConfig(f, fileName)
-	if err != nil {
-		panic(err)
-	}
-	return cfg
-}
-
 // ReadConfig read config from filepath
-func ReadConfig(f embed.FS, fileName string) error {
-	fileName = fmt.Sprintf("resource/config/%s.yml", fileName)
-	cfgBytes, err := f.ReadFile(fileName)
-	if err != nil {
-		return err
+func ReadConfig(f *embed.FS, fileName string) (*Config, *errLogic.ErrorInfo) {
+	var cfgBytes []byte
+	if f != nil {
+		fileBs, err := f.ReadFile(fileName)
+		if err != nil {
+			return nil, errLogic.NewError(err)
+		}
+		cfgBytes = fileBs
+	} else {
+		fileBs, err := util.ReadFile(fileName)
+		if err != nil {
+			return nil, errLogic.NewError(err)
+		}
+		cfgBytes = fileBs
 	}
 
 	cfg = &Config{}
-	err = yaml.Unmarshal(cfgBytes, cfg)
+	if err := yaml.Unmarshal(cfgBytes, cfg); err != nil {
+		return nil, errLogic.NewError(err)
+	}
 
-	return err
+	return cfg, nil
 }
 
 func LoadEnv(cfg *Config) *errLogic.ErrorInfo {
