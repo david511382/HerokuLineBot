@@ -114,8 +114,12 @@ type node struct {
 	target      *clubCourtLogicDomain.ActivityCourt
 }
 
-func (m *node) isSorted() bool {
+func (m *node) isFromSorted() bool {
 	return len(m.fromSideMap) == len(m.fromSides)
+}
+
+func (m *node) isToSorted() bool {
+	return len(m.toSideMap) == len(m.toSides)
 }
 
 func (m *node) fromLen() int {
@@ -136,41 +140,38 @@ func (m *node) totalValue() float64 {
 
 func (m *node) takeFromSideMax() []*clubCourtLogicDomain.ActivityCourt {
 	result := make([]*clubCourtLogicDomain.ActivityCourt, 0)
-	if m.target == nil {
-		return result
+
+	for _, index := range m.fromSides {
+		n := m.fromSideMap[index]
+		if n == nil || n.target == nil {
+			continue
+		}
+
+		target := *n.target
+		result = append(result, &target)
+		result = append(result, n.takeFromSideMax()...)
+		n.target = nil
+		break
 	}
-
-	if m.fromLen() > 0 {
-		index := m.fromSides[0]
-		result = append(result, m.fromSideMap[index].takeFromSideMax()...)
-		delete(m.fromSideMap, index)
-		m.fromSides = m.fromSides[1:]
-
-	}
-
-	target := *m.target
-	result = append(result, &target)
-	m.target = nil
 
 	return result
 }
 
 func (m *node) takeToSideMax() []*clubCourtLogicDomain.ActivityCourt {
 	result := make([]*clubCourtLogicDomain.ActivityCourt, 0)
-	if m.target == nil {
-		return result
+	for _, index := range m.toSides {
+		n := m.toSideMap[index]
+		if n == nil || n.target == nil {
+			continue
+		}
+
+		target := *n.target
+		result = append(result, &target)
+		result = append(result, n.takeToSideMax()...)
+		n.target = nil
+		break
 	}
 
-	target := *m.target
-	result = append(result, &target)
-	m.target = nil
-
-	if m.toLen() > 0 {
-		index := m.toSides[0]
-		result = append(result, m.toSideMap[index].takeToSideMax()...)
-		delete(m.toSideMap, index)
-		m.toSides = m.toSides[1:]
-	}
 	return result
 }
 
@@ -179,15 +180,10 @@ func (m *node) takeMax() []*clubCourtLogicDomain.ActivityCourt {
 		return make([]*clubCourtLogicDomain.ActivityCourt, 0)
 	}
 
-	target := *m.target
-
 	result := m.takeFromSideMax()
-	m.target = &target
-	tos := m.takeToSideMax()
-	if len(tos) > 1 {
-		tos = tos[1:]
-		result = append(result, tos...)
-	}
+	target := *m.target
+	result = append(result, &target)
+	result = append(result, m.takeToSideMax()...)
 
 	m.target = nil
 	return result
@@ -199,7 +195,8 @@ func (m *node) fromSideMax() float64 {
 	}
 
 	index := m.fromSides[0]
-	return m.fromSideMap[index].fromSideMax() + m.value()
+	next := m.fromSideMap[index]
+	return next.fromSideMax() + next.value()
 }
 
 func (m *node) toSideMax() float64 {
@@ -208,39 +205,57 @@ func (m *node) toSideMax() float64 {
 	}
 
 	index := m.toSides[0]
-	return m.toSideMap[index].toSideMax() + m.value()
+	next := m.toSideMap[index]
+	return next.toSideMax() + next.value()
 }
 
 func (m *node) sort() {
+	m.sortFromSide()
+	m.sortToSide()
+}
+
+func (m *node) sortFromSide() {
 	fromSideValueMap := make(map[int]float64)
 	m.fromSides = make([]int, 0)
 	for i, n := range m.fromSideMap {
-		if !n.isSorted() {
-			n.sort()
+		if !n.isFromSorted() {
+			n.sortFromSide()
 		}
 
-		fromSideValueMap[i] = n.fromSideMax()
+		fromSideValueMap[i] = n.fromSideMax() + n.value()
 
 		m.fromSides = append(m.fromSides, i)
 	}
-	sort.Slice(m.fromSides, func(i, j int) bool {
+	sort.SliceStable(m.fromSides, func(i, j int) bool {
+		iIndex := m.fromSides[i]
+		jIndex := m.fromSides[j]
+		return iIndex < jIndex
+	})
+	sort.SliceStable(m.fromSides, func(i, j int) bool {
 		iIndex := m.fromSides[i]
 		jIndex := m.fromSides[j]
 		return fromSideValueMap[iIndex] > fromSideValueMap[jIndex]
 	})
+}
 
+func (m *node) sortToSide() {
 	toSideValueMap := make(map[int]float64)
 	m.toSides = make([]int, 0)
 	for i, n := range m.toSideMap {
-		if !n.isSorted() {
-			n.sort()
+		if !n.isToSorted() {
+			n.sortToSide()
 		}
 
-		toSideValueMap[i] = n.toSideMax()
+		toSideValueMap[i] = n.toSideMax() + n.value()
 
 		m.toSides = append(m.toSides, i)
 	}
-	sort.Slice(m.toSides, func(i, j int) bool {
+	sort.SliceStable(m.toSides, func(i, j int) bool {
+		iIndex := m.toSides[i]
+		jIndex := m.toSides[j]
+		return iIndex < jIndex
+	})
+	sort.SliceStable(m.toSides, func(i, j int) bool {
 		iIndex := m.toSides[i]
 		jIndex := m.toSides[j]
 		return toSideValueMap[iIndex] > toSideValueMap[jIndex]
@@ -286,14 +301,14 @@ func (b *BackGround) combineSamePriceCourts(courts []*clubCourtLogicDomain.Activ
 		}
 
 		fromClockInt := commonLogic.ClockInt(court.FromTime, commonLogicDomain.MINUTE_TIME_TYPE)
-		if len(toIntMap[fromClockInt]) != 0 {
+		if len(toIntMap[fromClockInt]) > 0 {
 			for _, index := range toIntMap[fromClockInt] {
 				idNodeMap[index].toSideMap[i] = idNodeMap[i]
 				idNodeMap[i].fromSideMap[index] = idNodeMap[index]
 			}
 		}
 		toClockInt := commonLogic.ClockInt(court.ToTime, commonLogicDomain.MINUTE_TIME_TYPE)
-		if len(fromIntMap[toClockInt]) != 0 {
+		if len(fromIntMap[toClockInt]) > 0 {
 			for _, index := range fromIntMap[toClockInt] {
 				idNodeMap[index].fromSideMap[i] = idNodeMap[i]
 				idNodeMap[i].toSideMap[index] = idNodeMap[index]

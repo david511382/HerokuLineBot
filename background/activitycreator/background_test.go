@@ -58,7 +58,7 @@ func TestBackGround_combineSamePriceCourts(t *testing.T) {
 			[]*clubCourtLogicDomain.ActivityCourt{
 				{
 					FromTime:     commonLogic.GetTime(2013, 8, 2, 1),
-					ToTime:       commonLogic.GetTime(2013, 8, 2, 3),
+					ToTime:       commonLogic.GetTime(2013, 8, 2, 5),
 					Count:        1,
 					PricePerHour: 1,
 				},
@@ -70,7 +70,7 @@ func TestBackGround_combineSamePriceCourts(t *testing.T) {
 				},
 				{
 					FromTime:     commonLogic.GetTime(2013, 8, 2, 2),
-					ToTime:       commonLogic.GetTime(2013, 8, 2, 5),
+					ToTime:       commonLogic.GetTime(2013, 8, 2, 3),
 					Count:        1,
 					PricePerHour: 1,
 				},
