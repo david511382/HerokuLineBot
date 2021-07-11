@@ -9,13 +9,13 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	configName := fmt.Sprintf("../../../resource/config/%s.yml", "local")
-	cfg, errInfo := bootstrap.ReadConfig(nil, configName)
+	configName := fmt.Sprintf("../../../config/%s.yml", "local")
+	cfg, errInfo := bootstrap.LoadConfig(configName)
 	if errInfo != nil {
 		panic(errInfo.Error())
 	}
 
-	if errInfo := bootstrap.LoadEnv(cfg); errInfo != nil {
+	if errInfo := bootstrap.LoadEnv(); errInfo != nil {
 		panic(errInfo.Error())
 	}
 

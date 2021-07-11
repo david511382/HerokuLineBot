@@ -6,11 +6,14 @@ import (
 	"heroku-line-bot/logger"
 )
 
+//go:embed config/*
+var configFS embed.FS
+
 //go:embed resource/*
-var f embed.FS
+var resourceFS embed.FS
 
 func main() {
-	if errInfo := entry.Run(f); errInfo != nil {
+	if errInfo := entry.Run(configFS, resourceFS); errInfo != nil {
 		logger.LogRightNow("system", errInfo)
 		panic(errInfo.Error())
 	}

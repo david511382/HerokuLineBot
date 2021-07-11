@@ -9,12 +9,12 @@ import (
 	errLogic "heroku-line-bot/logic/error"
 )
 
-func Init(f embed.FS, cfg *bootstrap.Config) *errLogic.ErrorInfo {
+func Init(resourceFS embed.FS, cfg *bootstrap.Config) *errLogic.ErrorInfo {
 	if errInfo := autodbmigration.MigrationNotExist(); errInfo != nil {
 		return errInfo
 	}
 
-	if errInfo := club.Init(f); errInfo != nil {
+	if errInfo := club.Init(resourceFS); errInfo != nil {
 		return errInfo
 	}
 

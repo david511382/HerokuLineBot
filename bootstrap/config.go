@@ -2,8 +2,8 @@ package bootstrap
 
 import (
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
-	databaseDomain "heroku-line-bot/storage/database/domain"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -24,7 +24,10 @@ type Server struct {
 }
 
 func (c *Server) Addr() string {
-	return c.Host + ":" + strconv.Itoa(c.Port)
+	if c.Port > 0 {
+		return c.Host + ":" + strconv.Itoa(c.Port)
+	}
+	return c.Host
 }
 
 type LineBot struct {
@@ -54,9 +57,43 @@ type DbConfig struct {
 
 type Db struct {
 	Server   `yaml:"server"`
-	Password string                `yaml:"password"`
-	Database string                `yaml:"database"`
-	User     string                `yaml:"user"`
-	Type     databaseDomain.DbType `yaml:"type"`
-	Param    string                `yaml:"param"`
+	Password string `yaml:"password"`
+	Database string `yaml:"database"`
+	User     string `yaml:"user"`
+	Param    string `yaml:"param"`
+	// add s after protocol to enable https
+	Protocol string `yaml:"protocol"`
+}
+
+// protocol://user:password@server:port/database?key=value
+func (db *Db) ScanUrl(url string) error {
+	if protocolStrs := strings.Split(url, "://"); len(protocolStrs) == 2 {
+		db.Protocol = protocolStrs[0]
+		url = protocolStrs[1]
+	}
+	if userPasswordStrs := strings.Split(url, "@"); len(userPasswordStrs) == 2 {
+		if userStrs := strings.Split(userPasswordStrs[0], ":"); len(userStrs) == 2 {
+			db.User = userStrs[0]
+			db.Password = userStrs[1]
+		}
+		url = userPasswordStrs[1]
+	}
+	if paramStrs := strings.Split(url, "?"); len(paramStrs) == 2 {
+		db.Param = paramStrs[1]
+		url = paramStrs[0]
+	}
+	if dbStrs := strings.Split(url, "/"); len(dbStrs) == 2 {
+		db.Database = dbStrs[1]
+		url = dbStrs[0]
+	}
+	if portStrs := strings.Split(url, ":"); len(portStrs) == 2 {
+		if port, err := strconv.Atoi(portStrs[1]); err != nil {
+			return err
+		} else {
+			db.Port = port
+		}
+		url = portStrs[0]
+	}
+	db.Server.Host = url
+	return nil
 }

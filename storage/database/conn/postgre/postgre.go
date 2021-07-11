@@ -19,14 +19,19 @@ func (d postgreDb) GetDialector() gorm.Dialector {
 
 func (d postgreDb) addr() string {
 	cfg := d.cfg
-	addr := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d %s",
+	addr := fmt.Sprintf("host=%s user=%s password=%s dbname=%s %s",
 		cfg.Host,
 		cfg.User,
 		cfg.Password,
 		cfg.Database,
-		cfg.Port,
 		cfg.Param,
 	)
+	if cfg.Port > 0 {
+		addr = fmt.Sprintf("%s port=%d",
+			addr,
+			cfg.Port,
+		)
+	}
 
 	return addr
 }

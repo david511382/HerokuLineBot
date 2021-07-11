@@ -23,18 +23,18 @@ var (
 	guestRichMenuImg []byte
 )
 
-func Init(f embed.FS) *errLogic.ErrorInfo {
-	if bs, err := readImg(f, "adminRichMenu.png"); err != nil {
+func Init(resourceFS embed.FS) *errLogic.ErrorInfo {
+	if bs, err := readImg(resourceFS, "adminRichMenu.png"); err != nil {
 		return errLogic.NewError(err)
 	} else {
 		adminRichMenuImg = bs
 	}
-	if bs, err := readImg(f, "cadreRichMenu.png"); err != nil {
+	if bs, err := readImg(resourceFS, "cadreRichMenu.png"); err != nil {
 		return errLogic.NewError(err)
 	} else {
 		cadreRichMenuImg = bs
 	}
-	if bs, err := readImg(f, "guestRichMenu.png"); err != nil {
+	if bs, err := readImg(resourceFS, "guestRichMenu.png"); err != nil {
 		return errLogic.NewError(err)
 	} else {
 		guestRichMenuImg = bs
@@ -42,9 +42,9 @@ func Init(f embed.FS) *errLogic.ErrorInfo {
 	return nil
 }
 
-func readImg(f embed.FS, fileName string) ([]byte, error) {
+func readImg(resourceFS embed.FS, fileName string) ([]byte, error) {
 	fileName = fmt.Sprintf("resource/img/%s", fileName)
-	return f.ReadFile(fileName)
+	return resourceFS.ReadFile(fileName)
 }
 
 func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (resultErr error) {

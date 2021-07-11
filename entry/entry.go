@@ -13,19 +13,20 @@ import (
 	"os"
 )
 
-func Run(f embed.FS) *errLogic.ErrorInfo {
-	configName := os.Getenv("config")
-	if configName == "" {
-		configName = "config"
-	}
+func Run(configFS, resourceFS embed.FS) *errLogic.ErrorInfo {
+	bootstrap.LoadFS(&configFS)
 
-	configName = fmt.Sprintf("resource/config/%s.yml", configName)
-	cfg, errInfo := bootstrap.ReadConfig(&f, configName)
+	configName := os.Getenv("CONFIG")
+	if configName == "" {
+		configName = "master"
+	}
+	configName = fmt.Sprintf("config/%s.yml", configName)
+	cfg, errInfo := bootstrap.LoadConfig(configName)
 	if errInfo != nil {
 		return errInfo
 	}
 
-	if errInfo := bootstrap.LoadEnv(cfg); errInfo != nil {
+	if errInfo := bootstrap.LoadEnv(); errInfo != nil {
 		return errInfo
 	}
 
@@ -38,7 +39,7 @@ func Run(f embed.FS) *errLogic.ErrorInfo {
 	}
 	defer storage.Dispose()
 
-	if errInfo := logic.Init(f, cfg); errInfo != nil {
+	if errInfo := logic.Init(resourceFS, cfg); errInfo != nil {
 		return errInfo
 	}
 

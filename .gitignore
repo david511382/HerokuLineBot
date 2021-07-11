@@ -1,3 +1,5 @@
 .vscode/
 *.log
-resource/
+config/*
+!config/demo.yml
+!config/master.yml

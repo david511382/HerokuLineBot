@@ -23,7 +23,7 @@ func SystemRouter() *gin.Engine {
 	// 設定gin
 	router := gin.New()
 
-	router.LoadHTMLGlob("./server/resource/templates/*.html")
+	router.LoadHTMLGlob("./resource/templates/*.html")
 
 	router.Use(gin.Logger())
 
