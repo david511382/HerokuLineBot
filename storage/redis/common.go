@@ -19,8 +19,8 @@ func Init(cfg *bootstrap.Config) *errLogic.ErrorInfo {
 	maxLifeHour := cfg.RedisConfig.MaxLifeHour
 	maxConnAge := time.Hour * time.Duration(maxLifeHour)
 
-	if connection, err := conn.Connect(cfg.ClubRedis); err != nil {
-		return errLogic.NewError(err)
+	if connection, errInfo := conn.Connect(cfg.ClubRedis); errInfo != nil {
+		return errInfo
 	} else {
 		UserUsingStatus = userusingstatus.New(connection, connection, domain.CLUB_BASE_KEY)
 		UserUsingStatus.SetConnection(maxConnAge)

@@ -23,7 +23,7 @@ db:
   max_idle_conns: 5
   max_open_conns: 10
   max_life_hour: 1
-  
+
 club_db:
   protocol: "postgre"
   server:
@@ -38,6 +38,7 @@ redis:
   max_life_hour: 1
 
 club_redis:
+  protocol: "redis"
   server:
     host: "localhost"
     port: 6379

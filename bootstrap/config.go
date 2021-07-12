@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"fmt"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	"strconv"
 	"strings"
@@ -96,4 +97,42 @@ func (db *Db) ScanUrl(url string) error {
 	}
 	db.Server.Host = url
 	return nil
+}
+
+// protocol://user:password@server:port/database?key=value
+func (db *Db) ParseToUrl() (url string) {
+	if db.Protocol != "" {
+		url = fmt.Sprintf(
+			"%s://",
+			db.Protocol,
+		)
+	}
+	if db.User != "" || db.Password != "" {
+		url = fmt.Sprintf(
+			"%s%s:%s@",
+			url,
+			db.User,
+			db.Password,
+		)
+	}
+	url = fmt.Sprintf(
+		"%s%s",
+		url,
+		db.Server.Addr(),
+	)
+	if db.Database != "" {
+		url = fmt.Sprintf(
+			"%s/%s",
+			url,
+			db.Database,
+		)
+	}
+	if db.Param != "" {
+		url = fmt.Sprintf(
+			"%s?%s",
+			url,
+			db.Param,
+		)
+	}
+	return
 }
