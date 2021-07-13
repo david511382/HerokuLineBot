@@ -43,11 +43,17 @@ type GoogleScript struct {
 
 type Backgrounds struct {
 	ActivityCreator Background `yaml:"activity_creator"`
+	Heroku       Heroku       `yaml:"heroku"`
 }
 
 type Background struct {
 	Spec       string                     `yaml:"spec"`
 	PeriodType commonLogicDomain.TimeType `yaml:"period_type"`
+}
+
+type Heroku struct {
+	Background
+	Url  string `yaml:"url"`
 }
 
 type DbConfig struct {
