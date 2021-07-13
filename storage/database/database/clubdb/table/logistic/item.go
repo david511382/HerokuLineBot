@@ -4,7 +4,7 @@ import (
 	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/domain/model/reqs"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type Logistic struct {
@@ -21,6 +21,8 @@ func (t Logistic) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
 }
 
 func (t Logistic) whereArg(dp *gorm.DB, arg reqs.Logistic) *gorm.DB {
+	dp = dp.Model(t.GetTable())
+
 	if p := arg.ID; p != nil {
 		dp = dp.Where("id = ?", p)
 	}

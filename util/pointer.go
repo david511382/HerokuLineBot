@@ -4,7 +4,15 @@ func GetUint8P(i uint8) *uint8 {
 	return &i
 }
 
+func GetUint16P(i uint16) *uint16 {
+	return &i
+}
+
 func GetUintP(i uint) *uint {
+	return &i
+}
+
+func GetUint64P(i uint64) *uint64 {
 	return &i
 }
 
@@ -17,10 +25,6 @@ func GetInt16P(i int16) *int16 {
 }
 
 func GetInt64P(i int64) *int64 {
-	return &i
-}
-
-func GetUint64P(i uint64) *uint64 {
 	return &i
 }
 

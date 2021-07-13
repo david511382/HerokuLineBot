@@ -56,6 +56,11 @@ func GetTimeP(ts ...int) *time.Time {
 	return GetTimePLoc(time.Local, ts...)
 }
 
+func GetTimeIn(t time.Time, loc *time.Location) time.Time {
+	y, m, d := t.Date()
+	return *GetTimePLoc(loc, y, int(m), d, t.Hour(), t.Minute(), t.Second())
+}
+
 func GetUTCTime(ts ...int) time.Time {
 	return *GetUTCTimeP(ts...)
 }

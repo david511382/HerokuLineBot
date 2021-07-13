@@ -2,9 +2,11 @@ package club
 
 import (
 	"fmt"
+	courtDomain "heroku-line-bot/logic/club/court/domain"
 	"heroku-line-bot/logic/club/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
+	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
@@ -16,45 +18,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type NewActivity struct {
-	Context     domain.ICmdHandlerContext `json:"-"`
-	Date        time.Time                 `json:"date"`
-	Place       string                    `json:"place"`
-	Description string                    `json:"description"`
-	PeopleLimit *int16                    `json:"people_limit"`
-	ClubSubsidy int16                     `json:"club_subsidy"`
-	IsComplete  bool                      `json:"is_complete"`
-	Courts      []*ActivityCourt          `json:"courts"`
-}
-
-type ActivityCourt struct {
-	FromTime     time.Time `json:"from_time"`
-	ToTime       time.Time `json:"to_time"`
-	Count        int16     `json:"count"`
-	PricePerHour float64   `json:"price_per_hour"`
-}
-
-func (b *ActivityCourt) cost() float64 {
-	return b.TotalHours() * b.PricePerHour
-}
-
-func (b *ActivityCourt) hours() float64 {
-	return b.ToTime.Sub(b.FromTime).Hours()
-}
-
-func (b *ActivityCourt) TotalHours() float64 {
-	return b.hours() * float64(b.Count)
-}
-
-func (b *ActivityCourt) time() string {
-	return fmt.Sprintf(
-		"%s~%s",
-		b.FromTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
-		b.ToTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
-	)
+	Context     domain.ICmdHandlerContext    `json:"-"`
+	Date        time.Time                    `json:"date"`
+	Place       string                       `json:"place"`
+	Description string                       `json:"description"`
+	PeopleLimit *int16                       `json:"people_limit"`
+	ClubSubsidy int16                        `json:"club_subsidy"`
+	IsComplete  bool                         `json:"is_complete"`
+	Courts      []*courtDomain.ActivityCourt `json:"courts"`
 }
 
 func (b *NewActivity) Init(context domain.ICmdHandlerContext) error {
@@ -65,7 +40,7 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) error {
 		Place:       "大墩羽球館",
 		Description: "7人出團",
 		IsComplete:  false,
-		Courts: []*ActivityCourt{
+		Courts: []*courtDomain.ActivityCourt{
 			{
 				FromTime:     commonLogic.GetTime(1, 1, 1, 18),
 				ToTime:       commonLogic.GetTime(1, 1, 1, 20, 30),
@@ -167,33 +142,29 @@ func (b *NewActivity) Do(text string) (resultErr error) {
 		if err := transaction.Error; err != nil {
 			return err
 		}
+		var resultErrInfo *errLogic.ErrorInfo
 		defer func() {
-			if resultErr == nil {
-				if resultErr = transaction.Commit().Error; resultErr != nil {
-					return
-				}
-			}
-
-			if err := transaction.Rollback().Error; err != nil {
-				if resultErr == nil {
-					resultErr = err
-				}
-				return
+			if resultErrInfo != nil {
+				resultErr = resultErrInfo.Error()
 			}
 		}()
-		if resultErr = b.InsertActivity(transaction); resultErr != nil {
+		defer database.CommitTransaction(transaction, resultErrInfo)
+
+		if resultErrInfo = b.InsertActivity(transaction); resultErrInfo != nil {
 			return
 		}
 
-		if resultErr = b.Context.DeleteParam(); resultErr != nil {
+		if err := b.Context.DeleteParam(); err != nil {
+			resultErrInfo = errLogic.NewError(err)
 			return
 		}
 
 		replyMessges := []interface{}{
 			linebot.GetTextMessage("完成"),
 		}
-		if resultErr = b.Context.Reply(replyMessges); resultErr != nil {
-			return resultErr
+		if err := b.Context.Reply(replyMessges); err != nil {
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 
 		return nil
@@ -312,27 +283,15 @@ func (b *NewActivity) Do(text string) (resultErr error) {
 	return nil
 }
 
-func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErr error) {
+func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo *errLogic.ErrorInfo) {
 	courtsStr := b.getCourtsStr()
 	if transaction == nil {
 		transaction = database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
-		defer func() {
-			if resultErr == nil {
-				if resultErr = transaction.Commit().Error; resultErr != nil {
-					return
-				}
-			}
-
-			if err := transaction.Rollback().Error; err != nil {
-				if resultErr == nil {
-					resultErr = err
-				}
-				return
-			}
-		}()
+		defer database.CommitTransaction(transaction, resultErrInfo)
 	}
 
 	data := &activityDb.ActivityTable{
@@ -344,7 +303,8 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErr error) {
 		PeopleLimit:   b.PeopleLimit,
 		IsComplete:    b.IsComplete,
 	}
-	if resultErr = database.Club.Activity.BaseTable.Insert(transaction, data); resultErr != nil {
+	if err := database.Club.Activity.BaseTable.Insert(transaction, data); err != nil {
+		resultErrInfo = errLogic.NewError(err)
 		return
 	}
 
@@ -441,7 +401,7 @@ func (b *NewActivity) getLineComponents(actions domain.NewActivityLineTemplate) 
 func (b *NewActivity) getCourtFee() float64 {
 	totalFee := 0.0
 	for _, court := range b.Courts {
-		cost := court.cost()
+		cost := court.Cost()
 		totalFee = commonLogic.FloatPlus(totalFee, cost)
 	}
 	return totalFee
@@ -472,10 +432,10 @@ func (b *NewActivity) getCourtsStr() string {
 }
 
 func (b *NewActivity) ParseCourts(courtsStr string) error {
-	b.Courts = make([]*ActivityCourt, 0)
+	b.Courts = make([]*courtDomain.ActivityCourt, 0)
 	courtsStrs := strings.Split(courtsStr, ",")
 	for _, courtsStr := range courtsStrs {
-		court := &ActivityCourt{}
+		court := &courtDomain.ActivityCourt{}
 		timeStr := ""
 		if _, err := fmt.Sscanf(
 			courtsStr,
@@ -559,12 +519,12 @@ func (b *NewActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackA
 		SizeP: &mdSize,
 	}
 	for index, court := range b.Courts {
-		cost := court.cost()
+		cost := court.Cost()
 		placeFee = commonLogic.FloatPlus(placeFee, cost)
 
 		components = append(components, GetKeyValueEditComponent(
 			"時間",
-			court.time(),
+			court.Time(),
 			keyValueEditComponentOption,
 		))
 
@@ -630,14 +590,14 @@ func (b *NewActivity) getCourtsContents() []interface{} {
 	courtContents := make([]interface{}, 0)
 	placeFee := 0.0
 	for _, court := range b.Courts {
-		cost := court.cost()
+		cost := court.Cost()
 		placeFee = commonLogic.FloatPlus(placeFee, cost)
 
 		courtsComponent := linebot.GetFlexMessageBoxComponent(
 			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
 			nil,
 			linebot.GetFlexMessageTextComponent(
-				court.time(),
+				court.Time(),
 				&linebotModel.FlexMessageTextComponentOption{
 					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
 					Color: "#555555",

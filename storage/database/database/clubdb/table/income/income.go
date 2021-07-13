@@ -4,7 +4,7 @@ import (
 	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/domain/model/reqs"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type Income struct {
@@ -21,6 +21,8 @@ func (t Income) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
 }
 
 func (t Income) whereArg(dp *gorm.DB, arg reqs.Income) *gorm.DB {
+	dp = dp.Model(t.GetTable())
+
 	if p := arg.Type; p != nil {
 		dp = dp.Where("type = ?", p)
 	}

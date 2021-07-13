@@ -5,6 +5,7 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
+	errLogic "heroku-line-bot/logic/error"
 	lineUserLogic "heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
@@ -84,36 +85,15 @@ func (b *confirmRegister) LoadUsers(arg dbReqs.Member) (confirmRegisterUsers []*
 	return confirmRegisterUsers, nil
 }
 
-func (b *confirmRegister) ComfirmDb() (resultErr error) {
+func (b *confirmRegister) ComfirmDb() (resultErrInfo *errLogic.ErrorInfo) {
 	isChangeRole := b.isMemberAble() && b.User.Role == domain.GUEST_CLUB_ROLE
 
 	transaction := database.Club.Begin()
 	if err := transaction.Error; err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	}
-	defer func() {
-		if resultErr == nil {
-			if resultErr = transaction.Commit().Error; resultErr != nil {
-				return
-			}
-
-			if isChangeRole {
-				if _, err := redis.LineUser.Del(b.User.LineID); err != nil {
-					if resultErr == nil {
-						resultErr = err
-					}
-					return
-				}
-			}
-		}
-
-		if err := transaction.Rollback().Error; err != nil {
-			if resultErr == nil {
-				resultErr = err
-			}
-			return
-		}
-	}()
+	defer database.CommitTransaction(transaction, resultErrInfo)
 
 	arg := dbReqs.Member{
 		ID: &b.MemberID,
@@ -124,8 +104,16 @@ func (b *confirmRegister) ComfirmDb() (resultErr error) {
 	if isChangeRole {
 		fields["role"] = int16(domain.MEMBER_CLUB_ROLE)
 	}
-	if resultErr = database.Club.Member.Update(transaction, arg, fields); resultErr != nil {
+	if err := database.Club.Member.Update(transaction, arg, fields); err != nil {
+		resultErrInfo = errLogic.NewError(err)
 		return
+	}
+
+	if isChangeRole {
+		if _, err := redis.LineUser.Del(b.User.LineID); err != nil {
+			resultErrInfo = errLogic.NewError(err)
+			return
+		}
 	}
 
 	return nil
@@ -154,8 +142,8 @@ func (b *confirmRegister) Do(text string) (resultErr error) {
 	}
 
 	if b.context.IsComfirmed() {
-		if err := b.ComfirmDb(); err != nil {
-			return err
+		if errInfo := b.ComfirmDb(); errInfo != nil {
+			return errInfo.Error()
 		}
 
 		replyMessges := []interface{}{

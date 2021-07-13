@@ -10,7 +10,7 @@ import (
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourt"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtexception"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 func New(writeDb, readDb *gorm.DB) Database {

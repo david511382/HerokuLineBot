@@ -5,21 +5,35 @@ import (
 	"heroku-line-bot/storage/database/conn/mysql"
 	"heroku-line-bot/storage/database/conn/postgre"
 	"heroku-line-bot/storage/database/domain"
+	"strings"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 func Connect(cfg bootstrap.Db) (*gorm.DB, error) {
 	var c IConnect
-	dbType := cfg.Type
-	switch dbType {
-	case domain.POSTGRE_DB_TYPE:
-		c = postgre.New(cfg)
-	case domain.MYSQL_DB_TYPE:
-		c = mysql.New(cfg)
-	default:
+	dbs := []domain.DbType{
+		domain.POSTGRE_DB_TYPE,
+		domain.MYSQL_DB_TYPE,
+	}
+	for _, protocol := range dbs {
+		protocolStr := string(protocol)
+		if strings.HasPrefix(cfg.Protocol, protocolStr) {
+			switch protocol {
+			case domain.POSTGRE_DB_TYPE:
+				c = postgre.New(cfg)
+			case domain.MYSQL_DB_TYPE:
+				c = mysql.New(cfg)
+			default:
+				return nil, domain.UNKNOWN_DB_TYPE_ERROR
+			}
+			break
+		}
+	}
+	if c == nil {
 		return nil, domain.UNKNOWN_DB_TYPE_ERROR
 	}
 
-	return c.Connect()
+	dialector := c.GetDialector()
+	return gorm.Open(dialector, &gorm.Config{})
 }

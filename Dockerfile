@@ -12,7 +12,7 @@ RUN go mod tidy \
 # Final Stage
 FROM golang:1.16
 COPY --from=builder /app/heroku-line-bot /app/heroku-line-bot
-COPY --from=builder /app/server/resource /app/server/resource
+COPY --from=builder /app/resource /app/resource
 WORKDIR /app
 
 CMD [ "sh", "-c","./heroku-line-bot" ]

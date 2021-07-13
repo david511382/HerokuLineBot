@@ -45,6 +45,9 @@ services:
     depends_on:
       - db
       - redis
+    environment:
+      - CONFIG=docker
+      - PORT=80
     ports:
       - "9487:80"
 

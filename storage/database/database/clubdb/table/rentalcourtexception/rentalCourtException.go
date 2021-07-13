@@ -4,7 +4,7 @@ import (
 	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/domain/model/reqs"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type RentalCourtException struct {
@@ -21,6 +21,8 @@ func (t RentalCourtException) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
 }
 
 func (t RentalCourtException) whereArg(dp *gorm.DB, arg reqs.RentalCourtException) *gorm.DB {
+	dp = dp.Model(t.GetTable())
+
 	if p := arg.ID; p != nil {
 		dp = dp.Where("id = ?", p)
 	}

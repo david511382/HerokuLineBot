@@ -3,7 +3,7 @@ package memberactivity
 import (
 	"heroku-line-bot/storage/database/common"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 func New(writeDb, readDb *gorm.DB) MemberActivity {

@@ -2,41 +2,54 @@ package entry
 
 import (
 	"embed"
+	"fmt"
 	"heroku-line-bot/background"
 	"heroku-line-bot/bootstrap"
+	"heroku-line-bot/logger"
 	"heroku-line-bot/logic"
+	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/server"
 	"heroku-line-bot/storage"
 	"os"
 )
 
-func Run(f embed.FS) error {
-	configName := os.Getenv("config")
+func Run(configFS, resourceFS embed.FS) *errLogic.ErrorInfo {
+	bootstrap.LoadFS(&configFS)
+
+	configName := os.Getenv("CONFIG")
 	if configName == "" {
-		configName = "config"
+		configName = "master"
+	}
+	configName = fmt.Sprintf("config/%s.yml", configName)
+	cfg, errInfo := bootstrap.LoadConfig(configName)
+	if errInfo != nil {
+		return errInfo
 	}
 
-	cfg := bootstrap.LoadConfig(f, configName)
-	if err := bootstrap.LoadEnv(cfg); err != nil {
-		return err
+	if errInfo := bootstrap.LoadEnv(); errInfo != nil {
+		return errInfo
 	}
 
-	if err := storage.Init(cfg); err != nil {
-		return err
+	if errInfo := logger.Init(cfg); errInfo != nil {
+		return errInfo
+	}
+
+	if errInfo := storage.Init(cfg); errInfo != nil {
+		return errInfo
 	}
 	defer storage.Dispose()
 
-	if err := logic.Init(f, cfg); err != nil {
-		return err
+	if errInfo := logic.Init(resourceFS, cfg); errInfo != nil {
+		return errInfo
 	}
 
-	if err := background.Init(cfg); err != nil {
-		return err
+	if errInfo := background.Init(cfg); errInfo != nil {
+		return errInfo
 	}
 
 	server.Init(cfg)
-	if err := server.Run(); err != nil {
-		return err
+	if errInfo := server.Run(); errInfo != nil {
+		return errInfo
 	}
 
 	return nil

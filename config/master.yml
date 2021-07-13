@@ -1,0 +1,51 @@
+server:
+  host: "0.0.0.0"
+  port: 80
+
+line_bot:
+  admin_id: "U1551c57296cb23db6619bdaebe6396ee"
+  room_id: "C60353ba1a71ea09dafd2598cef1bccd4"
+  channel_access_token: "kXbwDepvZn7oNiP045H5YkLP33pTjGVNZLEIE+6DYkcU/1aPELovN4nxKuB/Aa8Ew6qoDlxZsNVy2RKZTEvU0du658SRGgf7I1prIb8/jrma2qzOv3xixWOYg4PdTSYDGuRNQYFP5yTfIXK2lEuQcwdB04t89/1O/w1cDnyilFU="
+
+telegram_bot:
+  admin_id: 1229658471
+  channel_access_token: "1890697759:AAHY9Q69KKLfMj8sGHXk2GJkgbEQV8SMBDw"
+
+google_script:
+  url: "https://script.google.com/macros/s/AKfycbw7oMDk44MyWah8vZd-uPxmt077jr3J1pg-1RH1BrHsMLuT6jGGVl-9ccKNTmu-W1hDeA/exec"
+
+backgrounds:
+  heroku:
+    url: "https://david511382-line-bot.herokuapp.com/"
+    background:
+      spec: "0 */29 * * * *"
+      period_type: 1
+  activity_creator:
+    spec: "0 0 9 * * *"
+    period_type: 3
+
+db:
+  max_idle_conns: 5
+  max_open_conns: 10
+  max_life_hour: 1
+
+club_db:
+  protocol: "postgre"
+  server:
+    host: "ec2-18-204-101-137.compute-1.amazonaws.com"
+    port: 5432
+  database: "dddnbudq9o4u21"
+  user: "mzpvbpbflcrykp"
+  password: "1191dc1885f4b3ce154b677191494d1f020ac32a24d15195d87c290a57789a07"
+  param: "sslmode=prefer"
+
+redis:
+  max_life_hour: 1
+
+club_redis:
+  protocol: "redis"
+  server:
+    host: "ec2-18-208-57-182.compute-1.amazonaws.com"
+    port: 19119
+  database: "0"
+  password: "p34dff3687466225ba516cb510be281bcd8f8ffcb0dcb8fab9c46702e9a3d5155"

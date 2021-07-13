@@ -38,6 +38,10 @@ func (t TimeType) Next(tt time.Time, count int) time.Time {
 	}
 }
 
+func (t TimeType) Next1(tt time.Time) time.Time {
+	return t.Next(tt, 1)
+}
+
 func (t TimeType) Of(tt time.Time) time.Time {
 	switch t {
 	case YEAR_TIME_TYPE:

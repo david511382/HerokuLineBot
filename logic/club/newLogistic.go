@@ -5,6 +5,7 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
+	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
@@ -15,7 +16,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type NewLogistic struct {
@@ -96,33 +97,29 @@ func (b *NewLogistic) Do(text string) (resultErr error) {
 		if err := transaction.Error; err != nil {
 			return err
 		}
+		var resultErrInfo *errLogic.ErrorInfo
 		defer func() {
-			if resultErr == nil {
-				if resultErr = transaction.Commit().Error; resultErr != nil {
-					return
-				}
-			}
-
-			if err := transaction.Rollback().Error; err != nil {
-				if resultErr == nil {
-					resultErr = err
-				}
-				return
+			if resultErrInfo != nil {
+				resultErr = resultErrInfo.Error()
 			}
 		}()
-		if resultErr = b.InsertLogistic(transaction); resultErr != nil {
+		defer database.CommitTransaction(transaction, resultErrInfo)
+
+		if resultErrInfo = b.InsertLogistic(transaction); resultErrInfo != nil {
 			return
 		}
 
-		if resultErr = b.Context.DeleteParam(); resultErr != nil {
+		if err := b.Context.DeleteParam(); err != nil {
+			resultErrInfo = errLogic.NewError(err)
 			return
 		}
 
 		replyMessges := []interface{}{
 			linebot.GetTextMessage("完成"),
 		}
-		if resultErr = b.Context.Reply(replyMessges); resultErr != nil {
-			return resultErr
+		if err := b.Context.Reply(replyMessges); err != nil {
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 
 		return nil
@@ -338,26 +335,14 @@ func (b *NewLogistic) Do(text string) (resultErr error) {
 	return nil
 }
 
-func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErr error) {
+func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErrInfo *errLogic.ErrorInfo) {
 	if transaction == nil {
 		transaction = database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
-		defer func() {
-			if resultErr == nil {
-				if resultErr = transaction.Commit().Error; resultErr != nil {
-					return
-				}
-			}
-
-			if err := transaction.Rollback().Error; err != nil {
-				if resultErr == nil {
-					resultErr = err
-				}
-				return
-			}
-		}()
+		defer database.CommitTransaction(transaction, resultErrInfo)
 	}
 
 	data := &logisticDb.LogisticTable{
@@ -366,7 +351,8 @@ func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErr error) {
 		Amount:      b.Amount,
 		Description: b.Description,
 	}
-	if resultErr = database.Club.Logistic.BaseTable.Insert(transaction, data); resultErr != nil {
+	if err := database.Club.Logistic.BaseTable.Insert(transaction, data); err != nil {
+		resultErrInfo = errLogic.NewError(err)
 		return
 	}
 
