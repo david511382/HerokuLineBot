@@ -16,11 +16,11 @@ func TestMain(m *testing.M) {
 	configName := fmt.Sprintf("../../../../../../config/%s.yml", "local")
 	cfg, errInfo := bootstrap.LoadConfig(configName)
 	if errInfo != nil {
-		panic(errInfo.Error())
+		panic(errInfo.ErrorWithTrace())
 	}
 
 	if errInfo := bootstrap.LoadEnv(); errInfo != nil {
-		panic(errInfo.Error())
+		panic(errInfo.ErrorWithTrace())
 	}
 
 	if connection, err := conn.Connect(cfg.ClubDb); err != nil {

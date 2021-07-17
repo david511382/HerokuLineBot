@@ -7,7 +7,7 @@ import (
 	"heroku-line-bot/storage/redis"
 )
 
-func Init(cfg *bootstrap.Config) *errLogic.ErrorInfo {
+func Init(cfg *bootstrap.Config) errLogic.IError {
 	if errInfo := database.Init(cfg); errInfo != nil {
 		return errInfo
 	}

@@ -13,7 +13,7 @@ import (
 	"os"
 )
 
-func Run(configFS, resourceFS embed.FS) *errLogic.ErrorInfo {
+func Run(configFS, resourceFS embed.FS) errLogic.IError {
 	bootstrap.LoadFS(&configFS)
 
 	configName := os.Getenv("CONFIG")

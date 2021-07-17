@@ -15,6 +15,6 @@ var resourceFS embed.FS
 func main() {
 	if errInfo := entry.Run(configFS, resourceFS); errInfo != nil {
 		logger.LogRightNow("system", errInfo)
-		panic(errInfo.Error())
+		panic(errInfo.ErrorWithTrace())
 	}
 }

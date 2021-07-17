@@ -8,7 +8,7 @@ import (
 	rds "github.com/go-redis/redis"
 )
 
-func Connect(cfg bootstrap.Db) (*rds.Client, *errLogic.ErrorInfo) {
+func Connect(cfg bootstrap.Db) (*rds.Client, errLogic.IError) {
 	url := cfg.ParseToUrl()
 	rdsOpt, err := rds.ParseURL(url)
 	if err != nil {

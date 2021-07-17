@@ -23,7 +23,7 @@ var (
 	guestRichMenuImg []byte
 )
 
-func Init(resourceFS embed.FS) *errLogic.ErrorInfo {
+func Init(resourceFS embed.FS) errLogic.IError {
 	if bs, err := readImg(resourceFS, "adminRichMenu.png"); err != nil {
 		return errLogic.NewError(err)
 	} else {
@@ -47,17 +47,18 @@ func readImg(resourceFS embed.FS, fileName string) ([]byte, error) {
 	return resourceFS.ReadFile(fileName)
 }
 
-func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (resultErr error) {
+func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (resultErrInfo errLogic.IError) {
 	cmd := domain.TextCmd(text)
 	var cmdHandler domain.ICmdHandler
 	paramJson := ""
 	isSingelParamText := !util.IsJSON(text)
 	if handler, err := getCmdHandler(cmd, lineContext); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	} else if handler != nil {
 		cmdHandler = handler
 		if err := lineContext.DeleteParam(); redis.IsRedisError(err) {
-			resultErr = err
+			resultErrInfo = errLogic.NewError(err)
 		}
 	} else {
 		cmd = getCmdFromJson(text)
@@ -67,7 +68,8 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 			}
 		} else {
 			if handler, err := getCmdHandler(cmd, lineContext); err != nil {
-				return err
+				resultErrInfo = errLogic.NewError(err)
+				return
 			} else if handler != nil {
 				cmdHandler = handler
 			}
@@ -78,7 +80,8 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 		switch dateTimeCmd {
 		case domain.TIME_POSTBACK_DATE_TIME_CMD, domain.DATE_TIME_POSTBACK_DATE_TIME_CMD, domain.DATE_POSTBACK_DATE_TIME_CMD:
 			if js, err := sjson.Delete(text, domain.DATE_TIME_CMD_ATTR); err != nil {
-				return err
+				resultErrInfo = errLogic.NewError(err)
+				return
 			} else {
 				paramJson = js
 			}
@@ -92,14 +95,15 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 		redisCmd := getCmdFromJson(redisParamJson)
 		if isChangeCmd := cmdHandler != nil && redisCmd != cmd; isChangeCmd {
 			if err := lineContext.DeleteParam(); redis.IsRedisError(err) {
-				resultErr = err
+				resultErrInfo = errLogic.NewError(err)
 			}
 			cmdHandler = nil
 		}
 
 		if cmdHandler == nil || isSingelParamText {
 			if handler, err := getCmdHandler(redisCmd, lineContext); err != nil {
-				return err
+				resultErrInfo = errLogic.NewError(err)
+				return
 			} else {
 				cmdHandler = handler
 			}
@@ -109,8 +113,9 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 			cmdHandler.SetSingleParamMode()
 		}
 
-		if err := cmdHandler.ReadParam([]byte(redisParamJson)); err != nil {
-			return err
+		if errInfo := cmdHandler.ReadParam([]byte(redisParamJson)); errInfo != nil {
+			resultErrInfo = errInfo
+			return
 		}
 	}
 
@@ -119,22 +124,25 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 			linebot.GetTextMessage("聽不懂你在說什麼"),
 		}
 		if err := lineContext.Reply(replyMessges); err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 		return nil
 	}
 
 	if paramJson != "" {
-		if err := cmdHandler.ReadParam([]byte(paramJson)); err != nil {
-			return err
+		if errInfo := cmdHandler.ReadParam([]byte(paramJson)); errInfo != nil {
+			resultErrInfo = errInfo
+			return
 		}
 	}
 
-	if err := cmdHandler.Do(text); err != nil {
-		return err
+	if errInfo := cmdHandler.Do(text); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
 
-	return resultErr
+	return
 }
 
 func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (domain.ICmdHandler, error) {
@@ -167,14 +175,14 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		IContext:  context,
 		ICmdLogic: logicHandler,
 	}
-	if err := logicHandler.Init(result); err != nil {
-		return nil, err
+	if errInfo := logicHandler.Init(result); errInfo != nil {
+		return nil, errInfo
 	}
 
 	return result, nil
 }
 
-func getCmd(cmd domain.TextCmd, pathValueMap map[string]interface{}) (string, error) {
+func getCmd(cmd domain.TextCmd, pathValueMap map[string]interface{}) (string, errLogic.IError) {
 	cmdHandler := &CmdHandler{
 		CmdBase: &domain.CmdBase{
 			Cmd: cmd,

@@ -9,7 +9,7 @@ import (
 	errLogic "heroku-line-bot/logic/error"
 )
 
-func Init(resourceFS embed.FS, cfg *bootstrap.Config) *errLogic.ErrorInfo {
+func Init(resourceFS embed.FS, cfg *bootstrap.Config) errLogic.IError {
 	if errInfo := autodbmigration.MigrationNotExist(); errInfo != nil {
 		return errInfo
 	}

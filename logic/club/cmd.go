@@ -2,9 +2,12 @@ package club
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"heroku-line-bot/logger"
 	"heroku-line-bot/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/logic/clublinebot/domain"
+	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
@@ -18,8 +21,11 @@ type CmdHandler struct {
 	pathValueMap map[string]interface{}
 }
 
-func (b *CmdHandler) ReadParam(jsonBytes []byte) error {
-	return json.Unmarshal(jsonBytes, b)
+func (b *CmdHandler) ReadParam(jsonBytes []byte) errLogic.IError {
+	if err := json.Unmarshal(jsonBytes, b); err != nil {
+		return errLogic.NewError(err)
+	}
+	return nil
 }
 
 func (b *CmdHandler) IsInputMode() bool {
@@ -32,17 +38,19 @@ func (b *CmdHandler) SetRequireInputMode(attr, attrText string, isInputImmediate
 	b.IsInputImmediately = isInputImmediately
 }
 
-func (b *CmdHandler) LoadSingleParamValue(valueText string) error {
+func (b *CmdHandler) LoadSingleParamValue(valueText string) errLogic.IError {
 	return b.ICmdLogic.LoadSingleParam(b.RequireRawParamAttr, valueText)
 }
 
-func (b *CmdHandler) CacheParams() error {
+func (b *CmdHandler) CacheParams() (resultErrInfo errLogic.IError) {
 	if jsBytes, err := json.Marshal(b); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	} else {
 		js := string(jsBytes)
 		if err := b.SaveParam(js); err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 	}
 	return nil
@@ -61,9 +69,10 @@ func (b *CmdHandler) GetInputTemplate(requireRawParamAttr string) interface{} {
 	valueText := b.ICmdLogic.GetSingleParam(requireRawParamAttr)
 	var text = fmt.Sprintf("%s %s ,確認或請輸入數值", b.RequireRawParamAttrText, valueText)
 
-	cancelRequireInputJs, err := b.GetCancelInputMode().GetSignal()
-	if err != nil {
-		return err
+	cancelRequireInputJs, errInfo := b.GetCancelInputMode().GetSignal()
+	if errInfo != nil {
+		logger.Log("line bot club", errInfo)
+		return nil
 	}
 
 	return linebot.GetFlexMessage(
@@ -103,17 +112,17 @@ func (b *CmdHandler) GetInputTemplate(requireRawParamAttr string) interface{} {
 	)
 }
 
-func (b *CmdHandler) Do(text string) error {
+func (b *CmdHandler) Do(text string) errLogic.IError {
 	if b.IsCancel {
 		if err := b.DeleteParam(); err != nil {
-			return err
+			return errLogic.NewError(err)
 		}
 
 		replyMessges := []interface{}{
 			linebot.GetTextMessage("取消"),
 		}
 		if err := b.IContext.Reply(replyMessges); err != nil {
-			return err
+			return errLogic.NewError(err)
 		}
 
 		return nil
@@ -127,7 +136,7 @@ func (b *CmdHandler) Do(text string) error {
 					linebot.GetTextMessage(msg),
 				}
 				if err := b.Reply(replyMessges); err != nil {
-					return err
+					return errLogic.NewError(err)
 				}
 				return nil
 			}
@@ -138,8 +147,8 @@ func (b *CmdHandler) Do(text string) error {
 			b.RequireRawParamAttr = ""
 		}
 
-		if err := b.CacheParams(); err != nil {
-			return err
+		if errInfo := b.CacheParams(); errInfo != nil {
+			return errInfo
 		}
 
 		if !b.IsInputImmediately {
@@ -151,23 +160,23 @@ func (b *CmdHandler) Do(text string) error {
 				replyMessge,
 			}
 			if err := b.IContext.Reply(replyMessges); err != nil {
-				return err
+				return errLogic.NewError(err)
 			}
 
 			return nil
 		}
 	}
 
-	if err := b.ICmdLogic.Do(text); err == domain.USER_NOT_REGISTERED ||
-		err == domain.NO_AUTH_ERROR {
+	if errInfo := b.ICmdLogic.Do(text); errors.Is(errInfo, domain.USER_NOT_REGISTERED) ||
+		errors.Is(errInfo, domain.NO_AUTH_ERROR) {
 		replyMessges := []interface{}{
-			linebot.GetTextMessage(err.Error()),
+			linebot.GetTextMessage(errInfo.ErrorWithTrace()),
 		}
 		if err := b.IContext.Reply(replyMessges); err != nil {
-			return err
+			return errLogic.NewError(err)
 		}
 	} else {
-		return err
+		return errInfo
 	}
 
 	return nil

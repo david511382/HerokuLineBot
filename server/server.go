@@ -19,7 +19,7 @@ func Init(cfg *bootstrap.Config) {
 	serverAddr = cfg.Server.Addr()
 }
 
-func Run() *errLogic.ErrorInfo {
+func Run() errLogic.IError {
 	if err := serverRouter.Run(serverAddr); err != nil {
 		return errLogic.NewError(err)
 	}

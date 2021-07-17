@@ -1,49 +1,75 @@
 package error
 
 import (
+	"errors"
 	"fmt"
+	"runtime/debug"
 	"strings"
 )
 
 type ErrorInfo struct {
-	rawError     error
+	rawMessage   string
 	traceMessage string
 	Value        interface{}
 	Level        ErrorLevel
 	childError   *ErrorInfo
 }
 
-func (ei *ErrorInfo) NewParent(datas ...interface{}) *ErrorInfo {
+func (ei *ErrorInfo) Trace() *ErrorInfo {
+	if ei == nil {
+		return nil
+	}
+
+	traceMsg := string(debug.Stack())
+	ei.traceMessage = traceMsg
+	return ei
+}
+
+func (ei *ErrorInfo) NewParent(datas ...interface{}) IError {
 	return ei.NewParentLevel(ei.Level, datas...)
 }
 
 func (ei *ErrorInfo) NewParentLevel(level ErrorLevel, datas ...interface{}) *ErrorInfo {
-	errMsg := msgCreator(datas...)
-	ei = &ErrorInfo{
-		rawError:   fmt.Errorf(errMsg),
-		Level:      ei.Level,
-		childError: ei,
-		Value:      ei.Value,
+	if ei == nil {
+		return nil
 	}
-	ei.Level = level
+
+	childError := *ei
+	errMsg := msgCreator(datas...)
+	ei = NewValue(errMsg, childError.Value, ei.Level)
+	ei.childError = &childError
 	return ei
 }
 
-func (ei *ErrorInfo) Error() error {
+func (ei *ErrorInfo) Error() string {
+	if ei == nil {
+		return ""
+	}
+	return ei.rawMessage
+}
+
+func (ei *ErrorInfo) ErrorWithTrace() string {
+	if ei == nil {
+		return ""
+	}
+
 	errMsgs := make([]string, 0)
 	for e := ei; e != nil; e = e.childError {
-		errMsg := e.rawError.Error()
-		if e.traceMessage != "" {
+		errMsg := e.Error()
+		if !e.IsInfo() && e.traceMessage != "" {
 			errMsg = fmt.Sprintf("%s\nSTACK: %s", errMsg, e.traceMessage)
 		}
 		errMsgs = append(errMsgs, errMsg)
 	}
 
 	errMsg := strings.Join(errMsgs, " <-- ")
-	return fmt.Errorf(errMsg)
+	return errMsg
 }
 
 func (ei *ErrorInfo) MinChild() (errInfo *ErrorInfo) {
+	if ei == nil {
+		return nil
+	}
 	for e := ei; e != nil; e = e.childError {
 		errInfo = e
 	}
@@ -58,7 +84,7 @@ func (ei *ErrorInfo) Contain(e *ErrorInfo) bool {
 	if ei.Level != e.Level {
 		return false
 	}
-	if ei.rawError.Error() != e.rawError.Error() {
+	if !errors.Is(ei, e) {
 		if ei.childError != nil {
 			return ei.childError.Contain(e)
 		} else {
@@ -70,14 +96,16 @@ func (ei *ErrorInfo) Contain(e *ErrorInfo) bool {
 }
 
 func (ei *ErrorInfo) Equal(e *ErrorInfo) bool {
-	if e == nil {
+	if (ei == nil) && (e == nil) {
+		return true
+	} else if e == nil || ei == nil {
 		return false
 	}
 
 	if ei.Level != e.Level {
 		return false
 	}
-	if ei.rawError.Error() != e.rawError.Error() {
+	if !errors.Is(ei, e) {
 		return false
 	}
 
@@ -96,10 +124,33 @@ func (ei *ErrorInfo) Equal(e *ErrorInfo) bool {
 	return true
 }
 
+func (ei *ErrorInfo) RawErrorEqual(err error) bool {
+	if (ei == nil) && (err == nil) {
+		return true
+	} else if err == nil || ei == nil {
+		return false
+	}
+
+	return errors.Is(ei, err)
+}
+
 func (ei *ErrorInfo) IsError() bool {
+	if ei == nil {
+		return false
+	}
 	return ei.Level == ERROR
 }
 
 func (ei *ErrorInfo) IsWarn() bool {
+	if ei == nil {
+		return false
+	}
 	return ei.Level == WARN
+}
+
+func (ei *ErrorInfo) IsInfo() bool {
+	if ei == nil {
+		return false
+	}
+	return ei.Level == INFO
 }

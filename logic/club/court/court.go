@@ -20,7 +20,7 @@ func GetRentalCourts(
 	weekday *int16,
 ) (
 	placeDateIntActivityMap map[string]map[int]*domain.Activity,
-	resultErrInfo *errLogic.ErrorInfo,
+	resultErrInfo errLogic.IError,
 ) {
 	fromDate = fromDate.In(commonLogic.Location)
 	toDate = toDate.In(commonLogic.Location)

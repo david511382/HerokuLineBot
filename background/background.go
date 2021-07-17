@@ -23,7 +23,7 @@ type Background struct {
 }
 
 // Init 初始化
-func (b *Background) Init(cfg bootstrap.Backgrounds) (string, *errLogic.ErrorInfo) {
+func (b *Background) Init(cfg bootstrap.Backgrounds) (string, errLogic.IError) {
 	if b.bg == nil {
 		return "", nil
 	}
@@ -72,7 +72,7 @@ func (b *Background) logF(format string, a ...interface{}) {
 	b.logErrInfo(errInfo)
 }
 
-func (b *Background) logErrInfo(errInfo *errLogic.ErrorInfo) {
+func (b *Background) logErrInfo(errInfo errLogic.IError) {
 	if errInfo == nil {
 		return
 	}

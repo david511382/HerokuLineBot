@@ -27,7 +27,7 @@ type NewLogistic struct {
 	Amount      int16                     `json:"amount"`
 }
 
-func (b *NewLogistic) Init(context domain.ICmdHandlerContext) error {
+func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
 	nowTime := commonLogic.TimeUtilObj.Now()
 	*b = NewLogistic{
 		Context:     context,
@@ -55,12 +55,13 @@ func (b *NewLogistic) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *NewLogistic) LoadSingleParam(attr, text string) error {
+func (b *NewLogistic) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
 	switch attr {
 	case "date":
 		t, err := time.Parse(commonLogicDomain.DATE_TIME_RFC3339_FORMAT, text)
 		if err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 		b.Date = t
 	case "ICmdLogic.name":
@@ -70,7 +71,8 @@ func (b *NewLogistic) LoadSingleParam(attr, text string) error {
 	case "ICmdLogic.amount":
 		i, err := strconv.Atoi(text)
 		if err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 		b.Amount = int16(i)
 	default:
@@ -83,26 +85,24 @@ func (b *NewLogistic) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
-func (b *NewLogistic) Do(text string) (resultErr error) {
+func (b *NewLogistic) Do(text string) (resultErrInfo errLogic.IError) {
 	if u, err := lineuser.Get(b.Context.GetUserID()); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	} else {
 		if u.Role != domain.ADMIN_CLUB_ROLE {
-			return domain.NO_AUTH_ERROR
+			resultErrInfo = errLogic.NewError(domain.NO_AUTH_ERROR)
+			return
 		}
 	}
 
 	if b.Context.IsComfirmed() {
 		transaction := database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
-		var resultErrInfo *errLogic.ErrorInfo
-		defer func() {
-			if resultErrInfo != nil {
-				resultErr = resultErrInfo.Error()
-			}
-		}()
+
 		defer database.CommitTransaction(transaction, resultErrInfo)
 
 		if resultErrInfo = b.InsertLogistic(transaction); resultErrInfo != nil {
@@ -122,11 +122,12 @@ func (b *NewLogistic) Do(text string) (resultErr error) {
 			return
 		}
 
-		return nil
+		return
 	}
 
-	if err := b.Context.CacheParams(); err != nil {
-		return err
+	if errInfo := b.Context.CacheParams(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
 
 	boxComponent := linebot.GetFlexMessageBoxComponent(
@@ -137,10 +138,11 @@ func (b *NewLogistic) Do(text string) (resultErr error) {
 		},
 	)
 
-	if js, err := b.Context.
+	if js, errInfo := b.Context.
 		GetDateTimeCmdInputMode(domain.DATE_POSTBACK_DATE_TIME_CMD, "date").
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		dateStr := fmt.Sprintf("%s(%s)",
 			b.Date.Format(commonLogicDomain.MONTH_DATE_SLASH_FORMAT),
@@ -181,10 +183,11 @@ func (b *NewLogistic) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.Context.
+	if js, errInfo := b.Context.
 		GetRequireInputMode("ICmdLogic.name", "品項", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		boxComponent.Contents = append(boxComponent.Contents,
 			linebot.GetFlexMessageBoxComponent(
@@ -218,10 +221,11 @@ func (b *NewLogistic) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.Context.
+	if js, errInfo := b.Context.
 		GetRequireInputMode("ICmdLogic.amount", "數量", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		amountStr := fmt.Sprintf("%d個, %d打", b.Amount, b.Amount/12)
 		boxComponent.Contents = append(boxComponent.Contents,
@@ -256,10 +260,11 @@ func (b *NewLogistic) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.Context.
+	if js, errInfo := b.Context.
 		GetRequireInputMode("ICmdLogic.description", "備註", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		boxComponent.Contents = append(boxComponent.Contents,
 			linebot.GetFlexMessageBoxComponent(
@@ -293,10 +298,11 @@ func (b *NewLogistic) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.Context.
+	if js, errInfo := b.Context.
 		GetComfirmMode().
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		boxComponent.Contents = append(boxComponent.Contents,
 			linebot.GetFlexMessageBoxComponent(
@@ -329,13 +335,14 @@ func (b *NewLogistic) Do(text string) (resultErr error) {
 		),
 	}
 	if err := b.Context.Reply(replyMessges); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	}
 
 	return nil
 }
 
-func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErrInfo *errLogic.ErrorInfo) {
+func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErrInfo errLogic.IError) {
 	if transaction == nil {
 		transaction = database.Club.Begin()
 		if err := transaction.Error; err != nil {

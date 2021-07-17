@@ -20,11 +20,11 @@ import (
 
 type BackGround struct{}
 
-func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo *errLogic.ErrorInfo) {
+func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo errLogic.IError) {
 	return "ActivityCreator", cfg.ActivityCreator, nil
 }
 
-func (b *BackGround) Run(runTime time.Time) (resultErrInfo *errLogic.ErrorInfo) {
+func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 	defer func() {
 		if resultErrInfo != nil {
 			resultErrInfo = resultErrInfo.NewParent(runTime.String())

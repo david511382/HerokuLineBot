@@ -15,7 +15,7 @@ var (
 	LineUser        lineuser.Key
 )
 
-func Init(cfg *bootstrap.Config) *errLogic.ErrorInfo {
+func Init(cfg *bootstrap.Config) errLogic.IError {
 	maxLifeHour := cfg.RedisConfig.MaxLifeHour
 	maxConnAge := time.Hour * time.Duration(maxLifeHour)
 

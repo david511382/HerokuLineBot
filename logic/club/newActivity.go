@@ -32,7 +32,7 @@ type NewActivity struct {
 	Courts      []*courtDomain.ActivityCourt `json:"courts"`
 }
 
-func (b *NewActivity) Init(context domain.ICmdHandlerContext) error {
+func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
 	nowTime := commonLogic.TimeUtilObj.Now()
 	*b = NewActivity{
 		Context:     context,
@@ -87,12 +87,13 @@ func (b *NewActivity) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *NewActivity) LoadSingleParam(attr, text string) error {
+func (b *NewActivity) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
 	switch attr {
 	case "date":
 		t, err := time.Parse(commonLogicDomain.DATE_TIME_RFC3339_FORMAT, text)
 		if err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 		b.Date = t
 	case "ICmdLogic.place":
@@ -102,19 +103,22 @@ func (b *NewActivity) LoadSingleParam(attr, text string) error {
 	case "ICmdLogic.people_limit":
 		i, err := strconv.Atoi(text)
 		if err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 		b.PeopleLimit = util.GetInt16P(int16(i))
 	case "ICmdLogic.club_subsidy":
 		i, err := strconv.Atoi(text)
 		if err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 		b.ClubSubsidy = int16(i)
 	case "ICmdLogic.courts":
 		if isJson := strings.ContainsAny(text, "{"); !isJson {
-			if err := b.ParseCourts(text); err != nil {
-				return err
+			if errInfo := b.ParseCourts(text); errInfo != nil {
+				resultErrInfo = errInfo
+				return
 			}
 		}
 	default:
@@ -127,27 +131,25 @@ func (b *NewActivity) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
-func (b *NewActivity) Do(text string) (resultErr error) {
+func (b *NewActivity) Do(text string) (resultErrInfo errLogic.IError) {
 	if u, err := lineuser.Get(b.Context.GetUserID()); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	} else {
 		if u.Role != domain.ADMIN_CLUB_ROLE &&
 			u.Role != domain.CADRE_CLUB_ROLE {
-			return domain.NO_AUTH_ERROR
+			resultErrInfo = errLogic.NewError(domain.NO_AUTH_ERROR)
+			return
 		}
 	}
 
 	if b.Context.IsComfirmed() {
 		transaction := database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
-		var resultErrInfo *errLogic.ErrorInfo
-		defer func() {
-			if resultErrInfo != nil {
-				resultErr = resultErrInfo.Error()
-			}
-		}()
+
 		defer database.CommitTransaction(transaction, resultErrInfo)
 
 		if resultErrInfo = b.InsertActivity(transaction); resultErrInfo != nil {
@@ -167,20 +169,22 @@ func (b *NewActivity) Do(text string) (resultErr error) {
 			return
 		}
 
-		return nil
+		return
 	}
 
-	if err := b.Context.CacheParams(); err != nil {
-		return err
+	if errInfo := b.Context.CacheParams(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
 
 	contents := []interface{}{}
 	actions := domain.NewActivityLineTemplate{}
 
-	if js, err := b.Context.
+	if js, errInfo := b.Context.
 		GetDateTimeCmdInputMode(domain.DATE_POSTBACK_DATE_TIME_CMD, "date").
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		actions.DateAction = linebot.GetTimeAction(
 			"修改",
@@ -191,10 +195,11 @@ func (b *NewActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.Context.
+	if js, errInfo := b.Context.
 		GetRequireInputMode("ICmdLogic.place", "地點", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		actions.PlaceAction = linebot.GetPostBackAction(
 			"修改",
@@ -202,10 +207,11 @@ func (b *NewActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.Context.
+	if js, errInfo := b.Context.
 		GetRequireInputMode("ICmdLogic.club_subsidy", "補助額", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		actions.ClubSubsidyAction = linebot.GetPostBackAction(
 			"修改",
@@ -213,10 +219,11 @@ func (b *NewActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.Context.
+	if js, errInfo := b.Context.
 		GetRequireInputMode("ICmdLogic.people_limit", "人數上限", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		actions.PeopleLimitAction = linebot.GetPostBackAction(
 			"修改",
@@ -224,10 +231,11 @@ func (b *NewActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.Context.
+	if js, errInfo := b.Context.
 		GetRequireInputMode("ICmdLogic.courts", "場地", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		actions.CourtAction = linebot.GetPostBackAction(
 			"修改場地",
@@ -238,17 +246,19 @@ func (b *NewActivity) Do(text string) (resultErr error) {
 	lineContents := b.getLineComponents(actions)
 	contents = append(contents, lineContents...)
 
-	cancelSignlJs, err := b.Context.
+	cancelSignlJs, errInfo := b.Context.
 		GetCancelMode().
 		GetSignal()
-	if err != nil {
-		return err
+	if errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
-	comfirmSignlJs, err := b.Context.
+	comfirmSignlJs, errInfo := b.Context.
 		GetComfirmMode().
 		GetSignal()
-	if err != nil {
-		return err
+	if errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
 	contents = append(contents,
 		GetComfirmComponent(
@@ -277,13 +287,14 @@ func (b *NewActivity) Do(text string) (resultErr error) {
 		),
 	}
 	if err := b.Context.Reply(replyMessges); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	}
 
 	return nil
 }
 
-func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo *errLogic.ErrorInfo) {
+func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errLogic.IError) {
 	courtsStr := b.getCourtsStr()
 	if transaction == nil {
 		transaction = database.Club.Begin()
@@ -431,7 +442,7 @@ func (b *NewActivity) getCourtsStr() string {
 	return strings.Join(courtStrs, ",")
 }
 
-func (b *NewActivity) ParseCourts(courtsStr string) error {
+func (b *NewActivity) ParseCourts(courtsStr string) (resultErrInfo errLogic.IError) {
 	b.Courts = make([]*courtDomain.ActivityCourt, 0)
 	courtsStrs := strings.Split(courtsStr, ",")
 	for _, courtsStr := range courtsStrs {
@@ -443,21 +454,27 @@ func (b *NewActivity) ParseCourts(courtsStr string) error {
 			&court.Count,
 			&court.PricePerHour,
 			&timeStr); err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 		times := strings.Split(timeStr, "~")
 		if len(times) != 2 {
-			return fmt.Errorf("時間格式錯誤")
+			errInfo := errLogic.New("時間格式錯誤")
+			errInfo = errInfo.Trace()
+			resultErrInfo = errInfo
+			return
 		}
 		fromTimeStr := times[0]
 		toTimeStr := times[1]
 		if t, err := time.Parse(commonLogicDomain.TIME_HOUR_MIN_FORMAT, fromTimeStr); err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		} else {
 			court.FromTime = t
 		}
 		if t, err := time.Parse(commonLogicDomain.TIME_HOUR_MIN_FORMAT, toTimeStr); err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		} else {
 			court.ToTime = t
 		}
