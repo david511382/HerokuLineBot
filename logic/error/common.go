@@ -51,3 +51,15 @@ func msgCreator(datas ...interface{}) string {
 	}
 	return strings.Join(msgs, " ")
 }
+
+func LevelName(level ErrorLevel) string {
+	switch level {
+	case ERROR:
+		return ERROR_NAME
+	case WARN:
+		return WARN_NAME
+	case INFO:
+		return INFO_NAME
+	}
+	return ""
+}

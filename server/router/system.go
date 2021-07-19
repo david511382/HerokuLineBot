@@ -1,8 +1,13 @@
 package router
 
 import (
+	indexApi "heroku-line-bot/server/api"
 	clubLineBotApi "heroku-line-bot/server/api/clublinebot"
-	viewApi "heroku-line-bot/server/api/view"
+	configApi "heroku-line-bot/server/api/config"
+	"heroku-line-bot/server/common"
+	"heroku-line-bot/server/middleware"
+	viewApi "heroku-line-bot/server/view"
+	liffView "heroku-line-bot/server/view/liff"
 	"io"
 	"os"
 
@@ -23,15 +28,32 @@ func SystemRouter() *gin.Engine {
 	// 設定gin
 	router := gin.New()
 
+	router.Static("/css", "./resource/css")
+	router.Static("/js", "./resource/js")
+	router.StaticFile("favicon.ico", "./resource/img/favicon.ico")
 	router.LoadHTMLGlob("./resource/templates/*.html")
 
 	router.Use(gin.Logger())
 
 	view := router.Group("/")
 	view.GET("/", viewApi.Index)
+	// liff
+	liff := view.Group("/liff")
+	liff.GET("/", liffView.Index)
+	liff.GET("/club", liffView.Club)
 
-	clubLineBot := router.Group("/")
-	clubLineBot.POST("/club-line-bot", clubLineBotApi.Index)
+	// api
+	api := router.Group("/api")
+	lineAuth := api.Group("/")
+	lineAuth.Use(middleware.GetTokenAuthorize(common.NewLineTokenVerifier(), true))
+	lineAuth.GET("/user-info", indexApi.GetUserInfo)
+
+	// api/config
+	config := api.Group("/config")
+	config.GET("/liff", configApi.GetLiff)
+
+	clubLineBotEvent := router.Group("/")
+	clubLineBotEvent.POST("/club-line-bot", clubLineBotApi.Index)
 
 	return router
 }

@@ -5,3 +5,9 @@ func New(channelAccessToken string) *LineBot {
 		channelAccessToken: channelAccessToken,
 	}
 }
+
+func NewOAuth(channelID uint64) *OAuth {
+	return &OAuth{
+		channelID: channelID,
+	}
+}

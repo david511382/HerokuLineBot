@@ -15,6 +15,10 @@ type ErrorInfo struct {
 	childError   *ErrorInfo
 }
 
+func (ei *ErrorInfo) SetLevel(level ErrorLevel) {
+	ei.Level = level
+}
+
 func (ei *ErrorInfo) Trace() *ErrorInfo {
 	if ei == nil {
 		return nil
@@ -56,7 +60,9 @@ func (ei *ErrorInfo) ErrorWithTrace() string {
 	errMsgs := make([]string, 0)
 	for e := ei; e != nil; e = e.childError {
 		errMsg := e.Error()
-		if !e.IsInfo() && e.traceMessage != "" {
+		if isLast := e.childError == nil; !e.IsInfo() &&
+			e.traceMessage != "" &&
+			isLast {
 			errMsg = fmt.Sprintf("%s\nSTACK: %s", errMsg, e.traceMessage)
 		}
 		errMsgs = append(errMsgs, errMsg)

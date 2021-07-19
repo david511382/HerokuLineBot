@@ -12,6 +12,8 @@ var (
 
 func Init(cfg *bootstrap.Config) {
 	channelAccessToken := cfg.LineBot.ChannelAccessToken
+	lineLoginChannelID := cfg.LineBot.LineLoginChannelID
+	LiffID := cfg.LineBot.LiffID
 	lineAdminID := cfg.LineBot.AdminID
 	lineRoomID := cfg.LineBot.RoomID
 	googleUrl := cfg.GoogleScript.Url
@@ -20,5 +22,7 @@ func Init(cfg *bootstrap.Config) {
 		lineRoomID:   lineRoomID,
 		LineBot:      linebot.New(channelAccessToken),
 		GoogleScript: googlescript.New(googleUrl),
+		OAuth:        linebot.NewOAuth(lineLoginChannelID),
+		LiffID:       LiffID,
 	}
 }

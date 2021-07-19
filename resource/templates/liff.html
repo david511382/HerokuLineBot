@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+        <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+        <script src="/js/api/liff.js"></script>
+        <script>
+            (async () => {
+              GetConfigLiff(function( liffID ) {
+                liff
+                  .init({
+                      liffId: liffID
+                  })
+                  .catch((err) => {
+                    // 第一次會出錯
+                    // 無視錯誤後才能往下執行跳回原本登入那頁
+                  });
+
+                isFirstRedirect = new URL(window.location).searchParams.get('liff.state');
+                if (isFirstRedirect) 
+                  return
+
+                const liffLoginRedirect = sessionStorage.getItem('liffLoginRedirect')
+                sessionStorage.removeItem('liffLoginRedirect');
+                location.href = liffLoginRedirect;
+              });
+            })()
+        </script>
+    </head>
+    <body>
+    </body>
+</html>

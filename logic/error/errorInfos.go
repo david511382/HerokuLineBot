@@ -8,6 +8,14 @@ import (
 
 type ErrorInfos []*ErrorInfo
 
+func (eis ErrorInfos) ErrorInfos(level ErrorLevel) {
+	for _, ei := range eis {
+		if ei.Level > level {
+			ei.Level = level
+		}
+	}
+}
+
 func (eis ErrorInfos) NewParent(datas ...interface{}) IError {
 	level := INFO
 	for _, ei := range eis {
@@ -104,7 +112,7 @@ func (eis ErrorInfos) ErrorWithTrace() string {
 		case INFO:
 			infoCount++
 		}
-		errMsgs = append(errMsgs, string(ei.Level), "\n", ei.ErrorWithTrace())
+		errMsgs = append(errMsgs, LevelName(ei.Level), "\n", ei.ErrorWithTrace())
 	}
 
 	resultMsgs := make([]string, 0)

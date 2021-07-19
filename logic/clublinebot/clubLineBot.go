@@ -18,7 +18,9 @@ type ClubLineBot struct {
 	lineAdminID,
 	lineRoomID string
 	*linebot.LineBot
+	OAuth *linebot.OAuth
 	*googlescript.GoogleScript
+	LiffID string
 }
 
 func (b *ClubLineBot) Handle(json string) error {
