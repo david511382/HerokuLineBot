@@ -2,11 +2,13 @@ package router
 
 import (
 	indexApi "heroku-line-bot/server/api"
+	clubApi "heroku-line-bot/server/api/club"
 	clubLineBotApi "heroku-line-bot/server/api/clublinebot"
 	configApi "heroku-line-bot/server/api/config"
 	"heroku-line-bot/server/common"
 	"heroku-line-bot/server/middleware"
 	viewApi "heroku-line-bot/server/view"
+	docsView "heroku-line-bot/server/view/docs"
 	liffView "heroku-line-bot/server/view/liff"
 	"io"
 	"os"
@@ -37,6 +39,9 @@ func SystemRouter() *gin.Engine {
 
 	view := router.Group("/")
 	view.GET("/", viewApi.Index)
+	// docs
+	doc := router.Group("/docs")
+	doc.GET("/*any", docsView.Swag)
 	// liff
 	liff := view.Group("/liff")
 	liff.GET("/", liffView.Index)
@@ -51,6 +56,10 @@ func SystemRouter() *gin.Engine {
 	// api/config
 	config := api.Group("/config")
 	config.GET("/liff", configApi.GetLiff)
+
+	// api/club
+	linebotClub := api.Group("/club")
+	linebotClub.GET("/rental-courts", clubApi.GetRentalCourts)
 
 	clubLineBotEvent := router.Group("/")
 	clubLineBotEvent.POST("/club-line-bot", clubLineBotApi.Index)

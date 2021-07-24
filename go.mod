@@ -3,6 +3,7 @@ module heroku-line-bot
 go 1.16
 
 require (
+	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/go-cmp v0.5.4 // indirect
@@ -11,6 +12,9 @@ require (
 	github.com/onsi/gomega v1.11.0 // indirect
 	github.com/robfig/cron v1.2.0
 	github.com/shopspring/decimal v1.2.0
+	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
+	github.com/swaggo/gin-swagger v1.3.0
+	github.com/swaggo/swag v1.7.0
 	github.com/tealeg/xlsx v1.0.5
 	github.com/tidwall/gjson v1.6.8
 	github.com/tidwall/sjson v1.1.5

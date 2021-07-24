@@ -1,6 +1,7 @@
 package rentalcourt
 
 import (
+	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/domain/model/resp"
 	"heroku-line-bot/util"
 	"sort"
@@ -83,40 +84,40 @@ func TestRentalCourt_GetRentalCourts(t *testing.T) {
 						ID:    1,
 						Place: "",
 					},
-					StartDate: util.GetUTCTime(2013, 5, 19),
-					EndDate:   util.GetUTCTime(2013, 5, 27),
+					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 5, 19)),
+					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 5, 27)),
 				},
 				{
 					IDPlaceCourtsAndTimePricePerHour: resp.IDPlaceCourtsAndTimePricePerHour{
 						ID:    2,
 						Place: "",
 					},
-					StartDate: util.GetUTCTime(2013, 5, 20),
-					EndDate:   util.GetUTCTime(2013, 5, 20),
+					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 5, 20)),
+					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 5, 20)),
 				},
 				{
 					IDPlaceCourtsAndTimePricePerHour: resp.IDPlaceCourtsAndTimePricePerHour{
 						ID:    3,
 						Place: "",
 					},
-					StartDate: util.GetUTCTime(2013, 1, 1),
-					EndDate:   util.GetUTCTime(2013, 5, 20),
+					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 1, 1)),
+					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 5, 20)),
 				},
 				{
 					IDPlaceCourtsAndTimePricePerHour: resp.IDPlaceCourtsAndTimePricePerHour{
 						ID:    4,
 						Place: "",
 					},
-					StartDate: util.GetUTCTime(2013, 5, 26),
-					EndDate:   util.GetUTCTime(2013, 5, 26),
+					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 5, 26)),
+					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 5, 26)),
 				},
 				{
 					IDPlaceCourtsAndTimePricePerHour: resp.IDPlaceCourtsAndTimePricePerHour{
 						ID:    5,
 						Place: "",
 					},
-					StartDate: util.GetUTCTime(2013, 5, 26),
-					EndDate:   util.GetUTCTime(2013, 12, 31),
+					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 5, 26)),
+					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 12, 31)),
 				},
 			},
 			false,
@@ -150,8 +151,8 @@ func TestRentalCourt_GetRentalCourts(t *testing.T) {
 						ID:    1,
 						Place: "a",
 					},
-					StartDate: util.GetUTCTime(2013, 4, 2),
-					EndDate:   util.GetUTCTime(2013, 5, 2),
+					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 4, 2)),
+					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 5, 2)),
 				},
 			},
 			false,

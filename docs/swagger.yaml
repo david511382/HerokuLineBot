@@ -1,0 +1,116 @@
+basePath: /api/
+definitions:
+  resp.GetRentalCourts:
+    properties:
+      not_pay_day_courts:
+        $ref: '#/definitions/resp.GetRentalCourtsPayInfo'
+      not_refund_day_courts:
+        $ref: '#/definitions/resp.GetRentalCourtsPayInfo'
+      total_day_courts:
+        items:
+          $ref: '#/definitions/resp.GetRentalCourtsDayCourts'
+        type: array
+    type: object
+  resp.GetRentalCourtsCourtInfo:
+    properties:
+      cost:
+        type: number
+      count:
+        type: integer
+      from_time:
+        type: string
+      place:
+        type: string
+      to_time:
+        type: string
+    type: object
+  resp.GetRentalCourtsDayCourts:
+    properties:
+      courts:
+        items:
+          $ref: '#/definitions/resp.GetRentalCourtsDayCourtsInfo'
+        type: array
+      date:
+        type: string
+      is_multiple_place:
+        type: boolean
+    type: object
+  resp.GetRentalCourtsDayCourtsInfo:
+    properties:
+      cost:
+        type: number
+      count:
+        type: integer
+      from_time:
+        type: string
+      place:
+        type: string
+      reason_message:
+        type: string
+      refund_time:
+        type: string
+      status:
+        type: integer
+      to_time:
+        type: string
+    type: object
+  resp.GetRentalCourtsPayInfo:
+    properties:
+      cost:
+        type: number
+      courts:
+        items:
+          $ref: '#/definitions/resp.GetRentalCourtsPayInfoDay'
+        type: array
+    type: object
+  resp.GetRentalCourtsPayInfoDay:
+    properties:
+      cost:
+        type: number
+      courts:
+        items:
+          $ref: '#/definitions/resp.GetRentalCourtsCourtInfo'
+        type: array
+      date:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Line-Bot
+  title: Heroku-Line-Bot
+  version: "1.0"
+paths:
+  /club/rental-courts:
+    get:
+      description: 租場狀況
+      parameters:
+      - default: "2013-08-02T00:00:00+08:00"
+        description: 起始日期
+        in: query
+        name: from_date
+        required: true
+        type: string
+      - default: "2013-08-02T00:00:00+08:00"
+        description: 結束日期
+        in: query
+        name: to_date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 資料
+          schema:
+            $ref: '#/definitions/resp.GetRentalCourts'
+      security:
+      - ApiKeyAuth: []
+      summary: 租場狀況
+      tags:
+      - Club
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

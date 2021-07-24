@@ -22,8 +22,6 @@ func GetRentalCourts(
 	placeDateIntActivityMap map[string]map[int]*domain.Activity,
 	resultErrInfo errLogic.IError,
 ) {
-	fromDate = fromDate.In(commonLogic.Location)
-	toDate = toDate.In(commonLogic.Location)
 	placeDateIntActivityMap = make(map[string]map[int]*domain.Activity)
 	if dbDatas, err := database.Club.RentalCourt.GetRentalCourts(
 		fromDate,
@@ -52,7 +50,7 @@ func GetRentalCourts(
 			} else {
 				for _, v := range dbDatas {
 					id := v.ID.ID
-					dateInt := commonLogic.TimeInt(v.ExcludeDate, commonLogicDomain.DATE_TIME_TYPE)
+					dateInt := commonLogic.TimeInt(v.ExcludeDate.Time(), commonLogicDomain.DATE_TIME_TYPE)
 					if rentalIDDateReasonMap[id] == nil {
 						rentalIDDateReasonMap[id] = make(map[int]*dbLogicDomain.ReasonType)
 					}
@@ -63,15 +61,16 @@ func GetRentalCourts(
 		}
 
 		for _, v := range dbDatas {
-			startDate := v.StartDate
-			endDate := v.EndDate
+			startDate := v.StartDate.Time()
+			endDate := v.EndDate.Time()
 			if startDate.Before(fromDate) {
 				startDate = fromDate
 			}
 			if endDate.After(toDate) {
 				endDate = toDate
 			}
-			fromDate, beforeDate := getDateRangeInEveryWeekday(startDate, endDate, int(v.EveryWeekday))
+			fromDate, toDate := getDateRangeInEveryWeekday(startDate, endDate, int(v.EveryWeekday))
+			beforeDate := commonLogicDomain.DATE_TIME_TYPE.Next1(toDate)
 			dateInts := make([]int, 0)
 			commonLogic.TimeSlice(
 				fromDate, beforeDate,
@@ -90,6 +89,15 @@ func GetRentalCourts(
 			}
 
 			for _, dateInt := range dateInts {
+				var cancelReason *dbLogicDomain.ReasonType
+				isCancel := rentalIDDateReasonMap[v.ID] != nil && rentalIDDateReasonMap[v.ID][dateInt] != nil
+				if isCancel {
+					cancelReason = rentalIDDateReasonMap[v.ID][dateInt]
+					if *cancelReason == domain.EXCLUDE_REASON_TYPE {
+						continue
+					}
+				}
+
 				if placeDateIntActivityMap[v.Place] == nil {
 					placeDateIntActivityMap[v.Place] = make(map[int]*domain.Activity)
 				}
@@ -102,12 +110,10 @@ func GetRentalCourts(
 				m := placeDateIntActivityMap[v.Place][dateInt]
 
 				c := *court
-				if isCancel := rentalIDDateReasonMap[v.ID] != nil && rentalIDDateReasonMap[v.ID][dateInt] != nil; isCancel {
-					cancelReason := rentalIDDateReasonMap[v.ID][dateInt]
-
+				if cancelReason != nil {
 					m.CancelCourts = append(m.CancelCourts, &domain.CancelCourt{
 						Court:        c,
-						CancelReason: cancelReason,
+						CancelReason: *cancelReason,
 					})
 				} else {
 					m.Courts = append(m.Courts, &c)
@@ -119,11 +125,137 @@ func GetRentalCourts(
 	return
 }
 
-func getDateRangeInEveryWeekday(startDate, endDate time.Time, everyWeekday int) (fromDate, beforeDate time.Time) {
-	days := (everyWeekday + 7 - int(startDate.Weekday())) % 7
+func GetRentalCourtsWithPay(
+	fromDate, toDate time.Time,
+	place *string,
+	weekday *int16,
+) (
+	placeActivityPaysMap map[string][]*domain.ActivityPay,
+	resultErrInfo errLogic.IError,
+) {
+	placeActivityPaysMap = make(map[string][]*domain.ActivityPay)
+	if dbDatas, err := database.Club.RentalCourt.GetRentalCourtsWithPay(
+		fromDate,
+		toDate,
+		place,
+		weekday,
+	); err != nil {
+		resultErrInfo = errLogic.NewError(err)
+		return
+	} else {
+		ids := []int{}
+		for _, v := range dbDatas {
+			ids = append(ids, v.ID)
+		}
+
+		rentalIDDateCancelActivityMap := make(map[int]map[int]*domain.TmpCancelActivity)
+		if len(ids) > 0 {
+			arg := dbReqs.RentalCourtException{
+				RentalCourtIDs:  ids,
+				FromExcludeDate: &fromDate,
+				ToExcludeDate:   &toDate,
+			}
+			if dbDatas, err := database.Club.RentalCourtException.RentalCourtIDExcludeDateReasonRefundRefundDate(arg); err != nil {
+				resultErrInfo = errLogic.NewError(err)
+				return
+			} else {
+				for _, v := range dbDatas {
+					id := v.ID.ID
+					dateInt := commonLogic.TimeInt(v.ExcludeDate.Time(), commonLogicDomain.DATE_TIME_TYPE)
+					if rentalIDDateCancelActivityMap[id] == nil {
+						rentalIDDateCancelActivityMap[id] = make(map[int]*domain.TmpCancelActivity)
+					}
+					if rentalIDDateCancelActivityMap[id][dateInt] == nil {
+						rentalIDDateCancelActivityMap[id][dateInt] = &domain.TmpCancelActivity{}
+					}
+					m := rentalIDDateCancelActivityMap[id][dateInt]
+					reasonType := dbLogicDomain.ReasonType(v.ReasonType)
+					m.CancelReason = reasonType
+					m.RefundDate = v.RefundDate.TimeP()
+					m.Refund = v.Refund
+				}
+			}
+		}
+
+		for _, v := range dbDatas {
+			startDate := v.StartDate.Time()
+			endDate := v.EndDate.Time()
+			if startDate.Before(fromDate) {
+				startDate = fromDate
+			}
+			if endDate.After(toDate) {
+				endDate = toDate
+			}
+
+			fromDate, toDate := getDateRangeInEveryWeekday(startDate, endDate, int(v.EveryWeekday))
+			beforeDate := commonLogicDomain.DATE_TIME_TYPE.Next1(toDate)
+			dateInts := make([]int, 0)
+			commonLogic.TimeSlice(
+				fromDate, beforeDate,
+				commonLogicDomain.WEEK_TIME_TYPE.Next1,
+				func(runTime, next time.Time) bool {
+					dateInt := commonLogic.TimeInt(runTime, commonLogicDomain.DATE_TIME_TYPE)
+					dateInts = append(dateInts, dateInt)
+					return true
+				},
+			)
+
+			court, err := parseCourts(v.CourtsAndTime, v.PricePerHour)
+			if err != nil {
+				resultErrInfo = errLogic.NewError(err)
+				return
+			}
+
+			activity := &domain.ActivityPay{
+				DateCourtMap: make(map[int]*domain.ActivityPayCourt),
+				DepositDate:  v.DepositDate.TimeP(),
+				BalanceDate:  v.BalanceDate.TimeP(),
+				Deposit:      v.Deposit,
+				Balance:      v.Balance,
+			}
+			for _, dateInt := range dateInts {
+				var cancelInfo *domain.TmpCancelActivity
+				if isCancel :=
+					rentalIDDateCancelActivityMap[v.ID] != nil &&
+						rentalIDDateCancelActivityMap[v.ID][dateInt] != nil; isCancel {
+					cancelInfo = rentalIDDateCancelActivityMap[v.ID][dateInt]
+					if cancelInfo.CancelReason == domain.EXCLUDE_REASON_TYPE {
+						continue
+					}
+				}
+
+				activityCourt := &domain.ActivityPayCourt{
+					Court: *court,
+				}
+				if isCancel := cancelInfo != nil; isCancel {
+					activityCourt.CancelReason = &cancelInfo.CancelReason
+					if refundDate := cancelInfo.RefundDate; refundDate != nil {
+						activityCourt.RefundDate = refundDate
+						activityCourt.Refund = cancelInfo.Refund
+					}
+				}
+
+				activity.DateCourtMap[dateInt] = activityCourt
+			}
+			if len(activity.DateCourtMap) == 0 {
+				continue
+			}
+
+			if placeActivityPaysMap[v.Place] == nil {
+				placeActivityPaysMap[v.Place] = make([]*domain.ActivityPay, 0)
+			}
+			placeActivityPaysMap[v.Place] = append(placeActivityPaysMap[v.Place], activity)
+		}
+	}
+
+	return
+}
+
+func getDateRangeInEveryWeekday(startDate, endDate time.Time, everyWeekday int) (fromDate, toDate time.Time) {
+	days := (everyWeekday - int(startDate.Weekday()) + 7) % 7
 	fromDate = commonLogicDomain.DATE_TIME_TYPE.Next(startDate, days)
-	days = (everyWeekday + 7 - int(endDate.Weekday())) % 7
-	beforeDate = commonLogicDomain.DATE_TIME_TYPE.Next(endDate, days)
+	days = (everyWeekday - int(startDate.Weekday()) + 7) % 7
+	toDate = commonLogicDomain.DATE_TIME_TYPE.Next(endDate, -days)
 	return
 }
 
