@@ -1,10 +1,11 @@
 import { InferGetStaticPropsType,GetStaticPropsContext} from 'next'
 import Head from 'next/head'
-import Liff,{LiffType,LoadLiffID} from '../../components/liff/Liff';
+import {GetLiffID} from '../../data/env/Liff';
+import Liff,{LiffType} from '../../components/liff/Liff';
 import React, { useState } from 'react'
 import LiffPanel from '../../components/liff/LiffPanel'
 import Nav from '../../components/nav/Nav'
-import {Route,} from "react-router-dom";
+import {Route} from "react-router-dom";
 
 export default function Page({liffID}: InferGetStaticPropsType<typeof getStaticProps>) {
   const  [liffProps,setLiff]= useState<LiffType>()
@@ -60,7 +61,7 @@ export const getStaticProps = (
 ) => {
   return {
       props: {
-        liffID: LoadLiffID(),
+        liffID: GetLiffID(),
       },
   }
 }

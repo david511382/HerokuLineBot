@@ -1,0 +1,1 @@
+export const GetLiffID = ()=>process.env.LIFF_ID

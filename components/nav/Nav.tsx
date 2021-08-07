@@ -1,5 +1,6 @@
 import React, { useEffect,useState } from 'react'
 import styles from './nav.module.css'
+import {GetUserInfo} from '../../data/api/UserInfo'
 import { RoleID,  UserInfo as UserInfoResp } from '../../models/resp/user-info'
 import {Link,HashRouter, Switch} from "react-router-dom";
 
@@ -54,7 +55,7 @@ export default function Nav(
       })
     }
     
-    getUserInfo()
+    GetUserInfo()
       .then((userInfo)=>{
         setUserInfo(userInfo)
         
@@ -81,33 +82,36 @@ export default function Nav(
     <div>
       使用者:{userInfo?.username}
       
-      <HashRouter>
-        <nav className={styles.nav}>
-          <ul className={styles.ul}>{
-            navs.map((page, i) => {               
-              return (
-                <li 
-                  className={`${styles.li} ${(page.Selected)?`${styles.selected}`:""}`}
-                  key={page.Name}>
-                  <Link
-                    to={page.Path}
-                    onClick={()=>{
-                      navs.forEach((page)=>page.Selected=false)
-                      navs[i].Selected = true
-                      setNavs([...navs])
-                    }}>
-                    <a>{page.Name}</a>
-                  </Link>
-                </li>
-              ) 
-            })
-          }</ul>
-        </nav>
+      {
+        navs.length > 0 &&
+        <HashRouter>
+          <nav className={styles.nav}>
+            <ul className={styles.ul}>{
+              navs.map((page, i) => {               
+                return (
+                  <li 
+                    className={`${styles.li} ${(page.Selected)?`${styles.selected}`:""}`}
+                    key={page.Name}>
+                    <Link
+                      to={page.Path}
+                      onClick={()=>{
+                        navs.forEach((page)=>page.Selected=false)
+                        navs[i].Selected = true
+                        setNavs([...navs])
+                      }}>
+                      <a>{page.Name}</a>
+                    </Link>
+                  </li>
+                ) 
+              })
+            }</ul>
+          </nav>
 
-        <Switch>
-          {children}
-        </Switch>
-      </HashRouter>
+          <Switch>
+            {children}
+          </Switch>
+        </HashRouter>
+      }
     </div>
   )
 }
@@ -118,14 +122,4 @@ export function getPath(page:PageEnum) :string {
     return path
 
   return '/'
-}
-
-async function getUserInfo() :Promise<UserInfoResp> {
-  return await fetch('/api/user-info')
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(response.statusText)
-      }
-      return response.json()
-    })
 }

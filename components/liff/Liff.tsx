@@ -74,10 +74,6 @@ export default function Liff(
     return (null);
 }
 
-export const LoadLiffID = () =>{
-    return process.env.LIFF_ID
-}
-
 async function initializeLiff(
     liffID : string,
     successCallback?: ((liff:LiffType) => void) | undefined,
