@@ -20,7 +20,6 @@ type ClubLineBot struct {
 	*linebot.LineBot
 	OAuth *linebot.OAuth
 	*googlescript.GoogleScript
-	LiffID string
 }
 
 func (b *ClubLineBot) Handle(json string) error {
