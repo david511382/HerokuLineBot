@@ -1,0 +1,19 @@
+.nav {
+}
+
+.ul {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  display: inline-flex;
+  background-color: lime;
+}
+
+.nav .ul .li {
+  display: inline-block;
+  flex: 1;
+}
+
+.nav .ul li.selected {
+  background-color: orange;
+}

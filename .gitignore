@@ -8,6 +8,9 @@ config/*
 
 # Frontend
 
+# env
+.env
+
 # api
 /pages/api/*
 
