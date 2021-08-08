@@ -28,6 +28,7 @@ func SystemRouter() *gin.Engine {
 	router := gin.New()
 
 	router.Use(gin.Logger())
+	router.Use(middleware.Cors)
 
 	// docs
 	doc := router.Group("/docs")
