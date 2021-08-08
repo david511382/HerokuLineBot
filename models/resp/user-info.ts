@@ -1,4 +1,4 @@
-export type UserInfo = {
+export interface UserInfo {
   username: string
   role_id: RoleID
 }

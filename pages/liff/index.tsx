@@ -2,6 +2,7 @@ import { InferGetStaticPropsType,GetStaticPropsContext} from 'next'
 import Head from 'next/head'
 import {GetLiffID} from '../../data/env/Liff';
 import Liff,{LiffType} from '../../components/liff/Liff';
+import {SetIDToken} from '../../service/auth/Token';
 import React, { useState } from 'react'
 import LiffPanel from '../../components/liff/LiffPanel'
 import Nav from '../../components/nav/Nav'
@@ -26,12 +27,12 @@ export default function Page({liffID}: InferGetStaticPropsType<typeof getStaticP
         liffID={liffID}
         isAutoLogin={true}
         successLoginCallback={(liff:LiffType)=>{
-          const idToken = liff.getIDToken();
-          // Set a cookie
-          const tokenCookieName = "token";
-          document.cookie = tokenCookieName + '=' + idToken + ";path=/";
-
           setLiff(liff)
+
+          const idToken = liff.getIDToken();
+          if (!idToken)
+            return
+          SetIDToken(idToken)
         }}
         errorCallback={(err:any)=>{
             console.log(err)}

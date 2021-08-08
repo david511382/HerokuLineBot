@@ -1,6 +1,6 @@
 import React, { useEffect,useState } from 'react'
 import styles from './nav.module.css'
-import {GetUserInfo} from '../../data/api/UserInfo'
+import {GetUserInfo} from '../../service/auth/User'
 import { RoleID,  UserInfo as UserInfoResp } from '../../models/resp/user-info'
 import {Link,HashRouter, Switch} from "react-router-dom";
 
@@ -49,7 +49,7 @@ export default function Nav(
       PagePathMap.forEach((path,page)=>{
         if (defaultPage)
           return
-        defaultPage = ( currentHash === path)?
+        defaultPage = (currentHash === path)?
           page:
           undefined
       })
@@ -57,6 +57,9 @@ export default function Nav(
     
     GetUserInfo()
       .then((userInfo)=>{
+        if (!userInfo)
+          return
+
         setUserInfo(userInfo)
         
         const roleID = userInfo.role_id
