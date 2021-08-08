@@ -1,9 +1,15 @@
 package error
 
-type ErrorLevel string
+type ErrorLevel int
 
 const (
-	WARN  ErrorLevel = "Warn"
-	ERROR ErrorLevel = "Error"
-	INFO  ErrorLevel = "Info"
+	WARN  ErrorLevel = 1
+	ERROR ErrorLevel = 2
+	INFO  ErrorLevel = 0
+)
+
+const (
+	WARN_NAME  string = "WARN"
+	ERROR_NAME string = "ERROR"
+	INFO_NAME  string = "INFO"
 )

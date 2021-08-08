@@ -30,7 +30,7 @@ type confirmRegisterUser struct {
 	LineID     string          `json:"line_id"`
 }
 
-func (b *confirmRegister) Init(context domain.ICmdHandlerContext) error {
+func (b *confirmRegister) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
 	*b = confirmRegister{
 		context: context,
 	}
@@ -45,12 +45,13 @@ func (b *confirmRegister) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *confirmRegister) LoadSingleParam(attr, text string) error {
+func (b *confirmRegister) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
 	switch attr {
 	case "date":
 		t, err := time.Parse(commonLogicDomain.DATE_TIME_RFC3339_FORMAT, text)
 		if err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 		b.Date = t
 	}
@@ -85,7 +86,7 @@ func (b *confirmRegister) LoadUsers(arg dbReqs.Member) (confirmRegisterUsers []*
 	return confirmRegisterUsers, nil
 }
 
-func (b *confirmRegister) ComfirmDb() (resultErrInfo *errLogic.ErrorInfo) {
+func (b *confirmRegister) ComfirmDb() (resultErrInfo errLogic.IError) {
 	isChangeRole := b.isMemberAble() && b.User.Role == domain.GUEST_CLUB_ROLE
 
 	transaction := database.Club.Begin()
@@ -119,12 +120,14 @@ func (b *confirmRegister) ComfirmDb() (resultErrInfo *errLogic.ErrorInfo) {
 	return nil
 }
 
-func (b *confirmRegister) Do(text string) (resultErr error) {
+func (b *confirmRegister) Do(text string) (resultErrInfo errLogic.IError) {
 	lineID := b.context.GetUserID()
 	if user, err := lineUserLogic.Get(lineID); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	} else if user.Role != domain.ADMIN_CLUB_ROLE {
-		return domain.NO_AUTH_ERROR
+		resultErrInfo = errLogic.NewError(domain.NO_AUTH_ERROR)
+		return
 	}
 
 	if b.User == nil {
@@ -132,9 +135,13 @@ func (b *confirmRegister) Do(text string) (resultErr error) {
 			ID: &b.MemberID,
 		}
 		if confirmRegisterUsers, err := b.LoadUsers(arg); err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		} else if len(confirmRegisterUsers) == 0 {
-			return fmt.Errorf("查無用戶")
+			errInfo := errLogic.New("查無用戶")
+			errInfo = errInfo.Trace()
+			resultErrInfo = errInfo
+			return
 		} else {
 			v := confirmRegisterUsers[0]
 			b.User = v
@@ -143,37 +150,43 @@ func (b *confirmRegister) Do(text string) (resultErr error) {
 
 	if b.context.IsComfirmed() {
 		if errInfo := b.ComfirmDb(); errInfo != nil {
-			return errInfo.Error()
+			resultErrInfo = errInfo
+			return
 		}
 
 		replyMessges := []interface{}{
 			linebot.GetTextMessage("完成"),
 		}
-		if resultErr = b.context.Reply(replyMessges); resultErr != nil {
-			return resultErr
+		if err := b.context.Reply(replyMessges); err != nil {
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 
-		if resultErr = b.context.DeleteParam(); resultErr != nil {
+		if err := b.context.DeleteParam(); err != nil {
+			resultErrInfo = errLogic.NewError(err)
 			return
 		}
 
 		return nil
 	}
 
-	if err := b.context.CacheParams(); err != nil {
-		return err
+	if errInfo := b.context.CacheParams(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
 
-	replyMessges, err := b.getTemplateMessage()
-	if err != nil {
-		return err
+	replyMessges, errInfo := b.getTemplateMessage()
+	if errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
 
 	if err := b.context.Reply(replyMessges); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	}
 
-	return nil
+	return
 }
 
 func (b *confirmRegister) isMemberAble() bool {
@@ -182,7 +195,7 @@ func (b *confirmRegister) isMemberAble() bool {
 		b.User.Department.IsClubMember()
 }
 
-func (b *confirmRegister) getTemplateMessage() ([]interface{}, error) {
+func (b *confirmRegister) getTemplateMessage() ([]interface{}, errLogic.IError) {
 	if b.User == nil {
 		return nil, nil
 	}
@@ -193,10 +206,10 @@ func (b *confirmRegister) getTemplateMessage() ([]interface{}, error) {
 		SizeP: &size,
 	}
 
-	if js, err := b.context.
+	if js, errInfo := b.context.
 		GetDateTimeCmdInputMode(domain.DATE_POSTBACK_DATE_TIME_CMD, "date").
-		GetSignal(); err != nil {
-		return nil, err
+		GetSignal(); errInfo != nil {
+		return nil, errInfo
 	} else {
 		action := linebot.GetTimeAction(
 			"修改",
@@ -284,11 +297,11 @@ func (b *confirmRegister) getTemplateMessage() ([]interface{}, error) {
 		)
 	}
 
-	comfirmSignlJs, err := b.context.
+	comfirmSignlJs, errInfo := b.context.
 		GetComfirmMode().
 		GetSignal()
-	if err != nil {
-		return nil, err
+	if errInfo != nil {
+		return nil, errInfo
 	}
 	contents = append(contents,
 		linebot.GetClassButtonComponent(

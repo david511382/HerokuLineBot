@@ -2,6 +2,7 @@ package clublinebot
 
 import (
 	clublinebotLogic "heroku-line-bot/logic/clublinebot"
+	"heroku-line-bot/server/common"
 	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
@@ -15,5 +16,5 @@ func Index(c *gin.Context) {
 	if err := clublinebotLogic.Bot.Handle(string(jsonData)); err != nil {
 		return
 	}
-	c.JSON(200, nil)
+	common.Success(c, nil)
 }

@@ -28,7 +28,7 @@ func init() {
 	PanicWriter = &panicWriter{}
 }
 
-func Init(cfg *bootstrap.Config) *errLogic.ErrorInfo {
+func Init(cfg *bootstrap.Config) errLogic.IError {
 	channelAccessToken := cfg.TelegramBot.ChannelAccessToken
 	if telegramID, err := strconv.Atoi(cfg.TelegramBot.AdminID); err != nil {
 		return errLogic.NewError(err)
@@ -39,26 +39,25 @@ func Init(cfg *bootstrap.Config) *errLogic.ErrorInfo {
 	return nil
 }
 
-func Log(name string, LogErrInfo *errLogic.ErrorInfo) {
+func Log(name string, LogErrInfo errLogic.IError) {
 	go func() {
 		LogRightNow(name, LogErrInfo)
 	}()
 }
 
-func LogRightNow(name string, LogErrInfo *errLogic.ErrorInfo) {
+func LogRightNow(name string, LogErrInfo errLogic.IError) {
 	if LogErrInfo == nil {
 		return
 	}
 
 	msg := message(name, LogErrInfo)
-	switch LogErrInfo.Level {
-	case errLogic.ERROR, errLogic.WARN:
+	if LogErrInfo.IsError() || LogErrInfo.IsWarn() {
 		if telegramBot == nil || notifyTelegramID == 0 {
 			logOnFile(name, msg)
 		} else {
 			logOnTelegram(msg)
 		}
-	case errLogic.INFO:
+	} else if LogErrInfo.IsInfo() {
 		logOnFile(name, msg)
 	}
 }
@@ -69,7 +68,7 @@ func logOnTelegram(msg string) {
 
 		errInfo = errInfo.NewParent("log telegram fail")
 		errInfo = errInfo.NewParent(msg)
-		logOnTeminal(errInfo.Error().Error())
+		logOnTeminal(errInfo.ErrorWithTrace())
 	}
 }
 
@@ -79,7 +78,7 @@ func logOnFile(name, msg string) {
 
 		errInfo = errInfo.NewParent("log file fail")
 		errInfo = errInfo.NewParent(msg)
-		logOnTeminal(errInfo.Error().Error())
+		logOnTeminal(errInfo.ErrorWithTrace())
 	}
 }
 
@@ -89,20 +88,19 @@ func logOnTeminal(msg string) {
 
 		errInfo = errInfo.NewParent("log teminal fail")
 		errInfo = errInfo.NewParent(msg)
-		fmt.Println(errInfo.Error().Error())
+		fmt.Println(errInfo.ErrorWithTrace())
 	}
 }
 
-func message(name string, errInfo *errLogic.ErrorInfo) string {
-	msg := errInfo.Error().Error()
-	switch errInfo.Level {
-	case errLogic.ERROR:
+func message(name string, errInfo errLogic.IError) string {
+	msg := errInfo.ErrorWithTrace()
+	if errInfo.IsError() {
 		return fmt.Sprintf("%s: ERROR: %s\n", name, msg)
-	case errLogic.WARN:
+	} else if errInfo.IsWarn() {
 		return fmt.Sprintf("%s: WARN: %s\n", name, msg)
-	case errLogic.INFO:
+	} else if errInfo.IsInfo() {
 		return fmt.Sprintf("%s: %s\n", name, msg)
-	default:
-		return fmt.Sprintf("UNDEFIND LEVEL: %s ON NAME: %s\n", errInfo.Level, name)
+	} else {
+		return fmt.Sprintf("UNDEFIND ERROR: %s ON NAME: %s\n", msg, name)
 	}
 }

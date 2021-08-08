@@ -1,6 +1,8 @@
 package rentalcourtexception
 
-import "time"
+import (
+	"time"
+)
 
 type RentalCourtExceptionTable struct {
 	ID            int        `gorm:"column:id;type:serial;primary_key;not null"`

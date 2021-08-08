@@ -52,9 +52,26 @@ func GetRequest(uri string, param interface{}) (*http.Request, error) {
 	return http.NewRequest(string(GET), uri, nil)
 }
 
-func FormRequest(uri string, method HttpMethod, param map[string]string) (*http.Request, error) {
+func FormRequest(uri string, method HttpMethod, param interface{}) (*http.Request, error) {
+	params, ok := param.(map[string]string)
+	if !ok {
+		params = make(map[string]string)
+		jsonData, err := json.Marshal(param)
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal(jsonData, &params)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	form := url.Values{}
-	for key, value := range param {
+	for key, value := range params {
+		if value == "" {
+			continue
+		}
 		form.Add(key, value)
 	}
 

@@ -6,7 +6,7 @@ import (
 	"heroku-line-bot/storage/database/common"
 )
 
-func MigrationNotExist() *errLogic.ErrorInfo {
+func MigrationNotExist() errLogic.IError {
 	tables := []*common.BaseTable{
 		database.Club.Member.BaseTable,
 		database.Club.Income.BaseTable,

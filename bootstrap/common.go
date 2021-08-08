@@ -25,7 +25,7 @@ func LoadFS(f *embed.FS) {
 }
 
 // ReadConfig read config from filepath
-func LoadConfig(fileName string) (*Config, *errLogic.ErrorInfo) {
+func LoadConfig(fileName string) (*Config, errLogic.IError) {
 	f := fs
 	var cfgBytes []byte
 	if f != nil {
@@ -50,7 +50,7 @@ func LoadConfig(fileName string) (*Config, *errLogic.ErrorInfo) {
 	return cfg, nil
 }
 
-func LoadEnv() *errLogic.ErrorInfo {
+func LoadEnv() errLogic.IError {
 	if cfg == nil {
 		cfg = &Config{}
 	}

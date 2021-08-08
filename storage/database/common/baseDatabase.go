@@ -17,7 +17,7 @@ func (d *BaseDatabase) Begin() *gorm.DB {
 	return d.Write.Begin()
 }
 
-func (d *BaseDatabase) SetConnection(maxIdleConns, maxOpenConns int, maxLifetime time.Duration) *errLogic.ErrorInfo {
+func (d *BaseDatabase) SetConnection(maxIdleConns, maxOpenConns int, maxLifetime time.Duration) errLogic.IError {
 	if d.Read != nil {
 		if errInfo := d.setConnection(d.Read, maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
 			return errInfo
@@ -32,7 +32,7 @@ func (d *BaseDatabase) SetConnection(maxIdleConns, maxOpenConns int, maxLifetime
 	return nil
 }
 
-func (d *BaseDatabase) setConnection(db *gorm.DB, maxIdleConns, maxOpenConns int, maxLifetime time.Duration) *errLogic.ErrorInfo {
+func (d *BaseDatabase) setConnection(db *gorm.DB, maxIdleConns, maxOpenConns int, maxLifetime time.Duration) errLogic.IError {
 	sqlDB, err := db.DB()
 	if err != nil {
 		return errLogic.NewError(err)
@@ -48,7 +48,7 @@ func (d *BaseDatabase) setConnection(db *gorm.DB, maxIdleConns, maxOpenConns int
 	return nil
 }
 
-func (d *BaseDatabase) Dispose() *errLogic.ErrorInfo {
+func (d *BaseDatabase) Dispose() errLogic.IError {
 	if d.Read != nil {
 		sqlDB, err := d.Read.DB()
 		if err != nil {

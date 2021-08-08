@@ -15,7 +15,7 @@ var (
 	Club clubdb.Database
 )
 
-func Init(cfg *bootstrap.Config) *errLogic.ErrorInfo {
+func Init(cfg *bootstrap.Config) errLogic.IError {
 	maxIdleConns := cfg.DbConfig.MaxIdleConns
 	maxOpenConns := cfg.DbConfig.MaxOpenConns
 	maxLifeHour := cfg.DbConfig.MaxLifeHour
@@ -41,7 +41,7 @@ func IsUniqErr(err error) bool {
 	return strings.Contains(err.Error(), "unique constraint")
 }
 
-func CommitTransaction(transaction *gorm.DB, resultErrInfo *errLogic.ErrorInfo) {
+func CommitTransaction(transaction *gorm.DB, resultErrInfo errLogic.IError) {
 	if resultErrInfo == nil {
 		transaction.Commit()
 	} else {

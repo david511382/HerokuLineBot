@@ -35,6 +35,7 @@ type LineBot struct {
 	AdminID            string `yaml:"admin_id"`
 	RoomID             string `yaml:"room_id"`
 	ChannelAccessToken string `yaml:"channel_access_token"`
+	LineLoginChannelID uint64 `yaml:"line_login_channel_id"`
 }
 
 type GoogleScript struct {

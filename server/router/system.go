@@ -1,8 +1,12 @@
 package router
 
 import (
+	indexApi "heroku-line-bot/server/api"
+	clubApi "heroku-line-bot/server/api/club"
 	clubLineBotApi "heroku-line-bot/server/api/clublinebot"
-	viewApi "heroku-line-bot/server/api/view"
+	"heroku-line-bot/server/common"
+	"heroku-line-bot/server/middleware"
+	docsView "heroku-line-bot/server/view/docs"
 	"io"
 	"os"
 
@@ -23,15 +27,25 @@ func SystemRouter() *gin.Engine {
 	// 設定gin
 	router := gin.New()
 
-	router.LoadHTMLGlob("./resource/templates/*.html")
-
 	router.Use(gin.Logger())
+	router.Use(middleware.Cors)
 
-	view := router.Group("/")
-	view.GET("/", viewApi.Index)
+	// docs
+	doc := router.Group("/docs")
+	doc.GET("/*any", docsView.Swag)
 
-	clubLineBot := router.Group("/")
-	clubLineBot.POST("/club-line-bot", clubLineBotApi.Index)
+	// api
+	api := router.Group("/api")
+	lineAuth := api.Group("/")
+	lineAuth.Use(middleware.GetTokenAuthorize(common.NewLineTokenVerifier(), true))
+	lineAuth.GET("/user-info", indexApi.GetUserInfo)
+
+	// api/club
+	linebotClub := api.Group("/club")
+	linebotClub.GET("/rental-courts", clubApi.GetRentalCourts)
+
+	clubLineBotEvent := router.Group("/")
+	clubLineBotEvent.POST("/club-line-bot", clubLineBotApi.Index)
 
 	return router
 }

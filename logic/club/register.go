@@ -2,6 +2,7 @@ package club
 
 import (
 	"fmt"
+	"heroku-line-bot/logger"
 	"heroku-line-bot/logic/club/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	errLogic "heroku-line-bot/logic/error"
@@ -73,7 +74,7 @@ type register struct {
 	MemberID                  int                       `json:"member_id"`
 }
 
-func (b *register) Init(context domain.ICmdHandlerContext) error {
+func (b *register) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
 	*b = register{
 		context: context,
 		Role:    domain.GUEST_CLUB_ROLE,
@@ -109,7 +110,7 @@ func (b *register) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *register) LoadSingleParam(attr, text string) error {
+func (b *register) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
 	switch attr {
 	case "company_id":
 		b.CompanyID = &text
@@ -142,12 +143,13 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 			pathValueMap := map[string]interface{}{
 				"ICmdLogic.is_require_db_check_company_id": true,
 			}
-			checkCompanyIDJs, err := b.context.
+			checkCompanyIDJs, errInfo := b.context.
 				GetCancelInputMode().
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal()
-			if err != nil {
-				return err
+			if errInfo != nil {
+				logger.Log("line bot club", errInfo)
+				return nil
 			}
 			comfirmButtonComponent := linebot.GetButtonComponent(
 				linebot.GetPostBackAction(
@@ -164,7 +166,8 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 			}
 			if count, err := database.Club.Member.Count(arg); err == nil && count > 0 {
 				if err := b.context.DeleteParam(); err != nil {
-					return err
+					logger.Log("line bot club", errLogic.NewError(err))
+					return nil
 				}
 
 				return linebot.GetFlexMessage(
@@ -225,18 +228,20 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 		if 處 != "" {
 			text = fmt.Sprintf("確認處為: %s 嗎？", 處)
 
-			comfirmInputJs, err := b.context.
+			comfirmInputJs, errInfo := b.context.
 				GetRequireInputMode("部", "部門", false).
 				GetSignal()
-			if err != nil {
-				return err
+			if errInfo != nil {
+				logger.Log("line bot club", errInfo)
+				return nil
 			}
 			if requireRawParamAttr == "處single" {
-				comfirmInputJs, err = b.context.
+				comfirmInputJs, errInfo = b.context.
 					GetCancelInputMode().
 					GetSignal()
-				if err != nil {
-					return err
+				if errInfo != nil {
+					logger.Log("line bot club", errInfo)
+					return nil
 				}
 			}
 
@@ -302,11 +307,12 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 			text = fmt.Sprintf("確認部為: %s 嗎？", 部)
 		}
 
-		requireDepartmentInputJs, err := b.context.
+		requireDepartmentInputJs, errInfo := b.context.
 			GetRequireInputMode("組", "組", false).
 			GetSignal()
-		if err != nil {
-			return err
+		if errInfo != nil {
+			logger.Log("line bot club", errInfo)
+			return nil
 		}
 		comfirmButton := linebot.GetButtonComponent(
 			linebot.GetPostBackAction(
@@ -356,23 +362,26 @@ func (b *register) init() {
 	}
 }
 
-func (b *register) Do(text string) (resultErr error) {
+func (b *register) Do(text string) (resultErrInfo errLogic.IError) {
 	if b.IsRequireDbCheckCompanyID {
 		b.IsRequireDbCheckCompanyID = false
 		b.MemberID = 0
-		if err := b.context.CacheParams(); err != nil {
-			return err
+		if errInfo := b.context.CacheParams(); errInfo != nil {
+			resultErrInfo = errInfo
+			return
 		}
 		arg := dbReqs.Member{
 			CompanyID: b.CompanyID,
 		}
 		if dbDatas, err := database.Club.Member.IDNameRoleDepartment(arg); err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		} else if len(dbDatas) == 0 {
 			if 處, _, _ := b.Department.Split(); 處 == "" {
 				b.context.SetRequireInputMode("處", "處", false)
-				if err := b.context.CacheParams(); err != nil {
-					return err
+				if errInfo := b.context.CacheParams(); errInfo != nil {
+					resultErrInfo = errInfo
+					return
 				}
 
 				replyMessge := b.GetInputTemplate("處")
@@ -380,7 +389,8 @@ func (b *register) Do(text string) (resultErr error) {
 					replyMessge,
 				}
 				if err := b.context.Reply(replyMessges); err != nil {
-					return err
+					resultErrInfo = errLogic.NewError(err)
+					return
 				}
 
 				return nil
@@ -402,14 +412,10 @@ func (b *register) Do(text string) (resultErr error) {
 	if b.context.IsComfirmed() {
 		transaction := database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
-		var resultErrInfo *errLogic.ErrorInfo
-		defer func() {
-			if resultErrInfo != nil {
-				resultErr = resultErrInfo.Error()
-			}
-		}()
+
 		defer database.CommitTransaction(transaction, resultErrInfo)
 
 		lineID := b.context.GetUserID()
@@ -483,17 +489,19 @@ func (b *register) Do(text string) (resultErr error) {
 		return nil
 	}
 
-	if err := b.context.CacheParams(); err != nil {
-		return err
+	if errInfo := b.context.CacheParams(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
 
 	contents := []interface{}{}
 	size := linebotDomain.MD_FLEX_MESSAGE_SIZE
 	if b.CompanyID != nil {
-		if js, err := b.context.
+		if js, errInfo := b.context.
 			GetRequireInputMode("company_id", "員工編號", false).
-			GetSignal(); err != nil {
-			return err
+			GetSignal(); errInfo != nil {
+			resultErrInfo = errInfo
+			return
 		} else {
 			action := linebot.GetPostBackAction(
 				"修改",
@@ -516,10 +524,11 @@ func (b *register) Do(text string) (resultErr error) {
 	if 處 == "" {
 		處 = "無"
 	}
-	if js, err := b.context.
+	if js, errInfo := b.context.
 		GetRequireInputMode("處single", "處", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		action := linebot.GetPostBackAction(
 			"修改",
@@ -539,10 +548,11 @@ func (b *register) Do(text string) (resultErr error) {
 	if 部 == "" {
 		部 = "無"
 	}
-	if js, err := b.context.
+	if js, errInfo := b.context.
 		GetRequireInputMode("部single", "部門", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		action := linebot.GetPostBackAction(
 			"修改",
@@ -562,10 +572,11 @@ func (b *register) Do(text string) (resultErr error) {
 	if 組 == "" {
 		組 = "無"
 	}
-	if js, err := b.context.
+	if js, errInfo := b.context.
 		GetRequireInputMode("組single", "組", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		action := linebot.GetPostBackAction(
 			"修改",
@@ -583,10 +594,11 @@ func (b *register) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.context.
+	if js, errInfo := b.context.
 		GetRequireInputMode("name", "暱稱", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		action := linebot.GetPostBackAction(
 			"修改",
@@ -604,17 +616,19 @@ func (b *register) Do(text string) (resultErr error) {
 		)
 	}
 
-	cancelSignlJs, err := b.context.
+	cancelSignlJs, errInfo := b.context.
 		GetCancelMode().
 		GetSignal()
-	if err != nil {
-		return err
+	if errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
-	comfirmSignlJs, err := b.context.
+	comfirmSignlJs, errInfo := b.context.
 		GetComfirmMode().
 		GetSignal()
-	if err != nil {
-		return err
+	if errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
 	contents = append(contents,
 		GetComfirmComponent(
@@ -643,7 +657,8 @@ func (b *register) Do(text string) (resultErr error) {
 		),
 	}
 	if err := b.context.Reply(replyMessges); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	}
 
 	return nil
@@ -664,11 +679,11 @@ func (b *register) GetNotifyRegisterContents() ([]interface{}, error) {
 	pathValueMap["ICmdLogic.member_id"] = b.MemberID
 	pathValueMap["ICmdLogic.date"] = util.DateOf(commonLogic.TimeUtilObj.Now())
 	cmd := domain.CONFIRM_REGISTER_TEXT_CMD
-	if js, err := b.context.
+	if js, errInfo := b.context.
 		GetCmdInputMode(&cmd).
 		GetKeyValueInputMode(pathValueMap).
-		GetSignal(); err != nil {
-		return nil, err
+		GetSignal(); errInfo != nil {
+		return nil, errInfo
 	} else {
 		contents = append(contents,
 			linebot.GetClassButtonComponent(

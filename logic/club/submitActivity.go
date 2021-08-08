@@ -39,7 +39,7 @@ type submitActivityJoinedMembers struct {
 	MemberActivityID int  `json:"id"`
 }
 
-func (b *submitActivity) Init(context domain.ICmdHandlerContext) error {
+func (b *submitActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
 	*b = submitActivity{
 		context: context,
 	}
@@ -56,12 +56,13 @@ func (b *submitActivity) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *submitActivity) LoadSingleParam(attr, text string) error {
+func (b *submitActivity) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
 	switch attr {
 	case "rsl4_consume":
 		i, err := strconv.Atoi(text)
 		if err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 		b.Rsl4Consume = int16(i)
 	default:
@@ -74,7 +75,7 @@ func (b *submitActivity) GetInputTemplate(requireRawParamAttr string) interface{
 	return nil
 }
 
-func (b *submitActivity) init() error {
+func (b *submitActivity) init() (resultErrInfo errLogic.IError) {
 	if b.HasLoad {
 		return nil
 	}
@@ -84,7 +85,8 @@ func (b *submitActivity) init() error {
 		ID: util.GetIntP(b.ActivityID),
 	}
 	if dbDatas, err := database.Club.Activity.IDDatePlaceCourtsSubsidyDescriptionPeopleLimit(arg); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	} else if len(dbDatas) == 0 {
 		return nil
 	} else {
@@ -99,15 +101,17 @@ func (b *submitActivity) init() error {
 			ClubSubsidy: v.ClubSubsidy,
 			IsComplete:  false,
 		}
-		if err := b.NewActivity.ParseCourts(v.CourtsAndTime); err != nil {
-			return err
+		if errInfo := b.NewActivity.ParseCourts(v.CourtsAndTime); errInfo != nil {
+			resultErrInfo = errInfo
+			return
 		}
 
 		memberActivityArg := dbReqs.MemberActivity{
 			ActivityID: util.GetIntP(b.ActivityID),
 		}
 		if dbDatas, err := database.Club.MemberActivity.IDMemberID(memberActivityArg); err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		} else {
 			type isClubMemberName struct {
 				isClubMember bool
@@ -122,7 +126,8 @@ func (b *submitActivity) init() error {
 			}
 			clubMemberIDMap := make(map[int]isClubMemberName)
 			if dbDatas, err := database.Club.Member.IDNameDepartmentJoinDate(arg); err != nil {
-				return err
+				resultErrInfo = errLogic.NewError(err)
+				return
 			} else {
 				for _, v := range dbDatas {
 					isClubMember := false
@@ -186,7 +191,7 @@ func (b *submitActivity) getJoinedGuestsCount() int {
 	return people
 }
 
-func (b *submitActivity) loadCurrentUserID() error {
+func (b *submitActivity) loadCurrentUserID() (resultErrInfo errLogic.IError) {
 	if b.CurrentUser != nil {
 		return nil
 	}
@@ -194,9 +199,11 @@ func (b *submitActivity) loadCurrentUserID() error {
 	lineID := b.context.GetUserID()
 	userData, err := lineUserLogic.Get(lineID)
 	if err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	} else if userData == nil {
-		return domain.USER_NOT_REGISTERED
+		resultErrInfo = errLogic.NewError(domain.USER_NOT_REGISTERED)
+		return
 	}
 
 	b.CurrentUser = userData
@@ -204,18 +211,21 @@ func (b *submitActivity) loadCurrentUserID() error {
 	return nil
 }
 
-func (b *submitActivity) Do(text string) (resultErr error) {
-	if err := b.loadCurrentUserID(); err != nil {
-		return err
+func (b *submitActivity) Do(text string) (resultErrInfo errLogic.IError) {
+	if errInfo := b.loadCurrentUserID(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
 
 	if b.CurrentUser.Role != domain.CADRE_CLUB_ROLE &&
 		b.CurrentUser.Role != domain.ADMIN_CLUB_ROLE {
-		return domain.NO_AUTH_ERROR
+		resultErrInfo = errLogic.NewError(domain.NO_AUTH_ERROR)
+		return
 	}
 
-	if err := b.init(); err != nil {
-		return err
+	if errInfo := b.init(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
 
 	if !b.HasLoad {
@@ -223,21 +233,18 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 			linebot.GetTextMessage("活動不存在"),
 		}
 		if err := b.context.Reply(replyMessges); err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
 	}
 
 	if b.context.IsComfirmed() {
 		transaction := database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			return err
+			resultErrInfo = errLogic.NewError(err)
+			return
 		}
-		var resultErrInfo *errLogic.ErrorInfo
-		defer func() {
-			if resultErrInfo != nil {
-				resultErr = resultErrInfo.Error()
-			}
-		}()
+
 		defer database.CommitTransaction(transaction, resultErrInfo)
 
 		isConsumeBall := b.Rsl4Consume > 0
@@ -339,8 +346,9 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 	b.AttendIndex = nil
 	b.PayIndex = nil
 
-	if err := b.context.CacheParams(); err != nil {
-		return err
+	if errInfo := b.context.CacheParams(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	}
 
 	bodyBox := linebot.GetFlexMessageBoxComponent(
@@ -372,14 +380,16 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 	b.IsJoinedMember = true
 	attendComponents, err := b.getAttendComponent("社員", b.JoinedMembers)
 	if err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	}
 	boxComponent.Contents = append(boxComponent.Contents, attendComponents...)
 
 	b.IsJoinedMember = false
 	attendComponents, err = b.getAttendComponent("自費人員", b.JoinedGuests)
 	if err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	}
 	boxComponent.Contents = append(boxComponent.Contents, attendComponents...)
 	bodyBox.Contents = append(bodyBox.Contents, boxComponent)
@@ -392,10 +402,11 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 		},
 	)
 
-	if js, err := b.context.
+	if js, errInfo := b.context.
 		GetRequireInputMode("rsl4_consume", "使用羽球數", false).
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		footerBox.Contents = append(footerBox.Contents,
 			linebot.GetFlexMessageBoxComponent(
@@ -418,10 +429,11 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 		)
 	}
 
-	if js, err := b.context.
+	if js, errInfo := b.context.
 		GetComfirmMode().
-		GetSignal(); err != nil {
-		return err
+		GetSignal(); errInfo != nil {
+		resultErrInfo = errInfo
+		return
 	} else {
 		footerBox.Contents = append(footerBox.Contents,
 			linebot.GetFlexMessageBoxComponent(
@@ -457,7 +469,8 @@ func (b *submitActivity) Do(text string) (resultErr error) {
 		replyMessage,
 	}
 	if err := b.context.Reply(replyMessages); err != nil {
-		return err
+		resultErrInfo = errLogic.NewError(err)
+		return
 	}
 
 	return nil
@@ -477,10 +490,10 @@ func (b *submitActivity) getAttendComponent(text string, members []*submitActivi
 			"ICmdLogic.attend_index":           id,
 			"ICmdLogic.is_joined_member_index": b.IsJoinedMember,
 		}
-		if js, err := b.context.
+		if js, errInfo := b.context.
 			GetKeyValueInputMode(pathValueMap).
-			GetSignal(); err != nil {
-			return nil, err
+			GetSignal(); errInfo != nil {
+			return nil, errInfo
 		} else {
 			attendAction = linebot.GetPostBackAction(
 				"簽到",
@@ -497,10 +510,10 @@ func (b *submitActivity) getAttendComponent(text string, members []*submitActivi
 			"ICmdLogic.is_joined_member_index": b.IsJoinedMember,
 			"ICmdLogic.pay_index":              id,
 		}
-		if js, err := b.context.
+		if js, errInfo := b.context.
 			GetKeyValueInputMode(pathValueMap).
-			GetSignal(); err != nil {
-			return nil, err
+			GetSignal(); errInfo != nil {
+			return nil, errInfo
 		} else {
 			payAction = linebot.GetPostBackAction(
 				"收費",

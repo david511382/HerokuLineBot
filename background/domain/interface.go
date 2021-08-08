@@ -7,7 +7,7 @@ import (
 )
 
 type IBackGround interface {
-	Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo *errLogic.ErrorInfo)
+	Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo errLogic.IError)
 	// 執行此時間的背景
-	Run(runTime time.Time) *errLogic.ErrorInfo
+	Run(runTime time.Time) errLogic.IError
 }

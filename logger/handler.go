@@ -12,7 +12,7 @@ type telegramLoggerHandler struct {
 	limit int
 }
 
-func (lh telegramLoggerHandler) log(id int, msg string) *errLogic.ErrorInfo {
+func (lh telegramLoggerHandler) log(id int, msg string) errLogic.IError {
 	msgs := make([]string, 0)
 	for i := 0; i < len(msg); i += lh.limit {
 		to := i + lh.limit
@@ -39,9 +39,9 @@ func (lh telegramLoggerHandler) log(id int, msg string) *errLogic.ErrorInfo {
 
 type fileLoggerHandler struct{}
 
-func (lh fileLoggerHandler) log(name, msg string) *errLogic.ErrorInfo {
+func (lh fileLoggerHandler) log(name, msg string) errLogic.IError {
 	util.MakeFolderOn("log")
-	
+
 	filename := fmt.Sprintf("log/%s.log", name)
 	f, err := os.OpenFile(filename,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -58,7 +58,7 @@ func (lh fileLoggerHandler) log(name, msg string) *errLogic.ErrorInfo {
 
 type teminalLoggerHandler struct{}
 
-func (lh teminalLoggerHandler) log(name, msg string) *errLogic.ErrorInfo {
+func (lh teminalLoggerHandler) log(name, msg string) errLogic.IError {
 	fmt.Println(msg)
 	return nil
 }

@@ -18,7 +18,7 @@ var (
 	backgrounds []*Background
 )
 
-func Init(totalCfg *bootstrap.Config) *errLogic.ErrorInfo {
+func Init(totalCfg *bootstrap.Config) errLogic.IError {
 	cr = cron.NewWithLocation(commonLogic.Location)
 	cfg := totalCfg.Backgrounds
 	backgrounds = []*Background{

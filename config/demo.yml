@@ -6,6 +6,7 @@ line_bot:
   admin_id: "admin line id"
   room_id: "using room id"
   channel_access_token: "access token"
+  line_login_channel_id: 123
 
 telegram_bot:
   admin_id: 123

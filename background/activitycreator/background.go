@@ -20,11 +20,11 @@ import (
 
 type BackGround struct{}
 
-func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo *errLogic.ErrorInfo) {
+func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo errLogic.IError) {
 	return "ActivityCreator", cfg.ActivityCreator, nil
 }
 
-func (b *BackGround) Run(runTime time.Time) (resultErrInfo *errLogic.ErrorInfo) {
+func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 	defer func() {
 		if resultErrInfo != nil {
 			resultErrInfo = resultErrInfo.NewParent(runTime.String())
@@ -176,11 +176,15 @@ func (m *node) takeToSideMax() []*clubCourtLogicDomain.ActivityCourt {
 }
 
 func (m *node) takeMax() []*clubCourtLogicDomain.ActivityCourt {
+	result := make([]*clubCourtLogicDomain.ActivityCourt, 0)
 	if m.target == nil {
-		return make([]*clubCourtLogicDomain.ActivityCourt, 0)
+		return result
 	}
 
-	result := m.takeFromSideMax()
+	fromSideNodes := m.takeFromSideMax()
+	for i := len(fromSideNodes) - 1; i >= 0; i-- {
+		result = append(result, fromSideNodes[i])
+	}
 	target := *m.target
 	result = append(result, &target)
 	result = append(result, m.takeToSideMax()...)

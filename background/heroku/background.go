@@ -11,12 +11,12 @@ type BackGround struct {
 	url string
 }
 
-func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo *errLogic.ErrorInfo) {
+func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo errLogic.IError) {
 	b.url = cfg.Heroku.Url
 	return "Heroku", cfg.Heroku.Background, nil
 }
 
-func (b *BackGround) Run(runTime time.Time) (resultErrInfo *errLogic.ErrorInfo) {
+func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 	if b.url != "" {
 		util.SendGetRequest(b.url, nil, nil)
 	}

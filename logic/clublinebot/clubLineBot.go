@@ -18,6 +18,7 @@ type ClubLineBot struct {
 	lineAdminID,
 	lineRoomID string
 	*linebot.LineBot
+	OAuth *linebot.OAuth
 	*googlescript.GoogleScript
 }
 

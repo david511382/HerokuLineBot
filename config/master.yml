@@ -6,6 +6,7 @@ line_bot:
   admin_id: "U1551c57296cb23db6619bdaebe6396ee"
   room_id: "C60353ba1a71ea09dafd2598cef1bccd4"
   channel_access_token: "kXbwDepvZn7oNiP045H5YkLP33pTjGVNZLEIE+6DYkcU/1aPELovN4nxKuB/Aa8Ew6qoDlxZsNVy2RKZTEvU0du658SRGgf7I1prIb8/jrma2qzOv3xixWOYg4PdTSYDGuRNQYFP5yTfIXK2lEuQcwdB04t89/1O/w1cDnyilFU="
+  line_login_channel_id: 1656214988
 
 telegram_bot:
   admin_id: 1229658471
