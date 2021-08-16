@@ -55,8 +55,9 @@ func (b *Background) Run() {
 	nowTime := commonLogic.TimeUtilObj.Now()
 	runTime := b.timeType.Of(nowTime)
 	b.logF("Run At %s", runTime.String())
-	if err := b.bg.Run(runTime); err != nil {
-		b.logF("%s %s has error :\n%s\n", time.Now(), b.name, err)
+	if errInfo := b.bg.Run(runTime); errInfo != nil {
+		errInfo = errInfo.NewParent("runTime", runTime.String())
+		b.logErrInfo(errInfo)
 	}
 }
 

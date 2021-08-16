@@ -10,6 +10,8 @@ import (
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	errLogic "heroku-line-bot/logic/error"
+	rdsBadmintonSettingLogic "heroku-line-bot/logic/redis/badmintonsetting"
+	"heroku-line-bot/models/storage"
 	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/storage/database"
 	"heroku-line-bot/util"
@@ -31,6 +33,21 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 		}
 	}()
 
+	rdsSetting, errInfo := rdsBadmintonSettingLogic.Get()
+	if errInfo != nil {
+		resultErrInfo = errInfo
+		if resultErrInfo.IsError() {
+			return
+		}
+	}
+	if rdsSetting == nil {
+		resultErrInfo = errLogic.New("no redis setting", errLogic.WARN)
+		rdsSetting = &storage.BadmintonActivity{
+			Description: "7人出團",
+			ClubSubsidy: 0,
+		}
+	}
+
 	newActivityHandlers := make([]*clubLogic.NewActivity, 0)
 	createActivityDate := commonLogicDomain.WEEK_TIME_TYPE.Next(
 		commonLogicDomain.DATE_TIME_TYPE.Of(runTime),
@@ -46,7 +63,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 		resultErrInfo = errInfo
 		return
 	} else if len(courtDatas) == 0 {
-		return nil
+		return
 	} else {
 		for place, dateMap := range courtDatas {
 			for dateInt, courtData := range dateMap {
@@ -55,8 +72,8 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 				newActivityHandler := &clubLogic.NewActivity{
 					Date:        date,
 					Place:       place,
-					Description: "7人出團",
-					ClubSubsidy: 359,
+					Description: rdsSetting.Description,
+					ClubSubsidy: rdsSetting.ClubSubsidy,
 					IsComplete:  false,
 					Courts:      courts,
 				}
@@ -103,7 +120,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 		return
 	}
 
-	return nil
+	return
 }
 
 type node struct {

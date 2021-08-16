@@ -1,11 +1,12 @@
-version: '3.3'
+version: "3.3"
 services:
   db:
     container_name: heroku-line-bot-db
     image: postgres:13.2
+    restart: always
     environment:
-     - POSTGRES_USER=root
-     - POSTGRES_PASSWORD=root
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
     ports:
       - "5432:5432"
     volumes:
@@ -23,6 +24,7 @@ services:
   redis:
     container_name: heroku-line-bot-redis
     image: redis
+    restart: always
     ports:
       - "6379:6379"
 
@@ -41,7 +43,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: always
     depends_on:
       - db
       - redis
