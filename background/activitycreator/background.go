@@ -95,13 +95,13 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 		resultErrInfo = errLogic.NewError(transaction.Error)
 		return
 	} else {
-		defer database.CommitTransaction(transaction, resultErrInfo)
-
 		for _, newActivityHandler := range newActivityHandlers {
 			if resultErrInfo = newActivityHandler.InsertActivity(transaction); resultErrInfo != nil {
 				return
 			}
 		}
+
+		database.CommitTransaction(transaction, resultErrInfo)
 	}
 
 	getActivityHandler := &clubLogic.GetActivities{}
