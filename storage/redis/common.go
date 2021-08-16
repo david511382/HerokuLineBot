@@ -5,14 +5,16 @@ import (
 	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/storage/redis/conn"
 	"heroku-line-bot/storage/redis/domain"
+	"heroku-line-bot/storage/redis/key/badmintonsetting"
 	"heroku-line-bot/storage/redis/key/lineuser"
 	"heroku-line-bot/storage/redis/key/userusingstatus"
 	"time"
 )
 
 var (
-	UserUsingStatus userusingstatus.Key
-	LineUser        lineuser.Key
+	UserUsingStatus  userusingstatus.Key
+	LineUser         lineuser.Key
+	BadmintonSetting badmintonsetting.Key
 )
 
 func Init(cfg *bootstrap.Config) errLogic.IError {
@@ -27,6 +29,9 @@ func Init(cfg *bootstrap.Config) errLogic.IError {
 
 		LineUser = lineuser.New(connection, connection, domain.CLUB_BASE_KEY)
 		LineUser.SetConnection(maxConnAge)
+
+		BadmintonSetting = badmintonsetting.New(connection, connection, domain.CLUB_BASE_KEY)
+		BadmintonSetting.SetConnection(maxConnAge)
 	}
 
 	return nil
@@ -34,11 +39,14 @@ func Init(cfg *bootstrap.Config) errLogic.IError {
 
 func Dispose() {
 	UserUsingStatus.Dispose()
+	LineUser.Dispose()
+	BadmintonSetting.Dispose()
 }
 
 func IsRedisError(err error) bool {
 	if err == nil ||
-		err == domain.NOT_CHANGE {
+		err.Error() == domain.NOT_CHANGE.Error() ||
+		err.Error() == domain.NOT_EXIST.Error() {
 		return false
 	}
 

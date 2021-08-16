@@ -4,6 +4,7 @@ import (
 	"errors"
 )
 
+// TODO: 改 IError
 var (
 	NOT_CHANGE  error = errors.New("redis not change")
 	NOT_SUCCESS error = errors.New("redis not success")
