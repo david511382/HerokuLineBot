@@ -4,13 +4,14 @@ import {GetLiffID} from '../../data/env/Liff';
 import Liff,{LiffType} from '../../components/liff/Liff';
 import {SetIDToken} from '../../service/auth/Token';
 import React, { useState } from 'react'
-import LiffPanel from '../../components/liff/LiffPanel'
-import Nav from '../../components/nav/Nav'
+import LiffPanel from '../../hashPages/liffPanenl/LiffPanel'
+import Nav,{PageEnum,GetPath} from '../../components/nav/Nav'
+import RentalCourt from '../../hashPages/clubRentalCourt/RentalCourt'
 import {Route} from "react-router-dom";
 
 export default function Page({liffID}: InferGetStaticPropsType<typeof getStaticProps>) {
   const  [liffProps,setLiff]= useState<LiffType>()
-
+  
   if (!liffID){
     return (null)
   }
@@ -40,17 +41,19 @@ export default function Page({liffID}: InferGetStaticPropsType<typeof getStaticP
       />
       {
         liffProps &&
-        <Nav>
-          <Route exact path="/debug" component={
-            ()=>  {
-              return LiffPanel(
-                {
-                  liffProps:liffProps,
-                }
-              )
+        <Nav defaultPage={PageEnum.RentalCourts}>
+          <Route exact path={GetPath(PageEnum.LiffDebug)}
+            component={
+              ()=>  {
+                return LiffPanel(
+                  {
+                    liffProps:liffProps,
+                  }
+                )
+              }
             }
-          }
           />
+          <Route exact path={GetPath(PageEnum.RentalCourts)} component={RentalCourt}></Route>
         </Nav>
       }
     </div>

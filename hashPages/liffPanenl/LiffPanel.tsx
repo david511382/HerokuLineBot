@@ -1,7 +1,7 @@
 import { GetStaticProps, InferGetStaticPropsType } from 'next'
 import React, { useEffect,useState } from 'react'
 import styles from './liff.module.css'
-import {LiffType} from './Liff';
+import {LiffType} from '../../components/liff/Liff';
 
 export default function LiffPanel(props: InferGetStaticPropsType<GetStaticProps>) {
     const liffProps:LiffType  = props.liffProps

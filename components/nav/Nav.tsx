@@ -2,10 +2,17 @@ import React, { useEffect,useState } from 'react'
 import styles from './nav.module.css'
 import {GetUserInfo} from '../../service/auth/User'
 import { RoleID,  UserInfo as UserInfoResp } from '../../models/resp/user-info'
-import {Link,HashRouter, Switch} from "react-router-dom";
+import {
+  Link,
+  HashRouter,
+  Switch,
+  Route,
+  Redirect,
+} from "react-router-dom";
 
 export enum PageEnum  {
   LiffDebug = "Liff Debug",
+  RentalCourts = "租場狀況",
 }
 
 interface Props  {
@@ -20,9 +27,8 @@ type Page ={
 }
 
 const PagePathMap : Map<PageEnum,string> = new Map([
-  [
-    PageEnum.LiffDebug, "/debug",
-  ],
+  [PageEnum.LiffDebug, "/debug"],
+  [PageEnum.RentalCourts, "/rental-courts"],
 ]);  
 
 const RolePagesMap : Map<RoleID,PageEnum[]> = new Map([
@@ -30,6 +36,7 @@ const RolePagesMap : Map<RoleID,PageEnum[]> = new Map([
     RoleID.ROLE_ADMIN, 
     [
       PageEnum.LiffDebug,
+      PageEnum.RentalCourts,
     ],
   ],
 ]);  
@@ -42,19 +49,19 @@ export default function Nav(
 ) {
   const  [userInfo,setUserInfo]= useState<UserInfoResp>()
   const  [navs,setNavs]= useState<Page[]>([])
-  
+  let showPage: PageEnum
   useEffect(() => {
-    if (!defaultPage){
+    if (!showPage){
       let currentHash = window.location.hash.replaceAll("#","")
       PagePathMap.forEach((path,page)=>{
-        if (defaultPage)
+        if (showPage)
           return
-        defaultPage = (currentHash === path)?
-          page:
-          undefined
+        if (currentHash === path)
+          showPage = page
       })
     }
     
+    let roleID = RoleID.ROLE_GUEST
     GetUserInfo()
       .then((userInfo)=>{
         if (!userInfo)
@@ -62,7 +69,10 @@ export default function Nav(
 
         setUserInfo(userInfo)
         
-        const roleID = userInfo.role_id
+        roleID = userInfo.role_id
+      })
+      .catch(()=>{})
+      .finally(()=>{
         let pages = RolePagesMap.get(roleID)
         if (!pages){
           pages = []
@@ -71,15 +81,13 @@ export default function Nav(
         let pageViews :Page[] = []
         pages.forEach((page)=>pageViews.push({
           Name: page,
-          Path: getPath(page),
-          Selected: (defaultPage && page === defaultPage)? true : false,
+          Path: GetPath(page),
+          Selected: (showPage && page === showPage)? true : false,
         }))
         
         setNavs(pageViews)
       })
-  },[
-    defaultPage
-  ])
+  },[])
   
   return (
     <div>
@@ -102,7 +110,7 @@ export default function Nav(
                         navs[i].Selected = true
                         setNavs([...navs])
                       }}>
-                      <a>{page.Name}</a>
+                      <p>{page.Name}</p>
                     </Link>
                   </li>
                 ) 
@@ -112,6 +120,18 @@ export default function Nav(
 
           <Switch>
             {children}
+            {
+              defaultPage &&
+              <Route
+                  path="/"
+                  render={() => {
+                      return (
+                        defaultPage &&
+                        <Redirect to={GetPath(defaultPage)} />
+                      )
+                  }}
+                />
+            }
           </Switch>
         </HashRouter>
       }
@@ -119,7 +139,7 @@ export default function Nav(
   )
 }
 
-export function getPath(page:PageEnum) :string {
+export function GetPath(page:PageEnum) :string {
   const path = PagePathMap.get(page)
   if (path)
     return path
