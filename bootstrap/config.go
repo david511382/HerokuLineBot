@@ -10,7 +10,8 @@ import (
 type Config struct {
 	Server       Server       `yaml:"server"`
 	LineBot      LineBot      `yaml:"line_bot"`
-	TelegramBot  LineBot      `yaml:"telegram_bot"`
+	TelegramBot  MessageBot   `yaml:"telegram_bot"`
+	Badminton    Badminton    `yaml:"badminton"`
 	GoogleScript GoogleScript `yaml:"google_script"`
 	Backgrounds  Backgrounds  `yaml:"backgrounds"`
 	DbConfig     DbConfig     `yaml:"db"`
@@ -32,10 +33,18 @@ func (c *Server) Addr() string {
 }
 
 type LineBot struct {
-	AdminID            string `yaml:"admin_id"`
+	MessageBot         `yaml:"message_bot"`
 	RoomID             string `yaml:"room_id"`
-	ChannelAccessToken string `yaml:"channel_access_token"`
 	LineLoginChannelID uint64 `yaml:"line_login_channel_id"`
+}
+
+type MessageBot struct {
+	AdminID            string `yaml:"admin_id"`
+	ChannelAccessToken string `yaml:"channel_access_token"`
+}
+
+type Badminton struct {
+	LiffUrl string `yaml:"liff_url"`
 }
 
 type GoogleScript struct {

@@ -14,7 +14,7 @@ func Init(resourceFS embed.FS, cfg *bootstrap.Config) errLogic.IError {
 		return errInfo
 	}
 
-	if errInfo := club.Init(resourceFS); errInfo != nil {
+	if errInfo := club.Init(cfg, resourceFS); errInfo != nil {
 		return errInfo
 	}
 

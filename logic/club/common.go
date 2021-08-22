@@ -3,6 +3,7 @@ package club
 import (
 	"embed"
 	"fmt"
+	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/logic/clublinebot/domain"
 	commonLogic "heroku-line-bot/logic/common"
@@ -21,9 +22,11 @@ var (
 	adminRichMenuImg,
 	cadreRichMenuImg,
 	guestRichMenuImg []byte
+
+	liffUrl string
 )
 
-func Init(resourceFS embed.FS) errLogic.IError {
+func Init(cfg *bootstrap.Config, resourceFS embed.FS) errLogic.IError {
 	if bs, err := readImg(resourceFS, "adminRichMenu.png"); err != nil {
 		return errLogic.NewError(err)
 	} else {
@@ -39,6 +42,8 @@ func Init(resourceFS embed.FS) errLogic.IError {
 	} else {
 		guestRichMenuImg = bs
 	}
+
+	liffUrl = cfg.Badminton.LiffUrl
 	return nil
 }
 
