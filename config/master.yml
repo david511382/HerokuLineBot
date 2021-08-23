@@ -3,14 +3,18 @@ server:
   port: 80
 
 line_bot:
-  admin_id: "U1551c57296cb23db6619bdaebe6396ee"
+  message_bot:
+    admin_id: "U1551c57296cb23db6619bdaebe6396ee"
+    channel_access_token: "kXbwDepvZn7oNiP045H5YkLP33pTjGVNZLEIE+6DYkcU/1aPELovN4nxKuB/Aa8Ew6qoDlxZsNVy2RKZTEvU0du658SRGgf7I1prIb8/jrma2qzOv3xixWOYg4PdTSYDGuRNQYFP5yTfIXK2lEuQcwdB04t89/1O/w1cDnyilFU="
   room_id: "C60353ba1a71ea09dafd2598cef1bccd4"
-  channel_access_token: "kXbwDepvZn7oNiP045H5YkLP33pTjGVNZLEIE+6DYkcU/1aPELovN4nxKuB/Aa8Ew6qoDlxZsNVy2RKZTEvU0du658SRGgf7I1prIb8/jrma2qzOv3xixWOYg4PdTSYDGuRNQYFP5yTfIXK2lEuQcwdB04t89/1O/w1cDnyilFU="
   line_login_channel_id: 1656214988
 
 telegram_bot:
   admin_id: 1229658471
   channel_access_token: "1890697759:AAHY9Q69KKLfMj8sGHXk2GJkgbEQV8SMBDw"
+
+badminton:
+  liff_url: "https://liff.line.me/1656214988-kDgzAOxn#/debug"
 
 google_script:
   url: "https://script.google.com/macros/s/AKfycbw7oMDk44MyWah8vZd-uPxmt077jr3J1pg-1RH1BrHsMLuT6jGGVl-9ccKNTmu-W1hDeA/exec"

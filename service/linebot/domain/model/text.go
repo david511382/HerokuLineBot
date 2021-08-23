@@ -97,6 +97,11 @@ type MessageAction struct {
 	Text  string `json:"text,omitempty"`
 }
 
+type UriAction struct {
+	Type string `json:"type"`
+	Uri  string `json:"uri,omitempty"`
+}
+
 type TimeAction struct {
 	*PostBackAction
 	Mode domain.TimeActionMode `json:"mode,omitempty"`

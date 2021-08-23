@@ -80,6 +80,13 @@ func GetMessageAction(text string) *model.MessageAction {
 	}
 }
 
+func GetUriAction(uri string) *model.UriAction {
+	return &model.UriAction{
+		Type: "uri",
+		Uri:  uri,
+	}
+}
+
 func GetTimeAction(text, data, max, min string, mode domain.TimeActionMode) *model.TimeAction {
 	return &model.TimeAction{
 		PostBackAction: &model.PostBackAction{
