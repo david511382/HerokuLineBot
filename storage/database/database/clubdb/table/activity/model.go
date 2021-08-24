@@ -12,7 +12,7 @@ type ActivityTable struct {
 	MemberFee     int16     `gorm:"column:member_fee;type:smallint;not null"`
 	GuestFee      int16     `gorm:"column:guest_fee;type:smallint;not null"`
 	ClubSubsidy   int16     `gorm:"column:club_subsidy;type:smallint;not null"`
-	LogisticID    int       `gorm:"column:logistic_id;type:int;"`
+	LogisticID    *int      `gorm:"column:logistic_id;type:int;"`
 	Description   string    `gorm:"column:description;type:varchar(50);not null"`
 	PeopleLimit   *int16    `gorm:"column:people_limit;type:smallint"`
 	IsComplete    bool      `gorm:"column:is_complete;type:boolean;not null"`

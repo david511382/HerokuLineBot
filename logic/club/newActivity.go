@@ -314,7 +314,7 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errLog
 		PeopleLimit:   b.PeopleLimit,
 		IsComplete:    b.IsComplete,
 	}
-	if err := database.Club.Activity.BaseTable.Insert(transaction, data); err != nil {
+	if err := database.Club.Activity.Insert(transaction, data); err != nil {
 		resultErrInfo = errLogic.NewError(err)
 		return
 	}
