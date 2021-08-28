@@ -15,10 +15,6 @@ type ErrorInfo struct {
 	childError   *ErrorInfo
 }
 
-func (ei *ErrorInfo) SetLevel(level ErrorLevel) {
-	ei.Level = level
-}
-
 func (ei *ErrorInfo) Trace() *ErrorInfo {
 	if ei == nil {
 		return nil
@@ -31,6 +27,26 @@ func (ei *ErrorInfo) Trace() *ErrorInfo {
 
 func (ei *ErrorInfo) NewParent(datas ...interface{}) IError {
 	return ei.NewParentLevel(ei.Level, datas...)
+}
+
+func (ei *ErrorInfo) ToErrInfo() *ErrorInfo {
+	return ei
+}
+
+func (ei *ErrorInfo) Append(errInfo IError) *ErrorInfos {
+	if errInfo == nil {
+		return nil
+	}
+
+	result := &ErrorInfos{}
+	if ei != nil {
+		result.Append(ei)
+	}
+	if errInfo == nil {
+		result.Append(errInfo)
+	}
+
+	return result
 }
 
 func (ei *ErrorInfo) NewParentLevel(level ErrorLevel, datas ...interface{}) *ErrorInfo {
@@ -138,6 +154,10 @@ func (ei *ErrorInfo) RawErrorEqual(err error) bool {
 	}
 
 	return errors.Is(ei, err)
+}
+
+func (ei *ErrorInfo) GetLevel() ErrorLevel {
+	return ei.Level
 }
 
 func (ei *ErrorInfo) IsError() bool {

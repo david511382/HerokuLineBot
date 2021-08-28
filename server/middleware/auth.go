@@ -23,14 +23,15 @@ func GetTokenAuthorize(tokenVerifier domain.TokenVerifier, require bool) gin.Han
 	return func(c *gin.Context) {
 		accessToken := GetToken(c)
 		if accessToken != "" {
-			if claims, errInfo := tokenVerifier.Parse(accessToken); errInfo == nil {
+			if claims, e := tokenVerifier.Parse(accessToken); e == nil {
 				c.Set(domain.KEY_JWT_CLAIMS, claims)
-			} else if errInfo != nil {
+			} else if e != nil {
 				if require {
-					common.FailForbidden(c, errInfo)
+					common.FailForbidden(c, e)
 					return
 				} else {
-					errInfo.SetLevel(errLogic.INFO)
+					errInfo := e.ToErrInfo()
+					errInfo.Level = errLogic.INFO
 					logger.Log(common.GetLogName(c), errInfo)
 				}
 			}

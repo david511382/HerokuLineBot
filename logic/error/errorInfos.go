@@ -1,187 +1,196 @@
 package error
 
 import (
-	"fmt"
-	"sort"
 	"strings"
 )
 
-type ErrorInfos []*ErrorInfo
+type ErrorInfos struct {
+	errorErrInfos,
+	warnErrInfos,
+	infoErrInfos []*ErrorInfo
+	parentMessages []interface{}
+}
 
-func (eis ErrorInfos) ErrorInfos(level ErrorLevel) {
-	for _, ei := range eis {
-		if ei.Level > level {
-			ei.Level = level
+func (eis *ErrorInfos) Errors(getErrInfo func(errInfo *ErrorInfo)) {
+	if eis == nil {
+		return
+	}
+
+	for _, v := range eis.errorErrInfos {
+		if len(eis.parentMessages) > 0 {
+			v = v.NewParent(eis.parentMessages).ToErrInfo()
 		}
+		getErrInfo(v)
+	}
+	for _, v := range eis.warnErrInfos {
+		if len(eis.parentMessages) > 0 {
+			v = v.NewParent(eis.parentMessages).ToErrInfo()
+		}
+		getErrInfo(v)
+	}
+	for _, v := range eis.infoErrInfos {
+		if len(eis.parentMessages) > 0 {
+			v = v.NewParent(eis.parentMessages).ToErrInfo()
+		}
+		getErrInfo(v)
 	}
 }
 
-func (eis ErrorInfos) NewParent(datas ...interface{}) IError {
-	level := INFO
-	for _, ei := range eis {
-		if ei.IsError() {
-			level = ERROR
-			break
-		}
-		if ei.IsWarn() {
-			level = WARN
-		}
+func (eis *ErrorInfos) ToErrInfo() *ErrorInfo {
+	if eis == nil {
+		return nil
 	}
-	errInfo := New(eis.Error(), level)
-	errInfo = errInfo.NewParent(datas...).(*ErrorInfo)
-	return errInfo
+
+	return eis.getErrorMessage(func(ei *ErrorInfo) string { return ei.ErrorWithTrace() })
 }
 
-func (eis ErrorInfos) Error() string {
-	if len(eis) == 0 {
-		return ""
-	} else if len(eis) == 1 {
-		return eis[0].Error()
+func (eis *ErrorInfos) NewParent(datas ...interface{}) IError {
+	if eis == nil {
+		return nil
 	}
 
-	sort.Slice(eis, func(i, j int) bool {
-		return eis[i].IsError() || eis[j].IsInfo()
-	})
+	eis.parentMessages = append(eis.parentMessages, datas)
 
-	errMsgs := make([]string, 0)
-	errorCount, warnCount, infoCount := 0, 0, 0
-	for _, ei := range eis {
-		switch ei.Level {
-		case ERROR:
-			errorCount++
-		case WARN:
-			warnCount++
-		case INFO:
-			infoCount++
+	return eis
+}
+
+func (eis *ErrorInfos) Append(errInfo IError) *ErrorInfos {
+	if errInfo == nil {
+		return eis
+	}
+
+	if eis == nil {
+		eis = &ErrorInfos{}
+	}
+
+	switch errInfo.GetLevel() {
+	case ERROR:
+		if eis.errorErrInfos == nil {
+			eis.errorErrInfos = make([]*ErrorInfo, 0)
 		}
-		errMsgs = append(errMsgs, string(ei.Level), "\n", ei.Error())
+		eis.errorErrInfos = append(eis.errorErrInfos, errInfo.ToErrInfo())
+	case WARN:
+		if eis.warnErrInfos == nil {
+			eis.warnErrInfos = make([]*ErrorInfo, 0)
+		}
+		eis.warnErrInfos = append(eis.warnErrInfos, errInfo.ToErrInfo())
+	case INFO:
+		if eis.infoErrInfos == nil {
+			eis.infoErrInfos = make([]*ErrorInfo, 0)
+		}
+		eis.infoErrInfos = append(eis.infoErrInfos, errInfo.ToErrInfo())
 	}
+
+	return eis
+}
+
+func (eis *ErrorInfos) AppendErrInfos(errInfos *ErrorInfos) *ErrorInfos {
+	if errInfos == nil {
+		return eis
+	}
+
+	if eis == nil {
+		eis = &ErrorInfos{}
+	}
+
+	eis.errorErrInfos = append(eis.errorErrInfos, errInfos.errorErrInfos...)
+	eis.warnErrInfos = append(eis.warnErrInfos, errInfos.warnErrInfos...)
+	eis.infoErrInfos = append(eis.infoErrInfos, errInfos.infoErrInfos...)
+
+	return eis
+}
+
+func (eis *ErrorInfos) Error() string {
+	return eis.getErrorMessage(func(ei *ErrorInfo) string { return ei.Error() }).Error()
+}
+
+func (eis *ErrorInfos) ErrorWithTrace() string {
+	return eis.getErrorMessage(func(ei *ErrorInfo) string { return ei.ErrorWithTrace() }).Error()
+}
+
+func (eis *ErrorInfos) getErrorMessage(getErrorF func(ei *ErrorInfo) string) *ErrorInfo {
+	if eis == nil {
+		return nil
+	}
+
+	errorCount, warnCount, infoCount := len(eis.errorErrInfos),
+		len(eis.warnErrInfos),
+		len(eis.infoErrInfos)
+	isSingle := errorCount+warnCount+infoCount == 1
 
 	resultMsgs := make([]string, 0)
-	title := ""
 	if errorCount > 0 {
-		title = fmt.Sprintf(
-			`%s
-Errors Count : %d`,
-			title,
-			errorCount,
-		)
+		if !isSingle {
+			resultMsgs = append(resultMsgs, "Errors:")
+		}
+		for _, ei := range eis.errorErrInfos {
+			resultMsgs = append(resultMsgs, getErrorF(ei))
+		}
 	}
+
 	if warnCount > 0 {
-		title = fmt.Sprintf(
-			`%s
-Warns Count : %d`,
-			title,
-			warnCount,
-		)
+		if !isSingle {
+			resultMsgs = append(resultMsgs, "Warns:")
+		}
+		for _, ei := range eis.warnErrInfos {
+			resultMsgs = append(resultMsgs, getErrorF(ei))
+		}
 	}
+
 	if infoCount > 0 {
-		title = fmt.Sprintf(
-			`%s
-Infos Count : %d`,
-			title,
-			infoCount,
-		)
+		if !isSingle {
+			resultMsgs = append(resultMsgs, "Infos:")
+		}
+		for _, ei := range eis.infoErrInfos {
+			resultMsgs = append(resultMsgs, getErrorF(ei))
+		}
 	}
 
-	resultMsgs = append(resultMsgs, title)
-	resultMsgs = append(resultMsgs, errMsgs...)
+	if len(resultMsgs) == 0 {
+		return nil
+	}
 	errMsg := strings.Join(resultMsgs, "\n\n")
-	return errMsg
+
+	resultErrInfo := New(errMsg, eis.GetLevel())
+	for _, parentMsg := range eis.parentMessages {
+		resultErrInfo = resultErrInfo.NewParent(parentMsg).ToErrInfo()
+	}
+
+	return resultErrInfo
 }
 
-func (eis ErrorInfos) ErrorWithTrace() string {
-	if len(eis) == 0 {
-		return ""
-	} else if len(eis) == 1 {
-		return eis[0].ErrorWithTrace()
+func (eis *ErrorInfos) GetLevel() ErrorLevel {
+	if eis == nil {
+		return INFO
 	}
 
-	sort.Slice(eis, func(i, j int) bool {
-		return eis[i].IsError() || eis[j].IsInfo()
-	})
-
-	errMsgs := make([]string, 0)
-	errorCount, warnCount, infoCount := 0, 0, 0
-	for _, ei := range eis {
-		switch ei.Level {
-		case ERROR:
-			errorCount++
-		case WARN:
-			warnCount++
-		case INFO:
-			infoCount++
-		}
-		errMsgs = append(errMsgs, LevelName(ei.Level), "\n", ei.ErrorWithTrace())
+	if len(eis.errorErrInfos) > 0 {
+		return ERROR
+	}
+	if len(eis.warnErrInfos) > 0 {
+		return WARN
 	}
 
-	resultMsgs := make([]string, 0)
-	title := ""
-	if errorCount > 0 {
-		title = fmt.Sprintf(
-			`%s
-Errors Count : %d`,
-			title,
-			errorCount,
-		)
-	}
-	if warnCount > 0 {
-		title = fmt.Sprintf(
-			`%s
-Warns Count : %d`,
-			title,
-			warnCount,
-		)
-	}
-	if infoCount > 0 {
-		title = fmt.Sprintf(
-			`%s
-Infos Count : %d`,
-			title,
-			infoCount,
-		)
-	}
-
-	resultMsgs = append(resultMsgs, title)
-	resultMsgs = append(resultMsgs, errMsgs...)
-	errMsg := strings.Join(resultMsgs, "\n\n")
-	return errMsg
+	return INFO
 }
 
-func (eis ErrorInfos) IsError() bool {
-	for _, ei := range eis {
-		if ei.IsError() {
-			return true
-		}
+func (eis *ErrorInfos) IsError() bool {
+	if eis == nil {
+		return false
 	}
-	return false
+	return eis.GetLevel() == ERROR
 }
 
-func (eis ErrorInfos) IsWarn() bool {
-	isWarn := false
-	for _, ei := range eis {
-		if ei.IsError() {
-			return false
-		}
-		if ei.IsWarn() {
-			isWarn = true
-		}
+func (eis *ErrorInfos) IsWarn() bool {
+	if eis == nil {
+		return false
 	}
-	return isWarn
+	return eis.GetLevel() == WARN
 }
 
-func (eis ErrorInfos) IsInfo() bool {
-	isInfo := false
-	for _, ei := range eis {
-		if ei.IsError() {
-			return false
-		}
-		if ei.IsWarn() {
-			return false
-		}
-		if ei.IsInfo() {
-			isInfo = true
-		}
+func (eis *ErrorInfos) IsInfo() bool {
+	if eis == nil {
+		return false
 	}
-	return isInfo
+	return eis.GetLevel() == INFO
 }
