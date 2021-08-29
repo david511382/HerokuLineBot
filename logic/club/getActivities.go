@@ -824,10 +824,10 @@ func (b *GetActivities) GetActivitieInfoContents(activity *NewActivity) (content
 
 func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActivity, isShowCurrentMember bool) (contents []interface{}) {
 	courtHours := activity.getCourtHours()
-	totalBallConsume := domain.ESTIMATE_BALL_CONSUME_PER_HOUR * courtHours
-	estimateBallFee := totalBallConsume * domain.PRICE_PER_BALL
+	totalBallConsume := courtHours.MulFloat(float64(domain.ESTIMATE_BALL_CONSUME_PER_HOUR))
+	estimateBallFee := totalBallConsume.MulFloat(float64(domain.PRICE_PER_BALL))
 	courtFee := activity.getCourtFee()
-	estimateActivityFee := commonLogic.FloatPlus(estimateBallFee, courtFee)
+	estimateActivityFee := estimateBallFee.Plus(courtFee)
 	joinedCount := len(activity.JoinedMembers)
 	peopleLimit := 0
 	waitingCount := 0
@@ -856,7 +856,7 @@ func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActi
 				},
 			),
 			linebot.GetFlexMessageTextComponent(
-				fmt.Sprintf("%s顆", strconv.FormatFloat(totalBallConsume, 'f', -1, 64)),
+				fmt.Sprintf("%s顆", totalBallConsume.ToString(-1)),
 				&linebotModel.FlexMessageTextComponentOption{
 					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
 					Color: "#111111",
@@ -864,7 +864,7 @@ func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActi
 				},
 			),
 			linebot.GetFlexMessageTextComponent(
-				fmt.Sprintf("$%s", strconv.FormatFloat(estimateBallFee, 'f', -1, 64)),
+				fmt.Sprintf("$%s", estimateBallFee.ToString(-1)),
 				&linebotModel.FlexMessageTextComponentOption{
 					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
 					Color: "#111111",
@@ -883,7 +883,7 @@ func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActi
 				},
 			),
 			linebot.GetFlexMessageTextComponent(
-				fmt.Sprintf("$%s", strconv.FormatFloat(estimateActivityFee, 'f', -1, 64)),
+				fmt.Sprintf("$%s", estimateActivityFee.ToString(-1)),
 				&linebotModel.FlexMessageTextComponentOption{
 					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
 					Color: "#111111",
@@ -953,7 +953,7 @@ func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActi
 
 	if activity.PeopleLimit != nil {
 		people := int(*activity.PeopleLimit)
-		_, clubMemberPay, guestPay := calculateActivityPay(people, totalBallConsume, courtFee, float64(activity.ClubSubsidy))
+		_, clubMemberPay, guestPay := calculateActivityPay(people, totalBallConsume, courtFee, util.ToFloat(float64(activity.ClubSubsidy)))
 		estimateBox.Contents = append(
 			estimateBox.Contents,
 			linebot.GetFlexMessageBoxComponent(

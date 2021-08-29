@@ -3,7 +3,6 @@ package club
 import (
 	"fmt"
 	"heroku-line-bot/logic/club/domain"
-	commonLogic "heroku-line-bot/logic/common"
 	errLogic "heroku-line-bot/logic/error"
 	lineUserLogic "heroku-line-bot/logic/redis/lineuser"
 	lineUserLogicDomain "heroku-line-bot/logic/redis/lineuser/domain"
@@ -280,7 +279,12 @@ func (b *submitActivity) Do(text string) (resultErrInfo errLogic.IError) {
 			}
 		}
 		peopleCount := memberCount + guestCount
-		_, memberFee, guestFee := calculateActivityPay(peopleCount, float64(b.Rsl4Consume), courtFee, float64(b.ClubSubsidy))
+		_, memberFee, guestFee := calculateActivityPay(
+			peopleCount,
+			util.ToFloat(float64(b.Rsl4Consume)),
+			courtFee,
+			util.ToFloat(float64(b.ClubSubsidy)),
+		)
 		updateFields := map[string]interface{}{
 			"is_complete":  true,
 			"member_count": memberCount,
@@ -699,12 +703,15 @@ func (b *submitActivity) getAttendInfoContents() []interface{} {
 
 func (b *submitActivity) getFeeContents() []interface{} {
 	courtFee := b.getCourtFee()
-	activityFee, ballFee := calculateActivity(float64(b.Rsl4Consume), courtFee)
+	activityFee, ballFee := calculateActivity(
+		util.ToFloat(float64(b.Rsl4Consume)),
+		courtFee,
+	)
 	clubMemberPeople := b.getJoinedMembersCount()
 	guestPeople := b.getJoinedGuestsCount()
 	people := clubMemberPeople + guestPeople
-	clubSubsidy := float64(b.ClubSubsidy)
-	shareMoney := commonLogic.FloatMinus(activityFee, clubSubsidy)
+	clubSubsidy := util.ToFloat(float64(b.ClubSubsidy))
+	shareMoney := activityFee.Minus(clubSubsidy)
 
 	result := []interface{}{
 		linebot.GetFlexMessageBoxComponent(
@@ -720,7 +727,7 @@ func (b *submitActivity) getFeeContents() []interface{} {
 				},
 			),
 			linebot.GetFlexMessageTextComponent(
-				fmt.Sprintf("$%s", strconv.FormatFloat(shareMoney, 'f', 0, 64)),
+				fmt.Sprintf("$%s", shareMoney.ToString(0)),
 				&linebotModel.FlexMessageTextComponentOption{
 					Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
 					Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
@@ -756,7 +763,7 @@ func (b *submitActivity) getFeeContents() []interface{} {
 					},
 				),
 				linebot.GetFlexMessageTextComponent(
-					fmt.Sprintf("$%s", strconv.FormatFloat(ballFee, 'f', -1, 64)),
+					fmt.Sprintf("$%s", ballFee.ToString(-1)),
 					&linebotModel.FlexMessageTextComponentOption{
 						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
 						Align: linebotDomain.END_Align,
@@ -775,7 +782,7 @@ func (b *submitActivity) getFeeContents() []interface{} {
 					},
 				),
 				linebot.GetFlexMessageTextComponent(
-					fmt.Sprintf("$%s", strconv.FormatFloat(courtFee, 'f', -1, 64)),
+					fmt.Sprintf("$%s", courtFee.ToString(-1)),
 					&linebotModel.FlexMessageTextComponentOption{
 						Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
 						Align: linebotDomain.END_Align,

@@ -147,12 +147,12 @@ func (m *node) toLen() int {
 	return len(m.toSideMap)
 }
 
-func (m *node) value() float64 {
+func (m *node) value() util.Float {
 	return m.target.TotalHours()
 }
 
-func (m *node) totalValue() float64 {
-	return m.fromSideMax() + m.value() + m.toSideMax()
+func (m *node) totalValue() util.Float {
+	return m.fromSideMax().Plus(m.value(), m.toSideMax())
 }
 
 func (m *node) takeFromSideMax() []*clubCourtLogicDomain.ActivityCourt {
@@ -210,24 +210,24 @@ func (m *node) takeMax() []*clubCourtLogicDomain.ActivityCourt {
 	return result
 }
 
-func (m *node) fromSideMax() float64 {
+func (m *node) fromSideMax() util.Float {
 	if m.fromLen() == 0 {
-		return 0
+		return util.ToFloat(0)
 	}
 
 	index := m.fromSides[0]
 	next := m.fromSideMap[index]
-	return next.fromSideMax() + next.value()
+	return next.fromSideMax().Plus(next.value())
 }
 
-func (m *node) toSideMax() float64 {
+func (m *node) toSideMax() util.Float {
 	if m.toLen() == 0 {
-		return 0
+		return util.ToFloat(0)
 	}
 
 	index := m.toSides[0]
 	next := m.toSideMap[index]
-	return next.toSideMax() + next.value()
+	return next.toSideMax().Plus(next.value())
 }
 
 func (m *node) sort() {
@@ -243,7 +243,7 @@ func (m *node) sortFromSide() {
 			n.sortFromSide()
 		}
 
-		fromSideValueMap[i] = n.fromSideMax() + n.value()
+		fromSideValueMap[i] = n.fromSideMax().Plus(n.value()).Value()
 
 		m.fromSides = append(m.fromSides, i)
 	}
@@ -267,7 +267,7 @@ func (m *node) sortToSide() {
 			n.sortToSide()
 		}
 
-		toSideValueMap[i] = n.toSideMax() + n.value()
+		toSideValueMap[i] = n.toSideMax().Plus(n.value()).Value()
 
 		m.toSides = append(m.toSides, i)
 	}
@@ -354,9 +354,9 @@ func (b *BackGround) combineSamePriceCourts(courts []*clubCourtLogicDomain.Activ
 
 	sort.Slice(nodes, func(i, j int) bool {
 		im := nodes[i]
-		iValue := im.totalValue()
+		iValue := im.totalValue().Value()
 		jm := nodes[j]
-		jValue := jm.totalValue()
+		jValue := jm.totalValue().Value()
 		return iValue > jValue
 	})
 

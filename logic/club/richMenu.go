@@ -12,7 +12,7 @@ import (
 	linebotReqs "heroku-line-bot/service/linebot/domain/model/reqs"
 	"heroku-line-bot/storage/database"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
-	"math"
+	"heroku-line-bot/util"
 	"strconv"
 )
 
@@ -265,21 +265,23 @@ func (b *richMenu) createRichMenu(name string, width, height, row, col int, acti
 		Areas:       make([]*linebotReqs.CreateRichMenuAreas, 0),
 	}
 
-	widthUnit := float64(width) / float64(col)
-	heightUnit := float64(height) / float64(row)
+	widthUnit := util.ToFloat(float64(width)).Div(util.ToFloat(float64(col)))
+	heightUnit := util.ToFloat(float64(height)).Div(util.ToFloat(float64(row)))
 	for index, action := range actions {
 		c := float64(index % col)
-		r := math.Floor(float64(index) / float64(col))
-		x := widthUnit * c
-		y := heightUnit * r
+		r := util.ToFloat(float64(index)).
+			DivFloat(float64(col)).
+			Floor()
+		x := widthUnit.MulFloat(c)
+		y := heightUnit.Mul(r)
 		result.Areas = append(result.Areas, &linebotReqs.CreateRichMenuAreas{
 			Action: action,
 			Bounds: linebotReqs.CreateRichMenuAreasBounds{
-				X: int(x),
-				Y: int(y),
+				X: int(x.ToInt()),
+				Y: int(y.ToInt()),
 				CreateRichMenuSize: linebotReqs.CreateRichMenuSize{
-					Width:  int(widthUnit),
-					Height: int(heightUnit),
+					Width:  int(widthUnit.ToInt()),
+					Height: int(heightUnit.ToInt()),
 				},
 			},
 		})

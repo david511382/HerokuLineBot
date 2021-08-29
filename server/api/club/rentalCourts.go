@@ -9,6 +9,7 @@ import (
 	"heroku-line-bot/server/common"
 	"heroku-line-bot/server/domain/reqs"
 	"heroku-line-bot/server/domain/resp"
+	"heroku-line-bot/util"
 	"sort"
 
 	"github.com/gin-gonic/gin"
@@ -79,7 +80,7 @@ func GetRentalCourts(c *gin.Context) {
 					FromTime: court.FromTime,
 					ToTime:   court.ToTime,
 					Count:    int(court.Count),
-					Cost:     court.Cost(),
+					Cost:     court.Cost().Value(),
 				}
 				if dateIntCourtsMap[dateInt] == nil {
 					dateIntCourtsMap[dateInt] = make([]*resp.GetRentalCourtsDayCourtsInfo, 0)
@@ -193,15 +194,18 @@ func getGetRentalCourtsPayInfo(dateIntCourtsMap map[int][]*resp.GetRentalCourtsC
 			Date:   commonLogic.IntTime(dateInt, commonLogicDomain.DATE_TIME_TYPE),
 			Courts: make([]*resp.GetRentalCourtsCourtInfo, 0),
 		}
+		cost := util.ToFloat(0)
 		resultCourt.Courts = append(resultCourt.Courts, courts...)
 		for _, v := range courts {
-			resultCourt.Cost = commonLogic.FloatPlus(resultCourt.Cost, v.Cost)
+			cost = cost.PlusFloat(v.Cost)
 		}
 		result.Courts = append(result.Courts, resultCourt)
+		resultCourt.Cost = cost.Value()
 	}
+	cost := util.ToFloat(0)
 	for _, court := range result.Courts {
-		result.Cost = commonLogic.FloatPlus(result.Cost, court.Cost)
+		cost = cost.PlusFloat(court.Cost)
 	}
-
+	result.Cost = cost.Value()
 	return
 }

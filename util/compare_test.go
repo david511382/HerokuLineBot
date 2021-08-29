@@ -23,14 +23,14 @@ func TestComp(t *testing.T) {
 		{
 			"time",
 			args{
-				actual: GetTimeP(300),
-				expect: GetTimeP(301),
+				actual: GetTimePLoc(time.UTC, 300),
+				expect: GetTimePLoc(time.UTC, 301),
 			},
 			false,
 			`actual:
-"0300-01-01 00:00:00 +0806 LMT"
+"0300-01-01 00:00:00 +0000 UTC"
 expect:
-"0301-01-01 00:00:00 +0806 LMT"
+"0301-01-01 00:00:00 +0000 UTC"
 ---`,
 		},
 		{

@@ -1,6 +1,8 @@
 package util
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestFloatString(t *testing.T) {
 	type args struct {
