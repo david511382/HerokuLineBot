@@ -10,10 +10,11 @@ import (
 func Get() (result *storageModel.BadmintonActivity, resultErrInfo errLogic.IError) {
 	redisData, err := redis.BadmintonSetting.Get()
 	if err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		errInfo := errLogic.NewError(err)
 		if !redis.IsRedisError(err) {
-			resultErrInfo.SetLevel(errLogic.WARN)
+			errInfo.Level = errLogic.WARN
 		}
+		resultErrInfo = errInfo
 		return
 	}
 

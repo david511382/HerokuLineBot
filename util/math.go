@@ -8,79 +8,16 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func UnlimitSum(a1, r float64, floatExponent int32) float64 {
-	dA1 := decimal.NewFromFloatWithExponent(a1, floatExponent)
-	dR := decimal.NewFromFloatWithExponent(r, floatExponent)
-	d1 := decimal.NewFromFloatWithExponent(1, floatExponent)
+func UnlimitSum(a1, r float64) float64 {
+	dA1 := decimal.NewFromFloat(a1)
+	dR := decimal.NewFromFloat(r)
+	d1 := decimal.NewFromFloat(1)
 
 	dSum := dA1.Div(d1.Sub(dR))
 
 	result, _ := dSum.Float64()
 
 	return result
-}
-
-func FloatToInt(v float64, floatExponent int32) int64 {
-	d := decimal.NewFromFloatWithExponent(v, floatExponent)
-	return d.IntPart()
-}
-
-func FloatMinus(v1, v2 float64, floatExponent int32) float64 {
-	d1 := decimal.NewFromFloatWithExponent(v1, floatExponent)
-	d2 := decimal.NewFromFloatWithExponent(v2, floatExponent)
-	r := d1.Sub(d2)
-	f, _ := r.Float64()
-	return f
-}
-
-func FloatPlus(v1, v2 float64, floatExponent int32) float64 {
-	d1 := decimal.NewFromFloatWithExponent(v1, floatExponent)
-	d2 := decimal.NewFromFloatWithExponent(v2, floatExponent)
-	r := d1.Add(d2)
-	f, _ := r.Float64()
-	return f
-}
-
-func FloatRound(v float64, exp int32, floatExponent int32) float64 {
-	d := decimal.NewFromFloatWithExponent(v, floatExponent)
-	d = d.Round(-exp)
-	f, _ := d.Float64()
-	return f
-}
-
-func SafeRate64Exponent(fraction, denominator float64, f int32, floatExponent int32) float64 {
-	if denominator == 0 {
-		return 0
-	}
-
-	fractionV := decimal.NewFromFloatWithExponent(fraction, floatExponent)
-	denominatorV := decimal.NewFromFloatWithExponent(denominator, floatExponent)
-	r := fractionV.Div(denominatorV)
-	v, _ := r.Float64()
-
-	return PercentAt(v, f, floatExponent)
-}
-
-func SafeDivision64(fraction, denominator float64, f int32, floatExponent int32) float64 {
-	if denominator == 0 {
-		return 0
-	}
-
-	d1 := decimal.NewFromFloatWithExponent(fraction, floatExponent)
-	d2 := decimal.NewFromFloatWithExponent(denominator, floatExponent)
-	r := d1.Div(d2)
-	r = r.Round(-f)
-	v, _ := r.Float64()
-	return v
-}
-
-func PercentAt(value float64, f int32, floatExponent int32) float64 {
-	percent := decimal.NewFromFloatWithExponent(100, floatExponent)
-	valueDec := decimal.NewFromFloatWithExponent(value, floatExponent)
-	r := valueDec.Mul(percent)
-	r = r.Round(-f)
-	v, _ := r.Float64()
-	return v
 }
 
 func FloatString(value float64, floatExponent int32) string {

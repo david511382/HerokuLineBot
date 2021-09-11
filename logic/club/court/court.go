@@ -16,17 +16,17 @@ import (
 
 func GetRentalCourts(
 	fromDate, toDate time.Time,
-	place *string,
+	placeID *int,
 	weekday *int16,
 ) (
-	placeDateIntActivityMap map[string]map[int]*domain.Activity,
+	placeDateIntActivityMap map[int]map[int]*domain.Activity,
 	resultErrInfo errLogic.IError,
 ) {
-	placeDateIntActivityMap = make(map[string]map[int]*domain.Activity)
+	placeDateIntActivityMap = make(map[int]map[int]*domain.Activity)
 	if dbDatas, err := database.Club.RentalCourt.GetRentalCourts(
 		fromDate,
 		toDate,
-		place,
+		placeID,
 		weekday,
 	); err != nil {
 		resultErrInfo = errLogic.NewError(err)
@@ -98,16 +98,16 @@ func GetRentalCourts(
 					}
 				}
 
-				if placeDateIntActivityMap[v.Place] == nil {
-					placeDateIntActivityMap[v.Place] = make(map[int]*domain.Activity)
+				if placeDateIntActivityMap[v.PlaceID] == nil {
+					placeDateIntActivityMap[v.PlaceID] = make(map[int]*domain.Activity)
 				}
-				if placeDateIntActivityMap[v.Place][dateInt] == nil {
-					placeDateIntActivityMap[v.Place][dateInt] = &domain.Activity{
+				if placeDateIntActivityMap[v.PlaceID][dateInt] == nil {
+					placeDateIntActivityMap[v.PlaceID][dateInt] = &domain.Activity{
 						Courts:       make([]*domain.ActivityCourt, 0),
 						CancelCourts: make([]*domain.CancelCourt, 0),
 					}
 				}
-				m := placeDateIntActivityMap[v.Place][dateInt]
+				m := placeDateIntActivityMap[v.PlaceID][dateInt]
 
 				c := *court
 				if cancelReason != nil {
@@ -127,17 +127,17 @@ func GetRentalCourts(
 
 func GetRentalCourtsWithPay(
 	fromDate, toDate time.Time,
-	place *string,
+	placeID *int,
 	weekday *int16,
 ) (
-	placeActivityPaysMap map[string][]*domain.ActivityPay,
+	placeActivityPaysMap map[int][]*domain.ActivityPay,
 	resultErrInfo errLogic.IError,
 ) {
-	placeActivityPaysMap = make(map[string][]*domain.ActivityPay)
+	placeActivityPaysMap = make(map[int][]*domain.ActivityPay)
 	if dbDatas, err := database.Club.RentalCourt.GetRentalCourtsWithPay(
 		fromDate,
 		toDate,
-		place,
+		placeID,
 		weekday,
 	); err != nil {
 		resultErrInfo = errLogic.NewError(err)
@@ -241,10 +241,10 @@ func GetRentalCourtsWithPay(
 				continue
 			}
 
-			if placeActivityPaysMap[v.Place] == nil {
-				placeActivityPaysMap[v.Place] = make([]*domain.ActivityPay, 0)
+			if placeActivityPaysMap[v.PlaceID] == nil {
+				placeActivityPaysMap[v.PlaceID] = make([]*domain.ActivityPay, 0)
 			}
-			placeActivityPaysMap[v.Place] = append(placeActivityPaysMap[v.Place], activity)
+			placeActivityPaysMap[v.PlaceID] = append(placeActivityPaysMap[v.PlaceID], activity)
 		}
 	}
 

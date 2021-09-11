@@ -33,16 +33,16 @@ func (t Activity) MigrationData(datas ...*ActivityTable) error {
 	return t.Insert(nil, datas...)
 }
 
-func (t Activity) DatePlacePeopleLimit(arg reqs.Activity) ([]*resp.DatePlacePeopleLimit, error) {
+func (t Activity) DatePlaceIDPeopleLimit(arg reqs.Activity) ([]*resp.DatePlaceIDPeopleLimit, error) {
 	dp := t.whereArg(t.Read, arg).Select(
 		`
 		date AS date,
-		place AS place,
+		place_id AS place_id,
 		people_limit AS people_limit
 		`,
 	)
 
-	result := make([]*resp.DatePlacePeopleLimit, 0)
+	result := make([]*resp.DatePlaceIDPeopleLimit, 0)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}
@@ -50,12 +50,12 @@ func (t Activity) DatePlacePeopleLimit(arg reqs.Activity) ([]*resp.DatePlacePeop
 	return result, nil
 }
 
-func (t Activity) IDDatePlaceCourtsSubsidyDescriptionPeopleLimit(arg reqs.Activity) ([]*resp.IDDatePlaceCourtsSubsidyDescriptionPeopleLimit, error) {
+func (t Activity) IDDatePlaceIDCourtsSubsidyDescriptionPeopleLimit(arg reqs.Activity) ([]*resp.IDDatePlaceIDCourtsSubsidyDescriptionPeopleLimit, error) {
 	dp := t.whereArg(t.Read, arg).Select(
 		`
 		id AS id,
 		date AS date,
-		place AS place,
+		place_id AS place_id,
 		courts_and_time AS courts_and_time,
 		club_subsidy AS club_subsidy,
 		description AS description,
@@ -63,7 +63,7 @@ func (t Activity) IDDatePlaceCourtsSubsidyDescriptionPeopleLimit(arg reqs.Activi
 		`,
 	)
 
-	result := make([]*resp.IDDatePlaceCourtsSubsidyDescriptionPeopleLimit, 0)
+	result := make([]*resp.IDDatePlaceIDCourtsSubsidyDescriptionPeopleLimit, 0)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}

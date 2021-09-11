@@ -6,9 +6,11 @@ import (
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	errLogic "heroku-line-bot/logic/error"
+	rdsBadmintonplaceLogic "heroku-line-bot/logic/redis/badmintonplace"
 	"heroku-line-bot/server/common"
 	"heroku-line-bot/server/domain/reqs"
 	"heroku-line-bot/server/domain/resp"
+	"heroku-line-bot/util"
 	"sort"
 
 	"github.com/gin-gonic/gin"
@@ -55,11 +57,21 @@ func GetRentalCourts(c *gin.Context) {
 		return
 	}
 
+	placeIDs := make([]int, 0)
+	for placeID := range placeActivityPaysMap {
+		placeIDs = append(placeIDs, placeID)
+	}
+	idPlaceMap, errInfo := rdsBadmintonplaceLogic.Load(placeIDs...)
+	if errInfo != nil && errInfo.IsError() {
+		common.FailInternal(c, errInfo)
+		return
+	}
+
 	dateIntPlaceMap := make(map[int]map[string]bool)
 	dateIntCourtsMap := make(map[int][]*resp.GetRentalCourtsDayCourtsInfo)
 	notPayDateIntCourtsMap := make(map[int][]*resp.GetRentalCourtsCourtInfo)
 	notRefundDateIntCourtsMap := make(map[int][]*resp.GetRentalCourtsCourtInfo)
-	for place, activityPays := range placeActivityPaysMap {
+	for placeID, activityPays := range placeActivityPaysMap {
 		for _, activityPay := range activityPays {
 			isPay := activityPay.BalanceDate != nil
 			for dateInt, dayCourts := range activityPay.DateCourtMap {
@@ -74,12 +86,13 @@ func GetRentalCourts(c *gin.Context) {
 					reasonMessage = clubCourtLogic.ReasonMessage(*dayCourts.CancelReason)
 				}
 
+				place := idPlaceMap[placeID].Name
 				info := resp.GetRentalCourtsCourtInfo{
 					Place:    place,
 					FromTime: court.FromTime,
 					ToTime:   court.ToTime,
 					Count:    int(court.Count),
-					Cost:     court.Cost(),
+					Cost:     court.Cost().Value(),
 				}
 				if dateIntCourtsMap[dateInt] == nil {
 					dateIntCourtsMap[dateInt] = make([]*resp.GetRentalCourtsDayCourtsInfo, 0)
@@ -193,15 +206,18 @@ func getGetRentalCourtsPayInfo(dateIntCourtsMap map[int][]*resp.GetRentalCourtsC
 			Date:   commonLogic.IntTime(dateInt, commonLogicDomain.DATE_TIME_TYPE),
 			Courts: make([]*resp.GetRentalCourtsCourtInfo, 0),
 		}
+		cost := util.ToFloat(0)
 		resultCourt.Courts = append(resultCourt.Courts, courts...)
 		for _, v := range courts {
-			resultCourt.Cost = commonLogic.FloatPlus(resultCourt.Cost, v.Cost)
+			cost = cost.PlusFloat(v.Cost)
 		}
 		result.Courts = append(result.Courts, resultCourt)
+		resultCourt.Cost = cost.Value()
 	}
+	cost := util.ToFloat(0)
 	for _, court := range result.Courts {
-		result.Cost = commonLogic.FloatPlus(result.Cost, court.Cost)
+		cost = cost.PlusFloat(court.Cost)
 	}
-
+	result.Cost = cost.Value()
 	return
 }

@@ -7,12 +7,14 @@ import (
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	errLogic "heroku-line-bot/logic/error"
+	rdsBadmintonplaceLogic "heroku-line-bot/logic/redis/badmintonplace"
 	"heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
 	activityDb "heroku-line-bot/storage/database/database/clubdb/table/activity"
+	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/util"
 	"strconv"
 	"strings"
@@ -24,7 +26,7 @@ import (
 type NewActivity struct {
 	Context     domain.ICmdHandlerContext    `json:"-"`
 	Date        time.Time                    `json:"date"`
-	Place       string                       `json:"place"`
+	PlaceID     int                          `json:"place_id"`
 	Description string                       `json:"description"`
 	PeopleLimit *int16                       `json:"people_limit"`
 	ClubSubsidy int16                        `json:"club_subsidy"`
@@ -37,7 +39,7 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 	*b = NewActivity{
 		Context:     context,
 		Date:        util.DateOf(nowTime),
-		Place:       "大墩羽球館",
+		PlaceID:     1,
 		Description: "7人出團",
 		IsComplete:  false,
 		Courts: []*courtDomain.ActivityCourt{
@@ -55,11 +57,8 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 			},
 		},
 	}
-	totalHours := 0.0
-	for _, court := range b.Courts {
-		totalHours = commonLogic.FloatPlus(totalHours, court.TotalHours())
-	}
-	b.PeopleLimit = util.GetInt16P(int16(totalHours * float64(domain.PEOPLE_PER_HOUR)))
+	totalHours := b.getCourtHours()
+	b.PeopleLimit = util.GetInt16P(int16(totalHours.MulFloat(float64(domain.PEOPLE_PER_HOUR)).Value()))
 
 	return nil
 }
@@ -68,8 +67,13 @@ func (b *NewActivity) GetSingleParam(attr string) string {
 	switch attr {
 	case "date":
 		return b.Date.Format(commonLogicDomain.DATE_FORMAT)
-	case "ICmdLogic.place":
-		return b.Place
+	case "ICmdLogic.place_id":
+		if dbDatas, errInfo := rdsBadmintonplaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
+			for _, v := range dbDatas {
+				return v.Name
+			}
+		}
+		return "未設置"
 	case "ICmdLogic.description":
 		return b.Description
 	case "ICmdLogic.people_limit":
@@ -96,8 +100,29 @@ func (b *NewActivity) LoadSingleParam(attr, text string) (resultErrInfo errLogic
 			return
 		}
 		b.Date = t
-	case "ICmdLogic.place":
-		b.Place = text
+	case "ICmdLogic.place_id":
+		if dbDatas, err := database.Club.Place.IDName(dbReqs.Place{
+			Name: &text,
+		}); err != nil {
+			errInfo := errLogic.NewError(err)
+			if resultErrInfo == nil {
+				resultErrInfo = errInfo
+			} else {
+				resultErrInfo = resultErrInfo.Append(errInfo)
+			}
+		} else if len(dbDatas) == 0 {
+			errInfo := errLogic.New("未登記的球場")
+			if resultErrInfo == nil {
+				resultErrInfo = errInfo
+			} else {
+				resultErrInfo = resultErrInfo.Append(errInfo)
+			}
+			return
+		} else {
+			for _, v := range dbDatas {
+				b.PlaceID = v.ID
+			}
+		}
 	case "ICmdLogic.description":
 		b.Description = text
 	case "ICmdLogic.people_limit":
@@ -196,7 +221,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errLogic.IError) {
 	}
 
 	if js, errInfo := b.Context.
-		GetRequireInputMode("ICmdLogic.place", "地點", false).
+		GetRequireInputMode("ICmdLogic.place_id", "地點", false).
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -307,14 +332,14 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errLog
 
 	data := &activityDb.ActivityTable{
 		Date:          b.Date,
-		Place:         b.Place,
+		PlaceID:       b.PlaceID,
 		CourtsAndTime: courtsStr,
 		ClubSubsidy:   b.ClubSubsidy,
 		Description:   b.Description,
 		PeopleLimit:   b.PeopleLimit,
 		IsComplete:    b.IsComplete,
 	}
-	if err := database.Club.Activity.BaseTable.Insert(transaction, data); err != nil {
+	if err := database.Club.Activity.Insert(transaction, data); err != nil {
 		resultErrInfo = errLogic.NewError(err)
 		return
 	}
@@ -325,9 +350,15 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errLog
 func (b *NewActivity) getPlaceTimeTemplate() (result []interface{}) {
 	result = []interface{}{}
 
+	place := "無球館"
+	if dbDatas, errInfo := rdsBadmintonplaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
+		for _, v := range dbDatas {
+			place = v.Name
+		}
+	}
 	result = append(result,
 		linebot.GetFlexMessageTextComponent(
-			b.Place,
+			place,
 			&linebotModel.FlexMessageTextComponentOption{
 				Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
 				Size:   linebotDomain.XXL_FLEX_MESSAGE_SIZE,
@@ -372,10 +403,16 @@ func (b *NewActivity) getLineComponents(actions domain.NewActivityLineTemplate) 
 		),
 	)
 
+	place := "無球館"
+	if dbDatas, errInfo := rdsBadmintonplaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
+		for _, v := range dbDatas {
+			place = v.Name
+		}
+	}
 	result = append(result,
 		GetKeyValueEditComponent(
 			"地點",
-			b.Place,
+			place,
 			&domain.KeyValueEditComponentOption{
 				Action: actions.PlaceAction,
 			},
@@ -409,20 +446,20 @@ func (b *NewActivity) getLineComponents(actions domain.NewActivityLineTemplate) 
 	return
 }
 
-func (b *NewActivity) getCourtFee() float64 {
-	totalFee := 0.0
+func (b *NewActivity) getCourtFee() util.Float {
+	totalFee := util.ToFloat(0)
 	for _, court := range b.Courts {
 		cost := court.Cost()
-		totalFee = commonLogic.FloatPlus(totalFee, cost)
+		totalFee = totalFee.Plus(cost)
 	}
 	return totalFee
 }
 
-func (b *NewActivity) getCourtHours() float64 {
-	totalHours := 0.0
+func (b *NewActivity) getCourtHours() util.Float {
+	totalHours := util.ToFloat(0)
 	for _, court := range b.Courts {
 		hours := court.TotalHours()
-		totalHours = commonLogic.FloatPlus(totalHours, hours)
+		totalHours = totalHours.Plus(hours)
 	}
 	return totalHours
 }
@@ -530,14 +567,12 @@ func (b *NewActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackA
 	)
 	components = append(components, headBoxComponent)
 
-	placeFee := 0.0
 	mdSize := linebotDomain.MD_FLEX_MESSAGE_SIZE
 	keyValueEditComponentOption := &domain.KeyValueEditComponentOption{
 		SizeP: &mdSize,
 	}
 	for index, court := range b.Courts {
 		cost := court.Cost()
-		placeFee = commonLogic.FloatPlus(placeFee, cost)
 
 		components = append(components, GetKeyValueEditComponent(
 			"時間",
@@ -549,7 +584,7 @@ func (b *NewActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackA
 			"場地數",
 			strconv.Itoa(int(court.Count)),
 			"價錢",
-			strconv.FormatFloat(cost, 'f', 0, 64),
+			cost.ToString(0),
 			nil,
 			keyValueEditComponentOption,
 		)
@@ -563,7 +598,7 @@ func (b *NewActivity) getCourtsBoxComponent(buttonAction *linebotModel.PostBackA
 	courtFee := b.getCourtFee()
 	courtFeeComponent := GetKeyValueEditComponent(
 		"場地費用總計",
-		strconv.FormatFloat(courtFee, 'f', -1, 64),
+		courtFee.ToString(-1),
 		keyValueEditComponentOption,
 	)
 	components = append(components, courtFeeComponent)
@@ -591,7 +626,7 @@ func (b *NewActivity) getCourtsContents() []interface{} {
 				},
 			),
 			linebot.GetFlexMessageTextComponent(
-				fmt.Sprintf("$%s", strconv.FormatFloat(courtFee, 'f', -1, 64)),
+				fmt.Sprintf("$%s", courtFee.ToString(-1)),
 				&linebotModel.FlexMessageTextComponentOption{
 					Size:   linebotDomain.SM_FLEX_MESSAGE_SIZE,
 					Weight: linebotDomain.BOLD_FLEX_MESSAGE_WEIGHT,
@@ -605,10 +640,8 @@ func (b *NewActivity) getCourtsContents() []interface{} {
 	}
 
 	courtContents := make([]interface{}, 0)
-	placeFee := 0.0
 	for _, court := range b.Courts {
 		cost := court.Cost()
-		placeFee = commonLogic.FloatPlus(placeFee, cost)
 
 		courtsComponent := linebot.GetFlexMessageBoxComponent(
 			linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
@@ -630,7 +663,7 @@ func (b *NewActivity) getCourtsContents() []interface{} {
 				},
 			),
 			linebot.GetFlexMessageTextComponent(
-				fmt.Sprintf("$%s", strconv.FormatFloat(cost, 'f', 0, 64)),
+				fmt.Sprintf("$%s", cost.ToString(0)),
 				&linebotModel.FlexMessageTextComponentOption{
 					Size:  linebotDomain.XS_FLEX_MESSAGE_SIZE,
 					Color: "#111111",

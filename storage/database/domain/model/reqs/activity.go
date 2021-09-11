@@ -2,7 +2,7 @@ package reqs
 
 type Activity struct {
 	Date
-	Place               *string
+	PlaceID             *int
 	ClubSubsidyNotEqual *int16
 	IsComplete          *bool
 	ID                  *int

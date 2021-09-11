@@ -6,6 +6,7 @@ import (
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	errLogic "heroku-line-bot/logic/error"
+	rdsBadmintonplaceLogic "heroku-line-bot/logic/redis/badmintonplace"
 	lineUserLogic "heroku-line-bot/logic/redis/lineuser"
 	lineUserLogicDomain "heroku-line-bot/logic/redis/lineuser/domain"
 	"heroku-line-bot/service/linebot"
@@ -74,13 +75,37 @@ func (b *GetActivities) init() (resultErrInfo errLogic.IError) {
 	arg := dbReqs.Activity{
 		IsComplete: util.GetBoolP(false),
 	}
-	if dbDatas, err := database.Club.Activity.IDDatePlaceCourtsSubsidyDescriptionPeopleLimit(arg); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+	if dbDatas, err := database.Club.Activity.IDDatePlaceIDCourtsSubsidyDescriptionPeopleLimit(arg); err != nil {
+		errInfo := errLogic.NewError(err)
+		if resultErrInfo == nil {
+			resultErrInfo = errInfo
+		} else {
+			resultErrInfo = resultErrInfo.Append(errInfo)
+		}
 		return
-	} else {
+	} else if len(dbDatas) > 0 {
 		activityIDs := []int{}
+		idPlaceMap := make(map[int]string)
 		for _, v := range dbDatas {
 			activityIDs = append(activityIDs, v.ID)
+			idPlaceMap[v.PlaceID] = ""
+		}
+
+		placeIDs := make([]int, 0)
+		for id := range idPlaceMap {
+			placeIDs = append(placeIDs, id)
+		}
+		if dbDatas, errInfo := rdsBadmintonplaceLogic.Load(placeIDs...); errInfo != nil {
+			errInfo := errLogic.NewError(err)
+			if resultErrInfo == nil {
+				resultErrInfo = errInfo
+			} else {
+				resultErrInfo = resultErrInfo.Append(errInfo)
+			}
+		} else {
+			for id, v := range dbDatas {
+				idPlaceMap[id] = v.Name
+			}
 		}
 
 		activityIDMap := make(map[int][]*getActivitiesActivityJoinedMembers)
@@ -88,7 +113,12 @@ func (b *GetActivities) init() (resultErrInfo errLogic.IError) {
 			ActivityIDs: activityIDs,
 		}
 		if dbDatas, err := database.Club.MemberActivity.IDMemberIDActivityID(memberActivityArg); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			errInfo := errLogic.NewError(err)
+			if resultErrInfo == nil {
+				resultErrInfo = errInfo
+			} else {
+				resultErrInfo = resultErrInfo.Append(errInfo)
+			}
 			return
 		} else if len(dbDatas) > 0 {
 			memberIDs := make([]int, 0)
@@ -138,7 +168,7 @@ func (b *GetActivities) init() (resultErrInfo errLogic.IError) {
 				NewActivity: NewActivity{
 					Context:     context,
 					Date:        v.Date,
-					Place:       v.Place,
+					PlaceID:     v.PlaceID,
 					Description: v.Description,
 					PeopleLimit: v.PeopleLimit,
 					ClubSubsidy: v.ClubSubsidy,
@@ -148,13 +178,18 @@ func (b *GetActivities) init() (resultErrInfo errLogic.IError) {
 				ActivityID:    v.ID,
 			}
 			if errInfo := activity.ParseCourts(v.CourtsAndTime); errInfo != nil {
-				resultErrInfo = errInfo
+				if resultErrInfo == nil {
+					resultErrInfo = errInfo
+				} else {
+					resultErrInfo = resultErrInfo.Append(errInfo)
+				}
 				return
 			}
 			b.activities = append(b.activities, activity)
 		}
 	}
-	return nil
+
+	return
 }
 
 func (b *GetActivities) listMembers() (resultErrInfo errLogic.IError) {
@@ -164,7 +199,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errLogic.IError) {
 	arg := dbReqs.Activity{
 		ID: &b.ListMembersActivityID,
 	}
-	if dbDatas, err := database.Club.Activity.DatePlacePeopleLimit(arg); err != nil {
+	if dbDatas, err := database.Club.Activity.DatePlaceIDPeopleLimit(arg); err != nil {
 		resultErrInfo = errLogic.NewError(err)
 		return
 	} else if len(dbDatas) == 0 {
@@ -180,7 +215,19 @@ func (b *GetActivities) listMembers() (resultErrInfo errLogic.IError) {
 		v := dbDatas[0]
 		date = v.Date
 		peopleLimit = v.PeopleLimit
-		place = v.Place
+
+		if dbDatas, errInfo := rdsBadmintonplaceLogic.Load(v.PlaceID); errInfo != nil {
+			errInfo := errLogic.NewError(err)
+			if resultErrInfo == nil {
+				resultErrInfo = errInfo
+			} else {
+				resultErrInfo = resultErrInfo.Append(errInfo)
+			}
+		} else {
+			for _, v := range dbDatas {
+				place = v.Name
+			}
+		}
 	}
 
 	memberComponents := []interface{}{}
@@ -303,7 +350,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errLogic.IError) {
 	activityArg := dbReqs.Activity{
 		ID: util.GetIntP(b.LeaveActivityID),
 	}
-	if dbDatas, err := database.Club.Activity.DatePlacePeopleLimit(activityArg); err != nil {
+	if dbDatas, err := database.Club.Activity.DatePlaceIDPeopleLimit(activityArg); err != nil {
 		resultErrInfo = errLogic.NewError(err)
 		return
 	} else if len(dbDatas) == 0 {
@@ -311,8 +358,20 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errLogic.IError) {
 	} else {
 		v := dbDatas[0]
 		peopleLimit = v.PeopleLimit
-		activityPlace = v.Place
 		activityDate = &v.Date
+
+		if dbDatas, errInfo := rdsBadmintonplaceLogic.Load(v.PlaceID); errInfo != nil {
+			errInfo := errLogic.NewError(err)
+			if resultErrInfo == nil {
+				resultErrInfo = errInfo
+			} else {
+				resultErrInfo = resultErrInfo.Append(errInfo)
+			}
+		} else {
+			for _, v := range dbDatas {
+				activityPlace = v.Name
+			}
+		}
 	}
 
 	var notifyWaitingMemberID *int
@@ -824,10 +883,10 @@ func (b *GetActivities) GetActivitieInfoContents(activity *NewActivity) (content
 
 func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActivity, isShowCurrentMember bool) (contents []interface{}) {
 	courtHours := activity.getCourtHours()
-	totalBallConsume := domain.ESTIMATE_BALL_CONSUME_PER_HOUR * courtHours
-	estimateBallFee := totalBallConsume * domain.PRICE_PER_BALL
+	totalBallConsume := courtHours.MulFloat(float64(domain.ESTIMATE_BALL_CONSUME_PER_HOUR))
+	estimateBallFee := totalBallConsume.MulFloat(float64(domain.PRICE_PER_BALL))
 	courtFee := activity.getCourtFee()
-	estimateActivityFee := commonLogic.FloatPlus(estimateBallFee, courtFee)
+	estimateActivityFee := estimateBallFee.Plus(courtFee)
 	joinedCount := len(activity.JoinedMembers)
 	peopleLimit := 0
 	waitingCount := 0
@@ -856,7 +915,7 @@ func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActi
 				},
 			),
 			linebot.GetFlexMessageTextComponent(
-				fmt.Sprintf("%s顆", strconv.FormatFloat(totalBallConsume, 'f', -1, 64)),
+				fmt.Sprintf("%s顆", totalBallConsume.ToString(-1)),
 				&linebotModel.FlexMessageTextComponentOption{
 					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
 					Color: "#111111",
@@ -864,7 +923,7 @@ func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActi
 				},
 			),
 			linebot.GetFlexMessageTextComponent(
-				fmt.Sprintf("$%s", strconv.FormatFloat(estimateBallFee, 'f', -1, 64)),
+				fmt.Sprintf("$%s", estimateBallFee.ToString(-1)),
 				&linebotModel.FlexMessageTextComponentOption{
 					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
 					Color: "#111111",
@@ -883,7 +942,7 @@ func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActi
 				},
 			),
 			linebot.GetFlexMessageTextComponent(
-				fmt.Sprintf("$%s", strconv.FormatFloat(estimateActivityFee, 'f', -1, 64)),
+				fmt.Sprintf("$%s", estimateActivityFee.ToString(-1)),
 				&linebotModel.FlexMessageTextComponentOption{
 					Size:  linebotDomain.SM_FLEX_MESSAGE_SIZE,
 					Color: "#111111",
@@ -953,7 +1012,7 @@ func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActi
 
 	if activity.PeopleLimit != nil {
 		people := int(*activity.PeopleLimit)
-		_, clubMemberPay, guestPay := calculateActivityPay(people, totalBallConsume, courtFee, float64(activity.ClubSubsidy))
+		_, clubMemberPay, guestPay := calculateActivityPay(people, totalBallConsume, courtFee, util.ToFloat(float64(activity.ClubSubsidy)))
 		estimateBox.Contents = append(
 			estimateBox.Contents,
 			linebot.GetFlexMessageBoxComponent(

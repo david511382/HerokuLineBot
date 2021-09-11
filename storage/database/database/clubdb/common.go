@@ -7,6 +7,7 @@ import (
 	"heroku-line-bot/storage/database/database/clubdb/table/logistic"
 	"heroku-line-bot/storage/database/database/clubdb/table/member"
 	"heroku-line-bot/storage/database/database/clubdb/table/memberactivity"
+	"heroku-line-bot/storage/database/database/clubdb/table/place"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourt"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtexception"
 
@@ -26,5 +27,6 @@ func New(writeDb, readDb *gorm.DB) Database {
 		RentalCourt:          rentalcourt.New(writeDb, readDb),
 		RentalCourtException: rentalcourtexception.New(writeDb, readDb),
 		Logistic:             logistic.New(writeDb, readDb),
+		Place:                place.New(writeDb, readDb),
 	}
 }

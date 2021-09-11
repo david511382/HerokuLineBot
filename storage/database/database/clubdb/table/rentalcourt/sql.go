@@ -38,7 +38,7 @@ func (t RentalCourt) IDPlaceCourtsAndTimePricePerHour(arg reqs.RentalCourt) ([]*
 	dp := t.whereArg(t.Read, arg).Select(
 		`
 		id AS id,
-		place AS place,
+		place_id AS place_id,
 		courts_and_time AS courts_and_time,
 		price_per_hour AS price_per_hour
 		`,
@@ -54,7 +54,7 @@ func (t RentalCourt) IDPlaceCourtsAndTimePricePerHour(arg reqs.RentalCourt) ([]*
 
 func (t RentalCourt) GetRentalCourts(
 	fromDate, toDate time.Time,
-	place *string,
+	placeID *int,
 	weekday *int16,
 ) (
 	[]*resp.IDPlaceCourtsAndTimePricePerHourEverweekdayStartdateEnddate,
@@ -70,7 +70,7 @@ func (t RentalCourt) GetRentalCourts(
 			reqs.RentalCourt{
 				FromStartDate: &fromDate,
 				ToStartDate:   &toDate,
-				Place:         place,
+				PlaceID:       placeID,
 				EveryWeekday:  weekday,
 			},
 		),
@@ -80,7 +80,7 @@ func (t RentalCourt) GetRentalCourts(
 			reqs.RentalCourt{
 				FromEndDate:  &fromDate,
 				ToEndDate:    &toDate,
-				Place:        place,
+				PlaceID:      placeID,
 				EveryWeekday: weekday,
 			},
 		),
@@ -90,7 +90,7 @@ func (t RentalCourt) GetRentalCourts(
 			reqs.RentalCourt{
 				ToStartDate:  &fromDate,
 				FromEndDate:  &toDate,
-				Place:        place,
+				PlaceID:      placeID,
 				EveryWeekday: weekday,
 			},
 		),
@@ -99,7 +99,7 @@ func (t RentalCourt) GetRentalCourts(
 	dp = dp.Select(
 		`
 		id AS id,
-		place AS place,
+		place_id AS place_id,
 		courts_and_time AS courts_and_time,
 		price_per_hour AS price_per_hour,
 		every_weekday AS every_weekday,
@@ -118,7 +118,7 @@ func (t RentalCourt) GetRentalCourts(
 
 func (t RentalCourt) GetRentalCourtsWithPay(
 	fromDate, toDate time.Time,
-	place *string,
+	placeID *int,
 	weekday *int16,
 ) (
 	[]*resp.IDPlaceCourtsAndTimePricePerHourEverweekdayStartdateEnddateWithPay,
@@ -134,7 +134,7 @@ func (t RentalCourt) GetRentalCourtsWithPay(
 			reqs.RentalCourt{
 				FromStartDate: &fromDate,
 				ToStartDate:   &toDate,
-				Place:         place,
+				PlaceID:       placeID,
 				EveryWeekday:  weekday,
 			},
 		),
@@ -144,7 +144,7 @@ func (t RentalCourt) GetRentalCourtsWithPay(
 			reqs.RentalCourt{
 				FromEndDate:  &fromDate,
 				ToEndDate:    &toDate,
-				Place:        place,
+				PlaceID:      placeID,
 				EveryWeekday: weekday,
 			},
 		),
@@ -154,7 +154,7 @@ func (t RentalCourt) GetRentalCourtsWithPay(
 			reqs.RentalCourt{
 				ToStartDate:  &fromDate,
 				FromEndDate:  &toDate,
-				Place:        place,
+				PlaceID:      placeID,
 				EveryWeekday: weekday,
 			},
 		),
@@ -163,7 +163,7 @@ func (t RentalCourt) GetRentalCourtsWithPay(
 	dp = dp.Select(
 		`
 		id AS id,
-		place AS place,
+		place_id AS place_id,
 		deposit_date AS deposit_date,
 		balance_date AS balance_date,
 		deposit AS deposit,

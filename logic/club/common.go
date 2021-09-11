@@ -6,11 +6,9 @@ import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/logic/clublinebot/domain"
-	commonLogic "heroku-line-bot/logic/common"
 	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/storage/redis"
 	"heroku-line-bot/util"
-	"math"
 
 	errLogic "heroku-line-bot/logic/error"
 
@@ -209,23 +207,23 @@ func getDateTimeCmdFromJson(json string) domain.DateTimeCmd {
 	return domain.DateTimeCmd(cmdJs.String())
 }
 
-func calculateActivity(ballConsume, courtFee float64) (activityFee, ballFee float64) {
-	ballFee = ballConsume * domain.PRICE_PER_BALL
-	return commonLogic.FloatPlus(ballFee, courtFee), ballFee
+func calculateActivity(ballConsume, courtFee util.Float) (activityFee, ballFee util.Float) {
+	ballFee = ballConsume.MulFloat(float64(domain.PRICE_PER_BALL))
+	return ballFee.Plus(courtFee), ballFee
 }
 
-func calculateActivityPay(people int, ballConsume, courtFee, clubSubsidy float64) (activityFee float64, clubMemberFee, guestFee int) {
+func calculateActivityPay(people int, ballConsume, courtFee, clubSubsidy util.Float) (activityFee util.Float, clubMemberFee, guestFee int) {
 	activityFee, _ = calculateActivity(ballConsume, courtFee)
 	clubMemberFee, guestFee = calculatePay(people, activityFee, clubSubsidy)
 	return
 }
 
-func calculatePay(people int, activityFee, clubSubsidy float64) (clubMemberFee, guestFee int) {
-	shareMoney := commonLogic.FloatMinus(activityFee, clubSubsidy)
-
-	p := people * domain.MONEY_UNIT
-	clubMemberFee = int(math.Ceil(shareMoney/float64(p)) * domain.MONEY_UNIT)
-	guestFee = int(math.Ceil(activityFee/float64(p)) * domain.MONEY_UNIT)
+func calculatePay(people int, activityFee, clubSubsidy util.Float) (clubMemberFee, guestFee int) {
+	shareMoney := activityFee.Minus(clubSubsidy)
+	p := util.ToFloat(float64(people * domain.MONEY_UNIT))
+	pp := int(shareMoney.Div(p).ToInt())
+	clubMemberFee = pp * domain.MONEY_UNIT
+	guestFee = int(activityFee.Div(p).ToInt()) * domain.MONEY_UNIT
 	return
 }
 

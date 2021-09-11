@@ -12,7 +12,7 @@ type RentalCourtTable struct {
 	Balance       int        `gorm:"column:balance;type:int;not null"`
 	PricePerHour  float64    `gorm:"column:price_per_hour;type:decimal(4,1);not null"`
 	CourtsAndTime string     `gorm:"column:courts_and_time;type:varchar(200);not null"`
-	Place         string     `gorm:"column:place;type:varchar(50);not null"`
+	PlaceID       int        `gorm:"column:place_id;type:int;not null"`
 	EveryWeekday  int16      `gorm:"column:every_weekday;type:smallint;not null"`
 }
 
