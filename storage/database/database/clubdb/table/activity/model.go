@@ -5,7 +5,7 @@ import "time"
 type ActivityTable struct {
 	ID            int       `gorm:"column:id;type:serial;primary_key;not null"`
 	Date          time.Time `gorm:"column:date;type:date;not null;index"`
-	Place         string    `gorm:"column:place;type:varchar(50);not null"`
+	PlaceID       int       `gorm:"column:place_id;type:int;not null"`
 	CourtsAndTime string    `gorm:"column:courts_and_time;type:varchar(200);not null"`
 	MemberCount   int16     `gorm:"column:member_count;type:smallint;not null"`
 	GuestCount    int16     `gorm:"column:guest_count;type:smallint;not null"`

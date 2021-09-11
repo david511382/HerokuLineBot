@@ -16,7 +16,7 @@ func TestGetRentalCourts(t *testing.T) {
 	type args struct {
 		fromDate time.Time
 		toDate   time.Time
-		place    *string
+		place    *int
 		weekday  *int16
 	}
 	tests := []struct {
@@ -24,7 +24,7 @@ func TestGetRentalCourts(t *testing.T) {
 		args                          args
 		rentalCourtMigration          []*rentalcourt.RentalCourtTable
 		rentalCourtExceptionMigration []*rentalcourtexception.RentalCourtExceptionTable
-		wantPlaceDateIntActivityMap   map[string]map[int]*domain.Activity
+		wantPlaceDateIntActivityMap   map[int]map[int]*domain.Activity
 		wantErr                       bool
 	}{
 		{
@@ -40,6 +40,7 @@ func TestGetRentalCourts(t *testing.T) {
 					CourtsAndTime: "52-08:02~13:14",
 					EveryWeekday:  1,
 					PricePerHour:  0,
+					PlaceID:       1,
 				},
 				{
 					StartDate:     commonLogic.GetTime(2013, 5, 20),
@@ -47,6 +48,7 @@ func TestGetRentalCourts(t *testing.T) {
 					CourtsAndTime: "52-08:02~13:14",
 					EveryWeekday:  1,
 					PricePerHour:  0,
+					PlaceID:       1,
 				},
 				{
 					StartDate:     commonLogic.GetTime(2013, 1, 1),
@@ -54,6 +56,7 @@ func TestGetRentalCourts(t *testing.T) {
 					CourtsAndTime: "52-08:02~13:14",
 					EveryWeekday:  1,
 					PricePerHour:  0,
+					PlaceID:       1,
 				},
 				{
 					StartDate:     commonLogic.GetTime(2013, 5, 26),
@@ -61,6 +64,7 @@ func TestGetRentalCourts(t *testing.T) {
 					CourtsAndTime: "52-08:02~13:14",
 					EveryWeekday:  0,
 					PricePerHour:  0,
+					PlaceID:       1,
 				},
 				{
 					StartDate:     commonLogic.GetTime(2013, 5, 26),
@@ -68,6 +72,7 @@ func TestGetRentalCourts(t *testing.T) {
 					CourtsAndTime: "52-08:02~13:14",
 					EveryWeekday:  0,
 					PricePerHour:  0,
+					PlaceID:       1,
 				},
 				// false
 				{
@@ -76,6 +81,7 @@ func TestGetRentalCourts(t *testing.T) {
 					CourtsAndTime: "52-08:02~13:14",
 					EveryWeekday:  0,
 					PricePerHour:  0,
+					PlaceID:       1,
 				},
 				{
 					StartDate:     commonLogic.GetTime(2013, 5, 27),
@@ -83,11 +89,12 @@ func TestGetRentalCourts(t *testing.T) {
 					CourtsAndTime: "52-08:02~13:14",
 					EveryWeekday:  1,
 					PricePerHour:  0,
+					PlaceID:       1,
 				},
 			},
 			[]*rentalcourtexception.RentalCourtExceptionTable{},
-			map[string]map[int]*domain.Activity{
-				"": {
+			map[int]map[int]*domain.Activity{
+				1: {
 					20130520: {
 						Courts: []*domain.ActivityCourt{
 							{
@@ -146,6 +153,7 @@ func TestGetRentalCourts(t *testing.T) {
 					CourtsAndTime: "52-08:02~13:14",
 					EveryWeekday:  5,
 					PricePerHour:  0,
+					PlaceID:       1,
 				},
 			},
 			[]*rentalcourtexception.RentalCourtExceptionTable{
@@ -161,8 +169,8 @@ func TestGetRentalCourts(t *testing.T) {
 					ReasonType:    int16(domain.EXCLUDE_REASON_TYPE),
 				},
 			},
-			map[string]map[int]*domain.Activity{
-				"": {
+			map[int]map[int]*domain.Activity{
+				1: {
 					20130802: {
 						Courts: []*domain.ActivityCourt{},
 						CancelCourts: []*domain.CancelCourt{
@@ -209,7 +217,7 @@ func TestGetRentalCourtsWithPay(t *testing.T) {
 	type args struct {
 		fromDate time.Time
 		toDate   time.Time
-		place    *string
+		place    *int
 		weekday  *int16
 	}
 	tests := []struct {
@@ -217,7 +225,7 @@ func TestGetRentalCourtsWithPay(t *testing.T) {
 		args                          args
 		rentalCourtMigration          []*rentalcourt.RentalCourtTable
 		rentalCourtExceptionMigration []*rentalcourtexception.RentalCourtExceptionTable
-		wantPlaceActivityPayMap       map[string][]*domain.ActivityPay
+		wantPlaceActivityPayMap       map[int][]*domain.ActivityPay
 		wantErr                       bool
 	}{
 		{
@@ -234,7 +242,7 @@ func TestGetRentalCourtsWithPay(t *testing.T) {
 					CourtsAndTime: "52-08:02~13:14",
 					EveryWeekday:  5,
 					PricePerHour:  0,
-					Place:         "S",
+					PlaceID:       1,
 					DepositDate:   commonLogic.GetTimeP(2013, 8, 1),
 					BalanceDate:   commonLogic.GetTimeP(2013, 8, 31),
 					Deposit:       5282,
@@ -257,8 +265,8 @@ func TestGetRentalCourtsWithPay(t *testing.T) {
 					Refund:        0,
 				},
 			},
-			map[string][]*domain.ActivityPay{
-				"S": {
+			map[int][]*domain.ActivityPay{
+				1: {
 					{
 						DateCourtMap: map[int]*domain.ActivityPayCourt{
 							20130802: {

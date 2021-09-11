@@ -27,8 +27,8 @@ func (t Activity) whereArg(dp *gorm.DB, arg reqs.Activity) *gorm.DB {
 		dp = dp.Where("id = ?", p)
 	}
 
-	if p := arg.Place; p != nil {
-		dp = dp.Where("place = ?", p)
+	if p := arg.PlaceID; p != nil {
+		dp = dp.Where("place_id = ?", p)
 	}
 
 	if p := arg.ClubSubsidyNotEqual; p != nil {

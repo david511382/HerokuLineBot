@@ -71,7 +71,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 				courts := b.combineCourts(courtData.Courts)
 				newActivityHandler := &clubLogic.NewActivity{
 					Date:        date,
-					Place:       place,
+					PlaceID:     place,
 					Description: rdsSetting.Description,
 					ClubSubsidy: rdsSetting.ClubSubsidy,
 					IsComplete:  false,

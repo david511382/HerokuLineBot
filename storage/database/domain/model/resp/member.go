@@ -20,7 +20,7 @@ type IDNameLineID struct {
 	ID int
 }
 
-type IDName struct {
+type MemberIDName struct {
 	ID   int
 	Name string
 }
@@ -37,7 +37,7 @@ type IDDepartment struct {
 }
 
 type IDNameDepartmentJoinDate struct {
-	IDName
+	MemberIDName
 	Department string
 	JoinDate   *time.Time
 }

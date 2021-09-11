@@ -2,14 +2,14 @@ package resp
 
 import "time"
 
-type DatePlacePeopleLimit struct {
+type DatePlaceIDPeopleLimit struct {
 	Date        time.Time
-	Place       string
+	PlaceID     int
 	PeopleLimit *int16
 }
 
-type IDDatePlaceCourtsSubsidyDescriptionPeopleLimit struct {
-	DatePlacePeopleLimit
+type IDDatePlaceIDCourtsSubsidyDescriptionPeopleLimit struct {
+	DatePlaceIDPeopleLimit
 	ID            int
 	CourtsAndTime string
 	ClubSubsidy   int16

@@ -14,7 +14,7 @@ func TestRentalCourt_GetRentalCourts(t *testing.T) {
 	type args struct {
 		fromDate time.Time
 		toDate   time.Time
-		place    *string
+		placeID  *int
 		weekday  *int16
 	}
 	tests := []struct {
@@ -33,88 +33,88 @@ func TestRentalCourt_GetRentalCourts(t *testing.T) {
 					ID:        1,
 					StartDate: util.GetUTCTime(2013, 5, 19),
 					EndDate:   util.GetUTCTime(2013, 5, 27),
-					Place:     "",
+					PlaceID:   1,
 				},
 				{
 					ID:        2,
 					StartDate: util.GetUTCTime(2013, 5, 20),
 					EndDate:   util.GetUTCTime(2013, 5, 20),
-					Place:     "",
+					PlaceID:   1,
 				},
 				{
 					ID:        3,
 					StartDate: util.GetUTCTime(2013, 1, 1),
 					EndDate:   util.GetUTCTime(2013, 5, 20),
-					Place:     "",
+					PlaceID:   1,
 				},
 				{
 					ID:        4,
 					StartDate: util.GetUTCTime(2013, 5, 26),
 					EndDate:   util.GetUTCTime(2013, 5, 26),
-					Place:     "",
+					PlaceID:   1,
 				},
 				{
 					ID:        5,
 					StartDate: util.GetUTCTime(2013, 5, 26),
 					EndDate:   util.GetUTCTime(2013, 12, 31),
-					Place:     "",
+					PlaceID:   1,
 				},
 				// false
 				{
 					ID:        6,
 					StartDate: util.GetUTCTime(2013, 1, 1),
 					EndDate:   util.GetUTCTime(2013, 5, 19),
-					Place:     "",
+					PlaceID:   1,
 				},
 				{
 					ID:        7,
 					StartDate: util.GetUTCTime(2013, 5, 27),
 					EndDate:   util.GetUTCTime(2013, 12, 31),
-					Place:     "",
+					PlaceID:   1,
 				},
 			},
 			args{
 				fromDate: util.GetUTCTime(2013, 5, 20),
 				toDate:   util.GetUTCTime(2013, 5, 26),
-				place:    nil,
+				placeID:  nil,
 			},
 			[]*resp.IDPlaceCourtsAndTimePricePerHourEverweekdayStartdateEnddate{
 				{
 					IDPlaceCourtsAndTimePricePerHour: resp.IDPlaceCourtsAndTimePricePerHour{
-						ID:    1,
-						Place: "",
+						ID:      1,
+						PlaceID: 1,
 					},
 					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 5, 19)),
 					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 5, 27)),
 				},
 				{
 					IDPlaceCourtsAndTimePricePerHour: resp.IDPlaceCourtsAndTimePricePerHour{
-						ID:    2,
-						Place: "",
+						ID:      2,
+						PlaceID: 1,
 					},
 					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 5, 20)),
 					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 5, 20)),
 				},
 				{
 					IDPlaceCourtsAndTimePricePerHour: resp.IDPlaceCourtsAndTimePricePerHour{
-						ID:    3,
-						Place: "",
+						ID:      3,
+						PlaceID: 1,
 					},
 					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 1, 1)),
 					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 5, 20)),
 				},
 				{
 					IDPlaceCourtsAndTimePricePerHour: resp.IDPlaceCourtsAndTimePricePerHour{
-						ID:    4,
-						Place: "",
+						ID:      4,
+						PlaceID: 1,
 					},
 					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 5, 26)),
 					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 5, 26)),
 				},
 				{
 					IDPlaceCourtsAndTimePricePerHour: resp.IDPlaceCourtsAndTimePricePerHour{
-						ID:    5,
-						Place: "",
+						ID:      5,
+						PlaceID: 1,
 					},
 					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 5, 26)),
 					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 12, 31)),
@@ -123,33 +123,33 @@ func TestRentalCourt_GetRentalCourts(t *testing.T) {
 			false,
 		},
 		{
-			"place",
+			"placeID",
 			db,
 			[]*RentalCourtTable{
 				{
 					ID:        1,
 					StartDate: util.GetUTCTime(2013, 4, 2),
 					EndDate:   util.GetUTCTime(2013, 5, 2),
-					Place:     "a",
+					PlaceID:   1,
 				},
 				// false
 				{
 					ID:        2,
 					StartDate: util.GetUTCTime(2013, 6, 2),
 					EndDate:   util.GetUTCTime(2013, 7, 2),
-					Place:     "b",
+					PlaceID:   2,
 				},
 			},
 			args{
 				fromDate: util.GetUTCTime(2013, 5, 2),
 				toDate:   util.GetUTCTime(2013, 8, 2),
-				place:    util.GetStringP("a"),
+				placeID:  util.GetIntP(1),
 			},
 			[]*resp.IDPlaceCourtsAndTimePricePerHourEverweekdayStartdateEnddate{
 				{
 					IDPlaceCourtsAndTimePricePerHour: resp.IDPlaceCourtsAndTimePricePerHour{
-						ID:    1,
-						Place: "a",
+						ID:      1,
+						PlaceID: 1,
 					},
 					StartDate: common.NewLocalTime(util.GetUTCTime(2013, 4, 2)),
 					EndDate:   common.NewLocalTime(util.GetUTCTime(2013, 5, 2)),
@@ -164,7 +164,7 @@ func TestRentalCourt_GetRentalCourts(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			got, err := tt.tr.GetRentalCourts(tt.args.fromDate, tt.args.toDate, tt.args.place, tt.args.weekday)
+			got, err := tt.tr.GetRentalCourts(tt.args.fromDate, tt.args.toDate, tt.args.placeID, tt.args.weekday)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RentalCourt.GetRentalCourts() error = %v, wantErr %v", err, tt.wantErr)
 				return

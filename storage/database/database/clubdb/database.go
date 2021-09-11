@@ -7,6 +7,7 @@ import (
 	"heroku-line-bot/storage/database/database/clubdb/table/logistic"
 	"heroku-line-bot/storage/database/database/clubdb/table/member"
 	"heroku-line-bot/storage/database/database/clubdb/table/memberactivity"
+	"heroku-line-bot/storage/database/database/clubdb/table/place"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourt"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtexception"
 )
@@ -20,4 +21,5 @@ type Database struct {
 	RentalCourt          rentalcourt.RentalCourt
 	RentalCourtException rentalcourtexception.RentalCourtException
 	Logistic             logistic.Logistic
+	Place                place.Place
 }

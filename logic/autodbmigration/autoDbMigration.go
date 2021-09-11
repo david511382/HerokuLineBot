@@ -15,6 +15,7 @@ func MigrationNotExist() errLogic.IError {
 		database.Club.RentalCourt.BaseTable,
 		database.Club.RentalCourtException.BaseTable,
 		database.Club.Logistic.BaseTable,
+		database.Club.Place.BaseTable,
 	}
 	for _, table := range tables {
 		if !table.IsExist() {

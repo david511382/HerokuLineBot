@@ -6,7 +6,7 @@ import (
 
 type IDPlaceCourtsAndTimePricePerHour struct {
 	ID            int
-	Place         string
+	PlaceID       int
 	CourtsAndTime string
 	PricePerHour  float64
 }

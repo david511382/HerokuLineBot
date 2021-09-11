@@ -3,9 +3,9 @@ package reqs
 import "time"
 
 type RentalCourt struct {
-	ID    *int
-	IDs   []int
-	Place *string
+	ID      *int
+	IDs     []int
+	PlaceID *int
 
 	StartDate       *time.Time
 	FromStartDate   *time.Time

@@ -83,7 +83,7 @@ func (b *submitActivity) init() (resultErrInfo errLogic.IError) {
 	arg := dbReqs.Activity{
 		ID: util.GetIntP(b.ActivityID),
 	}
-	if dbDatas, err := database.Club.Activity.IDDatePlaceCourtsSubsidyDescriptionPeopleLimit(arg); err != nil {
+	if dbDatas, err := database.Club.Activity.IDDatePlaceIDCourtsSubsidyDescriptionPeopleLimit(arg); err != nil {
 		resultErrInfo = errLogic.NewError(err)
 		return
 	} else if len(dbDatas) == 0 {
@@ -94,7 +94,7 @@ func (b *submitActivity) init() (resultErrInfo errLogic.IError) {
 		b.NewActivity = NewActivity{
 			Context:     context,
 			Date:        v.Date,
-			Place:       v.Place,
+			PlaceID:     v.PlaceID,
 			Description: v.Description,
 			PeopleLimit: v.PeopleLimit,
 			ClubSubsidy: v.ClubSubsidy,

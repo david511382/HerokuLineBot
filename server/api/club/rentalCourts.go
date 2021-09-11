@@ -6,6 +6,7 @@ import (
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	errLogic "heroku-line-bot/logic/error"
+	rdsBadmintonplaceLogic "heroku-line-bot/logic/redis/badmintonplace"
 	"heroku-line-bot/server/common"
 	"heroku-line-bot/server/domain/reqs"
 	"heroku-line-bot/server/domain/resp"
@@ -56,11 +57,21 @@ func GetRentalCourts(c *gin.Context) {
 		return
 	}
 
+	placeIDs := make([]int, 0)
+	for placeID := range placeActivityPaysMap {
+		placeIDs = append(placeIDs, placeID)
+	}
+	idPlaceMap, errInfo := rdsBadmintonplaceLogic.Load(placeIDs...)
+	if errInfo != nil && errInfo.IsError() {
+		common.FailInternal(c, errInfo)
+		return
+	}
+
 	dateIntPlaceMap := make(map[int]map[string]bool)
 	dateIntCourtsMap := make(map[int][]*resp.GetRentalCourtsDayCourtsInfo)
 	notPayDateIntCourtsMap := make(map[int][]*resp.GetRentalCourtsCourtInfo)
 	notRefundDateIntCourtsMap := make(map[int][]*resp.GetRentalCourtsCourtInfo)
-	for place, activityPays := range placeActivityPaysMap {
+	for placeID, activityPays := range placeActivityPaysMap {
 		for _, activityPay := range activityPays {
 			isPay := activityPay.BalanceDate != nil
 			for dateInt, dayCourts := range activityPay.DateCourtMap {
@@ -75,6 +86,7 @@ func GetRentalCourts(c *gin.Context) {
 					reasonMessage = clubCourtLogic.ReasonMessage(*dayCourts.CancelReason)
 				}
 
+				place := idPlaceMap[placeID].Name
 				info := resp.GetRentalCourtsCourtInfo{
 					Place:    place,
 					FromTime: court.FromTime,
