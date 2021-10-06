@@ -221,9 +221,9 @@ func calculateActivityPay(people int, ballConsume, courtFee, clubSubsidy util.Fl
 func calculatePay(people int, activityFee, clubSubsidy util.Float) (clubMemberFee, guestFee int) {
 	shareMoney := activityFee.Minus(clubSubsidy)
 	p := util.ToFloat(float64(people * domain.MONEY_UNIT))
-	pp := int(shareMoney.Div(p).ToInt())
+	pp := int(shareMoney.Div(p).Ceil().ToInt())
 	clubMemberFee = pp * domain.MONEY_UNIT
-	guestFee = int(activityFee.Div(p).ToInt()) * domain.MONEY_UNIT
+	guestFee = int(activityFee.Div(p).Ceil().ToInt()) * domain.MONEY_UNIT
 	return
 }
 
