@@ -82,7 +82,10 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 				for _, court := range newActivityHandler.Courts {
 					totalCourtCount += int(court.Count)
 				}
-				peopleLimit := int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2)
+				peopleLimit := rdsSetting.PeopleLimit
+				if rdsSetting.PeopleLimit == 0 {
+					peopleLimit = int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2)
+				}
 
 				newActivityHandler.PeopleLimit = util.GetInt16P(peopleLimit)
 
