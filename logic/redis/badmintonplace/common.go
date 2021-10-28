@@ -10,9 +10,12 @@ import (
 	"strconv"
 )
 
-// empty: reload all
-func Load(ids ...int) (resultIDMap map[int]*storageModel.BadmintonPlace, resultErrInfo errLogic.IError) {
-	resultIDMap = make(map[int]*storageModel.BadmintonPlace)
+func Load(ids ...int) (placeIDMap map[int]*storageModel.BadmintonPlace, resultErrInfo errLogic.IError) {
+	if len(ids) == 0 {
+		return
+	}
+
+	placeIDMap = make(map[int]*storageModel.BadmintonPlace)
 
 	idStrs := make([]string, 0)
 	for _, v := range ids {
@@ -42,7 +45,7 @@ func Load(ids ...int) (resultIDMap map[int]*storageModel.BadmintonPlace, resultE
 			return
 		}
 
-		resultIDMap[ids[i]] = result
+		placeIDMap[ids[i]] = result
 	}
 
 	if len(reLoadIDs) > 0 ||
@@ -58,7 +61,7 @@ func Load(ids ...int) (resultIDMap map[int]*storageModel.BadmintonPlace, resultE
 				result := &storageModel.BadmintonPlace{
 					Name: v.Name,
 				}
-				resultIDMap[v.ID] = result
+				placeIDMap[v.ID] = result
 
 				if bs, err := json.Marshal(result); err != nil {
 					errInfo := errLogic.NewError(err, errLogic.WARN)

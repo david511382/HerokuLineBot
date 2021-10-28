@@ -57,6 +57,11 @@ func GetRentalCourts(c *gin.Context) {
 		return
 	}
 
+	if len(placeActivityPaysMap) == 0 {
+		common.Success(c, result)
+		return
+	}
+
 	placeIDs := make([]int, 0)
 	for placeID := range placeActivityPaysMap {
 		placeIDs = append(placeIDs, placeID)
