@@ -8,7 +8,6 @@ import (
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	"time"
 
-	dbLogicDomain "heroku-line-bot/logic/database/domain"
 	errLogic "heroku-line-bot/logic/error"
 	rdsBadmintonplaceLogic "heroku-line-bot/logic/redis/badmintonplace"
 	"heroku-line-bot/server/common"
@@ -87,7 +86,7 @@ func GetRentalCourts(c *gin.Context) {
 			var status clubCourtLogicDomain.RentalCourtsStatus
 			var refundDate *time.Time
 			if isRefund {
-				reasonMessage = clubCourtLogic.ReasonMessage(dbLogicDomain.CANCEL_REASON_TYPE)
+				reasonMessage = "取消"
 				isPay := court.Refund.Income != nil
 				status = clubCourtLogic.GetStatus(isPay, isRefund)
 

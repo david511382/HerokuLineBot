@@ -2,18 +2,7 @@ package court
 
 import (
 	"heroku-line-bot/logic/club/court/domain"
-	dbLogicDomain "heroku-line-bot/logic/database/domain"
-	dbDomain "heroku-line-bot/storage/database/domain"
 )
-
-func ReasonMessage(cancelReason dbDomain.ReasonType) string {
-	switch cancelReason {
-	case dbLogicDomain.CANCEL_REASON_TYPE:
-		return "取消"
-	default:
-		return ""
-	}
-}
 
 func GetStatus(isPay, isRefund bool) domain.RentalCourtsStatus {
 	if isRefund {
