@@ -2,6 +2,7 @@ package club
 
 import (
 	"fmt"
+	"heroku-line-bot/global"
 	courtDomain "heroku-line-bot/logic/club/court/domain"
 	"heroku-line-bot/logic/club/domain"
 	commonLogic "heroku-line-bot/logic/common"
@@ -25,7 +26,7 @@ import (
 
 type NewActivity struct {
 	Context     domain.ICmdHandlerContext    `json:"-"`
-	Date        time.Time                    `json:"date"`
+	Date        commonLogic.DateTime         `json:"date"`
 	PlaceID     int                          `json:"place_id"`
 	Description string                       `json:"description"`
 	PeopleLimit *int16                       `json:"people_limit"`
@@ -35,10 +36,10 @@ type NewActivity struct {
 }
 
 func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
-	nowTime := commonLogic.TimeUtilObj.Now()
+	nowTime := global.TimeUtilObj.Now()
 	*b = NewActivity{
 		Context:     context,
-		Date:        util.DateOf(nowTime),
+		Date:        commonLogic.DateTime(util.DateOf(nowTime)),
 		PlaceID:     1,
 		Description: "7人出團",
 		IsComplete:  false,
@@ -66,7 +67,7 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 func (b *NewActivity) GetSingleParam(attr string) string {
 	switch attr {
 	case "date":
-		return b.Date.Format(commonLogicDomain.DATE_FORMAT)
+		return b.Date.Time().Format(commonLogicDomain.DATE_FORMAT)
 	case "ICmdLogic.place_id":
 		if dbDatas, errInfo := rdsBadmintonplaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
 			for _, v := range dbDatas {
@@ -99,7 +100,7 @@ func (b *NewActivity) LoadSingleParam(attr, text string) (resultErrInfo errLogic
 			resultErrInfo = errLogic.NewError(err)
 			return
 		}
-		b.Date = t
+		b.Date = commonLogic.DateTime(t)
 	case "ICmdLogic.place_id":
 		if dbDatas, err := database.Club.Place.IDName(dbReqs.Place{
 			Name: &text,
@@ -331,7 +332,7 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errLog
 	}
 
 	data := &activityDb.ActivityTable{
-		Date:          b.Date,
+		Date:          b.Date.Time(),
 		PlaceID:       b.PlaceID,
 		CourtsAndTime: courtsStr,
 		ClubSubsidy:   b.ClubSubsidy,
@@ -369,8 +370,8 @@ func (b *NewActivity) getPlaceTimeTemplate() (result []interface{}) {
 
 	minTime, maxTime := b.getCourtTimeRange()
 	valueText := fmt.Sprintf("%s(%s) %s~%s",
-		b.Date.Format(commonLogicDomain.DATE_FORMAT),
-		commonLogic.WeekDayName(b.Date.Weekday()),
+		b.Date.Time().Format(commonLogicDomain.DATE_FORMAT),
+		commonLogic.WeekDayName(b.Date.Time().Weekday()),
 		minTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
 		maxTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
 	)
@@ -390,7 +391,7 @@ func (b *NewActivity) getPlaceTimeTemplate() (result []interface{}) {
 
 func (b *NewActivity) getLineComponents(actions domain.NewActivityLineTemplate) (result []interface{}) {
 	result = []interface{}{}
-	valueText := fmt.Sprintf("%s(%s)", b.Date.Format(commonLogicDomain.DATE_FORMAT), commonLogic.WeekDayName(b.Date.Weekday()))
+	valueText := fmt.Sprintf("%s(%s)", b.Date.Time().Format(commonLogicDomain.DATE_FORMAT), commonLogic.WeekDayName(b.Date.Time().Weekday()))
 	valueTextSize := linebotDomain.MD_FLEX_MESSAGE_SIZE
 	result = append(result,
 		GetKeyValueEditComponent(

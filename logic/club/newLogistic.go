@@ -2,6 +2,7 @@ package club
 
 import (
 	"fmt"
+	"heroku-line-bot/global"
 	"heroku-line-bot/logic/club/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
@@ -28,7 +29,7 @@ type NewLogistic struct {
 }
 
 func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
-	nowTime := commonLogic.TimeUtilObj.Now()
+	nowTime := global.TimeUtilObj.Now()
 	*b = NewLogistic{
 		Context:     context,
 		Date:        util.DateOf(nowTime),

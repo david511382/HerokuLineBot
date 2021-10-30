@@ -23,6 +23,13 @@ func (t Income) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
 func (t Income) whereArg(dp *gorm.DB, arg reqs.Income) *gorm.DB {
 	dp = dp.Model(t.GetTable())
 
+	if p := arg.ID; p != nil {
+		dp = dp.Where("id = ?", p)
+	}
+	if p := arg.IDs; len(p) > 0 {
+		dp = dp.Where("id IN (?)", p)
+	}
+
 	if p := arg.Type; p != nil {
 		dp = dp.Where("type = ?", p)
 	}

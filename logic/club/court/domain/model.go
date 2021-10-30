@@ -1,7 +1,7 @@
 package domain
 
 import (
-	dbLogicDomain "heroku-line-bot/logic/database/domain"
+	dbDomain "heroku-line-bot/storage/database/domain"
 	"time"
 )
 
@@ -13,7 +13,7 @@ type ActivityPay struct {
 
 type ActivityPayCourt struct {
 	Court        ActivityCourt
-	CancelReason *dbLogicDomain.ReasonType
+	CancelReason *dbDomain.ReasonType
 	RefundDate   *time.Time
 	Refund       int
 }
@@ -25,11 +25,11 @@ type Activity struct {
 
 type CancelCourt struct {
 	Court        ActivityCourt
-	CancelReason dbLogicDomain.ReasonType
+	CancelReason dbDomain.ReasonType
 }
 
 type TmpCancelActivity struct {
-	CancelReason dbLogicDomain.ReasonType
+	CancelReason dbDomain.ReasonType
 	RefundDate   *time.Time
 	Refund       int
 }

@@ -63,3 +63,10 @@ func LevelName(level ErrorLevel) string {
 	}
 	return ""
 }
+
+func Append(result, errInfo IError) IError {
+	if result == nil {
+		return errInfo
+	}
+	return result.Append(errInfo)
+}

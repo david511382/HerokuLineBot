@@ -1,293 +1,222 @@
 package court
 
 import (
-	"fmt"
-	"heroku-line-bot/logic/club/court/domain"
 	commonLogic "heroku-line-bot/logic/common"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
-	dbLogicDomain "heroku-line-bot/logic/database/domain"
+
 	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/storage/database"
+	dbDomain "heroku-line-bot/storage/database/domain"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
-	"heroku-line-bot/util"
-	"strings"
-	"time"
 )
 
-func GetRentalCourts(
-	fromDate, toDate time.Time,
+func GetCourts(
+	fromDate, toDate commonLogic.DateTime,
 	placeID *int,
-	weekday *int16,
 ) (
-	placeDateIntActivityMap map[int]map[int]*domain.Activity,
+	placeCourtsMap map[int][]*Court,
 	resultErrInfo errLogic.IError,
 ) {
-	placeDateIntActivityMap = make(map[int]map[int]*domain.Activity)
-	if dbDatas, err := database.Club.RentalCourt.GetRentalCourts(
-		fromDate,
-		toDate,
-		placeID,
-		weekday,
-	); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+	placeCourtsMap = make(map[int][]*Court)
+
+	courtIDs := make([]int, 0)
+	courtIDMap := make(map[int]*Court)
+	if dbDatas, err := database.Club.RentalCourt.All(dbReqs.RentalCourt{
+		Date: dbReqs.Date{
+			FromDate: fromDate.TimeP(),
+			ToDate:   toDate.TimeP(),
+		},
+		PlaceID: placeID,
+	}); err != nil {
+		resultErrInfo = errLogic.Append(resultErrInfo, errLogic.NewError(err))
 		return
 	} else {
-		ids := []int{}
 		for _, v := range dbDatas {
-			ids = append(ids, v.ID)
-		}
+			placeID := v.PlaceID
 
-		rentalIDDateReasonMap := make(map[int]map[int]*dbLogicDomain.ReasonType)
-		if len(ids) > 0 {
-			arg := dbReqs.RentalCourtException{
-				RentalCourtIDs:  ids,
-				FromExcludeDate: &fromDate,
-				ToExcludeDate:   &toDate,
+			court := &Court{
+				ID:   v.ID,
+				Date: commonLogic.DateTime(v.Date),
 			}
-			if dbDatas, err := database.Club.RentalCourtException.RentalCourtIDExcludeDateReason(arg); err != nil {
-				resultErrInfo = errLogic.NewError(err)
-				return
-			} else {
-				for _, v := range dbDatas {
-					id := v.ID.ID
-					dateInt := commonLogic.TimeInt(v.ExcludeDate.Time(), commonLogicDomain.DATE_TIME_TYPE)
-					if rentalIDDateReasonMap[id] == nil {
-						rentalIDDateReasonMap[id] = make(map[int]*dbLogicDomain.ReasonType)
-					}
-					reasonType := dbLogicDomain.ReasonType(v.ReasonType)
-					rentalIDDateReasonMap[id][dateInt] = &reasonType
-				}
-			}
-		}
+			courtIDMap[v.ID] = court
 
-		for _, v := range dbDatas {
-			startDate := v.StartDate.Time()
-			endDate := v.EndDate.Time()
-			if startDate.Before(fromDate) {
-				startDate = fromDate
+			if placeCourtsMap[placeID] == nil {
+				placeCourtsMap[placeID] = make([]*Court, 0)
 			}
-			if endDate.After(toDate) {
-				endDate = toDate
-			}
-			fromDate, toDate := getDateRangeInEveryWeekday(startDate, endDate, int(v.EveryWeekday))
-			beforeDate := commonLogicDomain.DATE_TIME_TYPE.Next1(toDate)
-			dateInts := make([]int, 0)
-			commonLogic.TimeSlice(
-				fromDate, beforeDate,
-				commonLogicDomain.WEEK_TIME_TYPE.Next1,
-				func(runTime, next time.Time) bool {
-					dateInt := commonLogic.TimeInt(runTime, commonLogicDomain.DATE_TIME_TYPE)
-					dateInts = append(dateInts, dateInt)
-					return true
-				},
-			)
+			placeCourtsMap[placeID] = append(placeCourtsMap[placeID], court)
 
-			court, err := parseCourts(v.CourtsAndTime, v.PricePerHour)
-			if err != nil {
-				resultErrInfo = errLogic.NewError(err)
-				return
-			}
-
-			for _, dateInt := range dateInts {
-				var cancelReason *dbLogicDomain.ReasonType
-				isCancel := rentalIDDateReasonMap[v.ID] != nil && rentalIDDateReasonMap[v.ID][dateInt] != nil
-				if isCancel {
-					cancelReason = rentalIDDateReasonMap[v.ID][dateInt]
-					if *cancelReason == domain.EXCLUDE_REASON_TYPE {
-						continue
-					}
-				}
-
-				if placeDateIntActivityMap[v.PlaceID] == nil {
-					placeDateIntActivityMap[v.PlaceID] = make(map[int]*domain.Activity)
-				}
-				if placeDateIntActivityMap[v.PlaceID][dateInt] == nil {
-					placeDateIntActivityMap[v.PlaceID][dateInt] = &domain.Activity{
-						Courts:       make([]*domain.ActivityCourt, 0),
-						CancelCourts: make([]*domain.CancelCourt, 0),
-					}
-				}
-				m := placeDateIntActivityMap[v.PlaceID][dateInt]
-
-				c := *court
-				if cancelReason != nil {
-					m.CancelCourts = append(m.CancelCourts, &domain.CancelCourt{
-						Court:        c,
-						CancelReason: *cancelReason,
-					})
-				} else {
-					m.Courts = append(m.Courts, &c)
-				}
-			}
+			courtIDs = append(courtIDs, v.ID)
 		}
 	}
 
-	return
-}
+	if len(courtIDs) == 0 {
+		return
+	}
 
-func GetRentalCourtsWithPay(
-	fromDate, toDate time.Time,
-	placeID *int,
-	weekday *int16,
-) (
-	placeActivityPaysMap map[int][]*domain.ActivityPay,
-	resultErrInfo errLogic.IError,
-) {
-	placeActivityPaysMap = make(map[int][]*domain.ActivityPay)
-	if dbDatas, err := database.Club.RentalCourt.GetRentalCourtsWithPay(
-		fromDate,
-		toDate,
-		placeID,
-		weekday,
-	); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+	ledgerIDs := make([]int, 0)
+	ledgerCourtMap := make(map[int][]int)
+	courtLedgerMap := make(map[int][]int)
+	if dbDatas, err := database.Club.RentalCourtLedgerCourt.All(dbReqs.RentalCourtLedgerCourt{
+		RentalCourtIDs: courtIDs,
+	}); err != nil {
+		resultErrInfo = errLogic.Append(resultErrInfo, errLogic.NewError(err))
 		return
 	} else {
-		ids := []int{}
 		for _, v := range dbDatas {
-			ids = append(ids, v.ID)
+			if ledgerCourtMap[v.RentalCourtLedgerID] == nil {
+				ledgerCourtMap[v.RentalCourtLedgerID] = make([]int, 0)
+			}
+			ledgerCourtMap[v.RentalCourtLedgerID] = append(ledgerCourtMap[v.RentalCourtLedgerID], v.RentalCourtID)
+
+			if courtLedgerMap[v.RentalCourtID] == nil {
+				courtLedgerMap[v.RentalCourtID] = make([]int, 0)
+			}
+			courtLedgerMap[v.RentalCourtID] = append(courtLedgerMap[v.RentalCourtID], v.RentalCourtLedgerID)
 		}
 
-		rentalIDDateCancelActivityMap := make(map[int]map[int]*domain.TmpCancelActivity)
-		if len(ids) > 0 {
-			arg := dbReqs.RentalCourtException{
-				RentalCourtIDs:  ids,
-				FromExcludeDate: &fromDate,
-				ToExcludeDate:   &toDate,
+		for ledgerID := range ledgerCourtMap {
+			ledgerIDs = append(ledgerIDs, ledgerID)
+		}
+	}
+
+	incomeIDs := make([]int, 0)
+	detailIDLedgerIDsMap := make(map[int][]int)
+	incomeIDCourtIDsMap := make(map[int][]int)
+	incomeIDTypeMap := make(map[int]dbDomain.PayType)
+	ledgerIDTypeMap := make(map[int]dbDomain.PayType)
+	if dbDatas, err := database.Club.RentalCourtLedger.All(dbReqs.RentalCourtLedger{
+		IDs: ledgerIDs,
+	}); err != nil {
+		resultErrInfo = errLogic.Append(resultErrInfo, errLogic.NewError(err))
+		return
+	} else {
+		for _, v := range dbDatas {
+			ledgerID := v.ID
+			detailID := v.RentalCourtDetailID
+			t := dbDomain.PayType(v.Type)
+			courtIDs := ledgerCourtMap[ledgerID]
+
+			ledgerIDTypeMap[ledgerID] = t
+
+			if detailIDLedgerIDsMap[detailID] == nil {
+				detailIDLedgerIDsMap[detailID] = make([]int, 0)
 			}
-			if dbDatas, err := database.Club.RentalCourtException.RentalCourtIDExcludeDateReasonRefundRefundDate(arg); err != nil {
-				resultErrInfo = errLogic.NewError(err)
-				return
-			} else {
-				for _, v := range dbDatas {
-					id := v.ID.ID
-					dateInt := commonLogic.TimeInt(v.ExcludeDate.Time(), commonLogicDomain.DATE_TIME_TYPE)
-					if rentalIDDateCancelActivityMap[id] == nil {
-						rentalIDDateCancelActivityMap[id] = make(map[int]*domain.TmpCancelActivity)
+			detailIDLedgerIDsMap[detailID] = append(detailIDLedgerIDsMap[detailID], ledgerID)
+
+			for _, courtID := range courtIDs {
+				court := courtIDMap[courtID]
+				court.PricePerHour = v.PricePerHour
+
+				if v.IncomeID != nil {
+					incomeID := *v.IncomeID
+					income := &Income{
+						ID: incomeID,
 					}
-					if rentalIDDateCancelActivityMap[id][dateInt] == nil {
-						rentalIDDateCancelActivityMap[id][dateInt] = &domain.TmpCancelActivity{}
+
+					switch t {
+					case dbDomain.PAY_TYPE_REFUND:
+						court.Refund = &RefundMulCourtIncome{
+							Income: income,
+						}
+					case dbDomain.PAY_TYPE_BALANCE:
+						court.Balance = income
+					case dbDomain.PAY_TYPE_DESPOSIT:
+						court.Desposit = income
 					}
-					m := rentalIDDateCancelActivityMap[id][dateInt]
-					reasonType := dbLogicDomain.ReasonType(v.ReasonType)
-					m.CancelReason = reasonType
-					m.RefundDate = v.RefundDate.TimeP()
-					m.Refund = v.Refund
+				}
+			}
+
+			if v.IncomeID != nil {
+				incomeID := *v.IncomeID
+				incomeIDs = append(incomeIDs, incomeID)
+
+				incomeIDTypeMap[incomeID] = t
+
+				if incomeIDCourtIDsMap[incomeID] == nil {
+					incomeIDCourtIDsMap[incomeID] = make([]int, 0)
+				}
+				incomeIDCourtIDsMap[incomeID] = append(incomeIDCourtIDsMap[incomeID], courtIDs...)
+
+			}
+		}
+	}
+
+	if len(incomeIDs) > 0 {
+		if dbDatas, err := database.Club.Income.All(dbReqs.Income{
+			IDs: incomeIDs,
+		}); err != nil {
+			resultErrInfo = errLogic.Append(resultErrInfo, errLogic.NewError(err))
+			return
+		} else {
+			for _, v := range dbDatas {
+				incomeID := v.ID
+				courtIDs := incomeIDCourtIDsMap[incomeID]
+				for _, courtID := range courtIDs {
+					court := courtIDMap[courtID]
+					switch incomeIDTypeMap[v.ID] {
+					case dbDomain.PAY_TYPE_DESPOSIT:
+						court.Desposit.Money -= int(v.Income)
+						court.Desposit.PayDate = commonLogic.DateTime(v.Date)
+					case dbDomain.PAY_TYPE_BALANCE:
+						court.Balance.Money -= int(v.Income)
+						court.Balance.PayDate = commonLogic.DateTime(v.Date)
+					case dbDomain.PAY_TYPE_REFUND:
+						court.Refund.Income.Money += int(v.Income)
+						court.Refund.Income.PayDate = commonLogic.DateTime(v.Date)
+					}
 				}
 			}
 		}
+	}
 
+	detailIDs := make([]int, 0)
+	for detailID := range detailIDLedgerIDsMap {
+		detailIDs = append(detailIDs, detailID)
+	}
+
+	if dbDatas, err := database.Club.RentalCourtDetail.All(dbReqs.RentalCourtDetail{
+		IDs: detailIDs,
+	}); err != nil {
+		resultErrInfo = errLogic.Append(resultErrInfo, errLogic.NewError(err))
+		return
+	} else {
 		for _, v := range dbDatas {
-			startDate := v.StartDate.Time()
-			endDate := v.EndDate.Time()
-			if startDate.Before(fromDate) {
-				startDate = fromDate
-			}
-			if endDate.After(toDate) {
-				endDate = toDate
-			}
-
-			fromDate, toDate := getDateRangeInEveryWeekday(startDate, endDate, int(v.EveryWeekday))
-			beforeDate := commonLogicDomain.DATE_TIME_TYPE.Next1(toDate)
-			dateInts := make([]int, 0)
-			commonLogic.TimeSlice(
-				fromDate, beforeDate,
-				commonLogicDomain.WEEK_TIME_TYPE.Next1,
-				func(runTime, next time.Time) bool {
-					dateInt := commonLogic.TimeInt(runTime, commonLogicDomain.DATE_TIME_TYPE)
-					dateInts = append(dateInts, dateInt)
-					return true
-				},
-			)
-
-			court, err := parseCourts(v.CourtsAndTime, v.PricePerHour)
+			detailID := v.ID
+			startTime, err := commonLogic.HourMinTime(v.StartTime).Time()
 			if err != nil {
-				resultErrInfo = errLogic.NewError(err)
+				errInfo := errLogic.NewError(err)
+				resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+				return
+			}
+			endTime, err := commonLogic.HourMinTime(v.EndTime).Time()
+			if err != nil {
+				errInfo := errLogic.NewError(err)
+				resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
 				return
 			}
 
-			activity := &domain.ActivityPay{
-				DateCourtMap: make(map[int]*domain.ActivityPayCourt),
-				DepositDate:  v.DepositDate.TimeP(),
-				BalanceDate:  v.BalanceDate.TimeP(),
-				Deposit:      v.Deposit,
-				Balance:      v.Balance,
-			}
-			for _, dateInt := range dateInts {
-				var cancelInfo *domain.TmpCancelActivity
-				if isCancel :=
-					rentalIDDateCancelActivityMap[v.ID] != nil &&
-						rentalIDDateCancelActivityMap[v.ID][dateInt] != nil; isCancel {
-					cancelInfo = rentalIDDateCancelActivityMap[v.ID][dateInt]
-					if cancelInfo.CancelReason == domain.EXCLUDE_REASON_TYPE {
-						continue
+			ledgerIDs := detailIDLedgerIDsMap[detailID]
+			for _, ledgerID := range ledgerIDs {
+				t := ledgerIDTypeMap[ledgerID]
+				courtIDs := ledgerCourtMap[ledgerID]
+				for _, courtID := range courtIDs {
+					court := courtIDMap[courtID]
+
+					switch t {
+					case dbDomain.PAY_TYPE_REFUND:
+						court.Refund.Count = v.Count
+						court.Refund.FromTime = startTime
+						court.Refund.ToTime = endTime
+						court.Refund.CourtDetail.ID = detailID
+					default:
+						court.Count = v.Count
+						court.FromTime = startTime
+						court.ToTime = endTime
+						court.CourtDetail.ID = detailID
 					}
 				}
-
-				activityCourt := &domain.ActivityPayCourt{
-					Court: *court,
-				}
-				if isCancel := cancelInfo != nil; isCancel {
-					activityCourt.CancelReason = &cancelInfo.CancelReason
-					if refundDate := cancelInfo.RefundDate; refundDate != nil {
-						activityCourt.RefundDate = refundDate
-						activityCourt.Refund = cancelInfo.Refund
-					}
-				}
-
-				activity.DateCourtMap[dateInt] = activityCourt
 			}
-			if len(activity.DateCourtMap) == 0 {
-				continue
-			}
-
-			if placeActivityPaysMap[v.PlaceID] == nil {
-				placeActivityPaysMap[v.PlaceID] = make([]*domain.ActivityPay, 0)
-			}
-			placeActivityPaysMap[v.PlaceID] = append(placeActivityPaysMap[v.PlaceID], activity)
 		}
 	}
 
 	return
-}
-
-func getDateRangeInEveryWeekday(startDate, endDate time.Time, everyWeekday int) (fromDate, toDate time.Time) {
-	days := (everyWeekday - int(startDate.Weekday()) + 7) % 7
-	fromDate = commonLogicDomain.DATE_TIME_TYPE.Next(startDate, days)
-	days = (everyWeekday - int(startDate.Weekday()) + 7) % 7
-	toDate = commonLogicDomain.DATE_TIME_TYPE.Next(endDate, -days)
-	return
-}
-
-func parseCourts(courtsStr string, pricePerHour float64) (*domain.ActivityCourt, error) {
-	court := &domain.ActivityCourt{
-		PricePerHour: pricePerHour,
-	}
-
-	timeStr := ""
-	if _, err := fmt.Sscanf(
-		courtsStr,
-		"%d-%s",
-		&court.Count,
-		&timeStr); err != nil {
-		return nil, err
-	}
-	times := strings.Split(timeStr, "~")
-	if len(times) != 2 {
-		return nil, fmt.Errorf("時間格式錯誤")
-	}
-	fromTimeStr := times[0]
-	toTimeStr := times[1]
-	if t, err := time.Parse(commonLogicDomain.TIME_HOUR_MIN_FORMAT, fromTimeStr); err != nil {
-		return nil, err
-	} else {
-		court.FromTime = util.GetTimeIn(t, commonLogic.Location)
-	}
-	if t, err := time.Parse(commonLogicDomain.TIME_HOUR_MIN_FORMAT, toTimeStr); err != nil {
-		return nil, err
-	} else {
-		court.ToTime = util.GetTimeIn(t, commonLogic.Location)
-	}
-
-	return court, nil
 }

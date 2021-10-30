@@ -26,7 +26,7 @@ func (t RentalCourt) whereArg(dp *gorm.DB, arg reqs.RentalCourt) *gorm.DB {
 	if p := arg.ID; p != nil {
 		dp = dp.Where("id = ?", p)
 	}
-	if p := arg.IDs; p != nil {
+	if p := arg.IDs; len(p) > 0 {
 		dp = dp.Where("id IN (?)", p)
 	}
 
@@ -34,40 +34,20 @@ func (t RentalCourt) whereArg(dp *gorm.DB, arg reqs.RentalCourt) *gorm.DB {
 		dp = dp.Where("place_id = ?", p)
 	}
 
-	if p := arg.EveryWeekday; p != nil {
-		dp = dp.Where("every_weekday = ?", p)
+	if p := arg.Date.Date; p != nil {
+		dp = dp.Where("date = ?", p)
 	}
-
-	if p := arg.StartDate; p != nil {
-		dp = dp.Where("start_date = ?", p)
+	if p := arg.FromDate; p != nil {
+		dp = dp.Where("date >= ?", p)
 	}
-	if p := arg.FromStartDate; p != nil {
-		dp = dp.Where("start_date >= ?", p)
+	if p := arg.ToDate; p != nil {
+		dp = dp.Where("date <= ?", p)
 	}
-	if p := arg.ToStartDate; p != nil {
-		dp = dp.Where("start_date <= ?", p)
+	if p := arg.BeforeDate; p != nil {
+		dp = dp.Where("date < ?", p)
 	}
-	if p := arg.BeforeStartDate; p != nil {
-		dp = dp.Where("start_date < ?", p)
-	}
-	if p := arg.AfterStartDate; p != nil {
-		dp = dp.Where("start_date > ?", p)
-	}
-
-	if p := arg.EndDate; p != nil {
-		dp = dp.Where("end_date = ?", p)
-	}
-	if p := arg.FromEndDate; p != nil {
-		dp = dp.Where("end_date >= ?", p)
-	}
-	if p := arg.ToEndDate; p != nil {
-		dp = dp.Where("end_date <= ?", p)
-	}
-	if p := arg.BeforeEndDate; p != nil {
-		dp = dp.Where("end_date < ?", p)
-	}
-	if p := arg.AfterEndDate; p != nil {
-		dp = dp.Where("end_date > ?", p)
+	if p := arg.AfterDate; p != nil {
+		dp = dp.Where("date > ?", p)
 	}
 
 	return dp

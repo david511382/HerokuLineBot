@@ -2,9 +2,9 @@ package club
 
 import (
 	"fmt"
+	"heroku-line-bot/global"
 	"heroku-line-bot/logger"
 	"heroku-line-bot/logic/club/domain"
-	commonLogic "heroku-line-bot/logic/common"
 	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
@@ -677,7 +677,7 @@ func (b *register) GetNotifyRegisterContents() ([]interface{}, error) {
 
 	pathValueMap := make(map[string]interface{})
 	pathValueMap["ICmdLogic.member_id"] = b.MemberID
-	pathValueMap["ICmdLogic.date"] = util.DateOf(commonLogic.TimeUtilObj.Now())
+	pathValueMap["ICmdLogic.date"] = util.DateOf(global.TimeUtilObj.Now())
 	cmd := domain.CONFIRM_REGISTER_TEXT_CMD
 	if js, errInfo := b.context.
 		GetCmdInputMode(&cmd).

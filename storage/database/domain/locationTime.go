@@ -2,10 +2,10 @@ package domain
 
 import (
 	"database/sql/driver"
+	"heroku-line-bot/global"
 	"heroku-line-bot/util"
 	"time"
 
-	commonLogic "heroku-line-bot/logic/common"
 	errLogic "heroku-line-bot/logic/error"
 )
 
@@ -33,7 +33,7 @@ func (t LocationTime) Value() (driver.Value, error) {
 
 func (t *LocationTime) Scan(v interface{}) error {
 	if tt, ok := v.(time.Time); ok {
-		t.time = util.GetTimeIn(tt, commonLogic.Location)
+		t.time = util.GetTimeIn(tt, global.Location)
 	} else {
 		return errLogic.Newf("can not convert %v to time", v)
 	}

@@ -3,6 +3,7 @@ package club
 import (
 	"fmt"
 	"heroku-line-bot/logic/club/domain"
+	"heroku-line-bot/logic/common"
 	errLogic "heroku-line-bot/logic/error"
 	lineUserLogic "heroku-line-bot/logic/redis/lineuser"
 	lineUserLogicDomain "heroku-line-bot/logic/redis/lineuser/domain"
@@ -93,7 +94,7 @@ func (b *submitActivity) init() (resultErrInfo errLogic.IError) {
 		memberJoinDate := v.Date
 		b.NewActivity = NewActivity{
 			Context:     context,
-			Date:        v.Date,
+			Date:        common.DateTime(v.Date),
 			PlaceID:     v.PlaceID,
 			Description: v.Description,
 			PeopleLimit: v.PeopleLimit,
@@ -250,7 +251,7 @@ func (b *submitActivity) Do(text string) (resultErrInfo errLogic.IError) {
 		logisticID := 0
 		if isConsumeBall {
 			logisticData := &logisticDb.LogisticTable{
-				Date:        b.Date,
+				Date:        b.Date.Time(),
 				Name:        domain.BALL_NAME,
 				Amount:      -b.Rsl4Consume,
 				Description: "打球",

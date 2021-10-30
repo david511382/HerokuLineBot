@@ -3,7 +3,7 @@ package background
 import (
 	"heroku-line-bot/background/activitycreator"
 	"heroku-line-bot/bootstrap"
-	commonLogic "heroku-line-bot/logic/common"
+	"heroku-line-bot/global"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	"strconv"
 	"strings"
@@ -19,7 +19,7 @@ var (
 )
 
 func Init(totalCfg *bootstrap.Config) errLogic.IError {
-	cr = cron.NewWithLocation(commonLogic.Location)
+	cr = cron.NewWithLocation(global.Location)
 	cfg := totalCfg.Backgrounds
 	backgrounds = []*Background{
 		{

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"heroku-line-bot/background/domain"
 	"heroku-line-bot/bootstrap"
+	"heroku-line-bot/global"
 	"heroku-line-bot/logger"
-	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	errLogic "heroku-line-bot/logic/error"
 	"time"
@@ -52,7 +52,7 @@ func (b *Background) Init(cfg bootstrap.Backgrounds) (string, errLogic.IError) {
 func (b *Background) Run() {
 	defer b.recover()
 
-	nowTime := commonLogic.TimeUtilObj.Now()
+	nowTime := global.TimeUtilObj.Now()
 	runTime := b.timeType.Of(nowTime)
 	b.logF("Run At %s", runTime.String())
 	if errInfo := b.bg.Run(runTime); errInfo != nil {

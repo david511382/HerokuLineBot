@@ -5,6 +5,9 @@ import (
 )
 
 type Income struct {
+	ID  *int
+	IDs []int
+
 	Date
 	Type *incomeLogicDomain.IncomeType
 }

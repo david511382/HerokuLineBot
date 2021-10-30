@@ -1,14 +1,5 @@
 package domain
 
-import (
-	dbLogicDomain "heroku-line-bot/logic/database/domain"
-)
-
-const (
-	EXCLUDE_REASON_TYPE dbLogicDomain.ReasonType = 0
-	CANCEL_REASON_TYPE  dbLogicDomain.ReasonType = 1
-)
-
 type RentalCourtsStatus int8
 
 const (

@@ -1,4 +1,4 @@
-package rentalcourtexception
+package rentalcourtdetail
 
 import (
 	"heroku-line-bot/storage/database/common"
@@ -6,8 +6,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func New(writeDb, readDb *gorm.DB) RentalCourtException {
-	result := RentalCourtException{}
+func New(writeDb, readDb *gorm.DB) RentalCourtDetail {
+	result := RentalCourtDetail{}
 	result.BaseTable = common.NewBaseTable(result, writeDb, readDb)
 	return result
 }

@@ -32,6 +32,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 			resultErrInfo = resultErrInfo.NewParent(runTime.String())
 		}
 	}()
+	currentDate := commonLogicDomain.DATE_TIME_TYPE.Of(runTime)
 
 	rdsSetting, errInfo := rdsBadmintonSettingLogic.Get()
 	if errInfo != nil {
@@ -49,48 +50,48 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 	}
 
 	newActivityHandlers := make([]*clubLogic.NewActivity, 0)
-	createActivityDate := commonLogicDomain.WEEK_TIME_TYPE.Next(
-		commonLogicDomain.DATE_TIME_TYPE.Of(runTime),
+	createActivityDate := commonLogic.DateTime(commonLogicDomain.WEEK_TIME_TYPE.Next(
+		currentDate,
 		1,
-	)
-	weekday := int16(createActivityDate.Weekday())
-	if courtDatas, errInfo := clubCourtLogic.GetRentalCourts(
-		createActivityDate,
-		createActivityDate,
-		nil,
-		&weekday,
-	); errInfo != nil {
-		resultErrInfo = errInfo
-		return
-	} else if len(courtDatas) == 0 {
+	))
+	if placeCourtsMap, errInfo := clubCourtLogic.GetCourts(createActivityDate, createActivityDate, nil); errInfo != nil {
+		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
+			return
+		}
+	} else if len(placeCourtsMap) == 0 {
 		return
 	} else {
-		for place, dateMap := range courtDatas {
-			for dateInt, courtData := range dateMap {
-				date := commonLogic.IntTime(dateInt, commonLogicDomain.DATE_TIME_TYPE)
-				courts := b.combineCourts(courtData.Courts)
-				newActivityHandler := &clubLogic.NewActivity{
-					Date:        date,
-					PlaceID:     place,
-					Description: rdsSetting.Description,
-					ClubSubsidy: rdsSetting.ClubSubsidy,
-					IsComplete:  false,
-					Courts:      courts,
-				}
-
-				totalCourtCount := 0
-				for _, court := range newActivityHandler.Courts {
-					totalCourtCount += int(court.Count)
-				}
-				peopleLimit := rdsSetting.PeopleLimit
-				if rdsSetting.PeopleLimit == 0 {
-					peopleLimit = int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2)
-				}
-
-				newActivityHandler.PeopleLimit = util.GetInt16P(peopleLimit)
-
-				newActivityHandlers = append(newActivityHandlers, newActivityHandler)
+		for place, courts := range placeCourtsMap {
+			newActivityHandler := &clubLogic.NewActivity{
+				Date:        createActivityDate,
+				PlaceID:     place,
+				Description: rdsSetting.Description,
+				ClubSubsidy: rdsSetting.ClubSubsidy,
+				IsComplete:  false,
+				Courts:      make([]*clubCourtLogicDomain.ActivityCourt, 0),
 			}
+
+			totalCourtCount := 0
+			for _, court := range courts {
+				courtDetail := court.CourtDetailPrice
+				newActivityHandler.Courts = append(newActivityHandler.Courts, &clubCourtLogicDomain.ActivityCourt{
+					FromTime:     courtDetail.FromTime,
+					ToTime:       courtDetail.ToTime,
+					Count:        courtDetail.Count,
+					PricePerHour: courtDetail.PricePerHour,
+				})
+				totalCourtCount += int(court.Count)
+			}
+			newActivityHandler.Courts = b.combineCourts(newActivityHandler.Courts)
+
+			peopleLimit := rdsSetting.PeopleLimit
+			if rdsSetting.PeopleLimit == 0 {
+				peopleLimit = int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2)
+			}
+			newActivityHandler.PeopleLimit = util.GetInt16P(peopleLimit)
+
+			newActivityHandlers = append(newActivityHandlers, newActivityHandler)
 		}
 	}
 

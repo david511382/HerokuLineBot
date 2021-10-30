@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"heroku-line-bot/global"
 	"heroku-line-bot/logic/common/domain"
 	"heroku-line-bot/util"
 	"sort"
@@ -10,27 +11,27 @@ import (
 	"time"
 )
 
-var (
-	Location    *time.Location
-	TimeUtilObj ITimeUtil = &TimeUtil{}
-)
+type DateTime time.Time
 
-func init() {
-	loc, err := time.LoadLocation(domain.IANA_ZONE)
-	if err != nil {
-		panic(err)
-	}
-	Location = loc
+func NewDateTime(y, m, d int) DateTime {
+	return DateTime(GetTime(y, m, d))
 }
 
-type TimeUtil struct{}
-
-type ITimeUtil interface {
-	Now() time.Time
+func NewDateTimeOf(t time.Time) DateTime {
+	return DateTime(domain.DATE_TIME_TYPE.Of(t))
 }
 
-func (TimeUtil) Now() time.Time {
-	return time.Now().In(Location)
+func (t DateTime) Int() int {
+	return TimeInt(t.Time(), domain.DATE_TIME_TYPE)
+}
+
+func (t DateTime) Time() time.Time {
+	return time.Time(t)
+}
+
+func (t DateTime) TimeP() *time.Time {
+	tp := time.Time(t)
+	return &tp
 }
 
 func WeekDayName(weekDay time.Weekday) string {
@@ -38,7 +39,7 @@ func WeekDayName(weekDay time.Weekday) string {
 }
 
 func TimeInt(t time.Time, tt domain.TimeType) int {
-	t = t.In(Location)
+	t = t.In(global.Location)
 
 	yy := 0
 	mm := 0
@@ -108,7 +109,7 @@ func IntTime(i int, tt domain.TimeType) time.Time {
 }
 
 func ClockInt(t time.Time, tt domain.TimeType) int {
-	t = t.In(Location)
+	t = t.In(global.Location)
 
 	hh := 0
 	mm := 0
@@ -299,5 +300,5 @@ func GetTime(ts ...int) time.Time {
 }
 
 func GetTimeP(ts ...int) *time.Time {
-	return util.GetTimePLoc(Location, ts...)
+	return util.GetTimePLoc(global.Location, ts...)
 }

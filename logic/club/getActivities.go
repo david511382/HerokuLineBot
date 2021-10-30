@@ -167,7 +167,7 @@ func (b *GetActivities) init() (resultErrInfo errLogic.IError) {
 			activity := &getActivitiesActivity{
 				NewActivity: NewActivity{
 					Context:     context,
-					Date:        v.Date,
+					Date:        commonLogic.DateTime(v.Date),
 					PlaceID:     v.PlaceID,
 					Description: v.Description,
 					PeopleLimit: v.PeopleLimit,

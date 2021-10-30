@@ -1,15 +1,14 @@
-package rentalcourt
+package rentalcourtdetail
 
 import (
 	"errors"
-	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/domain"
 	"heroku-line-bot/storage/database/domain/model/reqs"
 
 	"gorm.io/gorm"
 )
 
-func (t RentalCourt) Insert(trans *gorm.DB, datas ...*RentalCourtTable) error {
+func (t RentalCourtDetail) Insert(trans *gorm.DB, datas ...*RentalCourtDetailTable) error {
 	var createValue interface{}
 	if len(datas) == 0 {
 		return domain.DB_NO_AFFECTED_ERROR
@@ -27,7 +26,7 @@ func (t RentalCourt) Insert(trans *gorm.DB, datas ...*RentalCourtTable) error {
 	return t.BaseTable.Insert(dp, createValue)
 }
 
-func (t RentalCourt) MigrationData(datas ...*RentalCourtTable) error {
+func (t RentalCourtDetail) MigrationData(datas ...*RentalCourtDetailTable) error {
 	if err := t.MigrationTable(); err != nil {
 		return err
 	}
@@ -37,19 +36,17 @@ func (t RentalCourt) MigrationData(datas ...*RentalCourtTable) error {
 	return nil
 }
 
-func (t RentalCourt) All(arg reqs.RentalCourt) ([]*RentalCourtTable, error) {
+func (t RentalCourtDetail) All(arg reqs.RentalCourtDetail) ([]*RentalCourtDetailTable, error) {
 	dp := t.whereArg(t.Read, arg).Select(
 		`
 		*
 		`,
 	)
 
-	result := make([]*RentalCourtTable, 0)
+	result := make([]*RentalCourtDetailTable, 0)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}
-
-	common.ConverTimeZone(result)
 
 	return result, nil
 }

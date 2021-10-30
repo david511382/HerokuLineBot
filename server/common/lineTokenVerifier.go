@@ -1,10 +1,10 @@
 package common
 
 import (
+	"heroku-line-bot/global"
 	"heroku-line-bot/logger"
 	clubLogicDomain "heroku-line-bot/logic/club/domain"
 	"heroku-line-bot/logic/clublinebot"
-	commonLogic "heroku-line-bot/logic/common"
 	errLogic "heroku-line-bot/logic/error"
 	rdsLineuserLogic "heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/server/domain"
@@ -30,8 +30,8 @@ func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resu
 		resultErrInfo = errLogic.NewError(err)
 		return
 	} else {
-		expTime := time.Unix(int64(claims.Exp), 0).In(commonLogic.Location)
-		if expTime.Before(commonLogic.TimeUtilObj.Now()) {
+		expTime := time.Unix(int64(claims.Exp), 0).In(global.Location)
+		if expTime.Before(global.TimeUtilObj.Now()) {
 			resultErrInfo = errLogic.New("token expire")
 			return
 		}
