@@ -466,20 +466,21 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errLogic.IError) {
 	return nil
 }
 
-func (b *GetActivities) loadCurrentUserID() (resultErrInfo errLogic.IError) {
+func (b *GetActivities) loadCurrentUserID() (replyMsg *string, resultErrInfo errLogic.IError) {
 	lineID := b.context.GetUserID()
 	userData, err := lineUserLogic.Get(lineID)
 	if err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		errInfo := errLogic.NewError(err)
+		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
 		return
 	} else if userData == nil {
-		resultErrInfo = errLogic.NewError(domain.USER_NOT_REGISTERED)
+		replyMsg = util.GetStringP(domain.USER_NOT_REGISTERED.Error())
 		return
 	}
 
 	b.currentUser = *userData
 
-	return nil
+	return
 }
 
 func (b *GetActivities) isJoined(activity *getActivitiesActivity) bool {
@@ -493,8 +494,18 @@ func (b *GetActivities) isJoined(activity *getActivitiesActivity) bool {
 }
 
 func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
-	if errInfo := b.loadCurrentUserID(); errInfo != nil {
-		resultErrInfo = errInfo
+	if replyMsg, errInfo := b.loadCurrentUserID(); errInfo != nil {
+		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+		return
+	} else if replyMsg != nil {
+		replyMessges := []interface{}{
+			linebot.GetTextMessage(*replyMsg),
+		}
+		if replyErr := b.context.Reply(replyMessges); replyErr != nil {
+			errInfo := errLogic.Newf("replyErr:%s", replyErr.Error())
+			resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+			return
+		}
 		return
 	}
 
@@ -504,7 +515,8 @@ func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
 				linebot.GetTextMessage("查看人員發生錯誤，已通知管理員"),
 			}
 			if replyErr := b.context.Reply(replyMessges); replyErr != nil {
-				resultErrInfo = errLogic.Newf("%s---replyErr:%s", errInfo.Error(), replyErr.Error())
+				errInfo := errLogic.Newf("%s---replyErr:%s", errInfo.Error(), replyErr.Error())
+				resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
 				return
 			}
 
