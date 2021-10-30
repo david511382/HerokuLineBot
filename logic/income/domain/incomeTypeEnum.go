@@ -3,7 +3,8 @@ package domain
 type IncomeType int16
 
 const (
-	ACTIVITY_INCOME_TYPE IncomeType = iota
-	SEASON_RENT_INCOME_TYPE
-	PURCHASE_INCOME_TYPE
+	INCOME_TYPE_ACTIVITY    IncomeType = 0
+	INCOME_TYPE_SEASON_RENT IncomeType = 1
+	INCOME_TYPE_PURCHASE    IncomeType = 2
+	INCOME_TYPE_ELSE        IncomeType = 3
 )

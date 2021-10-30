@@ -123,7 +123,7 @@ func TestGetCourts(t *testing.T) {
 					{
 						ID:          1,
 						Date:        commonLogic.GetTime(2013, 8, 5),
-						Type:        int16(incomeLogicDomain.SEASON_RENT_INCOME_TYPE),
+						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 						Description: "",
 						ReferenceID: util.GetIntP(1),
 						Income:      5,
@@ -131,7 +131,7 @@ func TestGetCourts(t *testing.T) {
 					{
 						ID:          2,
 						Date:        commonLogic.GetTime(2013, 8, 1),
-						Type:        int16(incomeLogicDomain.SEASON_RENT_INCOME_TYPE),
+						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 						Description: "",
 						ReferenceID: util.GetIntP(1),
 						Income:      1,
