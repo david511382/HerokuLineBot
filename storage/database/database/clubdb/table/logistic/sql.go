@@ -1,7 +1,9 @@
 package logistic
 
 import (
+	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/domain"
+	"heroku-line-bot/storage/database/domain/model/reqs"
 
 	"gorm.io/gorm"
 )
@@ -29,4 +31,21 @@ func (t Logistic) MigrationData(datas ...*LogisticTable) error {
 		return err
 	}
 	return t.Insert(nil, datas...)
+}
+
+func (t Logistic) All(arg reqs.Logistic) ([]*LogisticTable, error) {
+	dp := t.whereArg(t.Read, arg).Select(
+		`
+		*
+		`,
+	)
+
+	result := make([]*LogisticTable, 0)
+	if err := dp.Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	common.ConverTimeZone(result)
+
+	return result, nil
 }

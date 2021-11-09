@@ -11,6 +11,16 @@ import (
 	"time"
 )
 
+type DateInt int
+
+func (t DateInt) DateTime() DateTime {
+	return DateTime(t.Time())
+}
+
+func (t DateInt) Time() time.Time {
+	return IntTime(int(t), domain.DATE_TIME_TYPE)
+}
+
 type DateTime time.Time
 
 func NewDateTime(y, m, d int) DateTime {
@@ -21,8 +31,8 @@ func NewDateTimeOf(t time.Time) DateTime {
 	return DateTime(domain.DATE_TIME_TYPE.Of(t))
 }
 
-func (t DateTime) Int() int {
-	return TimeInt(t.Time(), domain.DATE_TIME_TYPE)
+func (t DateTime) Int() DateInt {
+	return DateInt(TimeInt(t.Time(), domain.DATE_TIME_TYPE))
 }
 
 func (t DateTime) Time() time.Time {

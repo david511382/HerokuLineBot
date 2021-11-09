@@ -2,11 +2,9 @@ package club
 
 import (
 	"heroku-line-bot/global"
-	clubCourtLogic "heroku-line-bot/logic/club/court"
-	clubCourtLogicDomain "heroku-line-bot/logic/club/court/domain"
+	badmintonCourtLogic "heroku-line-bot/logic/badminton/court"
+	badmintonCourtLogicDomain "heroku-line-bot/logic/badminton/court/domain"
 	commonLogic "heroku-line-bot/logic/common"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
-	"time"
 
 	errLogic "heroku-line-bot/logic/error"
 	rdsBadmintonplaceLogic "heroku-line-bot/logic/redis/badmintonplace"
@@ -49,7 +47,7 @@ func GetRentalCourts(c *gin.Context) {
 		},
 	}
 
-	placeCourtsMap, errInfo := clubCourtLogic.GetCourts(
+	placeDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(
 		commonLogic.NewDateTimeOf(reqs.FromDate),
 		commonLogic.NewDateTimeOf(reqs.ToDate),
 		nil,
@@ -59,13 +57,13 @@ func GetRentalCourts(c *gin.Context) {
 		return
 	}
 
-	if len(placeCourtsMap) == 0 {
+	if len(placeDateCourtsMap) == 0 {
 		common.Success(c, result)
 		return
 	}
 
 	placeIDs := make([]int, 0)
-	for placeID := range placeCourtsMap {
+	for placeID := range placeDateCourtsMap {
 		placeIDs = append(placeIDs, placeID)
 	}
 	idPlaceMap, errInfo := rdsBadmintonplaceLogic.Load(placeIDs...)
@@ -74,70 +72,67 @@ func GetRentalCourts(c *gin.Context) {
 		return
 	}
 
-	dateIntPlaceMap := make(map[int]map[string]bool)
-	dateIntCourtsMap := make(map[int][]*resp.GetRentalCourtsDayCourtsInfo)
-	notPayDateIntCourtsMap := make(map[int][]*resp.GetRentalCourtsCourtInfo)
-	notRefundDateIntCourtsMap := make(map[int][]*resp.GetRentalCourtsCourtInfo)
-	for placeID, courts := range placeCourtsMap {
-		for _, court := range courts {
-			place := idPlaceMap[placeID].Name
-			isRefund := court.Refund != nil
-			reasonMessage := ""
-			var status clubCourtLogicDomain.RentalCourtsStatus
-			var refundDate *time.Time
-			if isRefund {
-				reasonMessage = "取消"
-				isPay := court.Refund.Income != nil
-				status = clubCourtLogic.GetStatus(isPay, isRefund)
+	dateIntPlaceMap := make(map[commonLogic.DateInt]map[string]bool)
+	dateIntCourtsMap := make(map[commonLogic.DateInt][]*resp.GetRentalCourtsDayCourtsInfo)
+	notPayDateIntCourtsMap := make(map[commonLogic.DateInt][]*resp.GetRentalCourtsCourtInfo)
+	notRefundDateIntCourtsMap := make(map[commonLogic.DateInt][]*resp.GetRentalCourtsCourtInfo)
+	for placeID, dateCourts := range placeDateCourtsMap {
+		for _, dateCourt := range dateCourts {
+			courtDateInt := dateCourt.Date.Int()
+			for _, court := range dateCourt.Courts {
+				place := idPlaceMap[placeID].Name
 
-				if isPay {
-					refundDate = court.Refund.Income.PayDate.TimeP()
+				units := court.Parts()
+				for _, unit := range units {
+					status := unit.GetStatus()
+					reasonMessage := ""
+					switch status {
+					case badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_CANCEL,
+						badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND:
+						reasonMessage = "取消"
+					}
+
+					info := resp.GetRentalCourtsCourtInfo{
+						Place:    place,
+						FromTime: unit.FromTime,
+						ToTime:   unit.ToTime,
+						Count:    int(unit.Count),
+						Cost:     unit.Cost().Value(),
+					}
+					rInfo := &resp.GetRentalCourtsDayCourtsInfo{
+						GetRentalCourtsCourtInfo: info,
+						Status:                   int(status),
+						ReasonMessage:            reasonMessage,
+						RefundTime:               unit.GetRefundDate().TimeP(),
+					}
+					if dateIntCourtsMap[courtDateInt] == nil {
+						dateIntCourtsMap[courtDateInt] = make([]*resp.GetRentalCourtsDayCourtsInfo, 0)
+					}
+					dateIntCourtsMap[courtDateInt] = append(dateIntCourtsMap[courtDateInt], rInfo)
+
+					if dateIntPlaceMap[courtDateInt] == nil {
+						dateIntPlaceMap[courtDateInt] = make(map[string]bool)
+					}
+					dateIntPlaceMap[courtDateInt][place] = true
+
+					switch status {
+					case badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_PAY:
+						if notPayDateIntCourtsMap[courtDateInt] == nil {
+							notPayDateIntCourtsMap[courtDateInt] = make([]*resp.GetRentalCourtsCourtInfo, 0)
+						}
+						notPayDateIntCourtsMap[courtDateInt] = append(notPayDateIntCourtsMap[courtDateInt], &info)
+					case badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND:
+						if notRefundDateIntCourtsMap[courtDateInt] == nil {
+							notRefundDateIntCourtsMap[courtDateInt] = make([]*resp.GetRentalCourtsCourtInfo, 0)
+						}
+						notRefundDateIntCourtsMap[courtDateInt] = append(notRefundDateIntCourtsMap[courtDateInt], &info)
+					}
 				}
-			} else {
-				isPay := court.Balance != nil
-				status = clubCourtLogic.GetStatus(isPay, isRefund)
-			}
-
-			info := resp.GetRentalCourtsCourtInfo{
-				Place:    place,
-				FromTime: court.FromTime,
-				ToTime:   court.ToTime,
-				Count:    int(court.Count),
-				Cost:     court.Cost().Value(),
-			}
-			rInfo := &resp.GetRentalCourtsDayCourtsInfo{
-				GetRentalCourtsCourtInfo: info,
-				Status:                   int(status),
-				ReasonMessage:            reasonMessage,
-				RefundTime:               refundDate,
-			}
-			courtDateInt := court.Date.Int()
-			if dateIntCourtsMap[courtDateInt] == nil {
-				dateIntCourtsMap[courtDateInt] = make([]*resp.GetRentalCourtsDayCourtsInfo, 0)
-			}
-			dateIntCourtsMap[courtDateInt] = append(dateIntCourtsMap[courtDateInt], rInfo)
-
-			if dateIntPlaceMap[courtDateInt] == nil {
-				dateIntPlaceMap[courtDateInt] = make(map[string]bool)
-			}
-			dateIntPlaceMap[courtDateInt][place] = true
-
-			switch status {
-			case clubCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_PAY:
-				if notPayDateIntCourtsMap[courtDateInt] == nil {
-					notPayDateIntCourtsMap[courtDateInt] = make([]*resp.GetRentalCourtsCourtInfo, 0)
-				}
-				notPayDateIntCourtsMap[courtDateInt] = append(notPayDateIntCourtsMap[courtDateInt], &info)
-			case clubCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND:
-				if notRefundDateIntCourtsMap[courtDateInt] == nil {
-					notRefundDateIntCourtsMap[courtDateInt] = make([]*resp.GetRentalCourtsCourtInfo, 0)
-				}
-				notRefundDateIntCourtsMap[courtDateInt] = append(notRefundDateIntCourtsMap[courtDateInt], &info)
 			}
 		}
 	}
 
-	dateInts := make([]int, 0)
+	dateInts := make([]commonLogic.DateInt, 0)
 	for dateInt, courts := range dateIntCourtsMap {
 		dateInts = append(dateInts, dateInt)
 		sort.SliceStable(courts, func(i, j int) bool {
@@ -150,19 +145,19 @@ func GetRentalCourts(c *gin.Context) {
 			return courts[i].FromTime.Before(courts[j].FromTime)
 		})
 		sort.SliceStable(courts, func(i, j int) bool {
-			jStatus := clubCourtLogicDomain.RentalCourtsStatus(courts[j].Status)
-			if jStatus == clubCourtLogicDomain.RENTAL_COURTS_STATUS_CANCEL {
+			jStatus := badmintonCourtLogicDomain.RentalCourtsStatus(courts[j].Status)
+			if jStatus == badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_CANCEL {
 				return true
 			}
-			iStatus := clubCourtLogicDomain.RentalCourtsStatus(courts[i].Status)
-			if iStatus == clubCourtLogicDomain.RENTAL_COURTS_STATUS_CANCEL {
+			iStatus := badmintonCourtLogicDomain.RentalCourtsStatus(courts[i].Status)
+			if iStatus == badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_CANCEL {
 				return false
 			}
 
-			if jStatus == clubCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND {
+			if jStatus == badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND {
 				return true
 			}
-			if iStatus == clubCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND {
+			if iStatus == badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND {
 				return false
 			}
 
@@ -175,7 +170,7 @@ func GetRentalCourts(c *gin.Context) {
 	for _, dateInt := range dateInts {
 		courts := dateIntCourtsMap[dateInt]
 		resultCourt := &resp.GetRentalCourtsDayCourts{
-			Date:            commonLogic.IntTime(dateInt, commonLogicDomain.DATE_TIME_TYPE),
+			Date:            dateInt.Time(),
 			Courts:          make([]*resp.GetRentalCourtsDayCourtsInfo, 0),
 			IsMultiplePlace: len(dateIntPlaceMap[dateInt]) > 1,
 		}
@@ -189,12 +184,12 @@ func GetRentalCourts(c *gin.Context) {
 	common.Success(c, result)
 }
 
-func getGetRentalCourtsPayInfo(dateIntCourtsMap map[int][]*resp.GetRentalCourtsCourtInfo) (result resp.GetRentalCourtsPayInfo) {
+func getGetRentalCourtsPayInfo(dateIntCourtsMap map[commonLogic.DateInt][]*resp.GetRentalCourtsCourtInfo) (result resp.GetRentalCourtsPayInfo) {
 	result = resp.GetRentalCourtsPayInfo{
 		Courts: make([]*resp.GetRentalCourtsPayInfoDay, 0),
 	}
 
-	dateInts := make([]int, 0)
+	dateInts := make([]commonLogic.DateInt, 0)
 	for dateInt, courts := range dateIntCourtsMap {
 		dateInts = append(dateInts, dateInt)
 		sort.SliceStable(courts, func(i, j int) bool {
@@ -213,7 +208,7 @@ func getGetRentalCourtsPayInfo(dateIntCourtsMap map[int][]*resp.GetRentalCourtsC
 	for _, dateInt := range dateInts {
 		courts := dateIntCourtsMap[dateInt]
 		resultCourt := &resp.GetRentalCourtsPayInfoDay{
-			Date:   commonLogic.IntTime(dateInt, commonLogicDomain.DATE_TIME_TYPE),
+			Date:   dateInt.Time(),
 			Courts: make([]*resp.GetRentalCourtsCourtInfo, 0),
 		}
 		cost := util.ToFloat(0)

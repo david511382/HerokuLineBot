@@ -12,6 +12,10 @@ func ToFloat(v float64) Float {
 	return Float(decimal.NewFromFloat(v))
 }
 
+func Int64ToFloat(v int64) Float {
+	return Float(decimal.NewFromInt(v))
+}
+
 func (f Float) Value() float64 {
 	d := decimal.Decimal(f)
 	r, _ := d.Float64()
@@ -62,6 +66,14 @@ func (f Float) PlusFloat(vs ...float64) Float {
 	return f
 }
 
+func (f Float) PlusInt64(vs ...int64) Float {
+	for _, v := range vs {
+		d := Int64ToFloat(v)
+		f = f.Plus(d)
+	}
+	return f
+}
+
 func (f Float) Mul(vs ...Float) Float {
 	d1 := decimal.Decimal(f)
 	for _, v := range vs {
@@ -87,6 +99,10 @@ func (f Float) Div(v Float) Float {
 
 func (f Float) DivFloat(v float64) Float {
 	return f.Div(ToFloat(v))
+}
+
+func (f Float) DivInt64(v int64) Float {
+	return f.Div(Int64ToFloat(v))
 }
 
 // 4捨5入

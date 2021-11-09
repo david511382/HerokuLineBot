@@ -12,6 +12,7 @@ import (
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtdetail"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledger"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledgercourt"
+	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtrefundledger"
 
 	"gorm.io/gorm"
 )
@@ -22,15 +23,16 @@ func New(writeDb, readDb *gorm.DB) Database {
 			Read:  readDb,
 			Write: writeDb,
 		},
-		Member:                 member.New(writeDb, readDb),
-		Income:                 income.New(writeDb, readDb),
-		Activity:               activity.New(writeDb, readDb),
-		MemberActivity:         memberactivity.New(writeDb, readDb),
-		RentalCourt:            rentalcourt.New(writeDb, readDb),
-		RentalCourtLedgerCourt: rentalcourtledgercourt.New(writeDb, readDb),
-		RentalCourtDetail:      rentalcourtdetail.New(writeDb, readDb),
-		RentalCourtLedger:      rentalcourtledger.New(writeDb, readDb),
-		Logistic:               logistic.New(writeDb, readDb),
-		Place:                  place.New(writeDb, readDb),
+		Member:                  member.New(writeDb, readDb),
+		Income:                  income.New(writeDb, readDb),
+		Activity:                activity.New(writeDb, readDb),
+		MemberActivity:          memberactivity.New(writeDb, readDb),
+		RentalCourt:             rentalcourt.New(writeDb, readDb),
+		RentalCourtLedgerCourt:  rentalcourtledgercourt.New(writeDb, readDb),
+		RentalCourtDetail:       rentalcourtdetail.New(writeDb, readDb),
+		RentalCourtLedger:       rentalcourtledger.New(writeDb, readDb),
+		RentalCourtRefundLedger: rentalcourtrefundledger.New(writeDb, readDb),
+		Logistic:                logistic.New(writeDb, readDb),
+		Place:                   place.New(writeDb, readDb),
 	}
 }

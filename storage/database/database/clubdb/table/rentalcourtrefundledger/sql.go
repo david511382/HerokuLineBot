@@ -1,15 +1,14 @@
-package rentalcourtledger
+package rentalcourtrefundledger
 
 import (
 	"errors"
-	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/domain"
 	"heroku-line-bot/storage/database/domain/model/reqs"
 
 	"gorm.io/gorm"
 )
 
-func (t RentalCourtLedger) Insert(trans *gorm.DB, datas ...*RentalCourtLedgerTable) error {
+func (t RentalCourtRefundLedger) Insert(trans *gorm.DB, datas ...*RentalCourtRefundLedgerTable) error {
 	var createValue interface{}
 	if len(datas) == 0 {
 		return domain.DB_NO_AFFECTED_ERROR
@@ -27,7 +26,7 @@ func (t RentalCourtLedger) Insert(trans *gorm.DB, datas ...*RentalCourtLedgerTab
 	return t.BaseTable.Insert(dp, createValue)
 }
 
-func (t RentalCourtLedger) MigrationData(datas ...*RentalCourtLedgerTable) error {
+func (t RentalCourtRefundLedger) MigrationData(datas ...*RentalCourtRefundLedgerTable) error {
 	if err := t.MigrationTable(); err != nil {
 		return err
 	}
@@ -37,19 +36,17 @@ func (t RentalCourtLedger) MigrationData(datas ...*RentalCourtLedgerTable) error
 	return nil
 }
 
-func (t RentalCourtLedger) All(arg reqs.RentalCourtLedger) ([]*RentalCourtLedgerTable, error) {
+func (t RentalCourtRefundLedger) All(arg reqs.RentalCourtRefundLedger) ([]*RentalCourtRefundLedgerTable, error) {
 	dp := t.whereArg(t.Read, arg).Select(
 		`
 		*
 		`,
 	)
 
-	result := make([]*RentalCourtLedgerTable, 0)
+	result := make([]*RentalCourtRefundLedgerTable, 0)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}
-
-	common.ConverTimeZone(result)
 
 	return result, nil
 }

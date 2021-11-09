@@ -3,7 +3,7 @@ package club
 import (
 	"fmt"
 	"heroku-line-bot/global"
-	courtDomain "heroku-line-bot/logic/club/court/domain"
+	courtDomain "heroku-line-bot/logic/badminton/court/domain"
 	"heroku-line-bot/logic/club/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"

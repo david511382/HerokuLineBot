@@ -2,9 +2,9 @@ package activitycreator
 
 import (
 	"heroku-line-bot/bootstrap"
+	badmintonCourtLogic "heroku-line-bot/logic/badminton/court"
+	badmintonCourtLogicDomain "heroku-line-bot/logic/badminton/court/domain"
 	clubLogic "heroku-line-bot/logic/club"
-	clubCourtLogic "heroku-line-bot/logic/club/court"
-	clubCourtLogicDomain "heroku-line-bot/logic/club/court/domain"
 	"heroku-line-bot/logic/club/domain"
 	clubLineBotLogic "heroku-line-bot/logic/clublinebot"
 	commonLogic "heroku-line-bot/logic/common"
@@ -55,34 +55,36 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 		currentDate,
 		int(rdsSetting.ActivityCreateDays),
 	))
-	if placeCourtsMap, errInfo := clubCourtLogic.GetCourts(createActivityDate, createActivityDate, nil); errInfo != nil {
+	if placeDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(createActivityDate, createActivityDate, nil); errInfo != nil {
 		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
 			return
 		}
-	} else if len(placeCourtsMap) == 0 {
+	} else if len(placeDateCourtsMap) == 0 {
 		return
 	} else {
-		for place, courts := range placeCourtsMap {
+		for place, dateCourts := range placeDateCourtsMap {
 			newActivityHandler := &clubLogic.NewActivity{
 				Date:        createActivityDate,
 				PlaceID:     place,
 				Description: rdsSetting.Description,
 				ClubSubsidy: rdsSetting.ClubSubsidy,
 				IsComplete:  false,
-				Courts:      make([]*clubCourtLogicDomain.ActivityCourt, 0),
+				Courts:      make([]*badmintonCourtLogicDomain.ActivityCourt, 0),
 			}
 
 			totalCourtCount := 0
-			for _, court := range courts {
-				courtDetail := court.CourtDetailPrice
-				newActivityHandler.Courts = append(newActivityHandler.Courts, &clubCourtLogicDomain.ActivityCourt{
-					FromTime:     courtDetail.FromTime,
-					ToTime:       courtDetail.ToTime,
-					Count:        courtDetail.Count,
-					PricePerHour: courtDetail.PricePerHour,
-				})
-				totalCourtCount += int(court.Count)
+			for _, dateCourt := range dateCourts {
+				for _, court := range dateCourt.Courts {
+					courtDetail := court.CourtDetailPrice
+					newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonCourtLogicDomain.ActivityCourt{
+						FromTime:     courtDetail.FromTime,
+						ToTime:       courtDetail.ToTime,
+						Count:        courtDetail.Count,
+						PricePerHour: courtDetail.PricePerHour,
+					})
+					totalCourtCount += int(court.Count)
+				}
 			}
 			newActivityHandler.Courts = b.combineCourts(newActivityHandler.Courts)
 
@@ -133,7 +135,7 @@ type node struct {
 	toSideMap   map[int]*node
 	fromSides   []int
 	toSides     []int
-	target      *clubCourtLogicDomain.ActivityCourt
+	target      *badmintonCourtLogicDomain.ActivityCourt
 }
 
 func (m *node) isFromSorted() bool {
@@ -160,8 +162,8 @@ func (m *node) totalValue() util.Float {
 	return m.fromSideMax().Plus(m.value(), m.toSideMax())
 }
 
-func (m *node) takeFromSideMax() []*clubCourtLogicDomain.ActivityCourt {
-	result := make([]*clubCourtLogicDomain.ActivityCourt, 0)
+func (m *node) takeFromSideMax() []*badmintonCourtLogicDomain.ActivityCourt {
+	result := make([]*badmintonCourtLogicDomain.ActivityCourt, 0)
 
 	for _, index := range m.fromSides {
 		n := m.fromSideMap[index]
@@ -179,8 +181,8 @@ func (m *node) takeFromSideMax() []*clubCourtLogicDomain.ActivityCourt {
 	return result
 }
 
-func (m *node) takeToSideMax() []*clubCourtLogicDomain.ActivityCourt {
-	result := make([]*clubCourtLogicDomain.ActivityCourt, 0)
+func (m *node) takeToSideMax() []*badmintonCourtLogicDomain.ActivityCourt {
+	result := make([]*badmintonCourtLogicDomain.ActivityCourt, 0)
 	for _, index := range m.toSides {
 		n := m.toSideMap[index]
 		if n == nil || n.target == nil {
@@ -197,8 +199,8 @@ func (m *node) takeToSideMax() []*clubCourtLogicDomain.ActivityCourt {
 	return result
 }
 
-func (m *node) takeMax() []*clubCourtLogicDomain.ActivityCourt {
-	result := make([]*clubCourtLogicDomain.ActivityCourt, 0)
+func (m *node) takeMax() []*badmintonCourtLogicDomain.ActivityCourt {
+	result := make([]*badmintonCourtLogicDomain.ActivityCourt, 0)
 	if m.target == nil {
 		return result
 	}
@@ -288,14 +290,14 @@ func (m *node) sortToSide() {
 	})
 }
 
-func (b *BackGround) combineCourts(courts []*clubCourtLogicDomain.ActivityCourt) []*clubCourtLogicDomain.ActivityCourt {
-	newCourts := make([]*clubCourtLogicDomain.ActivityCourt, 0)
+func (b *BackGround) combineCourts(courts []*badmintonCourtLogicDomain.ActivityCourt) []*badmintonCourtLogicDomain.ActivityCourt {
+	newCourts := make([]*badmintonCourtLogicDomain.ActivityCourt, 0)
 
-	priceCourtsMap := make(map[float64][]*clubCourtLogicDomain.ActivityCourt)
+	priceCourtsMap := make(map[float64][]*badmintonCourtLogicDomain.ActivityCourt)
 	for _, court := range courts {
 		price := court.PricePerHour
 		if priceCourtsMap[price] == nil {
-			priceCourtsMap[price] = make([]*clubCourtLogicDomain.ActivityCourt, 0)
+			priceCourtsMap[price] = make([]*badmintonCourtLogicDomain.ActivityCourt, 0)
 		}
 		priceCourtsMap[price] = append(priceCourtsMap[price], court)
 	}
@@ -306,8 +308,8 @@ func (b *BackGround) combineCourts(courts []*clubCourtLogicDomain.ActivityCourt)
 	return newCourts
 }
 
-func (b *BackGround) combineSamePriceCourts(courts []*clubCourtLogicDomain.ActivityCourt) []*clubCourtLogicDomain.ActivityCourt {
-	newCourts := make([]*clubCourtLogicDomain.ActivityCourt, 0)
+func (b *BackGround) combineSamePriceCourts(courts []*badmintonCourtLogicDomain.ActivityCourt) []*badmintonCourtLogicDomain.ActivityCourt {
+	newCourts := make([]*badmintonCourtLogicDomain.ActivityCourt, 0)
 
 	for _, court := range courts {
 		for c := 1; c < int(court.Count); c++ {
@@ -366,16 +368,16 @@ func (b *BackGround) combineSamePriceCourts(courts []*clubCourtLogicDomain.Activ
 	})
 
 	timeCountMap := make(map[string]int)
-	timeCourtMap := make(map[string]*clubCourtLogicDomain.ActivityCourt)
+	timeCourtMap := make(map[string]*badmintonCourtLogicDomain.ActivityCourt)
 	for _, m := range nodes {
 		maxNodes := m.takeMax()
-		var newCourt *clubCourtLogicDomain.ActivityCourt
+		var newCourt *badmintonCourtLogicDomain.ActivityCourt
 		if len(maxNodes) == 1 {
 			newCourt = maxNodes[0]
 		} else if len(maxNodes) == 0 {
 			continue
 		} else {
-			newCourt = &clubCourtLogicDomain.ActivityCourt{
+			newCourt = &badmintonCourtLogicDomain.ActivityCourt{
 				FromTime:     maxNodes[0].FromTime,
 				ToTime:       maxNodes[len(maxNodes)-1].ToTime,
 				Count:        1,

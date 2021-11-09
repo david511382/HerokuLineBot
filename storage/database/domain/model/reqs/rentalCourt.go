@@ -68,8 +68,16 @@ type RentalCourtLedger struct {
 	AfterEndDate  *time.Time
 	ToEndDate     *time.Time
 	BeforeEndDate *time.Time
+}
 
-	EveryWeekday *int16
+type RentalCourtRefundLedger struct {
+	ID  *int
+	IDs []int
+
+	LedgerID  *int
+	LedgerIDs []int
+
+	PlaceID *int
 }
 
 type RentalCourtLedgerCourt struct {

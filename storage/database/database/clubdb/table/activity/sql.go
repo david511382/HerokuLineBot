@@ -1,6 +1,7 @@
 package activity
 
 import (
+	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/domain"
 	"heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/storage/database/domain/model/resp"
@@ -67,6 +68,23 @@ func (t Activity) IDDatePlaceIDCourtsSubsidyDescriptionPeopleLimit(arg reqs.Acti
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}
+
+	return result, nil
+}
+
+func (t Activity) All(arg reqs.Activity) ([]*ActivityTable, error) {
+	dp := t.whereArg(t.Read, arg).Select(
+		`
+		*
+		`,
+	)
+
+	result := make([]*ActivityTable, 0)
+	if err := dp.Scan(&result).Error; err != nil {
+		return nil, err
+	}
+
+	common.ConverTimeZone(result)
 
 	return result, nil
 }

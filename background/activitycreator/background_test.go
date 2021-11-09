@@ -1,7 +1,7 @@
 package activitycreator
 
 import (
-	clubCourtLogicDomain "heroku-line-bot/logic/club/court/domain"
+	badmintonCourtLogicDomain "heroku-line-bot/logic/badminton/court/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	"heroku-line-bot/util"
 	"sort"
@@ -10,19 +10,19 @@ import (
 
 func TestBackGround_combineSamePriceCourts(t *testing.T) {
 	type args struct {
-		courts []*clubCourtLogicDomain.ActivityCourt
+		courts []*badmintonCourtLogicDomain.ActivityCourt
 	}
 	tests := []struct {
 		name string
 		b    *BackGround
 		args args
-		want []*clubCourtLogicDomain.ActivityCourt
+		want []*badmintonCourtLogicDomain.ActivityCourt
 	}{
 		{
 			"standard",
 			&BackGround{},
 			args{
-				courts: []*clubCourtLogicDomain.ActivityCourt{
+				courts: []*badmintonCourtLogicDomain.ActivityCourt{
 					{
 						FromTime:     commonLogic.GetTime(2013, 8, 2, 2),
 						ToTime:       commonLogic.GetTime(2013, 8, 2, 3),
@@ -55,7 +55,7 @@ func TestBackGround_combineSamePriceCourts(t *testing.T) {
 					},
 				},
 			},
-			[]*clubCourtLogicDomain.ActivityCourt{
+			[]*badmintonCourtLogicDomain.ActivityCourt{
 				{
 					FromTime:     commonLogic.GetTime(2013, 8, 2, 1),
 					ToTime:       commonLogic.GetTime(2013, 8, 2, 5),
