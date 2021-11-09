@@ -37,7 +37,7 @@ func (b *ClubLineBot) handleTextMessageEvent(event *lineBotModel.MessageEvent) e
 	groupID := event.Source.GroupID
 	text := strings.Trim(message.Text, " ")
 
-	if groupID == Bot.lineRoomID {
+	if groupID != "" {
 		return nil
 	}
 
