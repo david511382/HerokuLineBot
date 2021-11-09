@@ -44,15 +44,16 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 	if rdsSetting == nil {
 		resultErrInfo = errLogic.New("no redis setting", errLogic.WARN)
 		rdsSetting = &storage.BadmintonActivity{
-			Description: "7人出團",
-			ClubSubsidy: 0,
+			Description:        "7人出團",
+			ClubSubsidy:        0,
+			ActivityCreateDays: 6,
 		}
 	}
 
 	newActivityHandlers := make([]*clubLogic.NewActivity, 0)
-	createActivityDate := commonLogic.DateTime(commonLogicDomain.WEEK_TIME_TYPE.Next(
+	createActivityDate := commonLogic.DateTime(commonLogicDomain.DATE_TIME_TYPE.Next(
 		currentDate,
-		1,
+		int(rdsSetting.ActivityCreateDays),
 	))
 	if placeCourtsMap, errInfo := clubCourtLogic.GetCourts(createActivityDate, createActivityDate, nil); errInfo != nil {
 		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
