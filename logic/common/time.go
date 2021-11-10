@@ -44,6 +44,13 @@ func (t DateTime) TimeP() *time.Time {
 	return &tp
 }
 
+func (t DateTime) Next(count int) DateTime {
+	return DateTime(domain.DATE_TIME_TYPE.Next(
+		t.Time(),
+		count,
+	))
+}
+
 func WeekDayName(weekDay time.Weekday) string {
 	return domain.WeekDayName[weekDay]
 }

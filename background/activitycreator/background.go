@@ -20,6 +20,7 @@ import (
 	"time"
 )
 
+// 自動開場
 type BackGround struct{}
 
 func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo errLogic.IError) {
@@ -32,7 +33,8 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 			resultErrInfo = resultErrInfo.NewParent(runTime.String())
 		}
 	}()
-	currentDate := commonLogicDomain.DATE_TIME_TYPE.Of(runTime)
+
+	currentDate := commonLogic.DateTime(commonLogicDomain.DATE_TIME_TYPE.Of(runTime))
 
 	rdsSetting, errInfo := rdsBadmintonSettingLogic.Get()
 	if errInfo != nil {
@@ -44,17 +46,16 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 	if rdsSetting == nil {
 		resultErrInfo = errLogic.New("no redis setting", errLogic.WARN)
 		rdsSetting = &storage.BadmintonActivity{
-			Description:        "7人出團",
-			ClubSubsidy:        0,
-			ActivityCreateDays: 6,
+			Description: "7人出團",
+			ClubSubsidy: 0,
 		}
+	}
+	if rdsSetting.ActivityCreateDays == nil {
+		rdsSetting.ActivityCreateDays = util.GetInt16P(6)
 	}
 
 	newActivityHandlers := make([]*clubLogic.NewActivity, 0)
-	createActivityDate := commonLogic.DateTime(commonLogicDomain.DATE_TIME_TYPE.Next(
-		currentDate,
-		int(rdsSetting.ActivityCreateDays),
-	))
+	createActivityDate := currentDate.Next(int(*rdsSetting.ActivityCreateDays))
 	if placeDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(createActivityDate, createActivityDate, nil); errInfo != nil {
 		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
@@ -77,6 +78,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 			for _, dateCourt := range dateCourts {
 				for _, court := range dateCourt.Courts {
 					courtDetail := court.CourtDetailPrice
+					// TODO: refunds
 					newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonCourtLogicDomain.ActivityCourt{
 						FromTime:     courtDetail.FromTime,
 						ToTime:       courtDetail.ToTime,
