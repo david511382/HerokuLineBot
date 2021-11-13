@@ -3,10 +3,10 @@ package club
 import (
 	"fmt"
 	"heroku-line-bot/logic/club/domain"
+	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	errLogic "heroku-line-bot/logic/error"
-	lineUserLogic "heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/storage/database"
@@ -122,7 +122,7 @@ func (b *confirmRegister) ComfirmDb() (resultErrInfo errLogic.IError) {
 
 func (b *confirmRegister) Do(text string) (resultErrInfo errLogic.IError) {
 	lineID := b.context.GetUserID()
-	if user, err := lineUserLogic.Get(lineID); err != nil {
+	if user, err := clubLineuserLogic.Get(lineID); err != nil {
 		resultErrInfo = errLogic.NewError(err)
 		return
 	} else if user.Role != domain.ADMIN_CLUB_ROLE {

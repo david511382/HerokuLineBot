@@ -1,4 +1,4 @@
-package storage
+package domain
 
 type BadmintonActivity struct {
 	Description        string `json:"description"`

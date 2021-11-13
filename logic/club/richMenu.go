@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"heroku-line-bot/logger"
 	"heroku-line-bot/logic/club/domain"
+	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	errLogic "heroku-line-bot/logic/error"
-	"heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
@@ -99,7 +99,7 @@ func (b *richMenu) GetInputTemplate(requireRawParamAttr string) interface{} {
 }
 
 func (b *richMenu) Do(text string) (resultErrInfo errLogic.IError) {
-	if u, err := lineuser.Get(b.context.GetUserID()); err != nil {
+	if u, err := clubLineuserLogic.Get(b.context.GetUserID()); err != nil {
 		resultErrInfo = errLogic.NewError(err)
 		return
 	} else {

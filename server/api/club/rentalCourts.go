@@ -4,10 +4,9 @@ import (
 	"heroku-line-bot/global"
 	badmintonCourtLogic "heroku-line-bot/logic/badminton/court"
 	badmintonCourtLogicDomain "heroku-line-bot/logic/badminton/court/domain"
+	badmintonPlaceLogic "heroku-line-bot/logic/badminton/place"
 	commonLogic "heroku-line-bot/logic/common"
-
 	errLogic "heroku-line-bot/logic/error"
-	rdsBadmintonplaceLogic "heroku-line-bot/logic/redis/badmintonplace"
 	"heroku-line-bot/server/common"
 	"heroku-line-bot/server/domain/reqs"
 	"heroku-line-bot/server/domain/resp"
@@ -66,7 +65,7 @@ func GetRentalCourts(c *gin.Context) {
 	for placeID := range placeDateCourtsMap {
 		placeIDs = append(placeIDs, placeID)
 	}
-	idPlaceMap, errInfo := rdsBadmintonplaceLogic.Load(placeIDs...)
+	idPlaceMap, errInfo := badmintonPlaceLogic.Load(placeIDs...)
 	if errInfo != nil && errInfo.IsError() {
 		common.FailInternal(c, errInfo)
 		return

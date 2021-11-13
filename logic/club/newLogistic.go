@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"heroku-line-bot/global"
 	"heroku-line-bot/logic/club/domain"
+	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	errLogic "heroku-line-bot/logic/error"
-	"heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
@@ -87,7 +87,7 @@ func (b *NewLogistic) GetInputTemplate(requireRawParamAttr string) interface{} {
 }
 
 func (b *NewLogistic) Do(text string) (resultErrInfo errLogic.IError) {
-	if u, err := lineuser.Get(b.Context.GetUserID()); err != nil {
+	if u, err := clubLineuserLogic.Get(b.Context.GetUserID()); err != nil {
 		resultErrInfo = errLogic.NewError(err)
 		return
 	} else {

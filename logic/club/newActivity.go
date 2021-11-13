@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"heroku-line-bot/global"
 	courtDomain "heroku-line-bot/logic/badminton/court/domain"
+	badmintonPlaceLogic "heroku-line-bot/logic/badminton/place"
 	"heroku-line-bot/logic/club/domain"
+	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	errLogic "heroku-line-bot/logic/error"
-	rdsBadmintonplaceLogic "heroku-line-bot/logic/redis/badmintonplace"
-	"heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
@@ -69,7 +69,7 @@ func (b *NewActivity) GetSingleParam(attr string) string {
 	case "date":
 		return b.Date.Time().Format(commonLogicDomain.DATE_FORMAT)
 	case "ICmdLogic.place_id":
-		if dbDatas, errInfo := rdsBadmintonplaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
+		if dbDatas, errInfo := badmintonPlaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
 			for _, v := range dbDatas {
 				return v.Name
 			}
@@ -158,7 +158,7 @@ func (b *NewActivity) GetInputTemplate(requireRawParamAttr string) interface{} {
 }
 
 func (b *NewActivity) Do(text string) (resultErrInfo errLogic.IError) {
-	if u, err := lineuser.Get(b.Context.GetUserID()); err != nil {
+	if u, err := clubLineuserLogic.Get(b.Context.GetUserID()); err != nil {
 		resultErrInfo = errLogic.NewError(err)
 		return
 	} else {
@@ -352,7 +352,7 @@ func (b *NewActivity) getPlaceTimeTemplate() (result []interface{}) {
 	result = []interface{}{}
 
 	place := "無球館"
-	if dbDatas, errInfo := rdsBadmintonplaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
+	if dbDatas, errInfo := badmintonPlaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
 		for _, v := range dbDatas {
 			place = v.Name
 		}
@@ -405,7 +405,7 @@ func (b *NewActivity) getLineComponents(actions domain.NewActivityLineTemplate) 
 	)
 
 	place := "無球館"
-	if dbDatas, errInfo := rdsBadmintonplaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
+	if dbDatas, errInfo := badmintonPlaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
 		for _, v := range dbDatas {
 			place = v.Name
 		}

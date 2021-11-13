@@ -10,10 +10,10 @@ import (
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	errLogic "heroku-line-bot/logic/error"
-	rdsBadmintonSettingLogic "heroku-line-bot/logic/redis/badmintonsetting"
-	"heroku-line-bot/models/storage"
 	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/storage/database"
+	"heroku-line-bot/storage/redis"
+	redisDomain "heroku-line-bot/storage/redis/domain"
 	"heroku-line-bot/util"
 	"sort"
 	"strconv"
@@ -36,7 +36,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 
 	currentDate := commonLogic.DateTime(commonLogicDomain.DATE_TIME_TYPE.Of(runTime))
 
-	rdsSetting, errInfo := rdsBadmintonSettingLogic.Get()
+	rdsSetting, errInfo := redis.BadmintonSetting.Load()
 	if errInfo != nil {
 		resultErrInfo = errInfo
 		if resultErrInfo.IsError() {
@@ -45,7 +45,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 	}
 	if rdsSetting == nil {
 		resultErrInfo = errLogic.New("no redis setting", errLogic.WARN)
-		rdsSetting = &storage.BadmintonActivity{
+		rdsSetting = &redisDomain.BadmintonActivity{
 			Description: "7人出團",
 			ClubSubsidy: 0,
 		}

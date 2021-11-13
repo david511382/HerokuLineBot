@@ -174,6 +174,42 @@ func (eis *ErrorInfos) GetLevel() ErrorLevel {
 	return INFO
 }
 
+func (eis *ErrorInfos) SetLevel(level ErrorLevel) {
+	if eis == nil {
+		return
+	}
+
+	if eis.GetLevel() != level {
+		switch level {
+		case ERROR:
+			if eis.errorErrInfos == nil {
+				eis.errorErrInfos = make([]*ErrorInfo, 0)
+			}
+			eis.errorErrInfos = append(eis.errorErrInfos, eis.warnErrInfos...)
+			eis.errorErrInfos = append(eis.errorErrInfos, eis.infoErrInfos...)
+			eis.warnErrInfos = make([]*ErrorInfo, 0)
+			eis.infoErrInfos = make([]*ErrorInfo, 0)
+		case WARN:
+			if eis.warnErrInfos == nil {
+				eis.warnErrInfos = make([]*ErrorInfo, 0)
+			}
+			eis.warnErrInfos = append(eis.warnErrInfos, eis.errorErrInfos...)
+			eis.warnErrInfos = append(eis.warnErrInfos, eis.infoErrInfos...)
+			eis.errorErrInfos = make([]*ErrorInfo, 0)
+			eis.infoErrInfos = make([]*ErrorInfo, 0)
+		case INFO:
+			if eis.infoErrInfos == nil {
+				eis.infoErrInfos = make([]*ErrorInfo, 0)
+			}
+			eis.infoErrInfos = append(eis.infoErrInfos, eis.errorErrInfos...)
+			eis.infoErrInfos = append(eis.infoErrInfos, eis.warnErrInfos...)
+			eis.errorErrInfos = make([]*ErrorInfo, 0)
+			eis.warnErrInfos = make([]*ErrorInfo, 0)
+		}
+	}
+	return
+}
+
 func (eis *ErrorInfos) IsError() bool {
 	if eis == nil {
 		return false

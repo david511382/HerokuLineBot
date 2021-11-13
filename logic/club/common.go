@@ -7,7 +7,7 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/logic/clublinebot/domain"
 	"heroku-line-bot/service/linebot"
-	"heroku-line-bot/storage/redis"
+	commonRedis "heroku-line-bot/storage/redis/common"
 	"heroku-line-bot/util"
 
 	errLogic "heroku-line-bot/logic/error"
@@ -60,7 +60,7 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 		return
 	} else if handler != nil {
 		cmdHandler = handler
-		if err := lineContext.DeleteParam(); redis.IsRedisError(err) {
+		if err := lineContext.DeleteParam(); commonRedis.IsRedisError(err) {
 			resultErrInfo = errLogic.NewError(err)
 		}
 	} else {
@@ -97,7 +97,7 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 	if redisParamJson := lineContext.GetParam(); redisParamJson != "" {
 		redisCmd := getCmdFromJson(redisParamJson)
 		if isChangeCmd := cmdHandler != nil && redisCmd != cmd; isChangeCmd {
-			if err := lineContext.DeleteParam(); redis.IsRedisError(err) {
+			if err := lineContext.DeleteParam(); commonRedis.IsRedisError(err) {
 				resultErrInfo = errLogic.NewError(err)
 			}
 			cmdHandler = nil

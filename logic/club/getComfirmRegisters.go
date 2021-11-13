@@ -2,9 +2,9 @@ package club
 
 import (
 	"heroku-line-bot/logic/club/domain"
+	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	commonLogic "heroku-line-bot/logic/common"
 	errLogic "heroku-line-bot/logic/error"
-	lineUserLogic "heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
@@ -75,7 +75,7 @@ func (b *GetComfirmRegisters) LoadComfirmRegisterUsers() (resultErrInfo errLogic
 
 func (b *GetComfirmRegisters) Do(text string) (resultErrInfo errLogic.IError) {
 	lineID := b.context.GetUserID()
-	if user, err := lineUserLogic.Get(lineID); err != nil {
+	if user, err := clubLineuserLogic.Get(lineID); err != nil {
 		resultErrInfo = errLogic.NewError(err)
 		return
 	} else if user.Role != domain.ADMIN_CLUB_ROLE {

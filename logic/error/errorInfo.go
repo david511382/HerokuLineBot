@@ -160,6 +160,14 @@ func (ei *ErrorInfo) GetLevel() ErrorLevel {
 	return ei.Level
 }
 
+func (ei *ErrorInfo) SetLevel(level ErrorLevel) {
+	if ei == nil {
+		return
+	}
+
+	ei.Level = level
+}
+
 func (ei *ErrorInfo) IsError() bool {
 	if ei == nil {
 		return false

@@ -4,9 +4,9 @@ import (
 	"heroku-line-bot/global"
 	"heroku-line-bot/logger"
 	clubLogicDomain "heroku-line-bot/logic/club/domain"
+	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	"heroku-line-bot/logic/clublinebot"
 	errLogic "heroku-line-bot/logic/error"
-	rdsLineuserLogic "heroku-line-bot/logic/redis/lineuser"
 	"heroku-line-bot/server/domain"
 	"heroku-line-bot/service/linebot"
 	linebotDomainReqs "heroku-line-bot/service/linebot/domain/model/reqs"
@@ -42,7 +42,7 @@ func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resu
 			ExpTime:  expTime,
 		}
 
-		if data, err := rdsLineuserLogic.Get(claims.Sub); err != nil {
+		if data, err := clubLineuserLogic.Get(claims.Sub); err != nil {
 			errInfo := errLogic.NewError(err, errLogic.WARN)
 			logger.Log("API", errInfo)
 		} else if data != nil {

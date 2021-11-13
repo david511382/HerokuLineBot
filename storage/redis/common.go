@@ -48,13 +48,3 @@ func Dispose() {
 	BadmintonSetting.Dispose()
 	BadmintonPlace.Dispose()
 }
-
-func IsRedisError(err error) bool {
-	if err == nil ||
-		err.Error() == domain.NOT_CHANGE.Error() ||
-		err.Error() == domain.NOT_EXIST.Error() {
-		return false
-	}
-
-	return true
-}

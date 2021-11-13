@@ -3,10 +3,10 @@ package club
 import (
 	"fmt"
 	"heroku-line-bot/logic/club/domain"
+	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
+	clubLineuserLogicDomain "heroku-line-bot/logic/club/lineuser/domain"
 	"heroku-line-bot/logic/common"
 	errLogic "heroku-line-bot/logic/error"
-	lineUserLogic "heroku-line-bot/logic/redis/lineuser"
-	lineUserLogicDomain "heroku-line-bot/logic/redis/lineuser/domain"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
@@ -24,7 +24,7 @@ type submitActivity struct {
 	JoinedMembers  []*submitActivityJoinedMembers `json:"joined_members"`
 	JoinedGuests   []*submitActivityJoinedMembers `json:"joined_guests"`
 	ActivityID     int                            `json:"activity_id"`
-	CurrentUser    *lineUserLogicDomain.Model     `json:"current_user"`
+	CurrentUser    *clubLineuserLogicDomain.Model `json:"current_user"`
 	HasLoad        bool                           `json:"has_load"`
 	Rsl4Consume    int16                          `json:"rsl4_consume"`
 	AttendIndex    *int                           `json:"attend_index,omitempty"`
@@ -197,7 +197,7 @@ func (b *submitActivity) loadCurrentUserID() (resultErrInfo errLogic.IError) {
 	}
 
 	lineID := b.context.GetUserID()
-	userData, err := lineUserLogic.Get(lineID)
+	userData, err := clubLineuserLogic.Get(lineID)
 	if err != nil {
 		resultErrInfo = errLogic.NewError(err)
 		return

@@ -10,6 +10,7 @@ type IError interface {
 	Append(errInfo IError) *ErrorInfos
 
 	GetLevel() ErrorLevel
+	SetLevel(ErrorLevel)
 	IsError() bool
 	IsWarn() bool
 	IsInfo() bool
