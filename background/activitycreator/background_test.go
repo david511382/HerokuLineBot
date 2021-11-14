@@ -8,19 +8,17 @@ import (
 	"testing"
 )
 
-func TestBackGround_combineSamePriceCourts(t *testing.T) {
+func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
 	type args struct {
 		courts []*badmintonCourtLogicDomain.ActivityCourt
 	}
 	tests := []struct {
-		name string
-		b    *BackGround
-		args args
-		want []*badmintonCourtLogicDomain.ActivityCourt
+		name               string
+		args               args
+		wantPriceRangesMap map[float64][]*commonLogic.TimeRangeValue
 	}{
 		{
 			"standard",
-			&BackGround{},
 			args{
 				courts: []*badmintonCourtLogicDomain.ActivityCourt{
 					{
@@ -55,38 +53,67 @@ func TestBackGround_combineSamePriceCourts(t *testing.T) {
 					},
 				},
 			},
-			[]*badmintonCourtLogicDomain.ActivityCourt{
-				{
-					FromTime:     commonLogic.GetTime(2013, 8, 2, 1),
-					ToTime:       commonLogic.GetTime(2013, 8, 2, 5),
-					Count:        1,
-					PricePerHour: 1,
-				},
-				{
-					FromTime:     commonLogic.GetTime(2013, 8, 2, 1),
-					ToTime:       commonLogic.GetTime(2013, 8, 2, 6),
-					Count:        1,
-					PricePerHour: 1,
-				},
-				{
-					FromTime:     commonLogic.GetTime(2013, 8, 2, 2),
-					ToTime:       commonLogic.GetTime(2013, 8, 2, 3),
-					Count:        1,
-					PricePerHour: 1,
+			map[float64][]*commonLogic.TimeRangeValue{
+				1: {
+					{
+						TimeRange: util.TimeRange{
+							From: commonLogic.GetTimeP(2013, 8, 2, 1),
+							To:   commonLogic.GetTimeP(2013, 8, 2, 3),
+						},
+						Value: util.ToFloat(2),
+					},
+					{
+						TimeRange: util.TimeRange{
+							From: commonLogic.GetTimeP(2013, 8, 2, 1),
+							To:   commonLogic.GetTimeP(2013, 8, 2, 3),
+						},
+						Value: util.ToFloat(2),
+					},
+					{
+						TimeRange: util.TimeRange{
+							From: commonLogic.GetTimeP(2013, 8, 2, 2),
+							To:   commonLogic.GetTimeP(2013, 8, 2, 3),
+						},
+						Value: util.ToFloat(1),
+					},
+					{
+						TimeRange: util.TimeRange{
+							From: commonLogic.GetTimeP(2013, 8, 2, 3),
+							To:   commonLogic.GetTimeP(2013, 8, 2, 4),
+						},
+						Value: util.ToFloat(1),
+					},
+					{
+						TimeRange: util.TimeRange{
+							From: commonLogic.GetTimeP(2013, 8, 2, 3),
+							To:   commonLogic.GetTimeP(2013, 8, 2, 5),
+						},
+						Value: util.ToFloat(2),
+					},
+					{
+						TimeRange: util.TimeRange{
+							From: commonLogic.GetTimeP(2013, 8, 2, 4),
+							To:   commonLogic.GetTimeP(2013, 8, 2, 6),
+						},
+						Value: util.ToFloat(2),
+					},
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.b.combineSamePriceCourts(tt.args.courts)
-			sort.SliceStable(got, func(i, j int) bool {
-				return got[i].ToTime.Before(got[j].ToTime)
-			})
-			sort.SliceStable(got, func(i, j int) bool {
-				return got[i].FromTime.Before(got[j].FromTime)
-			})
-			if ok, msg := util.Comp(got, tt.want); !ok {
+			b := BackGround{}
+			gotPriceRangesMap := b.parseCourtsToTimeRanges(tt.args.courts)
+			for _, ranges := range gotPriceRangesMap {
+				sort.SliceStable(ranges, func(i, j int) bool {
+					return ranges[i].To.Before(*ranges[j].To)
+				})
+				sort.SliceStable(ranges, func(i, j int) bool {
+					return ranges[i].From.Before(*ranges[j].From)
+				})
+			}
+			if ok, msg := util.Comp(gotPriceRangesMap, tt.wantPriceRangesMap); !ok {
 				t.Errorf(msg)
 			}
 		})
