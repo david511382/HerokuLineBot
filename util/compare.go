@@ -7,10 +7,11 @@ import (
 	"time"
 )
 
+const (
+	COMPARE_GET_IMPLEMENT_VALUE_FUNCTION_NAME = "GetUtilCompareValue"
+)
+
 func IsNilInterfaceObject(i interface{}) bool {
-	if i == nil {
-		return true
-	}
 	vi := reflect.ValueOf(i)
 	return vi.IsNil()
 }
@@ -120,7 +121,12 @@ func compV(aV, bV reflect.Value) (bool, string) {
 		if !bV.IsNil() {
 			bV = bV.Elem()
 		}
-		return Comp(aV.Interface(), bV.Interface())
+		if !aV.CanInterface() || !bV.CanInterface() {
+			return compV(aV, bV)
+		}
+		aVI := aV.Interface()
+		bVI := bV.Interface()
+		return Comp(aVI, bVI)
 	case reflect.Slice, reflect.Array:
 		if aK == reflect.Slice {
 			if aV.IsNil() != bV.IsNil() {
@@ -140,19 +146,18 @@ func compV(aV, bV reflect.Value) (bool, string) {
 
 		errMsg := ""
 		for i := 0; i < maxLen; i++ {
-			var aE, bE interface{}
+			var av, bv reflect.Value
 			if i >= aLen {
-				aE = nil
-				bE = bV.Index(i).Interface()
+				av = reflect.Value{}
+				bv = bV.Index(i)
 			} else if i >= bLen {
-				aE = aV.Index(i).Interface()
-				bE = nil
+				av = aV.Index(i)
+				bv = reflect.Value{}
 			} else {
-				aE = aV.Index(i).Interface()
-				bE = bV.Index(i).Interface()
+				av = aV.Index(i)
+				bv = bV.Index(i)
 			}
-
-			if ok, msg := Comp(aE, bE); !ok {
+			if ok, msg := compV(av, bv); !ok {
 				errMsg = fmt.Sprintf(
 					"%s\n--- index: %d\n%s",
 					errMsg,
@@ -166,16 +171,33 @@ func compV(aV, bV reflect.Value) (bool, string) {
 			return false, errMsg
 		}
 	case reflect.Struct:
+		isGetImplementValue := false
+		if actualImplementValue := aV.MethodByName(COMPARE_GET_IMPLEMENT_VALUE_FUNCTION_NAME); actualImplementValue.Kind() != reflect.Invalid {
+			values := actualImplementValue.Call([]reflect.Value{})
+			if len(values) == 1 {
+				aV = values[0]
+				isGetImplementValue = true
+			}
+		}
+		if expectImplementValue := bV.MethodByName(COMPARE_GET_IMPLEMENT_VALUE_FUNCTION_NAME); expectImplementValue.Kind() != reflect.Invalid {
+			values := expectImplementValue.Call([]reflect.Value{})
+			if len(values) == 1 {
+				bV = values[0]
+				isGetImplementValue = true
+			}
+		}
+		if isGetImplementValue {
+			return compV(aV, bV)
+		}
+
 		if aV.NumField() != bV.NumField() {
 			return false, compValueErrMsg(&aV, &bV)
 		}
 
-		var bt reflect.Type
 		if !bV.CanInterface() {
 			if aV.CanInterface() {
 				return false, compValueErrMsg(&aV, nil)
 			}
-			bt = reflect.TypeOf(bV)
 		} else if !aV.CanInterface() {
 			return false, compValueErrMsg(nil, &bV)
 		} else {
@@ -190,12 +212,10 @@ func compV(aV, bV reflect.Value) (bool, string) {
 				}
 				return false, compErrMsg(at.String(), expect)
 			}
-
-			bt = reflect.TypeOf(expect)
 		}
 
-		for i := 0; i < bt.NumField(); i++ {
-			fn := bt.Field(i).Name
+		for i := 0; i < bV.NumField(); i++ {
+			fn := bV.Field(i).Type().Name()
 			bv := bV.Field(i)
 			av := aV.Field(i)
 
@@ -288,22 +308,27 @@ func compV(aV, bV reflect.Value) (bool, string) {
 			reflect.Float64:
 			actual = aV.Float()
 			expect = bV.Float()
+		case reflect.String:
+			actual = aV.String()
+			expect = bV.String()
+		case reflect.Bool:
+			actual = aV.Bool()
+			expect = bV.Bool()
+		case reflect.Interface:
+			if aV.CanInterface() {
+				actual = aV.Interface()
+				expect = bV.Interface()
+				return Comp(actual, expect)
+			}
+			return false, compValueErrMsg(nil, &bV)
 		default:
 			if !bV.CanInterface() {
 				if aV.CanInterface() {
 					return false, compValueErrMsg(&aV, nil)
 				}
-				if !reflect.DeepEqual(aV.Elem(), bV.Elem()) {
-					return false, compValueErrMsg(&aV, &bV)
-				}
-				return true, ""
-			}
-			if !aV.CanInterface() {
-				return false, compValueErrMsg(nil, &bV)
 			}
 
-			actual = aV.Interface()
-			expect = bV.Interface()
+			return false, ""
 		}
 
 		if !reflect.DeepEqual(actual, expect) {

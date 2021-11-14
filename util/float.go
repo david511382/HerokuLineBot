@@ -16,6 +16,10 @@ func Int64ToFloat(v int64) Float {
 	return Float(decimal.NewFromInt(v))
 }
 
+func (f Float) GetUtilCompareValue() float64 {
+	return f.Value()
+}
+
 func (f Float) Value() float64 {
 	d := decimal.Decimal(f)
 	r, _ := d.Float64()
