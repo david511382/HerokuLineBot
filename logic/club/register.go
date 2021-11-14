@@ -5,7 +5,6 @@ import (
 	"heroku-line-bot/global"
 	"heroku-line-bot/logger"
 	"heroku-line-bot/logic/club/domain"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
@@ -13,6 +12,7 @@ import (
 	memberDb "heroku-line-bot/storage/database/database/clubdb/table/member"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"strings"
 )
 
@@ -74,7 +74,7 @@ type register struct {
 	MemberID                  int                       `json:"member_id"`
 }
 
-func (b *register) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
+func (b *register) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
 	*b = register{
 		context: context,
 		Role:    domain.GUEST_CLUB_ROLE,
@@ -110,7 +110,7 @@ func (b *register) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *register) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
+func (b *register) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	case "company_id":
 		b.CompanyID = &text
@@ -166,7 +166,7 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 			}
 			if count, err := database.Club.Member.Count(arg); err == nil && count > 0 {
 				if err := b.context.DeleteParam(); err != nil {
-					logger.Log("line bot club", errLogic.NewError(err))
+					logger.Log("line bot club", errUtil.NewError(err))
 					return nil
 				}
 
@@ -362,7 +362,7 @@ func (b *register) init() {
 	}
 }
 
-func (b *register) Do(text string) (resultErrInfo errLogic.IError) {
+func (b *register) Do(text string) (resultErrInfo errUtil.IError) {
 	if b.IsRequireDbCheckCompanyID {
 		b.IsRequireDbCheckCompanyID = false
 		b.MemberID = 0
@@ -374,7 +374,7 @@ func (b *register) Do(text string) (resultErrInfo errLogic.IError) {
 			CompanyID: b.CompanyID,
 		}
 		if dbDatas, err := database.Club.Member.IDNameRoleDepartment(arg); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		} else if len(dbDatas) == 0 {
 			if 處, _, _ := b.Department.Split(); 處 == "" {
@@ -389,7 +389,7 @@ func (b *register) Do(text string) (resultErrInfo errLogic.IError) {
 					replyMessge,
 				}
 				if err := b.context.Reply(replyMessges); err != nil {
-					resultErrInfo = errLogic.NewError(err)
+					resultErrInfo = errUtil.NewError(err)
 					return
 				}
 
@@ -412,7 +412,7 @@ func (b *register) Do(text string) (resultErrInfo errLogic.IError) {
 	if b.context.IsComfirmed() {
 		transaction := database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -430,7 +430,7 @@ func (b *register) Do(text string) (resultErrInfo errLogic.IError) {
 				"line_id":    &lineID,
 			}
 			if err := database.Club.Member.Update(transaction, arg, fields); err != nil {
-				resultErrInfo = errLogic.NewError(err)
+				resultErrInfo = errUtil.NewError(err)
 				return
 			}
 		} else {
@@ -442,7 +442,7 @@ func (b *register) Do(text string) (resultErrInfo errLogic.IError) {
 				LineID:     &lineID,
 			}
 			if err := database.Club.Member.BaseTable.Insert(transaction, data); err != nil {
-				resultErrInfo = errLogic.NewError(err)
+				resultErrInfo = errUtil.NewError(err)
 				return
 			}
 			b.MemberID = data.ID
@@ -450,7 +450,7 @@ func (b *register) Do(text string) (resultErrInfo errLogic.IError) {
 
 		var adminReplyMessges []interface{}
 		if adminReplyContents, err := b.GetNotifyRegisterContents(); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		} else {
 			adminReplyMessges = []interface{}{
@@ -469,7 +469,7 @@ func (b *register) Do(text string) (resultErrInfo errLogic.IError) {
 		}
 
 		if err := b.context.PushAdmin(adminReplyMessges); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -477,12 +477,12 @@ func (b *register) Do(text string) (resultErrInfo errLogic.IError) {
 			linebot.GetTextMessage("完成"),
 		}
 		if err := b.context.Reply(replyMessges); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
 		if err := b.context.DeleteParam(); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -657,7 +657,7 @@ func (b *register) Do(text string) (resultErrInfo errLogic.IError) {
 		),
 	}
 	if err := b.context.Reply(replyMessges); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 

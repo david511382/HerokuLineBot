@@ -9,7 +9,6 @@ import (
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
@@ -17,6 +16,7 @@ import (
 	activityDb "heroku-line-bot/storage/database/database/clubdb/table/activity"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"strconv"
 	"strings"
 	"time"
@@ -35,7 +35,7 @@ type NewActivity struct {
 	Courts      []*courtDomain.ActivityCourt `json:"courts"`
 }
 
-func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
+func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
 	nowTime := global.TimeUtilObj.Now()
 	*b = NewActivity{
 		Context:     context,
@@ -92,12 +92,12 @@ func (b *NewActivity) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *NewActivity) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
+func (b *NewActivity) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	case "date":
 		t, err := time.Parse(commonLogicDomain.DATE_TIME_RFC3339_FORMAT, text)
 		if err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		b.Date = commonLogic.DateTime(t)
@@ -105,14 +105,14 @@ func (b *NewActivity) LoadSingleParam(attr, text string) (resultErrInfo errLogic
 		if dbDatas, err := database.Club.Place.IDName(dbReqs.Place{
 			Name: &text,
 		}); err != nil {
-			errInfo := errLogic.NewError(err)
+			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
 				resultErrInfo = errInfo
 			} else {
 				resultErrInfo = resultErrInfo.Append(errInfo)
 			}
 		} else if len(dbDatas) == 0 {
-			errInfo := errLogic.New("未登記的球場")
+			errInfo := errUtil.New("未登記的球場")
 			if resultErrInfo == nil {
 				resultErrInfo = errInfo
 			} else {
@@ -129,14 +129,14 @@ func (b *NewActivity) LoadSingleParam(attr, text string) (resultErrInfo errLogic
 	case "ICmdLogic.people_limit":
 		i, err := strconv.Atoi(text)
 		if err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		b.PeopleLimit = util.GetInt16P(int16(i))
 	case "ICmdLogic.club_subsidy":
 		i, err := strconv.Atoi(text)
 		if err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		b.ClubSubsidy = int16(i)
@@ -157,14 +157,14 @@ func (b *NewActivity) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
-func (b *NewActivity) Do(text string) (resultErrInfo errLogic.IError) {
+func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	if u, err := clubLineuserLogic.Get(b.Context.GetUserID()); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {
 		if u.Role != domain.ADMIN_CLUB_ROLE &&
 			u.Role != domain.CADRE_CLUB_ROLE {
-			resultErrInfo = errLogic.NewError(domain.NO_AUTH_ERROR)
+			resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
 			return
 		}
 	}
@@ -172,7 +172,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errLogic.IError) {
 	if b.Context.IsComfirmed() {
 		transaction := database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -183,7 +183,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errLogic.IError) {
 		}
 
 		if err := b.Context.DeleteParam(); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -191,7 +191,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errLogic.IError) {
 			linebot.GetTextMessage("完成"),
 		}
 		if err := b.Context.Reply(replyMessges); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -313,19 +313,19 @@ func (b *NewActivity) Do(text string) (resultErrInfo errLogic.IError) {
 		),
 	}
 	if err := b.Context.Reply(replyMessges); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
 	return nil
 }
 
-func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errLogic.IError) {
+func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errUtil.IError) {
 	courtsStr := b.getCourtsStr()
 	if transaction == nil {
 		transaction = database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		defer database.CommitTransaction(transaction, resultErrInfo)
@@ -341,7 +341,7 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errLog
 		IsComplete:    b.IsComplete,
 	}
 	if err := database.Club.Activity.Insert(transaction, data); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
@@ -480,7 +480,7 @@ func (b *NewActivity) getCourtsStr() string {
 	return strings.Join(courtStrs, ",")
 }
 
-func (b *NewActivity) ParseCourts(courtsStr string) (resultErrInfo errLogic.IError) {
+func (b *NewActivity) ParseCourts(courtsStr string) (resultErrInfo errUtil.IError) {
 	b.Courts = make([]*courtDomain.ActivityCourt, 0)
 	courtsStrs := strings.Split(courtsStr, ",")
 	for _, courtsStr := range courtsStrs {
@@ -492,12 +492,12 @@ func (b *NewActivity) ParseCourts(courtsStr string) (resultErrInfo errLogic.IErr
 			&court.Count,
 			&court.PricePerHour,
 			&timeStr); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		times := strings.Split(timeStr, "~")
 		if len(times) != 2 {
-			errInfo := errLogic.New("時間格式錯誤")
+			errInfo := errUtil.New("時間格式錯誤")
 			errInfo = errInfo.Trace()
 			resultErrInfo = errInfo
 			return
@@ -505,13 +505,13 @@ func (b *NewActivity) ParseCourts(courtsStr string) (resultErrInfo errLogic.IErr
 		fromTimeStr := times[0]
 		toTimeStr := times[1]
 		if t, err := time.Parse(commonLogicDomain.TIME_HOUR_MIN_FORMAT, fromTimeStr); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		} else {
 			court.FromTime = t
 		}
 		if t, err := time.Parse(commonLogicDomain.TIME_HOUR_MIN_FORMAT, toTimeStr); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		} else {
 			court.ToTime = t

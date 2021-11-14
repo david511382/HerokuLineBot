@@ -2,9 +2,9 @@ package lineuser
 
 import (
 	"encoding/json"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/storage/redis/common"
 	"heroku-line-bot/storage/redis/domain"
+	errUtil "heroku-line-bot/util/error"
 
 	rds "github.com/go-redis/redis"
 )
@@ -25,18 +25,18 @@ func New(write, read *rds.Client, baseKey string) Key {
 	}
 }
 
-func (k Key) Load(lineID string) (result *domain.LineUser, resultErrInfo errLogic.IError) {
+func (k Key) Load(lineID string) (result *domain.LineUser, resultErrInfo errUtil.IError) {
 	redisData, err := k.Get(lineID)
 	if err != nil {
-		errInfo := errLogic.NewError(err)
-		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 
 	result = &domain.LineUser{}
 	if err := json.Unmarshal([]byte(redisData), result); err != nil {
-		errInfo := errLogic.NewError(err)
-		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 

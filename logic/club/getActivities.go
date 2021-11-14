@@ -8,7 +8,6 @@ import (
 	clubLineuserLogicDomain "heroku-line-bot/logic/club/lineuser/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
@@ -17,6 +16,7 @@ import (
 	"heroku-line-bot/storage/database/database/clubdb/table/memberactivity"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"sort"
 	"strconv"
 	"time"
@@ -42,7 +42,7 @@ type getActivitiesActivityJoinedMembers struct {
 	Name string `json:"name"`
 }
 
-func (b *GetActivities) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
+func (b *GetActivities) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
 	*b = GetActivities{
 		context:    context,
 		activities: make([]*getActivitiesActivity, 0),
@@ -58,7 +58,7 @@ func (b *GetActivities) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *GetActivities) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
+func (b *GetActivities) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	default:
 	}
@@ -70,13 +70,13 @@ func (b *GetActivities) GetInputTemplate(requireRawParamAttr string) interface{}
 	return nil
 }
 
-func (b *GetActivities) init() (resultErrInfo errLogic.IError) {
+func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 	context := b.context
 	arg := dbReqs.Activity{
 		IsComplete: util.GetBoolP(false),
 	}
 	if dbDatas, err := database.Club.Activity.IDDatePlaceIDCourtsSubsidyDescriptionPeopleLimit(arg); err != nil {
-		errInfo := errLogic.NewError(err)
+		errInfo := errUtil.NewError(err)
 		if resultErrInfo == nil {
 			resultErrInfo = errInfo
 		} else {
@@ -96,7 +96,7 @@ func (b *GetActivities) init() (resultErrInfo errLogic.IError) {
 			placeIDs = append(placeIDs, id)
 		}
 		if dbDatas, errInfo := badmintonPlaceLogic.Load(placeIDs...); errInfo != nil {
-			errInfo := errLogic.NewError(err)
+			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
 				resultErrInfo = errInfo
 			} else {
@@ -113,7 +113,7 @@ func (b *GetActivities) init() (resultErrInfo errLogic.IError) {
 			ActivityIDs: activityIDs,
 		}
 		if dbDatas, err := database.Club.MemberActivity.IDMemberIDActivityID(memberActivityArg); err != nil {
-			errInfo := errLogic.NewError(err)
+			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
 				resultErrInfo = errInfo
 			} else {
@@ -134,7 +134,7 @@ func (b *GetActivities) init() (resultErrInfo errLogic.IError) {
 				IDs: memberIDs,
 			}
 			if dbDatas, err := database.Club.Member.IDNameLineID(memberArg); err != nil {
-				resultErrInfo = errLogic.NewError(err)
+				resultErrInfo = errUtil.NewError(err)
 				return
 			} else {
 				for _, v := range dbDatas {
@@ -192,7 +192,7 @@ func (b *GetActivities) init() (resultErrInfo errLogic.IError) {
 	return
 }
 
-func (b *GetActivities) listMembers() (resultErrInfo errLogic.IError) {
+func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 	var date time.Time
 	var place string
 	var peopleLimit *int16
@@ -200,14 +200,14 @@ func (b *GetActivities) listMembers() (resultErrInfo errLogic.IError) {
 		ID: &b.ListMembersActivityID,
 	}
 	if dbDatas, err := database.Club.Activity.DatePlaceIDPeopleLimit(arg); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else if len(dbDatas) == 0 {
 		replyMessges := []interface{}{
 			linebot.GetTextMessage("查無活動"),
 		}
 		if err := b.context.Reply(replyMessges); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		return nil
@@ -217,7 +217,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errLogic.IError) {
 		peopleLimit = v.PeopleLimit
 
 		if dbDatas, errInfo := badmintonPlaceLogic.Load(v.PlaceID); errInfo != nil {
-			errInfo := errLogic.NewError(err)
+			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
 				resultErrInfo = errInfo
 			} else {
@@ -235,7 +235,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errLogic.IError) {
 		ActivityID: &b.ListMembersActivityID,
 	}
 	if dbDatas, err := database.Club.MemberActivity.IDMemberID(memberActivityArg); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {
 		memberIDs := make([]int, 0)
@@ -247,7 +247,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errLogic.IError) {
 			IDs: memberIDs,
 		}
 		if dbDatas, err := database.Club.Member.IDName(memberArg); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		} else {
 			for _, v := range dbDatas {
@@ -316,14 +316,14 @@ func (b *GetActivities) listMembers() (resultErrInfo errLogic.IError) {
 		replyMessge,
 	}
 	if err := b.context.Reply(replyMessges); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
 	return nil
 }
 
-func (b *GetActivities) joinActivity() (resultErrInfo errLogic.IError) {
+func (b *GetActivities) joinActivity() (resultErrInfo errUtil.IError) {
 	userData := b.currentUser
 	activityID := b.JoinActivityID
 	uID := userData.ID
@@ -334,14 +334,14 @@ func (b *GetActivities) joinActivity() (resultErrInfo errLogic.IError) {
 		IsAttend:   false,
 	}
 	if err := database.Club.MemberActivity.Insert(nil, insertData); err != nil && !database.IsUniqErr(err) {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
 	return nil
 }
 
-func (b *GetActivities) leaveActivity() (resultErrInfo errLogic.IError) {
+func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 	userData := b.currentUser
 
 	var peopleLimit *int16
@@ -351,7 +351,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errLogic.IError) {
 		ID: util.GetIntP(b.LeaveActivityID),
 	}
 	if dbDatas, err := database.Club.Activity.DatePlaceIDPeopleLimit(activityArg); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else if len(dbDatas) == 0 {
 		return nil
@@ -361,7 +361,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errLogic.IError) {
 		activityDate = &v.Date
 
 		if dbDatas, errInfo := badmintonPlaceLogic.Load(v.PlaceID); errInfo != nil {
-			errInfo := errLogic.NewError(err)
+			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
 				resultErrInfo = errInfo
 			} else {
@@ -380,7 +380,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errLogic.IError) {
 		ActivityID: util.GetIntP(b.LeaveActivityID),
 	}
 	if dbDatas, err := database.Club.MemberActivity.IDMemberID(arg); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else if len(dbDatas) == 0 {
 		return nil
@@ -409,7 +409,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errLogic.IError) {
 		ID: &deleteMemberActivityID,
 	}
 	if err := database.Club.MemberActivity.Delete(nil, arg); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
@@ -418,7 +418,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errLogic.IError) {
 			ID: notifyWaitingMemberID,
 		}
 		if dbDatas, err := database.Club.Member.LineID(memberArg); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		} else if len(dbDatas) > 0 {
 			lineID := dbDatas[0].LineID
@@ -456,7 +456,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errLogic.IError) {
 						linebot.GetTextMessage(fmt.Sprintf("leaveActivity notifyLineID:%s, %s", *lineID, err.Error())),
 					},
 				); err != nil {
-					resultErrInfo = errLogic.NewError(err)
+					resultErrInfo = errUtil.NewError(err)
 					return
 				}
 			}
@@ -466,12 +466,12 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errLogic.IError) {
 	return nil
 }
 
-func (b *GetActivities) loadCurrentUserID() (replyMsg *string, resultErrInfo errLogic.IError) {
+func (b *GetActivities) loadCurrentUserID() (replyMsg *string, resultErrInfo errUtil.IError) {
 	lineID := b.context.GetUserID()
 	userData, err := clubLineuserLogic.Get(lineID)
 	if err != nil {
-		errInfo := errLogic.NewError(err)
-		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else if userData == nil {
 		replyMsg = util.GetStringP(domain.USER_NOT_REGISTERED.Error())
@@ -493,17 +493,17 @@ func (b *GetActivities) isJoined(activity *getActivitiesActivity) bool {
 	return false
 }
 
-func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
+func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
 	if replyMsg, errInfo := b.loadCurrentUserID(); errInfo != nil {
-		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else if replyMsg != nil {
 		replyMessges := []interface{}{
 			linebot.GetTextMessage(*replyMsg),
 		}
 		if replyErr := b.context.Reply(replyMessges); replyErr != nil {
-			errInfo := errLogic.Newf("replyErr:%s", replyErr.Error())
-			resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+			errInfo := errUtil.Newf("replyErr:%s", replyErr.Error())
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 		return
@@ -515,8 +515,8 @@ func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
 				linebot.GetTextMessage("查看人員發生錯誤，已通知管理員"),
 			}
 			if replyErr := b.context.Reply(replyMessges); replyErr != nil {
-				errInfo := errLogic.Newf("%s---replyErr:%s", errInfo.Error(), replyErr.Error())
-				resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+				errInfo := errUtil.Newf("%s---replyErr:%s", errInfo.Error(), replyErr.Error())
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			}
 
@@ -531,7 +531,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
 			IsComplete: util.GetBoolP(false),
 		}
 		if count, err := database.Club.Activity.Count(arg); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		} else if isActivityOpen := count > 0; isActivityOpen {
 			if errInfo := b.joinActivity(); errInfo != nil {
@@ -539,7 +539,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
 					linebot.GetTextMessage("參加發生錯誤，已通知管理員"),
 				}
 				if replyErr := b.context.Reply(replyMessges); replyErr != nil {
-					resultErrInfo = errLogic.Newf("%s---replyErr:%s", errInfo.Error(), replyErr.Error())
+					resultErrInfo = errUtil.Newf("%s---replyErr:%s", errInfo.Error(), replyErr.Error())
 					return
 				}
 
@@ -551,7 +551,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
 				linebot.GetTextMessage("活動已關閉"),
 			}
 			if err := b.context.Reply(replyMessges); err != nil {
-				resultErrInfo = errLogic.NewError(err)
+				resultErrInfo = errUtil.NewError(err)
 				return
 			}
 			return nil
@@ -563,7 +563,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
 			IsComplete: util.GetBoolP(false),
 		}
 		if count, err := database.Club.Activity.Count(arg); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		} else if isActivityOpen := count > 0; isActivityOpen {
 			if errInfo := b.leaveActivity(); errInfo != nil {
@@ -571,7 +571,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
 					linebot.GetTextMessage("退出發生錯誤，已通知管理員"),
 				}
 				if replyErr := b.context.Reply(replyMessges); replyErr != nil {
-					resultErrInfo = errLogic.Newf("%s---replyErr:%s", errInfo.Error(), replyErr.Error())
+					resultErrInfo = errUtil.Newf("%s---replyErr:%s", errInfo.Error(), replyErr.Error())
 					return
 				}
 
@@ -583,7 +583,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
 				linebot.GetTextMessage("活動已關閉"),
 			}
 			if err := b.context.Reply(replyMessges); err != nil {
-				resultErrInfo = errLogic.NewError(err)
+				resultErrInfo = errUtil.NewError(err)
 				return
 			}
 			return nil
@@ -592,7 +592,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
 
 	replyMessge, err := b.GetActivitiesMessage("查看活動", true, true)
 	if err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
@@ -600,7 +600,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errLogic.IError) {
 		replyMessge,
 	}
 	if err := b.context.Reply(replyMessges); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
@@ -639,7 +639,7 @@ func (b *GetActivities) GetActivitieMessage(
 	isShowCurrentMember, isShowActionButton bool,
 ) (
 	carouselContent *linebotModel.FlexMessagBubbleComponent,
-	resultErrInfo errLogic.IError,
+	resultErrInfo errUtil.IError,
 ) {
 	contents := []interface{}{
 		linebot.GetFlexMessageTextComponent(

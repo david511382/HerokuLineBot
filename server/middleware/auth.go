@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"heroku-line-bot/logger"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/server/common"
 	"heroku-line-bot/server/domain"
+	errUtil "heroku-line-bot/util/error"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,7 +31,7 @@ func GetTokenAuthorize(tokenVerifier domain.TokenVerifier, require bool) gin.Han
 					return
 				} else {
 					errInfo := e.ToErrInfo()
-					errInfo.Level = errLogic.INFO
+					errInfo.Level = errUtil.INFO
 					logger.Log(common.GetLogName(c), errInfo)
 				}
 			}

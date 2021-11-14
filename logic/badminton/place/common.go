@@ -1,22 +1,22 @@
 package place
 
 import (
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/storage/database"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/storage/redis"
 	redisDomain "heroku-line-bot/storage/redis/domain"
+	errUtil "heroku-line-bot/util/error"
 )
 
-func Load(ids ...int) (resultPlaceIDMap map[int]*redisDomain.BadmintonPlace, resultErrInfo errLogic.IError) {
+func Load(ids ...int) (resultPlaceIDMap map[int]*redisDomain.BadmintonPlace, resultErrInfo errUtil.IError) {
 	if len(ids) == 0 {
 		return
 	}
 
 	placeIDMap, errInfo := redis.BadmintonPlace.Load(ids...)
 	if errInfo != nil {
-		errInfo.SetLevel(errLogic.WARN)
-		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+		errInfo.SetLevel(errUtil.WARN)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 	}
 	resultPlaceIDMap = placeIDMap
 	if resultPlaceIDMap == nil {
@@ -36,7 +36,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*redisDomain.BadmintonPlace, res
 		if dbDatas, err := database.Club.Place.IDName(dbReqs.Place{
 			IDs: reLoadIDs,
 		}); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		} else {
 			for _, v := range dbDatas {
@@ -49,8 +49,8 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*redisDomain.BadmintonPlace, res
 		}
 
 		if errInfo := redis.BadmintonPlace.Set(idPlaceMap); errInfo != nil {
-			errInfo.SetLevel(errLogic.WARN)
-			resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+			errInfo.SetLevel(errUtil.WARN)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}
 	}
 

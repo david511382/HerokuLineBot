@@ -10,7 +10,7 @@ import (
 	commonRedis "heroku-line-bot/storage/redis/common"
 	"heroku-line-bot/util"
 
-	errLogic "heroku-line-bot/logic/error"
+	errUtil "heroku-line-bot/util/error"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -24,19 +24,19 @@ var (
 	liffUrl string
 )
 
-func Init(cfg *bootstrap.Config, resourceFS embed.FS) errLogic.IError {
+func Init(cfg *bootstrap.Config, resourceFS embed.FS) errUtil.IError {
 	if bs, err := readImg(resourceFS, "adminRichMenu.png"); err != nil {
-		return errLogic.NewError(err)
+		return errUtil.NewError(err)
 	} else {
 		adminRichMenuImg = bs
 	}
 	if bs, err := readImg(resourceFS, "cadreRichMenu.png"); err != nil {
-		return errLogic.NewError(err)
+		return errUtil.NewError(err)
 	} else {
 		cadreRichMenuImg = bs
 	}
 	if bs, err := readImg(resourceFS, "guestRichMenu.png"); err != nil {
-		return errLogic.NewError(err)
+		return errUtil.NewError(err)
 	} else {
 		guestRichMenuImg = bs
 	}
@@ -50,18 +50,18 @@ func readImg(resourceFS embed.FS, fileName string) ([]byte, error) {
 	return resourceFS.ReadFile(fileName)
 }
 
-func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (resultErrInfo errLogic.IError) {
+func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (resultErrInfo errUtil.IError) {
 	cmd := domain.TextCmd(text)
 	var cmdHandler domain.ICmdHandler
 	paramJson := ""
 	isSingelParamText := !util.IsJSON(text)
 	if handler, err := getCmdHandler(cmd, lineContext); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else if handler != nil {
 		cmdHandler = handler
 		if err := lineContext.DeleteParam(); commonRedis.IsRedisError(err) {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 		}
 	} else {
 		cmd = getCmdFromJson(text)
@@ -71,7 +71,7 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 			}
 		} else {
 			if handler, err := getCmdHandler(cmd, lineContext); err != nil {
-				resultErrInfo = errLogic.NewError(err)
+				resultErrInfo = errUtil.NewError(err)
 				return
 			} else if handler != nil {
 				cmdHandler = handler
@@ -83,7 +83,7 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 		switch dateTimeCmd {
 		case domain.TIME_POSTBACK_DATE_TIME_CMD, domain.DATE_TIME_POSTBACK_DATE_TIME_CMD, domain.DATE_POSTBACK_DATE_TIME_CMD:
 			if js, err := sjson.Delete(text, domain.DATE_TIME_CMD_ATTR); err != nil {
-				resultErrInfo = errLogic.NewError(err)
+				resultErrInfo = errUtil.NewError(err)
 				return
 			} else {
 				paramJson = js
@@ -98,14 +98,14 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 		redisCmd := getCmdFromJson(redisParamJson)
 		if isChangeCmd := cmdHandler != nil && redisCmd != cmd; isChangeCmd {
 			if err := lineContext.DeleteParam(); commonRedis.IsRedisError(err) {
-				resultErrInfo = errLogic.NewError(err)
+				resultErrInfo = errUtil.NewError(err)
 			}
 			cmdHandler = nil
 		}
 
 		if cmdHandler == nil || isSingelParamText {
 			if handler, err := getCmdHandler(redisCmd, lineContext); err != nil {
-				resultErrInfo = errLogic.NewError(err)
+				resultErrInfo = errUtil.NewError(err)
 				return
 			} else {
 				cmdHandler = handler
@@ -127,7 +127,7 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 			linebot.GetTextMessage("聽不懂你在說什麼"),
 		}
 		if err := lineContext.Reply(replyMessges); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		return nil
@@ -185,7 +185,7 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 	return result, nil
 }
 
-func getCmd(cmd domain.TextCmd, pathValueMap map[string]interface{}) (string, errLogic.IError) {
+func getCmd(cmd domain.TextCmd, pathValueMap map[string]interface{}) (string, errUtil.IError) {
 	cmdHandler := &CmdHandler{
 		CmdBase: &domain.CmdBase{
 			Cmd: cmd,

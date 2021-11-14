@@ -4,9 +4,8 @@ import (
 	"database/sql/driver"
 	"heroku-line-bot/global"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"time"
-
-	errLogic "heroku-line-bot/logic/error"
 )
 
 type LocationTime struct {
@@ -35,7 +34,7 @@ func (t *LocationTime) Scan(v interface{}) error {
 	if tt, ok := v.(time.Time); ok {
 		t.time = util.GetTimeIn(tt, global.Location)
 	} else {
-		return errLogic.Newf("can not convert %v to time", v)
+		return errUtil.Newf("can not convert %v to time", v)
 	}
 
 	return nil

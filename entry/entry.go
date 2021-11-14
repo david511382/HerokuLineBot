@@ -7,13 +7,13 @@ import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/logger"
 	"heroku-line-bot/logic"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/server"
 	"heroku-line-bot/storage"
+	errUtil "heroku-line-bot/util/error"
 	"os"
 )
 
-func Run(configFS, resourceFS embed.FS) errLogic.IError {
+func Run(configFS, resourceFS embed.FS) errUtil.IError {
 	bootstrap.LoadFS(&configFS)
 
 	configName := os.Getenv("CONFIG")

@@ -5,7 +5,6 @@ import (
 	"heroku-line-bot/logger"
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
@@ -13,6 +12,7 @@ import (
 	"heroku-line-bot/storage/database"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"strconv"
 )
 
@@ -23,7 +23,7 @@ type richMenu struct {
 	RichMenuID string                    `json:"rich_menu_id"`
 }
 
-func (b *richMenu) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
+func (b *richMenu) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
 	*b = richMenu{
 		context: context,
 	}
@@ -40,7 +40,7 @@ func (b *richMenu) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *richMenu) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
+func (b *richMenu) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	case "rich_menu_id":
 		b.RichMenuID = text
@@ -98,13 +98,13 @@ func (b *richMenu) GetInputTemplate(requireRawParamAttr string) interface{} {
 	}
 }
 
-func (b *richMenu) Do(text string) (resultErrInfo errLogic.IError) {
+func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 	if u, err := clubLineuserLogic.Get(b.context.GetUserID()); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {
 		if u.Role != domain.ADMIN_CLUB_ROLE {
-			resultErrInfo = errLogic.NewError(domain.NO_AUTH_ERROR)
+			resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
 			return
 		}
 	}
@@ -117,13 +117,13 @@ func (b *richMenu) Do(text string) (resultErrInfo errLogic.IError) {
 		createRichMenuArg := b.createRoleRichMenu(b.Role)
 		createRichMenuResp, err := b.context.GetBot().CreateRichMenu(createRichMenuArg)
 		if err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
 		imgBs := b.getRoleRichMenuImg(b.Role)
 		if _, err := b.context.GetBot().UploadRichMenuImage(createRichMenuResp.RichMenuID, imgBs); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -143,7 +143,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errLogic.IError) {
 				Role: (*int16)(&b.Role),
 			}
 			if dbDatas, err := database.Club.Member.NameLineID(arg); err != nil {
-				resultErrInfo = errLogic.NewError(err)
+				resultErrInfo = errUtil.NewError(err)
 				return
 			} else if len(dbDatas) > 0 {
 				lineIDs := []string{}
@@ -159,7 +159,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errLogic.IError) {
 
 				for _, lineID := range lineIDs {
 					if _, err := b.context.GetBot().SetRichMenuTo(createRichMenuResp.RichMenuID, lineID); err != nil {
-						resultErrInfo = errLogic.NewError(err)
+						resultErrInfo = errUtil.NewError(err)
 						return
 					}
 				}
@@ -170,7 +170,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errLogic.IError) {
 			}
 		} else {
 			if _, err := b.context.GetBot().SetDefaultRichMenu(createRichMenuResp.RichMenuID); err != nil {
-				resultErrInfo = errLogic.NewError(err)
+				resultErrInfo = errUtil.NewError(err)
 				return
 			}
 			messages = append(messages, linebot.GetTextMessage(
@@ -179,13 +179,13 @@ func (b *richMenu) Do(text string) (resultErrInfo errLogic.IError) {
 		}
 
 		if err := b.context.DeleteParam(); err != nil {
-			logger.Log("line bot club", errLogic.NewError(err))
+			logger.Log("line bot club", errUtil.NewError(err))
 			return
 		}
 
 	case domain.SET_DEFAULT_RICH_MENU_METHOD:
 		if _, err := b.context.GetBot().SetDefaultRichMenu(b.RichMenuID); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		messages = append(messages, linebot.GetTextMessage(
@@ -193,7 +193,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errLogic.IError) {
 		))
 
 		if err := b.context.DeleteParam(); err != nil {
-			logger.Log("line bot club", errLogic.NewError(err))
+			logger.Log("line bot club", errUtil.NewError(err))
 			return
 		}
 	default:
@@ -246,7 +246,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errLogic.IError) {
 	}
 
 	if err := b.context.Reply(messages); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 

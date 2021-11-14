@@ -2,22 +2,21 @@ package conn
 
 import (
 	"heroku-line-bot/bootstrap"
-
-	errLogic "heroku-line-bot/logic/error"
+	errUtil "heroku-line-bot/util/error"
 
 	rds "github.com/go-redis/redis"
 )
 
-func Connect(cfg bootstrap.Db) (*rds.Client, errLogic.IError) {
+func Connect(cfg bootstrap.Db) (*rds.Client, errUtil.IError) {
 	url := cfg.ParseToUrl()
 	rdsOpt, err := rds.ParseURL(url)
 	if err != nil {
-		return nil, errLogic.NewError(err)
+		return nil, errUtil.NewError(err)
 	}
 	connection := rds.NewClient(rdsOpt)
 
 	if err := connection.Ping().Err(); err != nil {
-		return nil, errLogic.NewError(err)
+		return nil, errUtil.NewError(err)
 	}
 
 	return connection, nil

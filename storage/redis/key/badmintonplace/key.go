@@ -2,9 +2,9 @@ package badmintonplace
 
 import (
 	"encoding/json"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/storage/redis/common"
 	"heroku-line-bot/storage/redis/domain"
+	errUtil "heroku-line-bot/util/error"
 	"strconv"
 
 	rds "github.com/go-redis/redis"
@@ -26,7 +26,7 @@ func New(write, read *rds.Client, baseKey string) Key {
 	}
 }
 
-func (k Key) Load(ids ...int) (placeIDMap map[int]*domain.BadmintonPlace, resultErrInfo errLogic.IError) {
+func (k Key) Load(ids ...int) (placeIDMap map[int]*domain.BadmintonPlace, resultErrInfo errUtil.IError) {
 	placeIDMap = make(map[int]*domain.BadmintonPlace)
 
 	if len(ids) == 0 {
@@ -40,11 +40,11 @@ func (k Key) Load(ids ...int) (placeIDMap map[int]*domain.BadmintonPlace, result
 	}
 	redisDatas, err := k.HMGet(fields...)
 	if err != nil {
-		errInfo := errLogic.NewError(err)
+		errInfo := errUtil.NewError(err)
 		if !common.IsRedisError(err) {
-			errInfo.Level = errLogic.WARN
+			errInfo.Level = errUtil.WARN
 		}
-		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 
@@ -56,7 +56,7 @@ func (k Key) Load(ids ...int) (placeIDMap map[int]*domain.BadmintonPlace, result
 
 		result := &domain.BadmintonPlace{}
 		if err := json.Unmarshal([]byte(v), result); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -67,12 +67,12 @@ func (k Key) Load(ids ...int) (placeIDMap map[int]*domain.BadmintonPlace, result
 	return
 }
 
-func (k Key) Set(idPlaceMap map[int]*domain.BadmintonPlace) (resultErrInfo errLogic.IError) {
+func (k Key) Set(idPlaceMap map[int]*domain.BadmintonPlace) (resultErrInfo errUtil.IError) {
 	m := make(map[string]interface{})
 	for id, place := range idPlaceMap {
 		if js, err := json.Marshal(place); err != nil {
-			errInfo := errLogic.NewError(err)
-			resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		} else {
 			field := strconv.Itoa(id)
@@ -81,11 +81,11 @@ func (k Key) Set(idPlaceMap map[int]*domain.BadmintonPlace) (resultErrInfo errLo
 	}
 
 	if err := k.HMSet(m); err != nil {
-		errInfo := errLogic.NewError(err)
+		errInfo := errUtil.NewError(err)
 		if !common.IsRedisError(err) {
-			errInfo.Level = errLogic.WARN
+			errInfo.Level = errUtil.WARN
 		}
-		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
 			return
 		}

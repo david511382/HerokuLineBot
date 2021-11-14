@@ -2,9 +2,9 @@ package logger
 
 import (
 	"fmt"
-	errLogic "heroku-line-bot/logic/error"
 	telegramDomain "heroku-line-bot/service/telegram/domain"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"os"
 )
 
@@ -12,7 +12,7 @@ type telegramLoggerHandler struct {
 	limit int
 }
 
-func (lh telegramLoggerHandler) log(id int, msg string) errLogic.IError {
+func (lh telegramLoggerHandler) log(id int, msg string) errUtil.IError {
 	msgs := make([]string, 0)
 	for i := 0; i < len(msg); i += lh.limit {
 		to := i + lh.limit
@@ -30,7 +30,7 @@ func (lh telegramLoggerHandler) log(id int, msg string) errLogic.IError {
 				Text:   s,
 			}, nil,
 		); err != nil {
-			return errLogic.NewError(err)
+			return errUtil.NewError(err)
 		}
 	}
 
@@ -39,18 +39,18 @@ func (lh telegramLoggerHandler) log(id int, msg string) errLogic.IError {
 
 type fileLoggerHandler struct{}
 
-func (lh fileLoggerHandler) log(name, msg string) errLogic.IError {
+func (lh fileLoggerHandler) log(name, msg string) errUtil.IError {
 	util.MakeFolderOn("log")
 
 	filename := fmt.Sprintf("log/%s.log", name)
 	f, err := os.OpenFile(filename,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return errLogic.NewError(err)
+		return errUtil.NewError(err)
 	}
 	defer f.Close()
 	if _, err := f.WriteString(msg); err != nil {
-		return errLogic.NewError(err)
+		return errUtil.NewError(err)
 	}
 
 	return nil
@@ -58,7 +58,7 @@ func (lh fileLoggerHandler) log(name, msg string) errLogic.IError {
 
 type teminalLoggerHandler struct{}
 
-func (lh teminalLoggerHandler) log(name, msg string) errLogic.IError {
+func (lh teminalLoggerHandler) log(name, msg string) errUtil.IError {
 	fmt.Println(msg)
 	return nil
 }
@@ -67,7 +67,7 @@ type panicWriter struct{}
 
 func (lh panicWriter) Write(p []byte) (n int, err error) {
 	msg := string(p)
-	errInfo := errLogic.New(msg)
+	errInfo := errUtil.New(msg)
 	Log("system", errInfo)
 	return 0, nil
 }

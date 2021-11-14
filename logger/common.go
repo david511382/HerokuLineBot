@@ -3,8 +3,8 @@ package logger
 import (
 	"fmt"
 	"heroku-line-bot/bootstrap"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/telegram"
+	errUtil "heroku-line-bot/util/error"
 	"io"
 	"strconv"
 )
@@ -28,10 +28,10 @@ func init() {
 	PanicWriter = &panicWriter{}
 }
 
-func Init(cfg *bootstrap.Config) errLogic.IError {
+func Init(cfg *bootstrap.Config) errUtil.IError {
 	channelAccessToken := cfg.TelegramBot.ChannelAccessToken
 	if telegramID, err := strconv.Atoi(cfg.TelegramBot.AdminID); err != nil {
-		return errLogic.NewError(err)
+		return errUtil.NewError(err)
 	} else {
 		notifyTelegramID = telegramID
 	}
@@ -39,13 +39,13 @@ func Init(cfg *bootstrap.Config) errLogic.IError {
 	return nil
 }
 
-func Log(name string, LogErrInfo errLogic.IError) {
+func Log(name string, LogErrInfo errUtil.IError) {
 	go func() {
 		LogRightNow(name, LogErrInfo)
 	}()
 }
 
-func LogRightNow(name string, LogErrInfo errLogic.IError) {
+func LogRightNow(name string, LogErrInfo errUtil.IError) {
 	if LogErrInfo == nil {
 		return
 	}
@@ -92,7 +92,7 @@ func logOnTeminal(msg string) {
 	}
 }
 
-func message(name string, errInfo errLogic.IError) string {
+func message(name string, errInfo errUtil.IError) string {
 	msg := errInfo.ErrorWithTrace()
 	if errInfo.IsError() {
 		return fmt.Sprintf("%s: ERROR: %s\n", name, msg)

@@ -2,9 +2,9 @@ package database
 
 import (
 	"heroku-line-bot/bootstrap"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/storage/database/conn"
 	"heroku-line-bot/storage/database/database/clubdb"
+	errUtil "heroku-line-bot/util/error"
 	"strings"
 	"time"
 
@@ -15,14 +15,14 @@ var (
 	Club clubdb.Database
 )
 
-func Init(cfg *bootstrap.Config) errLogic.IError {
+func Init(cfg *bootstrap.Config) errUtil.IError {
 	maxIdleConns := cfg.DbConfig.MaxIdleConns
 	maxOpenConns := cfg.DbConfig.MaxOpenConns
 	maxLifeHour := cfg.DbConfig.MaxLifeHour
 	maxLifetime := time.Hour * time.Duration(maxLifeHour)
 
 	if connection, err := conn.Connect(cfg.ClubDb); err != nil {
-		return errLogic.NewError(err)
+		return errUtil.NewError(err)
 	} else {
 		Club = clubdb.New(connection, connection)
 		if errInfo := Club.SetConnection(maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
@@ -41,7 +41,7 @@ func IsUniqErr(err error) bool {
 	return strings.Contains(err.Error(), "unique constraint")
 }
 
-func CommitTransaction(transaction *gorm.DB, resultErrInfo errLogic.IError) {
+func CommitTransaction(transaction *gorm.DB, resultErrInfo errUtil.IError) {
 	if resultErrInfo == nil {
 		transaction.Commit()
 	} else {

@@ -7,13 +7,13 @@ import (
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
 	logisticDb "heroku-line-bot/storage/database/database/clubdb/table/logistic"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"strconv"
 	"time"
 
@@ -28,7 +28,7 @@ type NewLogistic struct {
 	Amount      int16                     `json:"amount"`
 }
 
-func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
+func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
 	nowTime := global.TimeUtilObj.Now()
 	*b = NewLogistic{
 		Context:     context,
@@ -56,12 +56,12 @@ func (b *NewLogistic) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *NewLogistic) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
+func (b *NewLogistic) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	case "date":
 		t, err := time.Parse(commonLogicDomain.DATE_TIME_RFC3339_FORMAT, text)
 		if err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		b.Date = t
@@ -72,7 +72,7 @@ func (b *NewLogistic) LoadSingleParam(attr, text string) (resultErrInfo errLogic
 	case "ICmdLogic.amount":
 		i, err := strconv.Atoi(text)
 		if err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		b.Amount = int16(i)
@@ -86,13 +86,13 @@ func (b *NewLogistic) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
-func (b *NewLogistic) Do(text string) (resultErrInfo errLogic.IError) {
+func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 	if u, err := clubLineuserLogic.Get(b.Context.GetUserID()); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {
 		if u.Role != domain.ADMIN_CLUB_ROLE {
-			resultErrInfo = errLogic.NewError(domain.NO_AUTH_ERROR)
+			resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
 			return
 		}
 	}
@@ -100,7 +100,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errLogic.IError) {
 	if b.Context.IsComfirmed() {
 		transaction := database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -111,7 +111,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errLogic.IError) {
 		}
 
 		if err := b.Context.DeleteParam(); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -119,7 +119,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errLogic.IError) {
 			linebot.GetTextMessage("完成"),
 		}
 		if err := b.Context.Reply(replyMessges); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -336,18 +336,18 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errLogic.IError) {
 		),
 	}
 	if err := b.Context.Reply(replyMessges); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
 	return nil
 }
 
-func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErrInfo errLogic.IError) {
+func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErrInfo errUtil.IError) {
 	if transaction == nil {
 		transaction = database.Club.Begin()
 		if err := transaction.Error; err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		defer database.CommitTransaction(transaction, resultErrInfo)
@@ -360,7 +360,7 @@ func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErrInfo errLog
 		Description: b.Description,
 	}
 	if err := database.Club.Logistic.BaseTable.Insert(transaction, data); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 

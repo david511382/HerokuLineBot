@@ -2,7 +2,7 @@ package club
 
 import (
 	"heroku-line-bot/logic/club/domain"
-	errLogic "heroku-line-bot/logic/error"
+	errUtil "heroku-line-bot/util/error"
 
 	"github.com/tidwall/sjson"
 )
@@ -73,12 +73,12 @@ func (b *CmdHandler) GetRequireInputMode(attr, attrText string, isInputImmediate
 	return nb
 }
 
-func (b *CmdHandler) GetSignal() (string, errLogic.IError) {
+func (b *CmdHandler) GetSignal() (string, errUtil.IError) {
 	js := "{}"
 	for path, value := range b.pathValueMap {
 		var err error
 		if js, err = sjson.Set(js, path, value); err != nil {
-			return "", errLogic.NewError(err)
+			return "", errUtil.NewError(err)
 		}
 	}
 

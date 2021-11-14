@@ -2,12 +2,12 @@ package domain
 
 import (
 	"heroku-line-bot/bootstrap"
-	errLogic "heroku-line-bot/logic/error"
+	errUtil "heroku-line-bot/util/error"
 	"time"
 )
 
 type IBackGround interface {
-	Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo errLogic.IError)
+	Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo errUtil.IError)
 	// 執行此時間的背景
-	Run(runTime time.Time) errLogic.IError
+	Run(runTime time.Time) errUtil.IError
 }

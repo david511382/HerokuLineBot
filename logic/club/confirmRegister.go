@@ -6,12 +6,12 @@ import (
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/storage/database"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/storage/redis"
+	errUtil "heroku-line-bot/util/error"
 	"time"
 )
 
@@ -30,7 +30,7 @@ type confirmRegisterUser struct {
 	LineID     string          `json:"line_id"`
 }
 
-func (b *confirmRegister) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
+func (b *confirmRegister) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
 	*b = confirmRegister{
 		context: context,
 	}
@@ -45,12 +45,12 @@ func (b *confirmRegister) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *confirmRegister) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
+func (b *confirmRegister) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	case "date":
 		t, err := time.Parse(commonLogicDomain.DATE_TIME_RFC3339_FORMAT, text)
 		if err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 		b.Date = t
@@ -86,12 +86,12 @@ func (b *confirmRegister) LoadUsers(arg dbReqs.Member) (confirmRegisterUsers []*
 	return confirmRegisterUsers, nil
 }
 
-func (b *confirmRegister) ComfirmDb() (resultErrInfo errLogic.IError) {
+func (b *confirmRegister) ComfirmDb() (resultErrInfo errUtil.IError) {
 	isChangeRole := b.isMemberAble() && b.User.Role == domain.GUEST_CLUB_ROLE
 
 	transaction := database.Club.Begin()
 	if err := transaction.Error; err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 	defer database.CommitTransaction(transaction, resultErrInfo)
@@ -106,13 +106,13 @@ func (b *confirmRegister) ComfirmDb() (resultErrInfo errLogic.IError) {
 		fields["role"] = int16(domain.MEMBER_CLUB_ROLE)
 	}
 	if err := database.Club.Member.Update(transaction, arg, fields); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
 	if isChangeRole {
 		if _, err := redis.LineUser.Del(b.User.LineID); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 	}
@@ -120,13 +120,13 @@ func (b *confirmRegister) ComfirmDb() (resultErrInfo errLogic.IError) {
 	return nil
 }
 
-func (b *confirmRegister) Do(text string) (resultErrInfo errLogic.IError) {
+func (b *confirmRegister) Do(text string) (resultErrInfo errUtil.IError) {
 	lineID := b.context.GetUserID()
 	if user, err := clubLineuserLogic.Get(lineID); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else if user.Role != domain.ADMIN_CLUB_ROLE {
-		resultErrInfo = errLogic.NewError(domain.NO_AUTH_ERROR)
+		resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
 		return
 	}
 
@@ -135,10 +135,10 @@ func (b *confirmRegister) Do(text string) (resultErrInfo errLogic.IError) {
 			ID: &b.MemberID,
 		}
 		if confirmRegisterUsers, err := b.LoadUsers(arg); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		} else if len(confirmRegisterUsers) == 0 {
-			errInfo := errLogic.New("查無用戶")
+			errInfo := errUtil.New("查無用戶")
 			errInfo = errInfo.Trace()
 			resultErrInfo = errInfo
 			return
@@ -158,12 +158,12 @@ func (b *confirmRegister) Do(text string) (resultErrInfo errLogic.IError) {
 			linebot.GetTextMessage("完成"),
 		}
 		if err := b.context.Reply(replyMessges); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
 		if err := b.context.DeleteParam(); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
@@ -182,7 +182,7 @@ func (b *confirmRegister) Do(text string) (resultErrInfo errLogic.IError) {
 	}
 
 	if err := b.context.Reply(replyMessges); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
@@ -195,7 +195,7 @@ func (b *confirmRegister) isMemberAble() bool {
 		b.User.Department.IsClubMember()
 }
 
-func (b *confirmRegister) getTemplateMessage() ([]interface{}, errLogic.IError) {
+func (b *confirmRegister) getTemplateMessage() ([]interface{}, errUtil.IError) {
 	if b.User == nil {
 		return nil, nil
 	}

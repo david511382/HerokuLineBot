@@ -7,10 +7,10 @@ import (
 	"heroku-line-bot/logger"
 	"heroku-line-bot/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/logic/clublinebot/domain"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
+	errUtil "heroku-line-bot/util/error"
 )
 
 type CmdHandler struct {
@@ -21,9 +21,9 @@ type CmdHandler struct {
 	pathValueMap map[string]interface{}
 }
 
-func (b *CmdHandler) ReadParam(jsonBytes []byte) errLogic.IError {
+func (b *CmdHandler) ReadParam(jsonBytes []byte) errUtil.IError {
 	if err := json.Unmarshal(jsonBytes, b); err != nil {
-		return errLogic.NewError(err)
+		return errUtil.NewError(err)
 	}
 	return nil
 }
@@ -38,18 +38,18 @@ func (b *CmdHandler) SetRequireInputMode(attr, attrText string, isInputImmediate
 	b.IsInputImmediately = isInputImmediately
 }
 
-func (b *CmdHandler) LoadSingleParamValue(valueText string) errLogic.IError {
+func (b *CmdHandler) LoadSingleParamValue(valueText string) errUtil.IError {
 	return b.ICmdLogic.LoadSingleParam(b.RequireRawParamAttr, valueText)
 }
 
-func (b *CmdHandler) CacheParams() (resultErrInfo errLogic.IError) {
+func (b *CmdHandler) CacheParams() (resultErrInfo errUtil.IError) {
 	if jsBytes, err := json.Marshal(b); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {
 		js := string(jsBytes)
 		if err := b.SaveParam(js); err != nil {
-			resultErrInfo = errLogic.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 	}
@@ -112,17 +112,17 @@ func (b *CmdHandler) GetInputTemplate(requireRawParamAttr string) interface{} {
 	)
 }
 
-func (b *CmdHandler) Do(text string) errLogic.IError {
+func (b *CmdHandler) Do(text string) errUtil.IError {
 	if b.IsCancel {
 		if err := b.DeleteParam(); err != nil {
-			return errLogic.NewError(err)
+			return errUtil.NewError(err)
 		}
 
 		replyMessges := []interface{}{
 			linebot.GetTextMessage("取消"),
 		}
 		if err := b.IContext.Reply(replyMessges); err != nil {
-			return errLogic.NewError(err)
+			return errUtil.NewError(err)
 		}
 
 		return nil
@@ -136,7 +136,7 @@ func (b *CmdHandler) Do(text string) errLogic.IError {
 					linebot.GetTextMessage(msg),
 				}
 				if err := b.Reply(replyMessges); err != nil {
-					return errLogic.NewError(err)
+					return errUtil.NewError(err)
 				}
 				return nil
 			}
@@ -160,7 +160,7 @@ func (b *CmdHandler) Do(text string) errLogic.IError {
 				replyMessge,
 			}
 			if err := b.IContext.Reply(replyMessges); err != nil {
-				return errLogic.NewError(err)
+				return errUtil.NewError(err)
 			}
 
 			return nil
@@ -173,7 +173,7 @@ func (b *CmdHandler) Do(text string) errLogic.IError {
 			linebot.GetTextMessage(errInfo.ErrorWithTrace()),
 		}
 		if err := b.IContext.Reply(replyMessges); err != nil {
-			return errLogic.NewError(err)
+			return errUtil.NewError(err)
 		}
 	} else {
 		return errInfo

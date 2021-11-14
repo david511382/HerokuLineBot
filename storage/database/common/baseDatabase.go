@@ -1,9 +1,8 @@
 package common
 
 import (
+	errUtil "heroku-line-bot/util/error"
 	"time"
-
-	errLogic "heroku-line-bot/logic/error"
 
 	"gorm.io/gorm"
 )
@@ -17,7 +16,7 @@ func (d *BaseDatabase) Begin() *gorm.DB {
 	return d.Write.Begin()
 }
 
-func (d *BaseDatabase) SetConnection(maxIdleConns, maxOpenConns int, maxLifetime time.Duration) errLogic.IError {
+func (d *BaseDatabase) SetConnection(maxIdleConns, maxOpenConns int, maxLifetime time.Duration) errUtil.IError {
 	if d.Read != nil {
 		if errInfo := d.setConnection(d.Read, maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
 			return errInfo
@@ -32,10 +31,10 @@ func (d *BaseDatabase) SetConnection(maxIdleConns, maxOpenConns int, maxLifetime
 	return nil
 }
 
-func (d *BaseDatabase) setConnection(db *gorm.DB, maxIdleConns, maxOpenConns int, maxLifetime time.Duration) errLogic.IError {
+func (d *BaseDatabase) setConnection(db *gorm.DB, maxIdleConns, maxOpenConns int, maxLifetime time.Duration) errUtil.IError {
 	sqlDB, err := db.DB()
 	if err != nil {
-		return errLogic.NewError(err)
+		return errUtil.NewError(err)
 	}
 
 	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
@@ -48,26 +47,26 @@ func (d *BaseDatabase) setConnection(db *gorm.DB, maxIdleConns, maxOpenConns int
 	return nil
 }
 
-func (d *BaseDatabase) Dispose() errLogic.IError {
+func (d *BaseDatabase) Dispose() errUtil.IError {
 	if d.Read != nil {
 		sqlDB, err := d.Read.DB()
 		if err != nil {
-			return errLogic.NewError(err)
+			return errUtil.NewError(err)
 		}
 
 		if err := sqlDB.Close(); err != nil {
-			return errLogic.NewError(err)
+			return errUtil.NewError(err)
 		}
 	}
 
 	if d.Write != nil {
 		sqlDB, err := d.Write.DB()
 		if err != nil {
-			return errLogic.NewError(err)
+			return errUtil.NewError(err)
 		}
 
 		if err := sqlDB.Close(); err != nil {
-			return errLogic.NewError(err)
+			return errUtil.NewError(err)
 		}
 	}
 

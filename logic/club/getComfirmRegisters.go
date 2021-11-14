@@ -4,13 +4,13 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	commonLogic "heroku-line-bot/logic/common"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 )
 
 type GetComfirmRegisters struct {
@@ -23,7 +23,7 @@ type confirmRegistersUser struct {
 	Name     string `json:"name"`
 }
 
-func (b *GetComfirmRegisters) Init(context domain.ICmdHandlerContext) (resultErrInfo errLogic.IError) {
+func (b *GetComfirmRegisters) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
 	*b = GetComfirmRegisters{
 		context:               context,
 		confirmRegistersUsers: make([]*confirmRegistersUser, 0),
@@ -39,7 +39,7 @@ func (b *GetComfirmRegisters) GetSingleParam(attr string) string {
 	}
 }
 
-func (b *GetComfirmRegisters) LoadSingleParam(attr, text string) (resultErrInfo errLogic.IError) {
+func (b *GetComfirmRegisters) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	default:
 	}
@@ -51,14 +51,14 @@ func (b *GetComfirmRegisters) GetInputTemplate(requireRawParamAttr string) inter
 	return nil
 }
 
-func (b *GetComfirmRegisters) LoadComfirmRegisterUsers() (resultErrInfo errLogic.IError) {
+func (b *GetComfirmRegisters) LoadComfirmRegisterUsers() (resultErrInfo errUtil.IError) {
 	arg := dbReqs.Member{
 		CompanyIDIsNull: util.GetBoolP(false),
 		LineIDIsNull:    util.GetBoolP(false),
 		JoinDateIsNull:  util.GetBoolP(true),
 	}
 	if dbDatas, err := database.Club.Member.IDName(arg); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {
 		for _, v := range dbDatas {
@@ -73,29 +73,29 @@ func (b *GetComfirmRegisters) LoadComfirmRegisterUsers() (resultErrInfo errLogic
 	return nil
 }
 
-func (b *GetComfirmRegisters) Do(text string) (resultErrInfo errLogic.IError) {
+func (b *GetComfirmRegisters) Do(text string) (resultErrInfo errUtil.IError) {
 	lineID := b.context.GetUserID()
 	if user, err := clubLineuserLogic.Get(lineID); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	} else if user.Role != domain.ADMIN_CLUB_ROLE {
-		resultErrInfo = errLogic.NewError(domain.NO_AUTH_ERROR)
+		resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
 		return
 	}
 
 	if err := b.LoadComfirmRegisterUsers(); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
 	replyMessges, err := b.GetConfirmRegisterUsersMessages("待確認入社社員")
 	if err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
 	if err := b.context.Reply(replyMessges); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 

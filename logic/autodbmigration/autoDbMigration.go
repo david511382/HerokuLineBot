@@ -1,12 +1,12 @@
 package autodbmigration
 
 import (
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/storage/database"
 	"heroku-line-bot/storage/database/common"
+	errUtil "heroku-line-bot/util/error"
 )
 
-func MigrationNotExist() errLogic.IError {
+func MigrationNotExist() errUtil.IError {
 	tables := []*common.BaseTable{
 		database.Club.Activity.BaseTable,
 		database.Club.Income.BaseTable,
@@ -22,7 +22,7 @@ func MigrationNotExist() errLogic.IError {
 	for _, table := range tables {
 		if !table.IsExist() {
 			if err := table.CreateTable(); err != nil {
-				return errLogic.NewError(err)
+				return errUtil.NewError(err)
 			}
 		}
 	}

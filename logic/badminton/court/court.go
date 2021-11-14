@@ -2,14 +2,13 @@ package court
 
 import (
 	commonLogic "heroku-line-bot/logic/common"
-
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/storage/database"
 	"heroku-line-bot/storage/database/database/clubdb/table/income"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourt"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledger"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtrefundledger"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
+	errUtil "heroku-line-bot/util/error"
 )
 
 func GetCourts(
@@ -17,7 +16,7 @@ func GetCourts(
 	placeID *int,
 ) (
 	placeDateCourtsMap map[int][]*DateCourt,
-	resultErrInfo errLogic.IError,
+	resultErrInfo errUtil.IError,
 ) {
 	placeDateCourtsMap = make(map[int][]*DateCourt)
 
@@ -31,7 +30,7 @@ func GetCourts(
 		},
 		PlaceID: placeID,
 	}); err != nil {
-		resultErrInfo = errLogic.Append(resultErrInfo, errLogic.NewError(err))
+		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
 		return
 	} else {
 		for _, v := range dbDatas {
@@ -52,7 +51,7 @@ func GetCourts(
 	if dbDatas, err := database.Club.RentalCourtLedgerCourt.All(dbReqs.RentalCourtLedgerCourt{
 		RentalCourtIDs: courtIDs,
 	}); err != nil {
-		resultErrInfo = errLogic.Append(resultErrInfo, errLogic.NewError(err))
+		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
 		return
 	} else {
 		for _, v := range dbDatas {
@@ -78,7 +77,7 @@ func GetCourts(
 	if dbDatas, err := database.Club.RentalCourtLedger.All(dbReqs.RentalCourtLedger{
 		IDs: ledgerIDs,
 	}); err != nil {
-		resultErrInfo = errLogic.Append(resultErrInfo, errLogic.NewError(err))
+		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
 		return
 	} else {
 		for _, v := range dbDatas {
@@ -103,7 +102,7 @@ func GetCourts(
 	if dbDatas, err := database.Club.RentalCourtRefundLedger.All(dbReqs.RentalCourtRefundLedger{
 		LedgerIDs: ledgerIDs,
 	}); err != nil {
-		resultErrInfo = errLogic.Append(resultErrInfo, errLogic.NewError(err))
+		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
 		return
 	} else {
 		for _, v := range dbDatas {
@@ -135,20 +134,20 @@ func GetCourts(
 	if dbDatas, err := database.Club.RentalCourtDetail.All(dbReqs.RentalCourtDetail{
 		IDs: detailIDs,
 	}); err != nil {
-		resultErrInfo = errLogic.Append(resultErrInfo, errLogic.NewError(err))
+		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
 		return
 	} else {
 		for _, v := range dbDatas {
 			startTime, err := commonLogic.HourMinTime(v.StartTime).Time()
 			if err != nil {
-				errInfo := errLogic.NewError(err)
-				resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+				errInfo := errUtil.NewError(err)
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			}
 			endTime, err := commonLogic.HourMinTime(v.EndTime).Time()
 			if err != nil {
-				errInfo := errLogic.NewError(err)
-				resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+				errInfo := errUtil.NewError(err)
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			}
 			detailIDMap[v.ID] = &CourtDetail{
@@ -167,7 +166,7 @@ func GetCourts(
 		if dbDatas, err := database.Club.Income.All(dbReqs.Income{
 			IDs: incomeIDs,
 		}); err != nil {
-			resultErrInfo = errLogic.Append(resultErrInfo, errLogic.NewError(err))
+			resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
 			return
 		} else {
 			for _, v := range dbDatas {

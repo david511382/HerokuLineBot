@@ -9,12 +9,12 @@ import (
 	clubLineBotLogic "heroku-line-bot/logic/clublinebot"
 	commonLogic "heroku-line-bot/logic/common"
 	commonLogicDomain "heroku-line-bot/logic/common/domain"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/storage/database"
 	"heroku-line-bot/storage/redis"
 	redisDomain "heroku-line-bot/storage/redis/domain"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"sort"
 	"strconv"
 	"time"
@@ -23,11 +23,11 @@ import (
 // 自動開場
 type BackGround struct{}
 
-func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo errLogic.IError) {
+func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo errUtil.IError) {
 	return "ActivityCreator", cfg.ActivityCreator, nil
 }
 
-func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
+func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	defer func() {
 		if resultErrInfo != nil {
 			resultErrInfo = resultErrInfo.NewParent(runTime.String())
@@ -44,7 +44,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 		}
 	}
 	if rdsSetting == nil {
-		resultErrInfo = errLogic.New("no redis setting", errLogic.WARN)
+		resultErrInfo = errUtil.New("no redis setting", errUtil.WARN)
 		rdsSetting = &redisDomain.BadmintonActivity{
 			Description: "7人出團",
 			ClubSubsidy: 0,
@@ -57,7 +57,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 	newActivityHandlers := make([]*clubLogic.NewActivity, 0)
 	createActivityDate := currentDate.Next(int(*rdsSetting.ActivityCreateDays))
 	if placeDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(createActivityDate, createActivityDate, nil); errInfo != nil {
-		resultErrInfo = errLogic.Append(resultErrInfo, errInfo)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
 			return
 		}
@@ -101,7 +101,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 	}
 
 	if transaction := database.Club.Begin(); transaction.Error != nil {
-		resultErrInfo = errLogic.NewError(transaction.Error)
+		resultErrInfo = errUtil.NewError(transaction.Error)
 		return
 	} else {
 		for _, newActivityHandler := range newActivityHandlers {
@@ -116,7 +116,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 	getActivityHandler := &clubLogic.GetActivities{}
 	pushMessage, err := getActivityHandler.GetActivitiesMessage("開放活動報名", false, false)
 	if err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 	pushMessages := []interface{}{
@@ -125,7 +125,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errLogic.IError) {
 	}
 	linebotContext := clubLineBotLogic.NewContext("", "", &clubLineBotLogic.Bot)
 	if err := linebotContext.PushRoom(pushMessages); err != nil {
-		resultErrInfo = errLogic.NewError(err)
+		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 

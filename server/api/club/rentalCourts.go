@@ -6,11 +6,11 @@ import (
 	badmintonCourtLogicDomain "heroku-line-bot/logic/badminton/court/domain"
 	badmintonPlaceLogic "heroku-line-bot/logic/badminton/place"
 	commonLogic "heroku-line-bot/logic/common"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/server/common"
 	"heroku-line-bot/server/domain/reqs"
 	"heroku-line-bot/server/domain/resp"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"sort"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +29,7 @@ import (
 func GetRentalCourts(c *gin.Context) {
 	reqs := reqs.GetRentalCourts{}
 	if err := c.ShouldBindQuery(&reqs); err != nil {
-		errInfo := errLogic.NewError(err)
+		errInfo := errUtil.NewError(err)
 		common.FailRequest(c, errInfo)
 		return
 	}

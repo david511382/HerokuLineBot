@@ -2,8 +2,8 @@ package bootstrap
 
 import (
 	"embed"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"os"
 	"strconv"
 
@@ -25,32 +25,32 @@ func LoadFS(f *embed.FS) {
 }
 
 // ReadConfig read config from filepath
-func LoadConfig(fileName string) (*Config, errLogic.IError) {
+func LoadConfig(fileName string) (*Config, errUtil.IError) {
 	f := fs
 	var cfgBytes []byte
 	if f != nil {
 		fileBs, err := f.ReadFile(fileName)
 		if err != nil {
-			return nil, errLogic.NewError(err)
+			return nil, errUtil.NewError(err)
 		}
 		cfgBytes = fileBs
 	} else {
 		fileBs, err := util.ReadFile(fileName)
 		if err != nil {
-			return nil, errLogic.NewError(err)
+			return nil, errUtil.NewError(err)
 		}
 		cfgBytes = fileBs
 	}
 
 	cfg = &Config{}
 	if err := yaml.Unmarshal(cfgBytes, cfg); err != nil {
-		return nil, errLogic.NewError(err)
+		return nil, errUtil.NewError(err)
 	}
 
 	return cfg, nil
 }
 
-func LoadEnv() errLogic.IError {
+func LoadEnv() errUtil.IError {
 	if cfg == nil {
 		cfg = &Config{}
 	}
@@ -58,7 +58,7 @@ func LoadEnv() errLogic.IError {
 	if envStr := os.Getenv("PORT"); envStr != "" {
 		port, err := strconv.Atoi(envStr)
 		if err != nil {
-			return errLogic.NewError(err)
+			return errUtil.NewError(err)
 		}
 		cfg.Server.Port = port
 	}
@@ -86,13 +86,13 @@ func LoadEnv() errLogic.IError {
 
 	if envStr := os.Getenv("DATABASE_URL"); envStr != "" {
 		if err := cfg.ClubDb.ScanUrl(envStr); err != nil {
-			return errLogic.NewError(err)
+			return errUtil.NewError(err)
 		}
 	}
 
 	if envStr := os.Getenv("REDIS_URL"); envStr != "" {
 		if err := cfg.ClubRedis.ScanUrl(envStr); err != nil {
-			return errLogic.NewError(err)
+			return errUtil.NewError(err)
 		}
 	}
 

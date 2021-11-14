@@ -2,13 +2,13 @@ package redis
 
 import (
 	"heroku-line-bot/bootstrap"
-	errLogic "heroku-line-bot/logic/error"
 	"heroku-line-bot/storage/redis/conn"
 	"heroku-line-bot/storage/redis/domain"
 	"heroku-line-bot/storage/redis/key/badmintonplace"
 	"heroku-line-bot/storage/redis/key/badmintonsetting"
 	"heroku-line-bot/storage/redis/key/lineuser"
 	"heroku-line-bot/storage/redis/key/userusingstatus"
+	errUtil "heroku-line-bot/util/error"
 	"time"
 )
 
@@ -19,7 +19,7 @@ var (
 	BadmintonPlace   badmintonplace.Key
 )
 
-func Init(cfg *bootstrap.Config) errLogic.IError {
+func Init(cfg *bootstrap.Config) errUtil.IError {
 	maxLifeHour := cfg.RedisConfig.MaxLifeHour
 	maxConnAge := time.Hour * time.Duration(maxLifeHour)
 

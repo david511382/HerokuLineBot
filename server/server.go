@@ -4,7 +4,7 @@ import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/server/router"
 
-	errLogic "heroku-line-bot/logic/error"
+	errUtil "heroku-line-bot/util/error"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,9 +19,9 @@ func Init(cfg *bootstrap.Config) {
 	serverAddr = cfg.Server.Addr()
 }
 
-func Run() errLogic.IError {
+func Run() errUtil.IError {
 	if err := serverRouter.Run(serverAddr); err != nil {
-		return errLogic.NewError(err)
+		return errUtil.NewError(err)
 	}
 	return nil
 }
