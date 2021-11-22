@@ -2,7 +2,6 @@ package common
 
 import (
 	"heroku-line-bot/global"
-	"heroku-line-bot/logger"
 	clubLogicDomain "heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	"heroku-line-bot/logic/clublinebot"
@@ -27,12 +26,14 @@ func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resu
 	if claims, err := l.OAuth.VerifyIDToken(linebotDomainReqs.OAuthVerifyIDToken{
 		IDToken: token,
 	}); err != nil {
-		resultErrInfo = errUtil.NewError(err)
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		expTime := time.Unix(int64(claims.Exp), 0).In(global.Location)
 		if expTime.Before(global.TimeUtilObj.Now()) {
-			resultErrInfo = errUtil.New("token expire")
+			errInfo := errUtil.New("token expire")
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 
@@ -42,10 +43,12 @@ func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resu
 			ExpTime:  expTime,
 		}
 
-		if data, err := clubLineuserLogic.Get(claims.Sub); err != nil {
+		data, errInfo := clubLineuserLogic.Get(claims.Sub)
+		if errInfo != nil {
 			errInfo := errUtil.NewError(err, errUtil.WARN)
-			logger.Log("API", errInfo)
-		} else if data != nil {
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		}
+		if data != nil {
 			jwtClaims.RoleID = int16(data.Role)
 			jwtClaims.Username = data.Name
 			jwtClaims.ID = data.ID
