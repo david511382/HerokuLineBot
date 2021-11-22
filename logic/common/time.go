@@ -187,12 +187,12 @@ func IntClock(i int, tt domain.TimeType) time.Time {
 	return GetTime(ts...)
 }
 
-type TimeRange struct {
+type TimePRange struct {
 	From *time.Time
 	To   *time.Time
 }
 
-func TimeRanges(timeRanges ...TimeRange) []TimeRange {
+func TimeRanges(timeRanges ...TimePRange) []TimePRange {
 	sort.Slice(timeRanges, func(i, j int) bool {
 		it := timeRanges[i]
 		jt := timeRanges[j]
@@ -204,11 +204,11 @@ func TimeRanges(timeRanges ...TimeRange) []TimeRange {
 		return it.From.Before(*jt.From)
 	})
 
-	result := make([]TimeRange, 0)
+	result := make([]TimePRange, 0)
 	for i := 0; i < len(timeRanges); {
 		v := timeRanges[i]
 
-		t := TimeRange{
+		t := TimePRange{
 			From: v.From,
 			To:   v.To,
 		}

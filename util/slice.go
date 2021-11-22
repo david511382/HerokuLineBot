@@ -56,21 +56,25 @@ func insertIndex(startIndex, lastIndex int, compareF func(index int) int, isDesc
 }
 
 // compareF: targe > found = 1, targe == found = 0, targe < found = -1
-func Search(startIndex, lastIndex int, compareF func(index int) int) int {
+func Search(startIndex, lastIndex int, compareF func(index int) int) (index int) {
 	previous, next := SearchUpDown(startIndex, lastIndex, compareF, false)
 	if previous == next && previous != -1 {
-		return previous
+		index = previous
+	} else {
+		index = -1
 	}
-	return -1
+	return
 }
 
 // compareF: targe > found = 1, targe == found = 0, targe < found = -1
-func DescSearch(startIndex, lastIndex int, compareF func(index int) int) int {
+func DescSearch(startIndex, lastIndex int, compareF func(index int) int) (index int) {
 	previous, next := SearchUpDown(startIndex, lastIndex, compareF, true)
 	if previous == next && previous != -1 {
-		return previous
+		index = previous
+	} else {
+		index = -1
 	}
-	return -1
+	return
 }
 
 // compareTargetF: targe > found = 1, targe == found = 0, targe < found = -1;

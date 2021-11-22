@@ -8,6 +8,7 @@ import (
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledger"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtrefundledger"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
+	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 )
 
@@ -151,9 +152,11 @@ func GetCourts(
 				return
 			}
 			detailIDMap[v.ID] = &CourtDetail{
-				FromTime: startTime,
-				ToTime:   endTime,
-				Count:    v.Count,
+				TimeRange: util.TimeRange{
+					From: startTime,
+					To:   endTime,
+				},
+				Count: v.Count,
 			}
 		}
 	}

@@ -2,10 +2,10 @@ package util
 
 import (
 	errUtil "heroku-line-bot/util/error"
-	"sort"
 	"time"
 )
 
+// target equal:0, less:-1, great:1
 func compareTime(target, compare *time.Time) int {
 	if (target == nil) && (compare == nil) {
 		return 0
@@ -25,11 +25,55 @@ func compareTime(target, compare *time.Time) int {
 }
 
 type TimeRange struct {
+	From time.Time
+	To   time.Time
+}
+
+func (tr *TimeRange) Hours() Float {
+	tp := TimePRange{
+		From: &tr.From,
+		To:   &tr.To,
+	}
+	return tp.Hours()
+}
+
+// target equal:0, less:-1, great:1
+func (tr *TimeRange) Compare(t *TimeRange) int {
+	tp := TimePRange{
+		From: &tr.From,
+		To:   &tr.To,
+	}
+	tt := &TimePRange{
+		From: &t.From,
+		To:   &t.To,
+	}
+	return tp.Compare(tt)
+}
+
+// -1 < from <= 0 <= to < 1
+func (tr *TimeRange) CompareTime(t *time.Time) int {
+	tp := TimePRange{
+		From: &tr.From,
+		To:   &tr.To,
+	}
+	return tp.CompareTime(t)
+}
+
+// from = t || from < t && t <= to
+func (tr TimeRange) IsContain(t time.Time) bool {
+	tp := TimePRange{
+		From: &tr.From,
+		To:   &tr.To,
+	}
+	return tp.IsContain(t)
+}
+
+type TimePRange struct {
 	From *time.Time
 	To   *time.Time
 }
 
-func (tr *TimeRange) Hours() Float {
+func (tr *TimePRange) Hours() Float {
 	if tr.To == nil ||
 		tr.From == nil {
 		return ToFloat(0)
@@ -38,7 +82,34 @@ func (tr *TimeRange) Hours() Float {
 	return ToFloat(tr.To.Sub(*tr.From).Hours())
 }
 
-func (tr TimeRange) IsContain(t time.Time) bool {
+// target equal:0, less:-1, great:1
+func (tr *TimePRange) Compare(t *TimePRange) int {
+	fromCompare := compareTime(tr.From, t.From)
+	if fromCompare == 0 {
+		toCompare := compareTime(tr.To, t.To)
+		return toCompare
+	} else {
+		return fromCompare
+	}
+}
+
+// -1 < from <= 0 <= to < 1
+func (tr *TimePRange) CompareTime(t *time.Time) int {
+	fromCompare := compareTime(tr.From, t)
+	if fromCompare == 1 {
+		return -1
+	} else if fromCompare == 0 {
+		return 0
+	}
+	toCompare := compareTime(tr.To, t)
+	if toCompare == -1 {
+		return 1
+	}
+	return 0
+}
+
+// from = t || from < t && t <= to
+func (tr TimePRange) IsContain(t time.Time) bool {
 	fromCompare := compareTime(tr.From, &t)
 	if fromCompare == 1 {
 		return false
@@ -49,55 +120,6 @@ func (tr TimeRange) IsContain(t time.Time) bool {
 	return toCompare != -1
 }
 
-func TimeRanges(timeRanges ...TimeRange) []TimeRange {
-	sort.Slice(timeRanges, func(i, j int) bool {
-		it := timeRanges[i]
-		jt := timeRanges[j]
-		if it.From == nil {
-			return true
-		} else if jt.From == nil {
-			return false
-		}
-		return it.From.Before(*jt.From)
-	})
-
-	result := make([]TimeRange, 0)
-	for i := 0; i < len(timeRanges); {
-		v := timeRanges[i]
-
-		t := TimeRange{
-			From: v.From,
-			To:   v.To,
-		}
-		if t.To == nil {
-			result = append(result, t)
-			return result
-		}
-
-		j := i + 1
-		for ; j < len(timeRanges); j++ {
-			nt := timeRanges[j]
-
-			if nt.From != nil && nt.From.After(*t.To) {
-				break
-			}
-
-			if nt.To == nil {
-				t.To = nt.To
-				result = append(result, t)
-				return result
-			} else if nt.To.After(*t.To) {
-				t.To = nt.To
-			}
-		}
-		i = j
-
-		result = append(result, t)
-	}
-
-	return result
-}
-
 type IData interface {
 	Split(t time.Time) (previous, next IData)
 	IsSplitable() bool
@@ -105,7 +127,7 @@ type IData interface {
 }
 
 type timeRangeData struct {
-	TimeRange
+	TimePRange
 	IData
 }
 
@@ -252,7 +274,7 @@ func (trds *TimeRangeDatas) loadNewDataRange(
 	(*resultDatas) = append((*resultDatas), newData)
 
 	(*newDatas) = append((*newDatas), &timeRangeData{
-		TimeRange: TimeRange{
+		TimePRange: TimePRange{
 			From: &from,
 			To:   &before,
 		},
@@ -285,13 +307,13 @@ func (trds *TimeRangeDatas) loadDataRange(
 	}
 
 	preDTimeRangeData := &timeRangeData{
-		TimeRange: TimeRange{
+		TimePRange: TimePRange{
 			From: dataRange.From,
 			To:   &splitTime,
 		},
 	}
 	nextDTimeRangeData := &timeRangeData{
-		TimeRange: TimeRange{
+		TimePRange: TimePRange{
 			From: &splitTime,
 			To:   dataRange.To,
 		},

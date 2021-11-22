@@ -202,9 +202,11 @@ func TestGetCourts(t *testing.T) {
 										DbCourtDetail: DbCourtDetail{
 											ID: 1,
 											CourtDetail: CourtDetail{
-												FromTime: commonLogic.NewHourMinTime(1, 0).ForceTime(),
-												ToTime:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
-												Count:    1,
+												TimeRange: util.TimeRange{
+													From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+													To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+												},
+												Count: 1,
 											},
 										},
 										PricePerHour: 2,
@@ -230,9 +232,11 @@ func TestGetCourts(t *testing.T) {
 											DbCourtDetail: DbCourtDetail{
 												ID: 3,
 												CourtDetail: CourtDetail{
-													FromTime: commonLogic.NewHourMinTime(2, 0).ForceTime(),
-													ToTime:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
-													Count:    1,
+													TimeRange: util.TimeRange{
+														From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
+														To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+													},
+													Count: 1,
 												},
 											},
 										},
@@ -242,9 +246,11 @@ func TestGetCourts(t *testing.T) {
 											DbCourtDetail: DbCourtDetail{
 												ID: 3,
 												CourtDetail: CourtDetail{
-													FromTime: commonLogic.NewHourMinTime(2, 0).ForceTime(),
-													ToTime:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
-													Count:    1,
+													TimeRange: util.TimeRange{
+														From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
+														To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+													},
+													Count: 1,
 												},
 											},
 										},
@@ -255,9 +261,11 @@ func TestGetCourts(t *testing.T) {
 										DbCourtDetail: DbCourtDetail{
 											ID: 1,
 											CourtDetail: CourtDetail{
-												FromTime: commonLogic.NewHourMinTime(1, 0).ForceTime(),
-												ToTime:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
-												Count:    1,
+												TimeRange: util.TimeRange{
+													From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+													To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+												},
+												Count: 1,
 											},
 										},
 										PricePerHour: 2,
@@ -276,9 +284,11 @@ func TestGetCourts(t *testing.T) {
 										DbCourtDetail: DbCourtDetail{
 											ID: 2,
 											CourtDetail: CourtDetail{
-												FromTime: commonLogic.NewHourMinTime(3, 0).ForceTime(),
-												ToTime:   commonLogic.NewHourMinTime(6, 0).ForceTime(),
-												Count:    1,
+												TimeRange: util.TimeRange{
+													From: commonLogic.NewHourMinTime(3, 0).ForceTime(),
+													To:   commonLogic.NewHourMinTime(6, 0).ForceTime(),
+												},
+												Count: 1,
 											},
 										},
 										PricePerHour: 2,
@@ -300,9 +310,11 @@ func TestGetCourts(t *testing.T) {
 											DbCourtDetail: DbCourtDetail{
 												ID: 4,
 												CourtDetail: CourtDetail{
-													FromTime: commonLogic.NewHourMinTime(3, 0).ForceTime(),
-													ToTime:   commonLogic.NewHourMinTime(4, 0).ForceTime(),
-													Count:    1,
+													TimeRange: util.TimeRange{
+														From: commonLogic.NewHourMinTime(3, 0).ForceTime(),
+														To:   commonLogic.NewHourMinTime(4, 0).ForceTime(),
+													},
+													Count: 1,
 												},
 											},
 										},

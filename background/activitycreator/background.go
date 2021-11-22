@@ -33,68 +33,11 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	}()
 
 	currentDate := commonLogic.DateTime(commonLogicDomain.DATE_TIME_TYPE.Of(runTime))
-
-	rdsSetting, errInfo := redis.BadmintonSetting.Load()
+	newActivityHandlers, errInfo := calDateActivity(currentDate)
 	if errInfo != nil {
-		resultErrInfo = errInfo
-		if resultErrInfo.IsError() {
-			return
-		}
-	}
-	if rdsSetting == nil {
-		resultErrInfo = errUtil.New("no redis setting", errUtil.WARN)
-		rdsSetting = &redisDomain.BadmintonActivity{
-			Description: "7人出團",
-			ClubSubsidy: 0,
-		}
-	}
-	if rdsSetting.ActivityCreateDays == nil {
-		rdsSetting.ActivityCreateDays = util.GetInt16P(6)
-	}
-
-	newActivityHandlers := make([]*clubLogic.NewActivity, 0)
-	createActivityDate := currentDate.Next(int(*rdsSetting.ActivityCreateDays))
-	if placeDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(createActivityDate, createActivityDate, nil); errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
 			return
-		}
-	} else if len(placeDateCourtsMap) == 0 {
-		return
-	} else {
-		for place, dateCourts := range placeDateCourtsMap {
-			newActivityHandler := &clubLogic.NewActivity{
-				Date:        createActivityDate,
-				PlaceID:     place,
-				Description: rdsSetting.Description,
-				ClubSubsidy: rdsSetting.ClubSubsidy,
-				IsComplete:  false,
-				Courts:      make([]*badmintonCourtLogicDomain.ActivityCourt, 0),
-			}
-
-			totalCourtCount := 0
-			for _, dateCourt := range dateCourts {
-				for _, court := range dateCourt.Courts {
-					courtDetail := court.CourtDetailPrice
-					// TODO: refunds
-					newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonCourtLogicDomain.ActivityCourt{
-						FromTime:     courtDetail.FromTime,
-						ToTime:       courtDetail.ToTime,
-						Count:        courtDetail.Count,
-						PricePerHour: courtDetail.PricePerHour,
-					})
-					totalCourtCount += int(court.Count)
-				}
-			}
-			newActivityHandler.Courts = b.combineCourts(newActivityHandler.Courts)
-
-			peopleLimit := rdsSetting.PeopleLimit
-			if rdsSetting.PeopleLimit == 0 {
-				peopleLimit = int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2)
-			}
-			newActivityHandler.PeopleLimit = util.GetInt16P(peopleLimit)
-
-			newActivityHandlers = append(newActivityHandlers, newActivityHandler)
 		}
 	}
 
@@ -111,10 +54,123 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 		database.CommitTransaction(transaction, resultErrInfo)
 	}
 
+	if errInfo := notifyGroup(); errInfo != nil {
+		errInfo.SetLevel(errUtil.WARN)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+	}
+
+	return
+}
+
+func calDateActivity(currentDate commonLogic.DateTime) (
+	newActivityHandlers []*clubLogic.NewActivity,
+	resultErrInfo errUtil.IError,
+) {
+	newActivityHandlers = make([]*clubLogic.NewActivity, 0)
+
+	rdsSetting, errInfo := redis.BadmintonSetting.Load()
+	if errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
+			return
+		}
+	}
+	if rdsSetting == nil {
+		errInfo := errUtil.New("no redis setting", errUtil.WARN)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+
+		rdsSetting = &redisDomain.BadmintonActivity{
+			Description: "7人出團",
+			ClubSubsidy: 0,
+		}
+	}
+	if rdsSetting.ActivityCreateDays == nil {
+		rdsSetting.ActivityCreateDays = util.GetInt16P(6)
+	}
+
+	createActivityDate := currentDate.Next(int(*rdsSetting.ActivityCreateDays))
+	placeDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(createActivityDate, createActivityDate, nil)
+	if errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
+			return
+		}
+	}
+
+	newActivityHandlers = calActivitys(placeDateCourtsMap, rdsSetting)
+
+	return
+}
+
+func calActivitys(
+	placeDateCourtsMap map[int][]*badmintonCourtLogic.DateCourt,
+	rdsSetting *redisDomain.BadmintonActivity,
+) (
+	newActivityHandlers []*clubLogic.NewActivity,
+) {
+	newActivityHandlers = make([]*clubLogic.NewActivity, 0)
+
+	for place, dateCourts := range placeDateCourtsMap {
+		dateDateCourtsMap := make(map[commonLogic.DateInt][]*badmintonCourtLogic.DateCourt)
+		for _, dateCourt := range dateCourts {
+			dateInt := dateCourt.Date.Int()
+			if dateDateCourtsMap[dateInt] == nil {
+				dateDateCourtsMap[dateInt] = make([]*badmintonCourtLogic.DateCourt, 0)
+			}
+			dateDateCourtsMap[dateInt] = append(dateDateCourtsMap[dateInt], dateCourt)
+		}
+
+		for dateInt, dateCourts := range dateDateCourtsMap {
+			totalCourtCount := 0
+			newActivityHandler := &clubLogic.NewActivity{
+				Date:        dateInt.DateTime(),
+				PlaceID:     place,
+				Description: rdsSetting.Description,
+				ClubSubsidy: rdsSetting.ClubSubsidy,
+				IsComplete:  false,
+				Courts:      make([]*badmintonCourtLogicDomain.ActivityCourt, 0),
+			}
+			peopleLimit := rdsSetting.PeopleLimit
+			if peopleLimit == 0 {
+				peopleLimit = int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2)
+			}
+			newActivityHandler.PeopleLimit = util.GetInt16P(peopleLimit)
+
+			for _, dateCourt := range dateCourts {
+			for _, court := range dateCourt.Courts {
+				courtDetail := court.CourtDetailPrice
+				pricePerHour := courtDetail.PricePerHour
+				units := court.Parts()
+				for _, v := range units {
+					if v.Refund != nil {
+						continue
+					}
+					newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonCourtLogicDomain.ActivityCourt{
+						FromTime:     v.From,
+						ToTime:       v.To,
+						Count:        v.Count,
+						PricePerHour: pricePerHour,
+					})
+					totalCourtCount += int(v.Hours().
+						Mul(util.Int64ToFloat(int64(court.Count))).ToInt())
+				}
+			}
+			}
+			newActivityHandler.Courts = combineCourts(newActivityHandler.Courts)
+
+			newActivityHandlers = append(newActivityHandlers, newActivityHandler)
+		}
+	}
+
+	return
+}
+
+func notifyGroup() (resultErrInfo errUtil.IError) {
 	getActivityHandler := &clubLogic.GetActivities{}
 	pushMessage, err := getActivityHandler.GetActivitiesMessage("開放活動報名", false, false)
 	if err != nil {
-		resultErrInfo = errUtil.NewError(err)
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 	pushMessages := []interface{}{
@@ -123,22 +179,23 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	}
 	linebotContext := clubLineBotLogic.NewContext("", "", &clubLineBotLogic.Bot)
 	if err := linebotContext.PushRoom(pushMessages); err != nil {
-		resultErrInfo = errUtil.NewError(err)
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 
 	return
 }
 
-func (b *BackGround) combineCourts(courts []*badmintonCourtLogicDomain.ActivityCourt) []*badmintonCourtLogicDomain.ActivityCourt {
+func combineCourts(courts []*badmintonCourtLogicDomain.ActivityCourt) []*badmintonCourtLogicDomain.ActivityCourt {
 	newCourts := make([]*badmintonCourtLogicDomain.ActivityCourt, 0)
 
-	priceRangesMap := b.parseCourtsToTimeRanges(courts)
+	priceRangesMap := parseCourtsToTimeRanges(courts)
 	for price, ranges := range priceRangesMap {
 		for _, v := range commonLogic.CombineMinuteTimeRanges(ranges) {
 			newCourts = append(newCourts, &badmintonCourtLogicDomain.ActivityCourt{
-				FromTime:     *v.From,
-				ToTime:       *v.To,
+				FromTime:     v.From,
+				ToTime:       v.To,
 				Count:        int16(v.Count),
 				PricePerHour: price,
 			})
@@ -148,7 +205,7 @@ func (b *BackGround) combineCourts(courts []*badmintonCourtLogicDomain.ActivityC
 	return newCourts
 }
 
-func (b *BackGround) parseCourtsToTimeRanges(courts []*badmintonCourtLogicDomain.ActivityCourt) (priceRangesMap map[float64][]*commonLogic.TimeRangeValue) {
+func parseCourtsToTimeRanges(courts []*badmintonCourtLogicDomain.ActivityCourt) (priceRangesMap map[float64][]*commonLogic.TimeRangeValue) {
 	priceRangesMap = make(map[float64][]*commonLogic.TimeRangeValue)
 
 	for _, court := range courts {
@@ -159,8 +216,8 @@ func (b *BackGround) parseCourtsToTimeRanges(courts []*badmintonCourtLogicDomain
 			}
 			priceRangesMap[price] = append(priceRangesMap[price], &commonLogic.TimeRangeValue{
 				TimeRange: util.TimeRange{
-					From: &court.FromTime,
-					To:   &court.ToTime,
+					From: court.FromTime,
+					To:   court.ToTime,
 				},
 				Value: court.Hours(),
 			})

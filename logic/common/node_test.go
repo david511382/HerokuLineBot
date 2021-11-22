@@ -20,43 +20,43 @@ func TestCombineMinuteTimeRanges(t *testing.T) {
 				ranges: []*TimeRangeValue{
 					{
 						TimeRange: util.TimeRange{
-							From: GetTimeP(2013, 8, 2, 2),
-							To:   GetTimeP(2013, 8, 2, 3),
+							From: GetTime(2013, 8, 2, 2),
+							To:   GetTime(2013, 8, 2, 3),
 						},
 						Value: util.ToFloat(1),
 					},
 					{
 						TimeRange: util.TimeRange{
-							From: GetTimeP(2013, 8, 2, 1),
-							To:   GetTimeP(2013, 8, 2, 3),
+							From: GetTime(2013, 8, 2, 1),
+							To:   GetTime(2013, 8, 2, 3),
 						},
 						Value: util.ToFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
-							From: GetTimeP(2013, 8, 2, 3),
-							To:   GetTimeP(2013, 8, 2, 5),
+							From: GetTime(2013, 8, 2, 3),
+							To:   GetTime(2013, 8, 2, 5),
 						},
 						Value: util.ToFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
-							From: GetTimeP(2013, 8, 2, 4),
-							To:   GetTimeP(2013, 8, 2, 6),
+							From: GetTime(2013, 8, 2, 4),
+							To:   GetTime(2013, 8, 2, 6),
 						},
 						Value: util.ToFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
-							From: GetTimeP(2013, 8, 2, 3),
-							To:   GetTimeP(2013, 8, 2, 4),
+							From: GetTime(2013, 8, 2, 3),
+							To:   GetTime(2013, 8, 2, 4),
 						},
 						Value: util.ToFloat(1),
 					},
 					{
 						TimeRange: util.TimeRange{
-							From: GetTimeP(2013, 8, 2, 1),
-							To:   GetTimeP(2013, 8, 2, 3),
+							From: GetTime(2013, 8, 2, 1),
+							To:   GetTime(2013, 8, 2, 3),
 						},
 						Value: util.ToFloat(2),
 					},
@@ -65,22 +65,22 @@ func TestCombineMinuteTimeRanges(t *testing.T) {
 			map[string]*TimeRangeCount{
 				"100-500": {
 					util.TimeRange{
-						From: GetTimeP(2013, 8, 2, 1),
-						To:   GetTimeP(2013, 8, 2, 5),
+						From: GetTime(2013, 8, 2, 1),
+						To:   GetTime(2013, 8, 2, 5),
 					},
 					1,
 				},
 				"100-600": {
 					util.TimeRange{
-						From: GetTimeP(2013, 8, 2, 1),
-						To:   GetTimeP(2013, 8, 2, 6),
+						From: GetTime(2013, 8, 2, 1),
+						To:   GetTime(2013, 8, 2, 6),
 					},
 					1,
 				},
 				"200-300": {
 					util.TimeRange{
-						From: GetTimeP(2013, 8, 2, 2),
-						To:   GetTimeP(2013, 8, 2, 3),
+						From: GetTime(2013, 8, 2, 2),
+						To:   GetTime(2013, 8, 2, 3),
 					},
 					1,
 				},

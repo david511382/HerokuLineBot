@@ -81,6 +81,11 @@ func GetRentalCourts(c *gin.Context) {
 			for _, court := range dateCourt.Courts {
 				place := idPlaceMap[placeID].Name
 
+				if dateIntPlaceMap[courtDateInt] == nil {
+					dateIntPlaceMap[courtDateInt] = make(map[string]bool)
+				}
+				dateIntPlaceMap[courtDateInt][place] = true
+
 				units := court.Parts()
 				for _, unit := range units {
 					status := unit.GetStatus()
@@ -93,27 +98,11 @@ func GetRentalCourts(c *gin.Context) {
 
 					info := resp.GetRentalCourtsCourtInfo{
 						Place:    place,
-						FromTime: unit.FromTime,
-						ToTime:   unit.ToTime,
+						FromTime: unit.From,
+						ToTime:   unit.To,
 						Count:    int(unit.Count),
-						Cost:     unit.Cost().Value(),
+						Cost:     unit.Cost(court.PricePerHour).Value(),
 					}
-					rInfo := &resp.GetRentalCourtsDayCourtsInfo{
-						GetRentalCourtsCourtInfo: info,
-						Status:                   int(status),
-						ReasonMessage:            reasonMessage,
-						RefundTime:               unit.GetRefundDate().TimeP(),
-					}
-					if dateIntCourtsMap[courtDateInt] == nil {
-						dateIntCourtsMap[courtDateInt] = make([]*resp.GetRentalCourtsDayCourtsInfo, 0)
-					}
-					dateIntCourtsMap[courtDateInt] = append(dateIntCourtsMap[courtDateInt], rInfo)
-
-					if dateIntPlaceMap[courtDateInt] == nil {
-						dateIntPlaceMap[courtDateInt] = make(map[string]bool)
-					}
-					dateIntPlaceMap[courtDateInt][place] = true
-
 					switch status {
 					case badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_PAY:
 						if notPayDateIntCourtsMap[courtDateInt] == nil {
@@ -126,6 +115,17 @@ func GetRentalCourts(c *gin.Context) {
 						}
 						notRefundDateIntCourtsMap[courtDateInt] = append(notRefundDateIntCourtsMap[courtDateInt], &info)
 					}
+
+					rInfo := &resp.GetRentalCourtsDayCourtsInfo{
+						GetRentalCourtsCourtInfo: info,
+						Status:                   int(status),
+						ReasonMessage:            reasonMessage,
+						RefundTime:               unit.GetRefundDate().TimeP(),
+					}
+					if dateIntCourtsMap[courtDateInt] == nil {
+						dateIntCourtsMap[courtDateInt] = make([]*resp.GetRentalCourtsDayCourtsInfo, 0)
+					}
+					dateIntCourtsMap[courtDateInt] = append(dateIntCourtsMap[courtDateInt], rInfo)
 				}
 			}
 		}

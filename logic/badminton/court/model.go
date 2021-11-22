@@ -1,22 +1,22 @@
 package court
 
 import (
-	"fmt"
 	"heroku-line-bot/logic/badminton/court/domain"
 	commonLogic "heroku-line-bot/logic/common"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	"heroku-line-bot/util"
-	"time"
 )
 
 type CourtDetail struct {
-	FromTime time.Time `json:"from_time"`
-	ToTime   time.Time `json:"to_time"`
-	Count    int16     `json:"count"`
+	util.TimeRange
+	Count int16
 }
 
-func (d *CourtDetail) Hours() util.Float {
-	return util.ToFloat(d.ToTime.Sub(d.FromTime).Hours())
+func (d *CourtDetail) GetTimeRanges() (resultTimeRanges util.AscTimeRanges) {
+	resultTimeRanges = make(util.AscTimeRanges, 0)
+	for i := 0; i < int(d.Count); i++ {
+		resultTimeRanges = append(resultTimeRanges, d.TimeRange)
+	}
+	return
 }
 
 func (d *CourtDetail) TotalHours() util.Float {
@@ -25,12 +25,6 @@ func (d *CourtDetail) TotalHours() util.Float {
 
 func (d *CourtDetail) Cost(pricePerHour float64) util.Float {
 	return d.TotalHours().MulFloat(pricePerHour)
-}
-
-func (d *CourtDetail) IsSmaller(detail CourtDetail) bool {
-	return detail.FromTime.Before(d.FromTime) ||
-		detail.ToTime.After(detail.ToTime) ||
-		detail.Count > d.Count
 }
 
 func (d *CourtDetail) Sub(detail CourtDetail) (
@@ -54,14 +48,6 @@ type CourtDetailPrice struct {
 
 func (b *CourtDetailPrice) Cost() util.Float {
 	return b.CourtDetail.Cost(b.PricePerHour)
-}
-
-func (b *CourtDetailPrice) Time() string {
-	return fmt.Sprintf(
-		"%s~%s",
-		b.FromTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
-		b.ToTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
-	)
 }
 
 type DateCourt struct {
@@ -98,30 +84,55 @@ func (c *Court) Cost() util.Float {
 	return result
 }
 
-// TODO: 目前只有全部註銷，需實做片段註銷
 func (c *Court) Parts() (resultCourts []*CourtUnit) {
 	resultCourts = make([]*CourtUnit, 0)
 
-	unit := &CourtUnit{
-		CourtDetailPrice: c.CourtDetailPrice,
-		Desposit:         c.Desposit,
-		Balance:          c.Balance,
-		BalanceCourIDs:   c.BalanceCourIDs,
-	}
+	isPay := c.Balance.Income != nil
 	if len(c.Refunds) > 0 {
-		unit.Refund = c.Refunds[0]
+		rentalTimeRanges := c.CourtDetail.GetTimeRanges()
+		for _, refund := range c.Refunds {
+			refundTimeRange := refund.TimeRange
+			for i := 0; i < int(refund.Count); i++ {
+				rentalTimeRanges = rentalTimeRanges.Sub(refundTimeRange)
+			}
+
+			refundUnit := &CourtUnit{
+				CourtDetail: refund.CourtDetail,
+				Refund:      refund,
+				isPay:       isPay,
+			}
+			resultCourts = append(resultCourts, refundUnit)
+		}
+
+		countAscTimeRangesMap := rentalTimeRanges.CombineByCount()
+		for count, ascTimeRanges := range countAscTimeRangesMap {
+			count16 := int16(count)
+			for _, timeRange := range ascTimeRanges {
+				unit := &CourtUnit{
+					CourtDetail: CourtDetail{
+						TimeRange: timeRange,
+						Count:     count16,
+					},
+					isPay: isPay,
+				}
+				resultCourts = append(resultCourts, unit)
+			}
+		}
+	} else {
+		unit := &CourtUnit{
+			CourtDetail: c.CourtDetail,
+			isPay:       isPay,
+		}
+		resultCourts = append(resultCourts, unit)
 	}
-	resultCourts = append(resultCourts, unit)
 
 	return
 }
 
 type CourtUnit struct {
-	CourtDetailPrice
-	Desposit       *Income
-	Balance        LedgerIncome
-	BalanceCourIDs []int
-	Refund         *RefundMulCourtIncome
+	CourtDetail
+	Refund *RefundMulCourtIncome
+	isPay  bool
 }
 
 func (c *CourtUnit) GetStatus() (status domain.RentalCourtsStatus) {
@@ -130,7 +141,7 @@ func (c *CourtUnit) GetStatus() (status domain.RentalCourtsStatus) {
 		isPay := c.Refund.Income != nil
 		status = GetStatus(isPay, isRefund)
 	} else {
-		isPay := c.Balance.Income != nil
+		isPay := c.isPay
 		status = GetStatus(isPay, isRefund)
 	}
 

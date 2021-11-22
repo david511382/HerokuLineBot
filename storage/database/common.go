@@ -43,6 +43,7 @@ func IsUniqErr(err error) bool {
 
 func CommitTransaction(transaction *gorm.DB, resultErrInfo errUtil.IError) {
 	if resultErrInfo == nil {
+		// TODO handle error
 		transaction.Commit()
 	} else {
 		transaction.Rollback()

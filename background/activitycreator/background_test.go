@@ -1,8 +1,11 @@
 package activitycreator
 
 import (
+	badmintonCourtLogic "heroku-line-bot/logic/badminton/court"
 	badmintonCourtLogicDomain "heroku-line-bot/logic/badminton/court/domain"
+	clubLogic "heroku-line-bot/logic/club"
 	commonLogic "heroku-line-bot/logic/common"
+	redisDomain "heroku-line-bot/storage/redis/domain"
 	"heroku-line-bot/util"
 	"sort"
 	"testing"
@@ -57,43 +60,43 @@ func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
 				1: {
 					{
 						TimeRange: util.TimeRange{
-							From: commonLogic.GetTimeP(2013, 8, 2, 1),
-							To:   commonLogic.GetTimeP(2013, 8, 2, 3),
+							From: commonLogic.GetTime(2013, 8, 2, 1),
+							To:   commonLogic.GetTime(2013, 8, 2, 3),
 						},
 						Value: util.ToFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
-							From: commonLogic.GetTimeP(2013, 8, 2, 1),
-							To:   commonLogic.GetTimeP(2013, 8, 2, 3),
+							From: commonLogic.GetTime(2013, 8, 2, 1),
+							To:   commonLogic.GetTime(2013, 8, 2, 3),
 						},
 						Value: util.ToFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
-							From: commonLogic.GetTimeP(2013, 8, 2, 2),
-							To:   commonLogic.GetTimeP(2013, 8, 2, 3),
+							From: commonLogic.GetTime(2013, 8, 2, 2),
+							To:   commonLogic.GetTime(2013, 8, 2, 3),
 						},
 						Value: util.ToFloat(1),
 					},
 					{
 						TimeRange: util.TimeRange{
-							From: commonLogic.GetTimeP(2013, 8, 2, 3),
-							To:   commonLogic.GetTimeP(2013, 8, 2, 4),
+							From: commonLogic.GetTime(2013, 8, 2, 3),
+							To:   commonLogic.GetTime(2013, 8, 2, 4),
 						},
 						Value: util.ToFloat(1),
 					},
 					{
 						TimeRange: util.TimeRange{
-							From: commonLogic.GetTimeP(2013, 8, 2, 3),
-							To:   commonLogic.GetTimeP(2013, 8, 2, 5),
+							From: commonLogic.GetTime(2013, 8, 2, 3),
+							To:   commonLogic.GetTime(2013, 8, 2, 5),
 						},
 						Value: util.ToFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
-							From: commonLogic.GetTimeP(2013, 8, 2, 4),
-							To:   commonLogic.GetTimeP(2013, 8, 2, 6),
+							From: commonLogic.GetTime(2013, 8, 2, 4),
+							To:   commonLogic.GetTime(2013, 8, 2, 6),
 						},
 						Value: util.ToFloat(2),
 					},
@@ -103,17 +106,138 @@ func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := BackGround{}
-			gotPriceRangesMap := b.parseCourtsToTimeRanges(tt.args.courts)
+			gotPriceRangesMap := parseCourtsToTimeRanges(tt.args.courts)
 			for _, ranges := range gotPriceRangesMap {
 				sort.SliceStable(ranges, func(i, j int) bool {
-					return ranges[i].To.Before(*ranges[j].To)
+					return ranges[i].To.Before(ranges[j].To)
 				})
 				sort.SliceStable(ranges, func(i, j int) bool {
-					return ranges[i].From.Before(*ranges[j].From)
+					return ranges[i].From.Before(ranges[j].From)
 				})
 			}
 			if ok, msg := util.Comp(gotPriceRangesMap, tt.wantPriceRangesMap); !ok {
+				t.Errorf(msg)
+			}
+		})
+	}
+}
+
+func Test_calActivitys(t *testing.T) {
+	type args struct {
+		placeDateCourtsMap map[int][]*badmintonCourtLogic.DateCourt
+		rdsSetting         *redisDomain.BadmintonActivity
+	}
+	tests := []struct {
+		name                    string
+		args                    args
+		wantNewActivityHandlers []*clubLogic.NewActivity
+	}{
+		{
+			"refund",
+			args{
+				map[int][]*badmintonCourtLogic.DateCourt{
+					1: {
+						{
+							Date: commonLogic.NewDateTime(2013, 8, 2),
+							Courts: []*badmintonCourtLogic.Court{
+								{
+									CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{
+										DbCourtDetail: badmintonCourtLogic.DbCourtDetail{
+											CourtDetail: badmintonCourtLogic.CourtDetail{
+												TimeRange: util.TimeRange{
+													From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+													To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+												},
+												Count: 2,
+											},
+										},
+										PricePerHour: 10,
+									},
+									Balance:        badmintonCourtLogic.LedgerIncome{},
+									BalanceCourIDs: []int{},
+									Refunds: []*badmintonCourtLogic.RefundMulCourtIncome{
+										{
+											DbCourtDetail: badmintonCourtLogic.DbCourtDetail{
+												CourtDetail: badmintonCourtLogic.CourtDetail{
+													TimeRange: util.TimeRange{
+														From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
+														To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+													},
+													Count: 1,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							Date: commonLogic.NewDateTime(2013, 8, 2),
+							Courts: []*badmintonCourtLogic.Court{
+								{
+									CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{
+										DbCourtDetail: badmintonCourtLogic.DbCourtDetail{
+											CourtDetail: badmintonCourtLogic.CourtDetail{
+												TimeRange: util.TimeRange{
+													From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
+													To:   commonLogic.NewHourMinTime(4, 0).ForceTime(),
+												},
+												Count: 1,
+											},
+										},
+										PricePerHour: 10,
+									},
+									Balance:        badmintonCourtLogic.LedgerIncome{},
+									BalanceCourIDs: []int{},
+									Refunds:        []*badmintonCourtLogic.RefundMulCourtIncome{},
+								},
+							},
+						},
+					},
+				},
+				&redisDomain.BadmintonActivity{
+					Description: "",
+					ClubSubsidy: 8,
+					PeopleLimit: 2,
+				},
+			},
+			[]*clubLogic.NewActivity{
+				{
+					Date:        commonLogic.NewDateTime(2013, 8, 2),
+					PlaceID:     1,
+					ClubSubsidy: 8,
+					Description: "",
+					PeopleLimit: util.GetInt16P(2),
+					Courts: []*badmintonCourtLogicDomain.ActivityCourt{
+						{
+							FromTime:     commonLogic.NewHourMinTime(1, 0).ForceTime(),
+							ToTime:       commonLogic.NewHourMinTime(3, 0).ForceTime(),
+							Count:        1,
+							PricePerHour: 10,
+						},
+						{
+							FromTime:     commonLogic.NewHourMinTime(1, 0).ForceTime(),
+							ToTime:       commonLogic.NewHourMinTime(4, 0).ForceTime(),
+							Count:        1,
+							PricePerHour: 10,
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotNewActivityHandlers := calActivitys(tt.args.placeDateCourtsMap, tt.args.rdsSetting)
+			for _, hs := range gotNewActivityHandlers {
+				sort.SliceStable(hs.Courts, func(i, j int) bool {
+					return hs.Courts[i].ToTime.Before(hs.Courts[j].ToTime)
+				})
+				sort.SliceStable(hs.Courts, func(i, j int) bool {
+					return hs.Courts[i].FromTime.Before(hs.Courts[j].FromTime)
+				})
+			}
+			if ok, msg := util.Comp(gotNewActivityHandlers, tt.wantNewActivityHandlers); !ok {
 				t.Errorf(msg)
 			}
 		})
