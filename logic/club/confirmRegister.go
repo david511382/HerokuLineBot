@@ -111,13 +111,13 @@ func (b *confirmRegister) ComfirmDb() (resultErrInfo errUtil.IError) {
 	}
 
 	if isChangeRole {
-		if _, err := redis.LineUser.Del(b.User.LineID); err != nil {
-			resultErrInfo = errUtil.NewError(err)
-			return
+		if errInfo := redis.LineUser.Del(b.User.LineID); errInfo != nil {
+			errInfo.SetLevel(errUtil.WARN)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}
 	}
 
-	return nil
+	return
 }
 
 func (b *confirmRegister) Do(text string) (resultErrInfo errUtil.IError) {
