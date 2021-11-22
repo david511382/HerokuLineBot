@@ -136,24 +136,23 @@ type CourtUnit struct {
 }
 
 func (c *CourtUnit) GetStatus() (status domain.RentalCourtsStatus) {
+	isPay := c.isPay
 	isRefund := c.Refund != nil
 	if isRefund {
-		isPay := c.Refund.Income != nil
 		status = GetStatus(isPay, isRefund)
 	} else {
-		isPay := c.isPay
 		status = GetStatus(isPay, isRefund)
 	}
 
 	return
 }
 
-func (c *CourtUnit) GetRefundDate() (refundDate commonLogic.DateTime) {
+func (c *CourtUnit) GetRefundDate() (refundDate *commonLogic.DateTime) {
 	isRefund := c.Refund != nil
 	if isRefund {
 		isPay := c.Refund.Income != nil
 		if isPay {
-			refundDate = c.Refund.Income.PayDate
+			refundDate = &c.Refund.Income.PayDate
 		}
 	}
 

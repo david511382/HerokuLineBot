@@ -39,8 +39,11 @@ func (t DateTime) Time() time.Time {
 	return time.Time(t)
 }
 
-func (t DateTime) TimeP() *time.Time {
-	tp := time.Time(t)
+func (t *DateTime) TimeP() *time.Time {
+	if t == nil {
+		return nil
+	}
+	tp := time.Time(*t)
 	return &tp
 }
 
