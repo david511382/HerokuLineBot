@@ -40,6 +40,9 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 			return
 		}
 	}
+	if len(newActivityHandlers) == 0 {
+		return
+	}
 
 	if transaction := database.Club.Begin(); transaction.Error != nil {
 		resultErrInfo = errUtil.NewError(transaction.Error)
