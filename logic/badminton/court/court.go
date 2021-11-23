@@ -13,7 +13,7 @@ import (
 )
 
 func GetCourts(
-	fromDate, toDate commonLogic.DateTime,
+	fromDate, toDate util.DateTime,
 	placeID *int,
 ) (
 	placeDateCourtsMap map[int][]*DateCourt,
@@ -192,7 +192,7 @@ func GetCourts(
 			dbIncome := incomeIDMap[incomeID]
 			ledgerIncome.Income = &Income{
 				ID:      incomeID,
-				PayDate: commonLogic.DateTime(dbIncome.Date),
+				PayDate: util.DateTime(dbIncome.Date),
 				Money:   int(dbIncome.Income),
 			}
 		}
@@ -203,7 +203,7 @@ func GetCourts(
 			dbIncome := incomeIDMap[incomeID]
 			depositIncome = &Income{
 				ID:      incomeID,
-				PayDate: commonLogic.DateTime(dbIncome.Date),
+				PayDate: util.DateTime(dbIncome.Date),
 				Money:   int(dbIncome.Income),
 			}
 		}
@@ -240,7 +240,7 @@ func GetCourts(
 						dbIncome := incomeIDMap[incomeID]
 						income = &Income{
 							ID:      incomeID,
-							PayDate: commonLogic.DateTime(dbIncome.Date),
+							PayDate: util.DateTime(dbIncome.Date),
 							Money:   int(dbIncome.Income),
 						}
 					}
@@ -266,7 +266,7 @@ func GetCourts(
 	for courtID, detailIDCourtsMap := range courtIDDetailIDCourtsMap {
 		dbCourt := courtIDMap[courtID]
 		placeID := dbCourt.PlaceID
-		date := commonLogic.NewDateTimeOf(dbCourt.Date)
+		date := util.NewDateTimeOf(dbCourt.Date)
 
 		dateCourt := &DateCourt{
 			ID:     dbCourt.ID,

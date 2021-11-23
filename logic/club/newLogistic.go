@@ -5,8 +5,6 @@ import (
 	"heroku-line-bot/global"
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
-	commonLogic "heroku-line-bot/logic/common"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
@@ -44,7 +42,7 @@ func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 func (b *NewLogistic) GetSingleParam(attr string) string {
 	switch attr {
 	case "date":
-		return b.Date.Format(commonLogicDomain.DATE_FORMAT)
+		return b.Date.Format(util.DATE_FORMAT)
 	case "ICmdLogic.name":
 		return b.Name
 	case "ICmdLogic.description":
@@ -59,7 +57,7 @@ func (b *NewLogistic) GetSingleParam(attr string) string {
 func (b *NewLogistic) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	case "date":
-		t, err := time.Parse(commonLogicDomain.DATE_TIME_RFC3339_FORMAT, text)
+		t, err := time.Parse(util.DATE_TIME_RFC3339_FORMAT, text)
 		if err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
@@ -150,8 +148,8 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 		return
 	} else {
 		dateStr := fmt.Sprintf("%s(%s)",
-			b.Date.Format(commonLogicDomain.MONTH_DATE_SLASH_FORMAT),
-			commonLogic.WeekDayName(b.Date.Weekday()),
+			b.Date.Format(util.MONTH_DATE_SLASH_FORMAT),
+			util.GetWeekDayName(b.Date.Weekday()),
 		)
 		boxComponent.Contents = append(boxComponent.Contents,
 			linebot.GetFlexMessageBoxComponent(

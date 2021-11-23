@@ -4,6 +4,25 @@ import (
 	"time"
 )
 
+const (
+	DATE_TIME_FORMAT         = "2006-01-02 15:04:05"
+	DATE_FORMAT              = "2006-01-02"
+	MONTH_DATE_SLASH_FORMAT  = "01/02"
+	TIME_FORMAT              = "15:04:05"
+	TIME_HOUR_MIN_FORMAT     = "15:04"
+	DATE_TIME_RFC3339_FORMAT = "2006-01-02T15:04:05Z07:00"
+)
+
+var WeekDayName = []string{
+	"日",
+	"一",
+	"二",
+	"三",
+	"四",
+	"五",
+	"六",
+}
+
 func TimePOf(t time.Time) *time.Time {
 	return &t
 }
@@ -48,14 +67,6 @@ func YearOf(t time.Time) time.Time {
 	return *GetTimePLoc(t.Location(), y)
 }
 
-func GetTime(ts ...int) time.Time {
-	return *GetTimeP(ts...)
-}
-
-func GetTimeP(ts ...int) *time.Time {
-	return GetTimePLoc(time.Local, ts...)
-}
-
 func GetTimeIn(t time.Time, loc *time.Location) time.Time {
 	y, m, d := t.Date()
 	return *GetTimePLoc(loc, y, int(m), d, t.Hour(), t.Minute(), t.Second())
@@ -79,4 +90,8 @@ func GetTimePLoc(loc *time.Location, ts ...int) *time.Time {
 	}
 	t := time.Date(ts[0], time.Month(ts[1]), ts[2], ts[3], ts[4], ts[5], ts[6], loc)
 	return &t
+}
+
+func GetWeekDayName(weekDay time.Weekday) string {
+	return WeekDayName[weekDay]
 }

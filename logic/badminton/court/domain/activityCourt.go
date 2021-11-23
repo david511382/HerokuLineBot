@@ -2,7 +2,6 @@ package domain
 
 import (
 	"fmt"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	"heroku-line-bot/util"
 	"time"
 )
@@ -29,7 +28,7 @@ func (b *ActivityCourt) TotalHours() util.Float {
 func (b *ActivityCourt) Time() string {
 	return fmt.Sprintf(
 		"%s~%s",
-		b.FromTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
-		b.ToTime.Format(commonLogicDomain.TIME_HOUR_MIN_FORMAT),
+		b.FromTime.Format(util.TIME_HOUR_MIN_FORMAT),
+		b.ToTime.Format(util.TIME_HOUR_MIN_FORMAT),
 	)
 }

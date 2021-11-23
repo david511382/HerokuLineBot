@@ -1,6 +1,7 @@
 package court
 
 import (
+	"heroku-line-bot/global"
 	commonLogic "heroku-line-bot/logic/common"
 	"sort"
 
@@ -18,8 +19,8 @@ import (
 
 func TestGetCourts(t *testing.T) {
 	type args struct {
-		fromDate commonLogic.DateTime
-		toDate   commonLogic.DateTime
+		fromDate util.DateTime
+		toDate   util.DateTime
 		placeID  *int
 	}
 	type migrations struct {
@@ -42,8 +43,8 @@ func TestGetCourts(t *testing.T) {
 		{
 			"refund",
 			args{
-				fromDate: commonLogic.NewDateTime(2013, 8, 2),
-				toDate:   commonLogic.NewDateTime(2013, 8, 2),
+				fromDate: util.NewDateTime(global.Location, 2013, 8, 2),
+				toDate:   util.NewDateTime(global.Location, 2013, 8, 2),
 			},
 			migrations{
 				rentalCourts: []*rentalcourt.RentalCourtTable{
@@ -195,7 +196,7 @@ func TestGetCourts(t *testing.T) {
 					1: {
 						{
 							ID:   1,
-							Date: commonLogic.NewDateTime(2013, 8, 2),
+							Date: util.NewDateTime(global.Location, 2013, 8, 2),
 							Courts: []*Court{
 								{
 									CourtDetailPrice: CourtDetailPrice{
@@ -217,7 +218,7 @@ func TestGetCourts(t *testing.T) {
 										ID: 11,
 										Income: &Income{
 											ID:      1,
-											PayDate: commonLogic.NewDateTime(2013, 8, 2),
+											PayDate: util.NewDateTime(global.Location, 2013, 8, 2),
 											Money:   -4,
 										},
 									},
@@ -226,7 +227,7 @@ func TestGetCourts(t *testing.T) {
 											ID: 1,
 											Income: &Income{
 												ID:      3,
-												PayDate: commonLogic.NewDateTime(2013, 8, 2),
+												PayDate: util.NewDateTime(global.Location, 2013, 8, 2),
 												Money:   2,
 											},
 											DbCourtDetail: DbCourtDetail{
@@ -299,7 +300,7 @@ func TestGetCourts(t *testing.T) {
 										ID: 13,
 										Income: &Income{
 											ID:      2,
-											PayDate: commonLogic.NewDateTime(2013, 8, 2),
+											PayDate: util.NewDateTime(global.Location, 2013, 8, 2),
 											Money:   -4,
 										},
 									},

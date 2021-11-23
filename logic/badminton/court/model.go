@@ -2,7 +2,6 @@ package court
 
 import (
 	"heroku-line-bot/logic/badminton/court/domain"
-	commonLogic "heroku-line-bot/logic/common"
 	"heroku-line-bot/util"
 )
 
@@ -52,7 +51,7 @@ func (b *CourtDetailPrice) Cost() util.Float {
 
 type DateCourt struct {
 	ID     int
-	Date   commonLogic.DateTime
+	Date   util.DateTime
 	Courts []*Court
 }
 
@@ -147,7 +146,7 @@ func (c *CourtUnit) GetStatus() (status domain.RentalCourtsStatus) {
 	return
 }
 
-func (c *CourtUnit) GetRefundDate() (refundDate *commonLogic.DateTime) {
+func (c *CourtUnit) GetRefundDate() (refundDate *util.DateTime) {
 	isRefund := c.Refund != nil
 	if isRefund {
 		isPay := c.Refund.Income != nil
@@ -183,6 +182,6 @@ type LedgerIncome struct {
 
 type Income struct {
 	ID      int
-	PayDate commonLogic.DateTime
+	PayDate util.DateTime
 	Money   int
 }

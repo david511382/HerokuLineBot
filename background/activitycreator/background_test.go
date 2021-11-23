@@ -1,6 +1,7 @@
 package activitycreator
 
 import (
+	"heroku-line-bot/global"
 	badmintonCourtLogic "heroku-line-bot/logic/badminton/court"
 	badmintonCourtLogicDomain "heroku-line-bot/logic/badminton/court/domain"
 	clubLogic "heroku-line-bot/logic/club"
@@ -138,7 +139,7 @@ func Test_calActivitys(t *testing.T) {
 				map[int][]*badmintonCourtLogic.DateCourt{
 					1: {
 						{
-							Date: commonLogic.NewDateTime(2013, 8, 2),
+							Date: util.NewDateTime(global.Location, 2013, 8, 2),
 							Courts: []*badmintonCourtLogic.Court{
 								{
 									CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{
@@ -172,7 +173,7 @@ func Test_calActivitys(t *testing.T) {
 							},
 						},
 						{
-							Date: commonLogic.NewDateTime(2013, 8, 2),
+							Date: util.NewDateTime(global.Location, 2013, 8, 2),
 							Courts: []*badmintonCourtLogic.Court{
 								{
 									CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{
@@ -203,7 +204,7 @@ func Test_calActivitys(t *testing.T) {
 			},
 			[]*clubLogic.NewActivity{
 				{
-					Date:        commonLogic.NewDateTime(2013, 8, 2),
+					Date:        util.NewDateTime(global.Location, 2013, 8, 2),
 					PlaceID:     1,
 					ClubSubsidy: 8,
 					Description: "",

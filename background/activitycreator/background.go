@@ -2,13 +2,13 @@ package activitycreator
 
 import (
 	"heroku-line-bot/bootstrap"
+	"heroku-line-bot/global"
 	badmintonCourtLogic "heroku-line-bot/logic/badminton/court"
 	badmintonCourtLogicDomain "heroku-line-bot/logic/badminton/court/domain"
 	clubLogic "heroku-line-bot/logic/club"
 	"heroku-line-bot/logic/club/domain"
 	clubLineBotLogic "heroku-line-bot/logic/clublinebot"
 	commonLogic "heroku-line-bot/logic/common"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/storage/database"
 	"heroku-line-bot/storage/redis"
@@ -32,7 +32,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 		}
 	}()
 
-	currentDate := commonLogic.DateTime(commonLogicDomain.DATE_TIME_TYPE.Of(runTime))
+	currentDate := util.NewDateTimeOf(runTime)
 	newActivityHandlers, errInfo := calDateActivity(currentDate)
 	if errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -70,7 +70,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	return
 }
 
-func calDateActivity(currentDate commonLogic.DateTime) (
+func calDateActivity(currentDate util.DateTime) (
 	newActivityHandlers []*clubLogic.NewActivity,
 	resultErrInfo errUtil.IError,
 ) {
@@ -119,7 +119,7 @@ func calActivitys(
 	newActivityHandlers = make([]*clubLogic.NewActivity, 0)
 
 	for place, dateCourts := range placeDateCourtsMap {
-		dateDateCourtsMap := make(map[commonLogic.DateInt][]*badmintonCourtLogic.DateCourt)
+		dateDateCourtsMap := make(map[util.DateInt][]*badmintonCourtLogic.DateCourt)
 		for _, dateCourt := range dateCourts {
 			dateInt := dateCourt.Date.Int()
 			if dateDateCourtsMap[dateInt] == nil {
@@ -131,7 +131,7 @@ func calActivitys(
 		for dateInt, dateCourts := range dateDateCourtsMap {
 			totalCourtCount := 0
 			newActivityHandler := &clubLogic.NewActivity{
-				Date:        dateInt.DateTime(),
+				Date:        dateInt.DateTime(global.Location),
 				PlaceID:     place,
 				Description: rdsSetting.Description,
 				ClubSubsidy: rdsSetting.ClubSubsidy,

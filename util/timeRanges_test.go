@@ -18,24 +18,24 @@ func TestAscTimeRanges_Append(t *testing.T) {
 			"insert first",
 			AscTimeRanges{
 				{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 15),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 15),
 				},
 			},
 			args{
 				newInsertTimeRange: TimeRange{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 14),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 14),
 				},
 			},
 			AscTimeRanges{
 				{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 14),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 14),
 				},
 				{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 15),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 15),
 				},
 			},
 		},
@@ -43,32 +43,32 @@ func TestAscTimeRanges_Append(t *testing.T) {
 			"insert mid",
 			AscTimeRanges{
 				{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 3),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 3),
 				},
 				{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 15),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 15),
 				},
 			},
 			args{
 				newInsertTimeRange: TimeRange{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 14),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 14),
 				},
 			},
 			AscTimeRanges{
 				{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 3),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 3),
 				},
 				{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 14),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 14),
 				},
 				{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 15),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 15),
 				},
 			},
 		},
@@ -76,24 +76,24 @@ func TestAscTimeRanges_Append(t *testing.T) {
 			"insert last",
 			AscTimeRanges{
 				{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 3),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 3),
 				},
 			},
 			args{
 				newInsertTimeRange: TimeRange{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 14),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 14),
 				},
 			},
 			AscTimeRanges{
 				{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 3),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 3),
 				},
 				{
-					From: GetTime(2013, 8, 2),
-					To:   GetTime(2013, 8, 14),
+					From: GetUTCTime(2013, 8, 2),
+					To:   GetUTCTime(2013, 8, 14),
 				},
 			},
 		},

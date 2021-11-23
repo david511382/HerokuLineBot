@@ -6,8 +6,6 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	clubLineuserLogicDomain "heroku-line-bot/logic/club/lineuser/domain"
-	commonLogic "heroku-line-bot/logic/common"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
@@ -167,7 +165,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 			activity := &getActivitiesActivity{
 				NewActivity: NewActivity{
 					Context:     context,
-					Date:        commonLogic.DateTime(v.Date),
+					Date:        util.DateTime(v.Date),
 					PlaceID:     v.PlaceID,
 					Description: v.Description,
 					PeopleLimit: v.PeopleLimit,
@@ -279,7 +277,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 	contents = append(contents,
 		GetKeyValueEditComponent(
 			"日期",
-			date.Format(commonLogicDomain.DATE_FORMAT),
+			date.Format(util.DATE_FORMAT),
 			nil,
 		),
 	)
@@ -438,8 +436,8 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 								linebot.GetTextMessage("你已排上活動正取!!"),
 								linebot.GetTextMessage(
 									fmt.Sprintf("活動 %s(%s) %s",
-										activityDate.Format(commonLogicDomain.MONTH_DATE_SLASH_FORMAT),
-										commonLogic.WeekDayName(activityDate.Weekday()),
+										activityDate.Format(util.MONTH_DATE_SLASH_FORMAT),
+										util.GetWeekDayName(activityDate.Weekday()),
 										activityPlace,
 									),
 								),

@@ -4,7 +4,7 @@ import (
 	"heroku-line-bot/background/activitycreator"
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/global"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
+	"heroku-line-bot/util"
 	"strconv"
 	"strings"
 
@@ -43,7 +43,7 @@ func Init(totalCfg *bootstrap.Config) errUtil.IError {
 	return nil
 }
 
-func GetPeriod(spec string, timeType commonLogicDomain.TimeType) int {
+func GetPeriod(spec string, timeType util.TimeType) int {
 	fields := strings.Fields(spec)
 	targetField := fields[int(timeType)]
 	ss := strings.Split(targetField, "/")

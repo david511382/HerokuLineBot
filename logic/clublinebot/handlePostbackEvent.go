@@ -2,7 +2,6 @@ package clublinebot
 
 import (
 	"encoding/json"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	lineBotDomain "heroku-line-bot/service/linebot/domain"
 	lineBotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/util"
@@ -21,7 +20,7 @@ func (b *ClubLineBot) handlePostbackEvent(event *lineBotModel.PostbackEvent) err
 	js := event.Postback.Data
 	if params := event.Postback.Params; params != nil {
 		if valueStr := params.Date; valueStr != "" {
-			t, err := time.Parse(commonLogicDomain.DATE_FORMAT, valueStr)
+			t, err := time.Parse(util.DATE_FORMAT, valueStr)
 			if err != nil {
 				return err
 			}
@@ -32,7 +31,7 @@ func (b *ClubLineBot) handlePostbackEvent(event *lineBotModel.PostbackEvent) err
 			}
 		}
 		if valueStr := params.Time; valueStr != "" {
-			t, err := time.Parse(commonLogicDomain.TIME_FORMAT, valueStr)
+			t, err := time.Parse(util.TIME_FORMAT, valueStr)
 			if err != nil {
 				return err
 			}
@@ -43,7 +42,7 @@ func (b *ClubLineBot) handlePostbackEvent(event *lineBotModel.PostbackEvent) err
 			}
 		}
 		if valueStr := params.DateTime; valueStr != "" {
-			t, err := time.Parse(commonLogicDomain.DATE_TIME_FORMAT, valueStr)
+			t, err := time.Parse(util.DATE_TIME_FORMAT, valueStr)
 			if err != nil {
 				return err
 			}

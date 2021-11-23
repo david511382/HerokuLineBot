@@ -23,14 +23,14 @@ func TestComp(t *testing.T) {
 		{
 			"time",
 			args{
-				actual: GetTimePLoc(time.UTC, 300),
-				expect: GetTimePLoc(time.UTC, 301),
+				actual: GetTimePLoc(time.FixedZone("timezone", int(8*time.Hour/time.Second)), 300),
+				expect: GetTimePLoc(time.FixedZone("timezone", int(2*time.Hour/time.Second)), 301),
 			},
 			false,
 			`actual:
-"0300-01-01 00:00:00 +0000 UTC"
+"0300-01-01 00:00:00 +0800 timezone"
 expect:
-"0301-01-01 00:00:00 +0000 UTC"
+"0301-01-01 00:00:00 +0200 timezone"
 ---`,
 		},
 		{
@@ -48,21 +48,21 @@ expect:
 				actual: map[int][]*test{
 					1: {
 						{
-							Time: GetTime(3000),
+							Time: GetUTCTime(3000),
 							I:    2,
 						},
 						{
-							Time: GetTime(3001),
+							Time: GetUTCTime(3001),
 							I:    3,
 						},
 					},
 					2: {
 						{
-							Time: GetTime(3100),
+							Time: GetUTCTime(3100),
 							I:    5,
 						},
 						{
-							Time: GetTime(3101),
+							Time: GetUTCTime(3101),
 							I:    90,
 						},
 					},
@@ -70,21 +70,21 @@ expect:
 				expect: map[int][]*test{
 					1: {
 						{
-							Time: GetTime(3000),
+							Time: GetUTCTime(3000),
 							I:    2,
 						},
 						{
-							Time: GetTime(3001),
+							Time: GetUTCTime(3001),
 							I:    3,
 						},
 					},
 					2: {
 						{
-							Time: GetTime(3100),
+							Time: GetUTCTime(3100),
 							I:    5,
 						},
 						{
-							Time: GetTime(3101),
+							Time: GetUTCTime(3101),
 							I:    90,
 						},
 					},
@@ -96,8 +96,8 @@ expect:
 		{
 			"slice time",
 			args{
-				actual: []*time.Time{GetTimeP(3000), GetTimeP(3000)},
-				expect: []*time.Time{GetTimeP(3000), GetTimeP(3000)},
+				actual: []*time.Time{GetUTCTimeP(3000), GetUTCTimeP(3000)},
+				expect: []*time.Time{GetUTCTimeP(3000), GetUTCTimeP(3000)},
 			},
 			true,
 			"",
@@ -105,16 +105,16 @@ expect:
 		{
 			"wrong slice time",
 			args{
-				actual: []*time.Time{GetTimeP(3000), GetTimeP(3000, 2)},
-				expect: []*time.Time{GetTimeP(3000), GetTimeP(3000)},
+				actual: []*time.Time{GetUTCTimeP(3000), GetUTCTimeP(3000, 2)},
+				expect: []*time.Time{GetUTCTimeP(3000), GetUTCTimeP(3000)},
 			},
 			false,
 			`
 --- index: 1
 actual:
-"3000-02-01 00:00:00 +0800 CST"
+"3000-02-01 00:00:00 +0000 UTC"
 expect:
-"3000-01-01 00:00:00 +0800 CST"
+"3000-01-01 00:00:00 +0000 UTC"
 ---`,
 		},
 		{
@@ -122,21 +122,21 @@ expect:
 			args{
 				actual: []*test{
 					{
-						Time: GetTime(3000),
+						Time: GetUTCTime(3000),
 						I:    1,
 					},
 					{
-						Time: GetTime(3000),
+						Time: GetUTCTime(3000),
 						I:    2,
 					},
 				},
 				expect: []*test{
 					{
-						Time: GetTime(3000),
+						Time: GetUTCTime(3000),
 						I:    1,
 					},
 					{
-						Time: GetTime(3000),
+						Time: GetUTCTime(3000),
 						I:    2,
 					},
 				},
@@ -149,21 +149,21 @@ expect:
 			args{
 				actual: []*test{
 					{
-						Time: GetTime(3000),
+						Time: GetUTCTime(3000),
 						I:    1,
 					},
 					{
-						Time: GetTime(3000),
+						Time: GetUTCTime(3000),
 						I:    2,
 					},
 				},
 				expect: []*test{
 					{
-						Time: GetTime(3000),
+						Time: GetUTCTime(3000),
 						I:    1,
 					},
 					{
-						Time: GetTime(3000, 2),
+						Time: GetUTCTime(3000, 2),
 						I:    2,
 					},
 				},
@@ -173,9 +173,9 @@ expect:
 --- index: 1
 Time
 actual:
-"3000-01-01 00:00:00 +0800 CST"
+"3000-01-01 00:00:00 +0000 UTC"
 expect:
-"3000-02-01 00:00:00 +0800 CST"
+"3000-02-01 00:00:00 +0000 UTC"
 ---`,
 		},
 		{

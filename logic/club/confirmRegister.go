@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
-	commonLogic "heroku-line-bot/logic/common"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/storage/database"
 	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/storage/redis"
+	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"time"
 )
@@ -48,7 +47,7 @@ func (b *confirmRegister) GetSingleParam(attr string) string {
 func (b *confirmRegister) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	case "date":
-		t, err := time.Parse(commonLogicDomain.DATE_TIME_RFC3339_FORMAT, text)
+		t, err := time.Parse(util.DATE_TIME_RFC3339_FORMAT, text)
 		if err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
@@ -225,7 +224,7 @@ func (b *confirmRegister) getTemplateMessage() ([]interface{}, errUtil.IError) {
 		contents = append(contents,
 			GetKeyValueEditComponent(
 				"日期",
-				fmt.Sprintf("%s(%s)", b.Date.Format(commonLogicDomain.DATE_FORMAT), commonLogic.WeekDayName(b.Date.Weekday())),
+				fmt.Sprintf("%s(%s)", b.Date.Format(util.DATE_FORMAT), util.GetWeekDayName(b.Date.Weekday())),
 				&domain.KeyValueEditComponentOption{
 					Action:     action,
 					ValueSizeP: &size,

@@ -5,7 +5,6 @@ import (
 	badmintonCourtLogic "heroku-line-bot/logic/badminton/court"
 	badmintonCourtLogicDomain "heroku-line-bot/logic/badminton/court/domain"
 	badmintonPlaceLogic "heroku-line-bot/logic/badminton/place"
-	commonLogic "heroku-line-bot/logic/common"
 	"heroku-line-bot/server/common"
 	"heroku-line-bot/server/domain/reqs"
 	"heroku-line-bot/server/domain/resp"
@@ -47,8 +46,8 @@ func GetRentalCourts(c *gin.Context) {
 	}
 
 	placeDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(
-		commonLogic.NewDateTimeOf(reqs.FromDate),
-		commonLogic.NewDateTimeOf(reqs.ToDate),
+		util.NewDateTimeOf(reqs.FromDate),
+		util.NewDateTimeOf(reqs.ToDate),
 		nil,
 	)
 	if errInfo != nil {
@@ -71,10 +70,10 @@ func GetRentalCourts(c *gin.Context) {
 		return
 	}
 
-	dateIntPlaceMap := make(map[commonLogic.DateInt]map[string]bool)
-	dateIntCourtsMap := make(map[commonLogic.DateInt][]*resp.GetRentalCourtsDayCourtsInfo)
-	notPayDateIntCourtsMap := make(map[commonLogic.DateInt][]*resp.GetRentalCourtsCourtInfo)
-	notRefundDateIntCourtsMap := make(map[commonLogic.DateInt][]*resp.GetRentalCourtsCourtInfo)
+	dateIntPlaceMap := make(map[util.DateInt]map[string]bool)
+	dateIntCourtsMap := make(map[util.DateInt][]*resp.GetRentalCourtsDayCourtsInfo)
+	notPayDateIntCourtsMap := make(map[util.DateInt][]*resp.GetRentalCourtsCourtInfo)
+	notRefundDateIntCourtsMap := make(map[util.DateInt][]*resp.GetRentalCourtsCourtInfo)
 	for placeID, dateCourts := range placeDateCourtsMap {
 		for _, dateCourt := range dateCourts {
 			courtDateInt := dateCourt.Date.Int()
@@ -131,7 +130,7 @@ func GetRentalCourts(c *gin.Context) {
 		}
 	}
 
-	dateInts := make([]commonLogic.DateInt, 0)
+	dateInts := make([]util.DateInt, 0)
 	for dateInt, courts := range dateIntCourtsMap {
 		dateInts = append(dateInts, dateInt)
 		sort.SliceStable(courts, func(i, j int) bool {
@@ -169,7 +168,7 @@ func GetRentalCourts(c *gin.Context) {
 	for _, dateInt := range dateInts {
 		courts := dateIntCourtsMap[dateInt]
 		resultCourt := &resp.GetRentalCourtsDayCourts{
-			Date:            dateInt.Time(),
+			Date:            dateInt.In(global.Location),
 			Courts:          make([]*resp.GetRentalCourtsDayCourtsInfo, 0),
 			IsMultiplePlace: len(dateIntPlaceMap[dateInt]) > 1,
 		}
@@ -183,12 +182,12 @@ func GetRentalCourts(c *gin.Context) {
 	common.Success(c, result)
 }
 
-func getGetRentalCourtsPayInfo(dateIntCourtsMap map[commonLogic.DateInt][]*resp.GetRentalCourtsCourtInfo) (result resp.GetRentalCourtsPayInfo) {
+func getGetRentalCourtsPayInfo(dateIntCourtsMap map[util.DateInt][]*resp.GetRentalCourtsCourtInfo) (result resp.GetRentalCourtsPayInfo) {
 	result = resp.GetRentalCourtsPayInfo{
 		Courts: make([]*resp.GetRentalCourtsPayInfoDay, 0),
 	}
 
-	dateInts := make([]commonLogic.DateInt, 0)
+	dateInts := make([]util.DateInt, 0)
 	for dateInt, courts := range dateIntCourtsMap {
 		dateInts = append(dateInts, dateInt)
 		sort.SliceStable(courts, func(i, j int) bool {
@@ -207,7 +206,7 @@ func getGetRentalCourtsPayInfo(dateIntCourtsMap map[commonLogic.DateInt][]*resp.
 	for _, dateInt := range dateInts {
 		courts := dateIntCourtsMap[dateInt]
 		resultCourt := &resp.GetRentalCourtsPayInfoDay{
-			Date:   dateInt.Time(),
+			Date:   dateInt.In(global.Location),
 			Courts: make([]*resp.GetRentalCourtsCourtInfo, 0),
 		}
 		cost := util.ToFloat(0)

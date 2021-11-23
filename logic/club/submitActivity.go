@@ -5,7 +5,6 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	clubLineuserLogicDomain "heroku-line-bot/logic/club/lineuser/domain"
-	"heroku-line-bot/logic/common"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
@@ -94,7 +93,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 		memberJoinDate := v.Date
 		b.NewActivity = NewActivity{
 			Context:     context,
-			Date:        common.DateTime(v.Date),
+			Date:        util.DateTime(v.Date),
 			PlaceID:     v.PlaceID,
 			Description: v.Description,
 			PeopleLimit: v.PeopleLimit,

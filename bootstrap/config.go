@@ -2,7 +2,7 @@ package bootstrap
 
 import (
 	"fmt"
-	commonLogicDomain "heroku-line-bot/logic/common/domain"
+	"heroku-line-bot/util"
 	"strconv"
 	"strings"
 )
@@ -56,8 +56,8 @@ type Backgrounds struct {
 }
 
 type Background struct {
-	Spec       string                     `yaml:"spec"`
-	PeriodType commonLogicDomain.TimeType `yaml:"period_type"`
+	Spec       string        `yaml:"spec"`
+	PeriodType util.TimeType `yaml:"period_type"`
 }
 
 type DbConfig struct {
