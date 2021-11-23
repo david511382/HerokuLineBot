@@ -6,6 +6,7 @@ import (
 	clubLineBotApi "heroku-line-bot/server/api/clublinebot"
 	"heroku-line-bot/server/common"
 	"heroku-line-bot/server/middleware"
+	"heroku-line-bot/server/validation"
 	docsView "heroku-line-bot/server/view/docs"
 	"io"
 	"os"
@@ -29,6 +30,9 @@ func SystemRouter() *gin.Engine {
 
 	router.Use(gin.Logger())
 	router.Use(middleware.Cors)
+
+	// 客製參數驗證
+	validation.RegisterValidation()
 
 	// docs
 	doc := router.Group("/docs")
