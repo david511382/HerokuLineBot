@@ -104,7 +104,11 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 			return
 		}
 
-		defer database.CommitTransaction(transaction, resultErrInfo)
+		defer func() {
+			if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			}
+		}()
 
 		if resultErrInfo = b.InsertLogistic(transaction); resultErrInfo != nil {
 			return
@@ -350,7 +354,11 @@ func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErrInfo errUti
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
-		defer database.CommitTransaction(transaction, resultErrInfo)
+		defer func() {
+			if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			}
+		}()
 	}
 
 	data := &logisticDb.LogisticTable{

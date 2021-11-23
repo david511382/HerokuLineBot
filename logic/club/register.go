@@ -416,7 +416,11 @@ func (b *register) Do(text string) (resultErrInfo errUtil.IError) {
 			return
 		}
 
-		defer database.CommitTransaction(transaction, resultErrInfo)
+		defer func() {
+			if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			}
+		}()
 
 		lineID := b.context.GetUserID()
 		if b.MemberID > 0 {

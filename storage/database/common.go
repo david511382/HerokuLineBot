@@ -41,11 +41,14 @@ func IsUniqErr(err error) bool {
 	return strings.Contains(err.Error(), "unique constraint")
 }
 
-func CommitTransaction(transaction *gorm.DB, resultErrInfo errUtil.IError) {
-	if resultErrInfo == nil {
-		// TODO handle error
-		transaction.Commit()
+func CommitTransaction(transaction *gorm.DB, errInfo errUtil.IError) (resultErrInfo errUtil.IError) {
+	if errInfo.IsError() {
+		if err := transaction.Commit().Error; err != nil {
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		}
 	} else {
 		transaction.Rollback()
 	}
+	return
 }

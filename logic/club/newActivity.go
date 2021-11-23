@@ -176,7 +176,11 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 			return
 		}
 
-		defer database.CommitTransaction(transaction, resultErrInfo)
+		defer func() {
+			if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			}
+		}()
 
 		if resultErrInfo = b.InsertActivity(transaction); resultErrInfo != nil {
 			return
@@ -328,7 +332,11 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errUti
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
-		defer database.CommitTransaction(transaction, resultErrInfo)
+		defer func() {
+			if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			}
+		}()
 	}
 
 	data := &activityDb.ActivityTable{

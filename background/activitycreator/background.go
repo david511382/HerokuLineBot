@@ -51,7 +51,12 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 			}
 		}
 
-		database.CommitTransaction(transaction, resultErrInfo)
+		if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			if resultErrInfo.IsError() {
+				return
+			}
+		}
 	}
 
 	if errInfo := notifyGroup(); errInfo != nil {
@@ -137,24 +142,24 @@ func calActivitys(
 			newActivityHandler.PeopleLimit = util.GetInt16P(peopleLimit)
 
 			for _, dateCourt := range dateCourts {
-			for _, court := range dateCourt.Courts {
-				courtDetail := court.CourtDetailPrice
-				pricePerHour := courtDetail.PricePerHour
-				units := court.Parts()
-				for _, v := range units {
-					if v.Refund != nil {
-						continue
+				for _, court := range dateCourt.Courts {
+					courtDetail := court.CourtDetailPrice
+					pricePerHour := courtDetail.PricePerHour
+					units := court.Parts()
+					for _, v := range units {
+						if v.Refund != nil {
+							continue
+						}
+						newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonCourtLogicDomain.ActivityCourt{
+							FromTime:     v.From,
+							ToTime:       v.To,
+							Count:        v.Count,
+							PricePerHour: pricePerHour,
+						})
+						totalCourtCount += int(v.Hours().
+							Mul(util.Int64ToFloat(int64(court.Count))).ToInt())
 					}
-					newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonCourtLogicDomain.ActivityCourt{
-						FromTime:     v.From,
-						ToTime:       v.To,
-						Count:        v.Count,
-						PricePerHour: pricePerHour,
-					})
-					totalCourtCount += int(v.Hours().
-						Mul(util.Int64ToFloat(int64(court.Count))).ToInt())
 				}
-			}
 			}
 			newActivityHandler.Courts = combineCourts(newActivityHandler.Courts)
 

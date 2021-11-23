@@ -245,7 +245,11 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 			return
 		}
 
-		defer database.CommitTransaction(transaction, resultErrInfo)
+		defer func() {
+			if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			}
+		}()
 
 		isConsumeBall := b.Rsl4Consume > 0
 		logisticID := 0

@@ -94,7 +94,11 @@ func (b *confirmRegister) ComfirmDb() (resultErrInfo errUtil.IError) {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}
-	defer database.CommitTransaction(transaction, resultErrInfo)
+	defer func() {
+		if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		}
+	}()
 
 	arg := dbReqs.Member{
 		ID: &b.MemberID,
