@@ -42,7 +42,7 @@ func IsUniqErr(err error) bool {
 }
 
 func CommitTransaction(transaction *gorm.DB, errInfo errUtil.IError) (resultErrInfo errUtil.IError) {
-	if errInfo.IsError() {
+	if errInfo == nil || !errInfo.IsError() {
 		if err := transaction.Commit().Error; err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
