@@ -127,7 +127,7 @@ func (ei *ErrorInfo) Equal(e *ErrorInfo) bool {
 	if ei.Level != e.Level {
 		return false
 	}
-	if !errors.Is(ei, e) {
+	if ei.Error() != e.Error() {
 		return false
 	}
 
