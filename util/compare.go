@@ -194,10 +194,12 @@ func compV(aV, bV reflect.Value) (bool, string) {
 			return false, compValueErrMsg(&aV, &bV)
 		}
 
+		var bt reflect.Type
 		if !bV.CanInterface() {
 			if aV.CanInterface() {
 				return false, compValueErrMsg(&aV, nil)
 			}
+			bt = reflect.TypeOf(bV)
 		} else if !aV.CanInterface() {
 			return false, compValueErrMsg(nil, &bV)
 		} else {
@@ -212,10 +214,12 @@ func compV(aV, bV reflect.Value) (bool, string) {
 				}
 				return false, compErrMsg(at.String(), expect)
 			}
+
+			bt = reflect.TypeOf(expect)
 		}
 
-		for i := 0; i < bV.NumField(); i++ {
-			fn := bV.Field(i).Type().Name()
+		for i := 0; i < bt.NumField(); i++ {
+			fn := bt.Field(i).Name
 			bv := bV.Field(i)
 			av := aV.Field(i)
 
