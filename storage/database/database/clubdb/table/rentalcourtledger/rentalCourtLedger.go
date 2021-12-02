@@ -24,46 +24,46 @@ func (t RentalCourtLedger) whereArg(dp *gorm.DB, arg reqs.RentalCourtLedger) *go
 	dp = dp.Model(t.GetTable())
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where("id = ?", p)
+		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
 	}
 	if p := arg.IDs; p != nil {
-		dp = dp.Where("id IN (?)", p)
+		dp = dp.Where(string(COLUMN_ID+" IN (?)"), p)
 	}
 
 	if p := arg.PlaceID; p != nil {
-		dp = dp.Where("place_id = ?", p)
+		dp = dp.Where(string(COLUMN_PlaceID+" = ?"), p)
 	}
 
 	if p := arg.StartDate; p != nil {
-		dp = dp.Where("start_date = ?", p)
+		dp = dp.Where(string(COLUMN_StartDate+" = ?"), p)
 	}
 	if p := arg.FromStartDate; p != nil {
-		dp = dp.Where("start_date >= ?", p)
+		dp = dp.Where(string(COLUMN_StartDate+" >= ?"), p)
 	}
 	if p := arg.ToStartDate; p != nil {
-		dp = dp.Where("start_date <= ?", p)
+		dp = dp.Where(string(COLUMN_StartDate+" <= ?"), p)
 	}
 	if p := arg.BeforeStartDate; p != nil {
-		dp = dp.Where("start_date < ?", p)
+		dp = dp.Where(string(COLUMN_StartDate+" < ?"), p)
 	}
 	if p := arg.AfterStartDate; p != nil {
-		dp = dp.Where("start_date > ?", p)
+		dp = dp.Where(string(COLUMN_StartDate+" > ?"), p)
 	}
 
 	if p := arg.EndDate; p != nil {
-		dp = dp.Where("end_date = ?", p)
+		dp = dp.Where(string(COLUMN_EndDate+" = ?"), p)
 	}
 	if p := arg.FromEndDate; p != nil {
-		dp = dp.Where("end_date >= ?", p)
+		dp = dp.Where(string(COLUMN_EndDate+" >= ?"), p)
 	}
 	if p := arg.ToEndDate; p != nil {
-		dp = dp.Where("end_date <= ?", p)
+		dp = dp.Where(string(COLUMN_EndDate+" <= ?"), p)
 	}
 	if p := arg.BeforeEndDate; p != nil {
-		dp = dp.Where("end_date < ?", p)
+		dp = dp.Where(string(COLUMN_EndDate+" < ?"), p)
 	}
 	if p := arg.AfterEndDate; p != nil {
-		dp = dp.Where("end_date > ?", p)
+		dp = dp.Where(string(COLUMN_EndDate+" > ?"), p)
 	}
 
 	return dp

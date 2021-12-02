@@ -32,6 +32,10 @@ func NewHourMinTime(hour, min uint) HourMinTime {
 	return HourMinTime(fmt.Sprintf("%s:%s", hourStr, minStr))
 }
 
+func NewHourMinTimeOf(t time.Time) HourMinTime {
+	return NewHourMinTime(uint(t.Hour()), uint(t.Minute()))
+}
+
 func (t HourMinTime) Time() (resultTime time.Time, resultErr error) {
 	rawT, err := time.Parse("15:04", string(t))
 	if err != nil {

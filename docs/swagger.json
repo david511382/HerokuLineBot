@@ -8,6 +8,45 @@
     },
     "basePath": "/api/",
     "paths": {
+        "/badminton/rental-courts": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "新增租場",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Badminton"
+                ],
+                "summary": "新增租場",
+                "parameters": [
+                    {
+                        "description": "參數",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/reqs.AddRentalCourt"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "資料",
+                        "schema": {
+                            "$ref": "#/definitions/resp.Base"
+                        }
+                    }
+                }
+            }
+        },
         "/club/rental-courts": {
             "get": {
                 "security": [
@@ -53,6 +92,73 @@
         }
     },
     "definitions": {
+        "reqs.AddRentalCourt": {
+            "type": "object",
+            "required": [
+                "court_count",
+                "court_from_time",
+                "court_to_time",
+                "from_date",
+                "place_id",
+                "price_per_hour",
+                "to_date"
+            ],
+            "properties": {
+                "balance_date": {
+                    "type": "string"
+                },
+                "balance_money": {
+                    "type": "integer"
+                },
+                "court_count": {
+                    "type": "integer"
+                },
+                "court_from_time": {
+                    "type": "string"
+                },
+                "court_to_time": {
+                    "type": "string"
+                },
+                "desposit_date": {
+                    "type": "string"
+                },
+                "desposit_money": {
+                    "type": "integer"
+                },
+                "every_weekday": {
+                    "type": "integer"
+                },
+                "exclude_dates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "from_date": {
+                    "type": "string",
+                    "default": "2013-08-02T00:00:00+08:00"
+                },
+                "place_id": {
+                    "type": "integer"
+                },
+                "price_per_hour": {
+                    "type": "integer"
+                },
+                "to_date": {
+                    "type": "string",
+                    "default": "2013-08-02T00:00:00+08:00"
+                }
+            }
+        },
+        "resp.Base": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "resp.GetRentalCourts": {
             "type": "object",
             "properties": {

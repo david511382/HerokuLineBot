@@ -5,7 +5,7 @@ import (
 	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/domain"
 	"heroku-line-bot/storage/database/domain/model/reqs"
-	"heroku-line-bot/storage/database/domain/model/resp"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -38,27 +38,17 @@ func (t Income) MigrationData(datas ...*IncomeTable) error {
 	return nil
 }
 
-func (t Income) Income(arg reqs.Income) ([]*resp.Income, error) {
-	dp := t.whereArg(t.Read, arg).Select(
-		`
-		income AS income
-		`,
-	)
-
-	result := make([]*resp.Income, 0)
-	if err := dp.Scan(&result).Error; err != nil {
-		return nil, err
+func (t Income) Select(arg reqs.Income, columns ...Column) ([]*IncomeTable, error) {
+	columnsStr := "*"
+	if len(columns) > 0 {
+		columnStrs := make([]string, 0)
+		for _, column := range columns {
+			columnStrs = append(columnStrs, string(column))
+		}
+		columnsStr = strings.Join(columnStrs, ",")
 	}
 
-	return result, nil
-}
-
-func (t Income) All(arg reqs.Income) ([]*IncomeTable, error) {
-	dp := t.whereArg(t.Read, arg).Select(
-		`
-		*
-		`,
-	)
+	dp := t.whereArg(t.Read, arg).Select(columnsStr)
 
 	result := make([]*IncomeTable, 0)
 	if err := dp.Scan(&result).Error; err != nil {

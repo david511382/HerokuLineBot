@@ -24,24 +24,24 @@ func (t RentalCourtLedgerCourt) whereArg(dp *gorm.DB, arg reqs.RentalCourtLedger
 	dp = dp.Model(t.GetTable())
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where("id = ?", p)
+		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
 	}
 	if p := arg.IDs; len(p) > 0 {
-		dp = dp.Where("id IN (?)", p)
+		dp = dp.Where(string(COLUMN_ID+" IN (?)"), p)
 	}
 
 	if p := arg.RentalCourtID; p != nil {
-		dp = dp.Where("rental_court_id = ?", p)
+		dp = dp.Where(string(COLUMN_RentalCourtID+" = ?"), p)
 	}
 	if p := arg.RentalCourtIDs; len(p) > 0 {
-		dp = dp.Where("rental_court_id IN (?)", p)
+		dp = dp.Where(string(COLUMN_RentalCourtID+" IN (?)"), p)
 	}
 
 	if p := arg.RentalCourtLedgerID; p != nil {
-		dp = dp.Where("rental_court_ledger_id = ?", p)
+		dp = dp.Where(string(COLUMN_RentalCourtLedgerID+" = ?"), p)
 	}
 	if p := arg.RentalCourtLedgerIDs; len(p) > 0 {
-		dp = dp.Where("rental_court_ledger_id IN (?)", p)
+		dp = dp.Where(string(COLUMN_RentalCourtLedgerID+" IN (?)"), p)
 	}
 
 	return dp

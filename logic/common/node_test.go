@@ -23,42 +23,42 @@ func TestCombineMinuteTimeRanges(t *testing.T) {
 							From: GetTime(2013, 8, 2, 2),
 							To:   GetTime(2013, 8, 2, 3),
 						},
-						Value: util.ToFloat(1),
+						Value: util.NewFloat(1),
 					},
 					{
 						TimeRange: util.TimeRange{
 							From: GetTime(2013, 8, 2, 1),
 							To:   GetTime(2013, 8, 2, 3),
 						},
-						Value: util.ToFloat(2),
+						Value: util.NewFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
 							From: GetTime(2013, 8, 2, 3),
 							To:   GetTime(2013, 8, 2, 5),
 						},
-						Value: util.ToFloat(2),
+						Value: util.NewFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
 							From: GetTime(2013, 8, 2, 4),
 							To:   GetTime(2013, 8, 2, 6),
 						},
-						Value: util.ToFloat(2),
+						Value: util.NewFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
 							From: GetTime(2013, 8, 2, 3),
 							To:   GetTime(2013, 8, 2, 4),
 						},
-						Value: util.ToFloat(1),
+						Value: util.NewFloat(1),
 					},
 					{
 						TimeRange: util.TimeRange{
 							From: GetTime(2013, 8, 2, 1),
 							To:   GetTime(2013, 8, 2, 3),
 						},
-						Value: util.ToFloat(2),
+						Value: util.NewFloat(2),
 					},
 				},
 			},

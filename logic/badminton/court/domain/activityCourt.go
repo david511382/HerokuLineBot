@@ -18,7 +18,7 @@ func (b *ActivityCourt) Cost() util.Float {
 }
 
 func (b *ActivityCourt) Hours() util.Float {
-	return util.ToFloat(b.ToTime.Sub(b.FromTime).Hours())
+	return util.NewFloat(b.ToTime.Sub(b.FromTime).Hours())
 }
 
 func (b *ActivityCourt) TotalHours() util.Float {

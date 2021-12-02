@@ -24,30 +24,30 @@ func (t Income) whereArg(dp *gorm.DB, arg reqs.Income) *gorm.DB {
 	dp = dp.Model(t.GetTable())
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where("id = ?", p)
+		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
 	}
 	if p := arg.IDs; len(p) > 0 {
-		dp = dp.Where("id IN (?)", p)
+		dp = dp.Where(string(COLUMN_ID+" IN (?)"), p)
 	}
 
 	if p := arg.Type; p != nil {
-		dp = dp.Where("type = ?", p)
+		dp = dp.Where(string(COLUMN_Type+" = ?"), p)
 	}
 
 	if p := arg.Date.Date; p != nil && !p.IsZero() {
-		dp = dp.Where("date = ?", p)
+		dp = dp.Where(string(COLUMN_Date+" = ?"), p)
 	}
 	if p := arg.FromDate; p != nil && !p.IsZero() {
-		dp = dp.Where("date >= ?", p)
+		dp = dp.Where(string(COLUMN_Date+" >= ?"), p)
 	}
 	if p := arg.ToDate; p != nil && !p.IsZero() {
-		dp = dp.Where("date <= ?", p)
+		dp = dp.Where(string(COLUMN_Date+" <= ?"), p)
 	}
 	if p := arg.BeforeDate; p != nil && !p.IsZero() {
-		dp = dp.Where("date < ?", p)
+		dp = dp.Where(string(COLUMN_Date+" < ?"), p)
 	}
 	if p := arg.AfterDate; p != nil && !p.IsZero() {
-		dp = dp.Where("date > ?", p)
+		dp = dp.Where(string(COLUMN_Date+" > ?"), p)
 	}
 
 	return dp

@@ -41,7 +41,7 @@ func TestFloat_Round(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := ToFloat(tt.args.v)
+			f := NewFloat(tt.args.v)
 			if got := f.Round(tt.args.exp).Value(); got != tt.want {
 				t.Errorf("FloatRound() = %v, want %v", got, tt.want)
 			}
@@ -56,7 +56,7 @@ func BenchmarkFloat_PlusFloat(b *testing.B) {
 		arr = append(arr, 1000-i)
 	}
 	for i := 0; i < b.N; i++ {
-		f := ToFloat(0)
+		f := NewFloat(0)
 		f.PlusFloat(arr...)
 	}
 }

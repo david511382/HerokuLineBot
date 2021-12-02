@@ -265,11 +265,11 @@ func (b *richMenu) createRichMenu(name string, width, height, row, col int, acti
 		Areas:       make([]*linebotReqs.CreateRichMenuAreas, 0),
 	}
 
-	widthUnit := util.ToFloat(float64(width)).Div(util.ToFloat(float64(col)))
-	heightUnit := util.ToFloat(float64(height)).Div(util.ToFloat(float64(row)))
+	widthUnit := util.NewFloat(float64(width)).Div(util.NewFloat(float64(col)))
+	heightUnit := util.NewFloat(float64(height)).Div(util.NewFloat(float64(row)))
 	for index, action := range actions {
 		c := float64(index % col)
-		r := util.ToFloat(float64(index)).
+		r := util.NewFloat(float64(index)).
 			DivFloat(float64(col)).
 			Floor()
 		x := widthUnit.MulFloat(c)

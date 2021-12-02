@@ -19,6 +19,7 @@ func RegisterValidation() {
 			reqs.MustFromToDate{},
 			reqs.MustFromBeforeDate{},
 			reqs.FromBeforeDate{},
+			reqs.AddRentalCourt{},
 		)
 	}
 }

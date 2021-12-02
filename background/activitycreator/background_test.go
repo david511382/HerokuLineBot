@@ -64,42 +64,42 @@ func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
 							From: commonLogic.GetTime(2013, 8, 2, 1),
 							To:   commonLogic.GetTime(2013, 8, 2, 3),
 						},
-						Value: util.ToFloat(2),
+						Value: util.NewFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
 							From: commonLogic.GetTime(2013, 8, 2, 1),
 							To:   commonLogic.GetTime(2013, 8, 2, 3),
 						},
-						Value: util.ToFloat(2),
+						Value: util.NewFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
 							From: commonLogic.GetTime(2013, 8, 2, 2),
 							To:   commonLogic.GetTime(2013, 8, 2, 3),
 						},
-						Value: util.ToFloat(1),
+						Value: util.NewFloat(1),
 					},
 					{
 						TimeRange: util.TimeRange{
 							From: commonLogic.GetTime(2013, 8, 2, 3),
 							To:   commonLogic.GetTime(2013, 8, 2, 4),
 						},
-						Value: util.ToFloat(1),
+						Value: util.NewFloat(1),
 					},
 					{
 						TimeRange: util.TimeRange{
 							From: commonLogic.GetTime(2013, 8, 2, 3),
 							To:   commonLogic.GetTime(2013, 8, 2, 5),
 						},
-						Value: util.ToFloat(2),
+						Value: util.NewFloat(2),
 					},
 					{
 						TimeRange: util.TimeRange{
 							From: commonLogic.GetTime(2013, 8, 2, 4),
 							To:   commonLogic.GetTime(2013, 8, 2, 6),
 						},
-						Value: util.ToFloat(2),
+						Value: util.NewFloat(2),
 					},
 				},
 			},
@@ -139,7 +139,7 @@ func Test_calActivitys(t *testing.T) {
 				map[int][]*badmintonCourtLogic.DateCourt{
 					1: {
 						{
-							Date: util.NewDateTime(global.Location, 2013, 8, 2),
+							Date: *util.NewDateTimeP(global.Location, 2013, 8, 2),
 							Courts: []*badmintonCourtLogic.Court{
 								{
 									CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{
@@ -173,7 +173,7 @@ func Test_calActivitys(t *testing.T) {
 							},
 						},
 						{
-							Date: util.NewDateTime(global.Location, 2013, 8, 2),
+							Date: *util.NewDateTimeP(global.Location, 2013, 8, 2),
 							Courts: []*badmintonCourtLogic.Court{
 								{
 									CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{
@@ -204,7 +204,7 @@ func Test_calActivitys(t *testing.T) {
 			},
 			[]*clubLogic.NewActivity{
 				{
-					Date:        util.NewDateTime(global.Location, 2013, 8, 2),
+					Date:        *util.NewDateTimeP(global.Location, 2013, 8, 2),
 					PlaceID:     1,
 					ClubSubsidy: 8,
 					Description: "",

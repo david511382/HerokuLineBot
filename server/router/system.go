@@ -1,7 +1,10 @@
 package router
 
 import (
+	// TODO verify
+	//clubLogicDomain"heroku-line-bot/logic/club/domain"
 	indexApi "heroku-line-bot/server/api"
+	badmintonApi "heroku-line-bot/server/api/badminton"
 	clubApi "heroku-line-bot/server/api/club"
 	clubLineBotApi "heroku-line-bot/server/api/clublinebot"
 	"heroku-line-bot/server/common"
@@ -43,6 +46,15 @@ func SystemRouter() *gin.Engine {
 	lineAuth := api.Group("/")
 	lineAuth.Use(middleware.GetTokenAuthorize(common.NewLineTokenVerifier(), true))
 	lineAuth.GET("/user-info", indexApi.GetUserInfo)
+
+	// api/badminton
+	apiBadminton := api.Group("/badminton")
+	apiBadminton.Use(middleware.VerifyAuthorize(map[int16]bool{
+		// TODO verify
+		//int16(clubLogicDomain.ADMIN_CLUB_ROLE): true,
+		//int16(clubLogicDomain.CADRE_CLUB_ROLE): true,
+	}))
+	apiBadminton.POST("/rental-courts", badmintonApi.AddRentalCourt)
 
 	// api/club
 	linebotClub := api.Group("/club")

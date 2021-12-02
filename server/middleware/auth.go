@@ -42,3 +42,18 @@ func GetTokenAuthorize(tokenVerifier domain.TokenVerifier, require bool) gin.Han
 		c.Next()
 	}
 }
+
+func VerifyAuthorize(roleIDAllowMap map[int16]bool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if len(roleIDAllowMap) > 0 {
+			if jwtClaims := common.GetClaims(c); jwtClaims == nil ||
+				!roleIDAllowMap[jwtClaims.RoleID] {
+				errInfo := errUtil.New("No Allow", errUtil.INFO)
+				common.FailForbidden(c, errInfo)
+				return
+			}
+		}
+
+		c.Next()
+	}
+}

@@ -97,5 +97,13 @@ func timeValidation(sl validator.StructLevel) {
 		// 錯誤訊息樣式:
 		// Error #01: Key: 'FromTo.FromTime' Error:Field validation for 'FromTime' failed on the 'DateRange' tag
 		sl.ReportError(condiction.FromDate, "FromDate", "", "FromBefore", "")
+	} else if condiction, ok := sl.Current().Interface().(reqs.AddRentalCourt); ok {
+		if condiction.CourtFromTime.IsZero() ||
+			condiction.CourtToTime.IsZero() ||
+			condiction.CourtFromTime.After(condiction.CourtToTime) {
+			// 驗證失敗
+			sl.ReportError(condiction.FromDate, "CourtFromTime ", "", "CourtToTime", "")
+			return
+		}
 	}
 }

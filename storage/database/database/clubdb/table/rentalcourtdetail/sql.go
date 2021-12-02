@@ -4,6 +4,7 @@ import (
 	"errors"
 	"heroku-line-bot/storage/database/domain"
 	"heroku-line-bot/storage/database/domain/model/reqs"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -36,12 +37,17 @@ func (t RentalCourtDetail) MigrationData(datas ...*RentalCourtDetailTable) error
 	return nil
 }
 
-func (t RentalCourtDetail) All(arg reqs.RentalCourtDetail) ([]*RentalCourtDetailTable, error) {
-	dp := t.whereArg(t.Read, arg).Select(
-		`
-		*
-		`,
-	)
+func (t RentalCourtDetail) Select(arg reqs.RentalCourtDetail, columns ...Column) ([]*RentalCourtDetailTable, error) {
+	columnsStr := "*"
+	if len(columns) > 0 {
+		columnStrs := make([]string, 0)
+		for _, column := range columns {
+			columnStrs = append(columnStrs, string(column))
+		}
+		columnsStr = strings.Join(columnStrs, ",")
+	}
+
+	dp := t.whereArg(t.Read, arg).Select(columnsStr)
 
 	result := make([]*RentalCourtDetailTable, 0)
 	if err := dp.Scan(&result).Error; err != nil {

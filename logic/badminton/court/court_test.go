@@ -2,9 +2,8 @@ package court
 
 import (
 	"heroku-line-bot/global"
+	"heroku-line-bot/logic/badminton/court/domain"
 	commonLogic "heroku-line-bot/logic/common"
-	"sort"
-
 	incomeLogicDomain "heroku-line-bot/logic/income/domain"
 	"heroku-line-bot/storage/database"
 	"heroku-line-bot/storage/database/database/clubdb/table/income"
@@ -13,7 +12,10 @@ import (
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledger"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledgercourt"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtrefundledger"
+	"heroku-line-bot/storage/database/domain/model/reqs"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
+	"sort"
 	"testing"
 )
 
@@ -43,8 +45,8 @@ func TestGetCourts(t *testing.T) {
 		{
 			"refund",
 			args{
-				fromDate: util.NewDateTime(global.Location, 2013, 8, 2),
-				toDate:   util.NewDateTime(global.Location, 2013, 8, 2),
+				fromDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+				toDate:   *util.NewDateTimeP(global.Location, 2013, 8, 2),
 			},
 			migrations{
 				rentalCourts: []*rentalcourt.RentalCourtTable{
@@ -196,7 +198,7 @@ func TestGetCourts(t *testing.T) {
 					1: {
 						{
 							ID:   1,
-							Date: util.NewDateTime(global.Location, 2013, 8, 2),
+							Date: *util.NewDateTimeP(global.Location, 2013, 8, 2),
 							Courts: []*Court{
 								{
 									CourtDetailPrice: CourtDetailPrice{
@@ -218,7 +220,7 @@ func TestGetCourts(t *testing.T) {
 										ID: 11,
 										Income: &Income{
 											ID:      1,
-											PayDate: util.NewDateTime(global.Location, 2013, 8, 2),
+											PayDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
 											Money:   -4,
 										},
 									},
@@ -227,7 +229,7 @@ func TestGetCourts(t *testing.T) {
 											ID: 1,
 											Income: &Income{
 												ID:      3,
-												PayDate: util.NewDateTime(global.Location, 2013, 8, 2),
+												PayDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
 												Money:   2,
 											},
 											DbCourtDetail: DbCourtDetail{
@@ -300,7 +302,7 @@ func TestGetCourts(t *testing.T) {
 										ID: 13,
 										Income: &Income{
 											ID:      2,
-											PayDate: util.NewDateTime(global.Location, 2013, 8, 2),
+											PayDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
 											Money:   -4,
 										},
 									},
@@ -351,7 +353,7 @@ func TestGetCourts(t *testing.T) {
 
 			gotPlaceDateCourtsMap, gotResultErrInfo := GetCourts(tt.args.fromDate, tt.args.toDate, tt.args.placeID)
 			if gotResultErrInfo != nil {
-				t.Errorf("GetCourts() error = %v", gotResultErrInfo.Error())
+				t.Errorf("GetCourts() error = %v", gotResultErrInfo.ErrorWithTrace())
 				return
 			}
 
@@ -372,6 +374,337 @@ func TestGetCourts(t *testing.T) {
 			}
 			if ok, msg := util.Comp(gotPlaceDateCourtsMap, tt.wants.gotPlaceDateCourtsMap); !ok {
 				t.Fatal(msg)
+			}
+		})
+	}
+}
+
+func TestAddCourt(t *testing.T) {
+	type args struct {
+		placeID         int
+		pricePerHour    int
+		courtDetail     CourtDetail
+		despositMoney   *int
+		balanceMoney    *int
+		despositPayDate *util.DateTime
+		balancePayDate  *util.DateTime
+		rentalDates     []util.DateTime
+	}
+	type migrations struct {
+		rentalCourts            []*rentalcourt.RentalCourtTable
+		rentalCourtLedgerCourts []*rentalcourtledgercourt.RentalCourtLedgerCourtTable
+		rentalCourtLedgers      []*rentalcourtledger.RentalCourtLedgerTable
+		incomes                 []*income.IncomeTable
+		rentalCourtDetail       []*rentalcourtdetail.RentalCourtDetailTable
+	}
+	type wants struct {
+		rentalCourts            []*rentalcourt.RentalCourtTable
+		rentalCourtLedgerCourts []*rentalcourtledgercourt.RentalCourtLedgerCourtTable
+		rentalCourtLedgers      []*rentalcourtledger.RentalCourtLedgerTable
+		incomes                 []*income.IncomeTable
+		rentalCourtDetail       []*rentalcourtdetail.RentalCourtDetailTable
+		wantResultErrInfo       errUtil.IError
+	}
+	tests := []struct {
+		name       string
+		args       args
+		migrations migrations
+		wants      wants
+	}{
+		{
+			"pay",
+			args{
+				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
+				placeID:      1,
+				pricePerHour: 10,
+				courtDetail: CourtDetail{
+					TimeRange: util.TimeRange{
+						From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+						To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+					},
+					Count: 1,
+				},
+				despositMoney:   util.GetIntP(5),
+				balanceMoney:    util.GetIntP(15),
+				despositPayDate: util.NewDateTimeP(global.Location, 2013, 8, 1),
+				balancePayDate:  util.NewDateTimeP(global.Location, 2013, 8, 3),
+			},
+			migrations{
+				rentalCourts:            []*rentalcourt.RentalCourtTable{},
+				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
+				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
+				incomes:                 []*income.IncomeTable{},
+				rentalCourtDetail:       []*rentalcourtdetail.RentalCourtDetailTable{},
+			},
+			wants{
+				rentalCourts: []*rentalcourt.RentalCourtTable{
+					{
+						ID:      1,
+						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						PlaceID: 1,
+					},
+				},
+				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{
+					{
+						ID:                  1,
+						RentalCourtID:       1,
+						RentalCourtLedgerID: 1,
+					},
+				},
+				rentalCourtLedgers: []*rentalcourtledger.RentalCourtLedgerTable{
+					{
+						ID:                  1,
+						RentalCourtDetailID: 1,
+						PlaceID:             1,
+						PricePerHour:        10,
+						IncomeID:            util.GetIntP(2),
+						DepositIncomeID:     util.GetIntP(1),
+						PayDate:             util.GetTimePLoc(global.Location, 2013, 8, 3),
+						StartDate:           *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						EndDate:             *util.GetTimePLoc(global.Location, 2013, 8, 2),
+					},
+				},
+				incomes: []*income.IncomeTable{
+					{
+						ID:          1,
+						Date:        *util.GetTimePLoc(global.Location, 2013, 8, 1),
+						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
+						Description: domain.INCOME_DESCRIPTION_DESPOSIT,
+						Income:      5,
+					},
+					{
+						ID:          2,
+						Date:        *util.GetTimePLoc(global.Location, 2013, 8, 3),
+						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
+						Description: domain.INCOME_DESCRIPTION_BALANCE,
+						Income:      15,
+					},
+				},
+				rentalCourtDetail: []*rentalcourtdetail.RentalCourtDetailTable{
+					{
+						ID:        1,
+						StartTime: string(commonLogic.NewHourMinTime(1, 0)),
+						EndTime:   string(commonLogic.NewHourMinTime(3, 0)),
+						Count:     1,
+					},
+				},
+				wantResultErrInfo: nil,
+			},
+		},
+		{
+			"wrong balance error",
+			args{
+				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
+				placeID:      1,
+				pricePerHour: 10,
+				courtDetail: CourtDetail{
+					TimeRange: util.TimeRange{
+						From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+						To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+					},
+					Count: 1,
+				},
+				balanceMoney: util.GetIntP(10),
+			},
+			migrations{
+				rentalCourts:            []*rentalcourt.RentalCourtTable{},
+				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
+				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
+				incomes:                 []*income.IncomeTable{},
+				rentalCourtDetail:       []*rentalcourtdetail.RentalCourtDetailTable{},
+			},
+			wants{
+				rentalCourts:            []*rentalcourt.RentalCourtTable{},
+				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
+				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
+				incomes:                 []*income.IncomeTable{},
+				rentalCourtDetail:       []*rentalcourtdetail.RentalCourtDetailTable{},
+				wantResultErrInfo:       errUtil.New(domain.ERROR_MSG_WRONG_PAY),
+			},
+		},
+		{
+			"wrong desposit balance error",
+			args{
+				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
+				placeID:      1,
+				pricePerHour: 10,
+				courtDetail: CourtDetail{
+					TimeRange: util.TimeRange{
+						From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+						To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+					},
+					Count: 1,
+				},
+				despositMoney:   util.GetIntP(5),
+				balanceMoney:    util.GetIntP(20),
+				despositPayDate: util.NewDateTimeP(global.Location, 2013, 8, 2),
+				balancePayDate:  util.NewDateTimeP(global.Location, 2013, 8, 2),
+			},
+			migrations{
+				rentalCourts:            []*rentalcourt.RentalCourtTable{},
+				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
+				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
+				incomes:                 []*income.IncomeTable{},
+				rentalCourtDetail:       []*rentalcourtdetail.RentalCourtDetailTable{},
+			},
+			wants{
+				rentalCourts:            []*rentalcourt.RentalCourtTable{},
+				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
+				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
+				incomes:                 []*income.IncomeTable{},
+				rentalCourtDetail:       []*rentalcourtdetail.RentalCourtDetailTable{},
+				wantResultErrInfo:       errUtil.New(domain.ERROR_MSG_WRONG_PAY),
+			},
+		},
+		{
+			"exist",
+			args{
+				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
+				placeID:      1,
+				pricePerHour: 10,
+				courtDetail: CourtDetail{
+					TimeRange: util.TimeRange{
+						From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+						To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+					},
+					Count: 1,
+				},
+			},
+			migrations{
+				rentalCourts: []*rentalcourt.RentalCourtTable{
+					{
+						ID:      2,
+						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						PlaceID: 1,
+					},
+				},
+				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
+				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
+				incomes:                 []*income.IncomeTable{},
+				rentalCourtDetail: []*rentalcourtdetail.RentalCourtDetailTable{
+					{
+						ID:        2,
+						StartTime: string(commonLogic.NewHourMinTime(1, 0)),
+						EndTime:   string(commonLogic.NewHourMinTime(3, 0)),
+						Count:     1,
+					},
+				},
+			},
+			wants{
+				rentalCourts: []*rentalcourt.RentalCourtTable{
+					{
+						ID:      2,
+						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						PlaceID: 1,
+					},
+				},
+				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{
+					{
+						ID:                  1,
+						RentalCourtID:       2,
+						RentalCourtLedgerID: 1,
+					},
+				},
+				rentalCourtLedgers: []*rentalcourtledger.RentalCourtLedgerTable{
+					{
+						ID:                  1,
+						RentalCourtDetailID: 2,
+						PlaceID:             1,
+						PricePerHour:        10,
+						StartDate:           *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						EndDate:             *util.GetTimePLoc(global.Location, 2013, 8, 2),
+					},
+				},
+				incomes: []*income.IncomeTable{},
+				rentalCourtDetail: []*rentalcourtdetail.RentalCourtDetailTable{
+					{
+						ID:        2,
+						StartTime: string(commonLogic.NewHourMinTime(1, 0)),
+						EndTime:   string(commonLogic.NewHourMinTime(3, 0)),
+						Count:     1,
+					},
+				},
+				wantResultErrInfo: nil,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := database.Club.RentalCourt.MigrationData(tt.migrations.rentalCourts...); err != nil {
+				t.Fatal(err.Error())
+			}
+			if err := database.Club.RentalCourtLedgerCourt.MigrationData(tt.migrations.rentalCourtLedgerCourts...); err != nil {
+				t.Fatal(err.Error())
+			}
+			if err := database.Club.RentalCourtLedger.MigrationData(tt.migrations.rentalCourtLedgers...); err != nil {
+				t.Fatal(err.Error())
+			}
+			if err := database.Club.Income.MigrationData(tt.migrations.incomes...); err != nil {
+				t.Fatal(err.Error())
+			}
+			if err := database.Club.RentalCourtDetail.MigrationData(tt.migrations.rentalCourtDetail...); err != nil {
+				t.Fatal(err.Error())
+			}
+
+			gotResultErrInfo := AddCourt(tt.args.placeID, tt.args.pricePerHour, tt.args.courtDetail, tt.args.despositMoney, tt.args.balanceMoney, tt.args.despositPayDate, tt.args.balancePayDate, tt.args.rentalDates)
+			if !errUtil.Equal(gotResultErrInfo, tt.wants.wantResultErrInfo) {
+				if gotResultErrInfo == nil {
+					t.Errorf("error = %v", gotResultErrInfo)
+				} else {
+					t.Errorf("error = %v", gotResultErrInfo.ErrorWithTrace())
+				}
+				return
+			}
+
+			if dbDatas, err := database.Club.RentalCourt.Select(reqs.RentalCourt{}); err != nil {
+				t.Fatal(err.Error())
+			} else {
+				sort.Slice(dbDatas, func(i, j int) bool {
+					return dbDatas[i].ID < dbDatas[j].ID
+				})
+				if ok, msg := util.Comp(dbDatas, tt.wants.rentalCourts); !ok {
+					t.Fatal(msg)
+				}
+			}
+			if dbDatas, err := database.Club.RentalCourtLedgerCourt.Select(reqs.RentalCourtLedgerCourt{}); err != nil {
+				t.Fatal(err.Error())
+			} else {
+				sort.Slice(dbDatas, func(i, j int) bool {
+					return dbDatas[i].ID < dbDatas[j].ID
+				})
+				if ok, msg := util.Comp(dbDatas, tt.wants.rentalCourtLedgerCourts); !ok {
+					t.Fatal(msg)
+				}
+			}
+			if dbDatas, err := database.Club.RentalCourtLedger.Select(reqs.RentalCourtLedger{}); err != nil {
+				t.Fatal(err.Error())
+			} else {
+				sort.Slice(dbDatas, func(i, j int) bool {
+					return dbDatas[i].ID < dbDatas[j].ID
+				})
+				if ok, msg := util.Comp(dbDatas, tt.wants.rentalCourtLedgers); !ok {
+					t.Fatal(msg)
+				}
+			}
+			if dbDatas, err := database.Club.Income.Select(reqs.Income{}); err != nil {
+				t.Fatal(err.Error())
+			} else {
+				sort.Slice(dbDatas, func(i, j int) bool {
+					return dbDatas[i].ID < dbDatas[j].ID
+				})
+				if ok, msg := util.Comp(dbDatas, tt.wants.incomes); !ok {
+					t.Fatal(msg)
+				}
+			}
+			if dbDatas, err := database.Club.RentalCourtDetail.Select(reqs.RentalCourtDetail{}); err != nil {
+				t.Fatal(err.Error())
+			} else {
+				sort.Slice(dbDatas, func(i, j int) bool {
+					return dbDatas[i].ID < dbDatas[j].ID
+				})
+				if ok, msg := util.Comp(dbDatas, tt.wants.rentalCourtDetail); !ok {
+					t.Fatal(msg)
+				}
 			}
 		})
 	}

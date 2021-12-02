@@ -195,7 +195,7 @@ func (m *node) takeMax() []*TimeRangeValue {
 
 func (m *node) fromSideMax() util.Float {
 	if m.fromLen() == 0 {
-		return util.ToFloat(0)
+		return util.NewFloat(0)
 	}
 
 	index := m.fromSides[0]
@@ -205,7 +205,7 @@ func (m *node) fromSideMax() util.Float {
 
 func (m *node) toSideMax() util.Float {
 	if m.toLen() == 0 {
-		return util.ToFloat(0)
+		return util.NewFloat(0)
 	}
 
 	index := m.toSides[0]

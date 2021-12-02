@@ -28,5 +28,4 @@ func main() {
 
 // TODO: 清除richmenu
 // TODO: 取消場次
-// TODO: 租借場次
 // TODO: 修改場次

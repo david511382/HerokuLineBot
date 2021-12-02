@@ -24,10 +24,21 @@ func (t RentalCourtDetail) whereArg(dp *gorm.DB, arg reqs.RentalCourtDetail) *go
 	dp = dp.Model(t.GetTable())
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where("id = ?", p)
+		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
 	}
 	if p := arg.IDs; len(p) > 0 {
-		dp = dp.Where("id IN (?)", p)
+		dp = dp.Where(string(COLUMN_ID+" IN (?)"), p)
+	}
+
+	if p := arg.StartTime; p != nil {
+		dp = dp.Where(string(COLUMN_StartTime+" = ?"), p)
+	}
+	if p := arg.EndTime; p != nil {
+		dp = dp.Where(string(COLUMN_EndTime+" = ?"), p)
+	}
+
+	if p := arg.Count; p != nil {
+		dp = dp.Where(string(COLUMN_Count+" = ?"), p)
 	}
 
 	return dp

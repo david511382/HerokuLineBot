@@ -205,12 +205,18 @@ func (t YearInt) In(location *time.Location) time.Time {
 
 type YearTime time.Time
 
-func NewYearTime(location *time.Location, y int) YearTime {
-	return YearTime(*GetTimePLoc(location, y))
+func NewYearTimeP(location *time.Location, y int) *YearTime {
+	r := YearTime(*GetTimePLoc(location, y))
+	return &r
 }
 
-func NewYearTimeOf(t time.Time) YearTime {
-	return YearTime(YEAR_TIME_TYPE.Of(t))
+func NewYearTimePOf(t *time.Time) *YearTime {
+	if t == nil {
+		return nil
+	}
+
+	r := YearTime(YEAR_TIME_TYPE.Of(*t))
+	return &r
 }
 
 func (t YearTime) GetUtilCompareValue() string {
@@ -252,12 +258,18 @@ func (t DateInt) In(location *time.Location) time.Time {
 
 type DateTime time.Time
 
-func NewDateTime(location *time.Location, y, m, d int) DateTime {
-	return DateTime(*GetTimePLoc(location, y, m, d))
+func NewDateTimeP(location *time.Location, y, m, d int) *DateTime {
+	r := DateTime(*GetTimePLoc(location, y, m, d))
+	return &r
 }
 
-func NewDateTimeOf(t time.Time) DateTime {
-	return DateTime(DATE_TIME_TYPE.Of(t))
+func NewDateTimePOf(t *time.Time) *DateTime {
+	if t == nil {
+		return nil
+	}
+
+	r := DateTime(DATE_TIME_TYPE.Of(*t))
+	return &r
 }
 
 func (t DateTime) GetUtilCompareValue() string {
@@ -299,12 +311,18 @@ func (t HourInt) In(location *time.Location) time.Time {
 
 type HourTime time.Time
 
-func NewHourTime(location *time.Location, y, m, d, h int) HourTime {
-	return HourTime(*GetTimePLoc(location, y, m, d, h))
+func NewHourTimeP(location *time.Location, y, m, d, h int) *HourTime {
+	r := HourTime(*GetTimePLoc(location, y, m, d, h))
+	return &r
 }
 
-func NewHourTimeOf(t time.Time) HourTime {
-	return HourTime(HOUR_TIME_TYPE.Of(t))
+func NewHourTimePOf(t *time.Time) *HourTime {
+	if t == nil {
+		return nil
+	}
+
+	r := HourTime(HOUR_TIME_TYPE.Of(*t))
+	return &r
 }
 
 func (t HourTime) GetUtilCompareValue() string {

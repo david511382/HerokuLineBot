@@ -12,6 +12,8 @@ go test ./storage/database/... --count=1
 go test ./bootstrap/... --count=1
 
 go test ./util/... --count=1
+
+go test ./server/... --count=1
 ```
 
 ## db migration

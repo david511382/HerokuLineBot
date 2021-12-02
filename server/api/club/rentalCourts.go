@@ -46,8 +46,8 @@ func GetRentalCourts(c *gin.Context) {
 	}
 
 	placeDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(
-		util.NewDateTimeOf(reqs.FromDate),
-		util.NewDateTimeOf(reqs.ToDate),
+		*util.NewDateTimePOf(&reqs.FromDate),
+		*util.NewDateTimePOf(&reqs.ToDate),
 		nil,
 	)
 	if errInfo != nil {
@@ -209,7 +209,7 @@ func getGetRentalCourtsPayInfo(dateIntCourtsMap map[util.DateInt][]*resp.GetRent
 			Date:   dateInt.In(global.Location),
 			Courts: make([]*resp.GetRentalCourtsCourtInfo, 0),
 		}
-		cost := util.ToFloat(0)
+		cost := util.NewFloat(0)
 		resultCourt.Courts = append(resultCourt.Courts, courts...)
 		for _, v := range courts {
 			cost = cost.PlusFloat(v.Cost)
@@ -217,7 +217,7 @@ func getGetRentalCourtsPayInfo(dateIntCourtsMap map[util.DateInt][]*resp.GetRent
 		result.Courts = append(result.Courts, resultCourt)
 		resultCourt.Cost = cost.Value()
 	}
-	cost := util.ToFloat(0)
+	cost := util.NewFloat(0)
 	for _, court := range result.Courts {
 		cost = cost.PlusFloat(court.Cost)
 	}

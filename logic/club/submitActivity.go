@@ -285,9 +285,9 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		peopleCount := memberCount + guestCount
 		_, memberFee, guestFee := calculateActivityPay(
 			peopleCount,
-			util.ToFloat(float64(b.Rsl4Consume)),
+			util.NewFloat(float64(b.Rsl4Consume)),
 			courtFee,
-			util.ToFloat(float64(b.ClubSubsidy)),
+			util.NewFloat(float64(b.ClubSubsidy)),
 		)
 		updateFields := map[string]interface{}{
 			"is_complete":  true,
@@ -708,13 +708,13 @@ func (b *submitActivity) getAttendInfoContents() []interface{} {
 func (b *submitActivity) getFeeContents() []interface{} {
 	courtFee := b.getCourtFee()
 	activityFee, ballFee := calculateActivity(
-		util.ToFloat(float64(b.Rsl4Consume)),
+		util.NewFloat(float64(b.Rsl4Consume)),
 		courtFee,
 	)
 	clubMemberPeople := b.getJoinedMembersCount()
 	guestPeople := b.getJoinedGuestsCount()
 	people := clubMemberPeople + guestPeople
-	clubSubsidy := util.ToFloat(float64(b.ClubSubsidy))
+	clubSubsidy := util.NewFloat(float64(b.ClubSubsidy))
 	shareMoney := activityFee.Minus(clubSubsidy)
 
 	result := []interface{}{

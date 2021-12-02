@@ -455,7 +455,7 @@ func (b *NewActivity) getLineComponents(actions domain.NewActivityLineTemplate) 
 }
 
 func (b *NewActivity) getCourtFee() util.Float {
-	totalFee := util.ToFloat(0)
+	totalFee := util.NewFloat(0)
 	for _, court := range b.Courts {
 		cost := court.Cost()
 		totalFee = totalFee.Plus(cost)
@@ -464,7 +464,7 @@ func (b *NewActivity) getCourtFee() util.Float {
 }
 
 func (b *NewActivity) getCourtHours() util.Float {
-	totalHours := util.ToFloat(0)
+	totalHours := util.NewFloat(0)
 	for _, court := range b.Courts {
 		hours := court.TotalHours()
 		totalHours = totalHours.Plus(hours)

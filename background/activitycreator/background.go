@@ -32,7 +32,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 		}
 	}()
 
-	currentDate := util.NewDateTimeOf(runTime)
+	currentDate := *util.NewDateTimePOf(&runTime)
 	newActivityHandlers, errInfo := calDateActivity(currentDate)
 	if errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -160,7 +160,7 @@ func calActivitys(
 							PricePerHour: pricePerHour,
 						})
 						totalCourtCount += int(v.Hours().
-							Mul(util.Int64ToFloat(int64(court.Count))).ToInt())
+							Mul(util.NewInt64Float(int64(court.Count))).ToInt())
 					}
 				}
 			}

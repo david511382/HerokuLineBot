@@ -95,3 +95,59 @@ func GetTimePLoc(loc *time.Location, ts ...int) *time.Time {
 func GetWeekDayName(weekDay time.Weekday) string {
 	return WeekDayName[weekDay]
 }
+
+func GetDatesInWeekday(fromDate, toDate DateTime, weekDay time.Weekday) (result []DateTime) {
+	result = make([]DateTime, 0)
+
+	var firstDate DateTime
+	{
+		fromWeekday := fromDate.Time().Weekday()
+		if fromWeekday > weekDay {
+			firstDate = DateTime(WEEK_TIME_TYPE.Next1(
+				fromDate.Next(
+					int(weekDay - fromWeekday),
+				).Time(),
+			))
+		} else {
+			firstDate = DateTime(
+				fromDate.Next(
+					int(weekDay - fromWeekday),
+				).Time(),
+			)
+		}
+
+		if firstDate.Time().After(toDate.Time()) {
+			return
+		}
+	}
+
+	TimeSlice(firstDate.Time(), toDate.Time(),
+		WEEK_TIME_TYPE.Next1,
+		func(runTime, next time.Time) (isContinue bool) {
+			result = append(result, *NewDateTimePOf(&runTime))
+			return true
+		},
+	)
+
+	return
+}
+
+func TimeSlice(
+	fromTime, beforeTime time.Time,
+	nextTime func(time.Time) time.Time,
+	do func(runTime, next time.Time) (isContinue bool),
+) {
+	runTime := fromTime
+	for dur := time.Duration(1); dur > 0; dur = beforeTime.Sub(runTime) {
+		next := nextTime(runTime)
+		if next.After(beforeTime) {
+			next = beforeTime
+		}
+
+		if !do(runTime, next) {
+			break
+		}
+
+		runTime = next
+	}
+}

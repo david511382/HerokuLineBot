@@ -2,6 +2,7 @@ package court
 
 import (
 	"heroku-line-bot/logic/badminton/court/domain"
+	commonLogic "heroku-line-bot/logic/common"
 	"heroku-line-bot/util"
 )
 
@@ -35,6 +36,12 @@ func (d *CourtDetail) Sub(detail CourtDetail) (
 	return
 }
 
+func (d *CourtDetail) GetTime() (from, to commonLogic.HourMinTime) {
+	from = commonLogic.NewHourMinTimeOf(d.From)
+	to = commonLogic.NewHourMinTimeOf(d.To)
+	return
+}
+
 type DbCourtDetail struct {
 	ID int
 	CourtDetail
@@ -64,7 +71,7 @@ type Court struct {
 }
 
 func (c *Court) Cost() util.Float {
-	result := util.ToFloat(0)
+	result := util.NewFloat(0)
 	if c.Desposit != nil {
 		if p := c.Desposit; p != nil {
 			result = result.PlusInt64(int64(p.Money))
@@ -165,13 +172,13 @@ type RefundMulCourtIncome struct {
 }
 
 func (c *RefundMulCourtIncome) Cost() (result util.Float) {
-	result = util.ToFloat(0)
+	result = util.NewFloat(0)
 	if c == nil ||
 		c.Income == nil {
 		return
 	}
 
-	result = util.Int64ToFloat(int64(c.Money))
+	result = util.NewInt64Float(int64(c.Money))
 	return
 }
 

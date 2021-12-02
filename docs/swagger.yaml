@@ -1,5 +1,52 @@
 basePath: /api/
 definitions:
+  reqs.AddRentalCourt:
+    properties:
+      balance_date:
+        type: string
+      balance_money:
+        type: integer
+      court_count:
+        type: integer
+      court_from_time:
+        type: string
+      court_to_time:
+        type: string
+      desposit_date:
+        type: string
+      desposit_money:
+        type: integer
+      every_weekday:
+        type: integer
+      exclude_dates:
+        items:
+          type: string
+        type: array
+      from_date:
+        default: "2013-08-02T00:00:00+08:00"
+        type: string
+      place_id:
+        type: integer
+      price_per_hour:
+        type: integer
+      to_date:
+        default: "2013-08-02T00:00:00+08:00"
+        type: string
+    required:
+    - court_count
+    - court_from_time
+    - court_to_time
+    - from_date
+    - place_id
+    - price_per_hour
+    - to_date
+    type: object
+  resp.Base:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
   resp.GetRentalCourts:
     properties:
       not_pay_day_courts:
@@ -80,6 +127,30 @@ info:
   title: Heroku-Line-Bot
   version: "1.0"
 paths:
+  /badminton/rental-courts:
+    post:
+      consumes:
+      - application/json
+      description: 新增租場
+      parameters:
+      - description: 參數
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/reqs.AddRentalCourt'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 資料
+          schema:
+            $ref: '#/definitions/resp.Base'
+      security:
+      - ApiKeyAuth: []
+      summary: 新增租場
+      tags:
+      - Badminton
   /club/rental-courts:
     get:
       description: 租場狀況

@@ -76,10 +76,10 @@ type TimePRange struct {
 func (tr *TimePRange) Hours() Float {
 	if tr.To == nil ||
 		tr.From == nil {
-		return ToFloat(0)
+		return NewFloat(0)
 	}
 
-	return ToFloat(tr.To.Sub(*tr.From).Hours())
+	return NewFloat(tr.To.Sub(*tr.From).Hours())
 }
 
 // target equal:0, less:-1, great:1
