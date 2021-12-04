@@ -10,7 +10,7 @@ import (
 	"heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
 	memberDb "heroku-line-bot/storage/database/database/clubdb/table/member"
-	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
+	dbReqs "heroku-line-bot/storage/database/domain/reqs"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"strings"
@@ -373,7 +373,13 @@ func (b *register) Do(text string) (resultErrInfo errUtil.IError) {
 		arg := dbReqs.Member{
 			CompanyID: b.CompanyID,
 		}
-		if dbDatas, err := database.Club.Member.IDNameRoleDepartment(arg); err != nil {
+		if dbDatas, err := database.Club.Member.Select(
+			arg,
+			memberDb.COLUMN_ID,
+			memberDb.COLUMN_Name,
+			memberDb.COLUMN_Role,
+			memberDb.COLUMN_Department,
+		); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		} else if len(dbDatas) == 0 {
@@ -403,7 +409,7 @@ func (b *register) Do(text string) (resultErrInfo errUtil.IError) {
 
 			b.MemberID = v.ID
 			b.Department = Department(v.Department)
-			b.Role = domain.ClubRole(v.Role.Role)
+			b.Role = domain.ClubRole(v.Role)
 		}
 	}
 

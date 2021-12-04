@@ -1,50 +1,40 @@
 package place
 
 import (
-	"heroku-line-bot/storage/database/domain"
-	"heroku-line-bot/storage/database/domain/model/reqs"
-	"heroku-line-bot/storage/database/domain/model/resp"
+	"heroku-line-bot/storage/database/common"
+	"heroku-line-bot/storage/database/domain/reqs"
+	"strings"
 
 	"gorm.io/gorm"
 )
 
 func (t Place) Insert(trans *gorm.DB, datas ...*PlaceTable) error {
-	var createValue interface{}
-	if len(datas) == 0 {
-		return domain.DB_NO_AFFECTED_ERROR
-	} else if len(datas) > 1 {
-		createValue = &datas
-	} else if len(datas) == 1 {
-		createValue = datas[0]
-	}
-
-	dp := trans
-	if dp == nil {
-		dp = t.Write
-	}
-
-	return t.BaseTable.Insert(dp, createValue)
+	return t.BaseTable.Insert(trans, datas)
 }
 
 func (t Place) MigrationData(datas ...*PlaceTable) error {
-	if err := t.MigrationTable(); err != nil {
-		return err
-	}
-	return t.Insert(nil, datas...)
+	return t.BaseTable.MigrationData(len(datas), datas)
 }
 
-func (t Place) IDName(arg reqs.Place) ([]*resp.PlaceIDName, error) {
-	dp := t.whereArg(t.Read, arg).Select(
-		`
-		id AS id,
-		name AS name
-		`,
-	)
+func (t Place) Select(arg reqs.Place, columns ...Column) ([]*PlaceTable, error) {
+	result := make([]*PlaceTable, 0)
 
-	result := make([]*resp.PlaceIDName, 0)
+	columnsStr := "*"
+	if len(columns) > 0 {
+		columnStrs := make([]string, 0)
+		for _, column := range columns {
+			columnStrs = append(columnStrs, string(column))
+		}
+		columnsStr = strings.Join(columnStrs, ",")
+	}
+
+	dp := t.WhereArg(t.Read, arg).Select(columnsStr)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}
 
+	if t.IsRequireTimeConver {
+		common.ConverTimeZone(result)
+	}
 	return result, nil
 }

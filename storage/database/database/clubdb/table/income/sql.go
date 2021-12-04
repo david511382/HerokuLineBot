@@ -1,44 +1,24 @@
 package income
 
 import (
-	"errors"
 	"heroku-line-bot/storage/database/common"
-	"heroku-line-bot/storage/database/domain"
-	"heroku-line-bot/storage/database/domain/model/reqs"
+	"heroku-line-bot/storage/database/domain/reqs"
 	"strings"
 
 	"gorm.io/gorm"
 )
 
 func (t Income) Insert(trans *gorm.DB, datas ...*IncomeTable) error {
-	var createValue interface{}
-	if len(datas) == 0 {
-		return domain.DB_NO_AFFECTED_ERROR
-	} else if len(datas) > 1 {
-		createValue = &datas
-	} else if len(datas) == 1 {
-		createValue = datas[0]
-	}
-
-	dp := trans
-	if dp == nil {
-		dp = t.Write
-	}
-
-	return t.BaseTable.Insert(dp, createValue)
+	return t.BaseTable.Insert(trans, datas)
 }
 
 func (t Income) MigrationData(datas ...*IncomeTable) error {
-	if err := t.MigrationTable(); err != nil {
-		return err
-	}
-	if err := t.Insert(nil, datas...); err != nil && !errors.Is(err, domain.DB_NO_AFFECTED_ERROR) {
-		return err
-	}
-	return nil
+	return t.BaseTable.MigrationData(len(datas), datas)
 }
 
 func (t Income) Select(arg reqs.Income, columns ...Column) ([]*IncomeTable, error) {
+	result := make([]*IncomeTable, 0)
+
 	columnsStr := "*"
 	if len(columns) > 0 {
 		columnStrs := make([]string, 0)
@@ -48,14 +28,13 @@ func (t Income) Select(arg reqs.Income, columns ...Column) ([]*IncomeTable, erro
 		columnsStr = strings.Join(columnStrs, ",")
 	}
 
-	dp := t.whereArg(t.Read, arg).Select(columnsStr)
-
-	result := make([]*IncomeTable, 0)
+	dp := t.WhereArg(t.Read, arg).Select(columnsStr)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}
 
-	common.ConverTimeZone(result)
-
+	if t.IsRequireTimeConver {
+		common.ConverTimeZone(result)
+	}
 	return result, nil
 }

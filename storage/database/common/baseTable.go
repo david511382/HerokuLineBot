@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"heroku-line-bot/storage/database/domain"
 
 	"gorm.io/gorm"
@@ -9,21 +10,32 @@ import (
 type ITable interface {
 	WhereArg(connection *gorm.DB, arg interface{}) *gorm.DB
 	GetTable() interface{}
+	IsRequireTimeConver() bool
 }
 
 type BaseTable struct {
 	BaseDatabase
-	table ITable
+	table               ITable
+	IsRequireTimeConver bool
 }
 
-func NewBaseTable(table ITable, writeDb, readDb *gorm.DB) *BaseTable {
-	return &BaseTable{
+func NewBaseTable(
+	table ITable,
+	writeDb, readDb *gorm.DB,
+) *BaseTable {
+	result := &BaseTable{
 		table: table,
 		BaseDatabase: BaseDatabase{
 			Write: writeDb,
 			Read:  readDb,
 		},
+		IsRequireTimeConver: table.IsRequireTimeConver(),
 	}
+	return result
+}
+
+func (t BaseTable) WhereArg(connection *gorm.DB, arg interface{}) *gorm.DB {
+	return t.table.WhereArg(connection, arg)
 }
 
 func (t BaseTable) Count(arg interface{}) (int64, error) {
@@ -37,8 +49,12 @@ func (t BaseTable) Count(arg interface{}) (int64, error) {
 	return result, nil
 }
 
-func (t BaseTable) Insert(dp *gorm.DB, createValue interface{}) error {
-	if err := dp.Create(createValue).Error; err != nil {
+func (t BaseTable) Insert(trans *gorm.DB, datas interface{}) error {
+	dp := trans
+	if dp == nil {
+		dp = t.Write
+	}
+	if err := dp.Create(datas).Error; err != nil {
 		return err
 	}
 	return nil
@@ -57,6 +73,20 @@ func (t BaseTable) MigrationTable() error {
 		return err
 	}
 
+	return nil
+}
+
+func (t BaseTable) MigrationData(length int, datas interface{}) error {
+	if err := t.MigrationTable(); err != nil {
+		return err
+	}
+	if length == 0 {
+		return nil
+	}
+
+	if err := t.Insert(nil, datas); err != nil && !errors.Is(err, domain.DB_NO_AFFECTED_ERROR) {
+		return err
+	}
 	return nil
 }
 

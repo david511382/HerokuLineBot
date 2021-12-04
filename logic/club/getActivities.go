@@ -11,8 +11,10 @@ import (
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	linebotReqs "heroku-line-bot/service/linebot/domain/model/reqs"
 	"heroku-line-bot/storage/database"
+	"heroku-line-bot/storage/database/database/clubdb/table/activity"
+	"heroku-line-bot/storage/database/database/clubdb/table/member"
 	"heroku-line-bot/storage/database/database/clubdb/table/memberactivity"
-	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
+	dbReqs "heroku-line-bot/storage/database/domain/reqs"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"sort"
@@ -73,7 +75,16 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 	arg := dbReqs.Activity{
 		IsComplete: util.GetBoolP(false),
 	}
-	if dbDatas, err := database.Club.Activity.IDDatePlaceIDCourtsSubsidyDescriptionPeopleLimit(arg); err != nil {
+	if dbDatas, err := database.Club.Activity.Select(
+		arg,
+		activity.COLUMN_ID,
+		activity.COLUMN_Date,
+		activity.COLUMN_PlaceID,
+		activity.COLUMN_CourtsAndTime,
+		activity.COLUMN_ClubSubsidy,
+		activity.COLUMN_Description,
+		activity.COLUMN_PeopleLimit,
+	); err != nil {
 		errInfo := errUtil.NewError(err)
 		if resultErrInfo == nil {
 			resultErrInfo = errInfo
@@ -110,7 +121,12 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 		memberActivityArg := dbReqs.MemberActivity{
 			ActivityIDs: activityIDs,
 		}
-		if dbDatas, err := database.Club.MemberActivity.IDMemberIDActivityID(memberActivityArg); err != nil {
+		if dbDatas, err := database.Club.MemberActivity.Select(
+			memberActivityArg,
+			memberactivity.COLUMN_ID,
+			memberactivity.COLUMN_MemberID,
+			memberactivity.COLUMN_ActivityID,
+		); err != nil {
 			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
 				resultErrInfo = errInfo
@@ -131,7 +147,12 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 			memberArg := dbReqs.Member{
 				IDs: memberIDs,
 			}
-			if dbDatas, err := database.Club.Member.IDNameLineID(memberArg); err != nil {
+			if dbDatas, err := database.Club.Member.Select(
+				memberArg,
+				member.COLUMN_ID,
+				member.COLUMN_Name,
+				member.COLUMN_LineID,
+			); err != nil {
 				resultErrInfo = errUtil.NewError(err)
 				return
 			} else {
@@ -197,7 +218,12 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 	arg := dbReqs.Activity{
 		ID: &b.ListMembersActivityID,
 	}
-	if dbDatas, err := database.Club.Activity.DatePlaceIDPeopleLimit(arg); err != nil {
+	if dbDatas, err := database.Club.Activity.Select(
+		arg,
+		activity.COLUMN_Date,
+		activity.COLUMN_PlaceID,
+		activity.COLUMN_PeopleLimit,
+	); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	} else if len(dbDatas) == 0 {
@@ -232,7 +258,11 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 	memberActivityArg := dbReqs.MemberActivity{
 		ActivityID: &b.ListMembersActivityID,
 	}
-	if dbDatas, err := database.Club.MemberActivity.IDMemberID(memberActivityArg); err != nil {
+	if dbDatas, err := database.Club.MemberActivity.Select(
+		memberActivityArg,
+		memberactivity.COLUMN_ID,
+		memberactivity.COLUMN_MemberID,
+	); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {
@@ -244,7 +274,11 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 		memberArg := dbReqs.Member{
 			IDs: memberIDs,
 		}
-		if dbDatas, err := database.Club.Member.IDName(memberArg); err != nil {
+		if dbDatas, err := database.Club.Member.Select(
+			memberArg,
+			member.COLUMN_ID,
+			member.COLUMN_Name,
+		); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		} else {
@@ -348,7 +382,12 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 	activityArg := dbReqs.Activity{
 		ID: util.GetIntP(b.LeaveActivityID),
 	}
-	if dbDatas, err := database.Club.Activity.DatePlaceIDPeopleLimit(activityArg); err != nil {
+	if dbDatas, err := database.Club.Activity.Select(
+		activityArg,
+		activity.COLUMN_Date,
+		activity.COLUMN_PlaceID,
+		activity.COLUMN_PeopleLimit,
+	); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	} else if len(dbDatas) == 0 {
@@ -377,7 +416,11 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 	arg := dbReqs.MemberActivity{
 		ActivityID: util.GetIntP(b.LeaveActivityID),
 	}
-	if dbDatas, err := database.Club.MemberActivity.IDMemberID(arg); err != nil {
+	if dbDatas, err := database.Club.MemberActivity.Select(
+		arg,
+		memberactivity.COLUMN_ID,
+		memberactivity.COLUMN_MemberID,
+	); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	} else if len(dbDatas) == 0 {
@@ -415,7 +458,10 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 		memberArg := dbReqs.Member{
 			ID: notifyWaitingMemberID,
 		}
-		if dbDatas, err := database.Club.Member.LineID(memberArg); err != nil {
+		if dbDatas, err := database.Club.Member.Select(
+			memberArg,
+			member.COLUMN_LineID,
+		); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		} else if len(dbDatas) > 0 {

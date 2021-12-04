@@ -8,7 +8,8 @@ import (
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
-	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/table/member"
+	dbReqs "heroku-line-bot/storage/database/domain/reqs"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 )
@@ -57,7 +58,11 @@ func (b *GetComfirmRegisters) LoadComfirmRegisterUsers() (resultErrInfo errUtil.
 		LineIDIsNull:    util.GetBoolP(false),
 		JoinDateIsNull:  util.GetBoolP(true),
 	}
-	if dbDatas, err := database.Club.Member.IDName(arg); err != nil {
+	if dbDatas, err := database.Club.Member.Select(
+		arg,
+		member.COLUMN_ID,
+		member.COLUMN_Name,
+	); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {

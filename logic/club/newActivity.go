@@ -13,7 +13,8 @@ import (
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
 	activityDb "heroku-line-bot/storage/database/database/clubdb/table/activity"
-	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/table/place"
+	dbReqs "heroku-line-bot/storage/database/domain/reqs"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"strconv"
@@ -101,9 +102,13 @@ func (b *NewActivity) LoadSingleParam(attr, text string) (resultErrInfo errUtil.
 		}
 		b.Date = util.DateTime(t)
 	case "ICmdLogic.place_id":
-		if dbDatas, err := database.Club.Place.IDName(dbReqs.Place{
-			Name: &text,
-		}); err != nil {
+		if dbDatas, err := database.Club.Place.Select(
+			dbReqs.Place{
+				Name: &text,
+			},
+			place.COLUMN_ID,
+			place.COLUMN_Name,
+		); err != nil {
 			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
 				resultErrInfo = errInfo

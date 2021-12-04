@@ -1,82 +1,40 @@
 package memberactivity
 
 import (
-	"heroku-line-bot/storage/database/domain"
-	"heroku-line-bot/storage/database/domain/model/reqs"
-	"heroku-line-bot/storage/database/domain/model/resp"
+	"heroku-line-bot/storage/database/common"
+	"heroku-line-bot/storage/database/domain/reqs"
+	"strings"
 
 	"gorm.io/gorm"
 )
 
 func (t MemberActivity) Insert(trans *gorm.DB, datas ...*MemberActivityTable) error {
-	var createValue interface{}
-	if len(datas) == 0 {
-		return domain.DB_NO_AFFECTED_ERROR
-	} else if len(datas) > 1 {
-		createValue = &datas
-	} else if len(datas) == 1 {
-		createValue = datas[0]
-	}
-
-	dp := trans
-	if dp == nil {
-		dp = t.Write
-	}
-
-	return t.BaseTable.Insert(dp, createValue)
+	return t.BaseTable.Insert(trans, datas)
 }
 
 func (t MemberActivity) MigrationData(datas ...*MemberActivityTable) error {
-	if err := t.MigrationTable(); err != nil {
-		return err
-	}
-	return t.Insert(nil, datas...)
+	return t.BaseTable.MigrationData(len(datas), datas)
 }
 
-func (t MemberActivity) ID(arg reqs.MemberActivity) ([]*resp.ID, error) {
-	dp := t.whereArg(t.Read, arg).Select(
-		`
-		id AS id
-		`,
-	)
+func (t MemberActivity) Select(arg reqs.MemberActivity, columns ...Column) ([]*MemberActivityTable, error) {
+	result := make([]*MemberActivityTable, 0)
 
-	result := make([]*resp.ID, 0)
+	columnsStr := "*"
+	if len(columns) > 0 {
+		columnStrs := make([]string, 0)
+		for _, column := range columns {
+			columnStrs = append(columnStrs, string(column))
+		}
+		columnsStr = strings.Join(columnStrs, ",")
+	}
+
+	dp := t.WhereArg(t.Read, arg).Select(columnsStr)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}
 
-	return result, nil
-}
-
-func (t MemberActivity) IDMemberID(arg reqs.MemberActivity) ([]*resp.IDMemberID, error) {
-	dp := t.whereArg(t.Read, arg).Select(
-		`
-		id AS id,
-		member_id AS member_id
-		`,
-	)
-
-	result := make([]*resp.IDMemberID, 0)
-	if err := dp.Scan(&result).Error; err != nil {
-		return nil, err
+	if t.IsRequireTimeConver {
+		common.ConverTimeZone(result)
 	}
-
-	return result, nil
-}
-
-func (t MemberActivity) IDMemberIDActivityID(arg reqs.MemberActivity) ([]*resp.IDMemberIDActivityID, error) {
-	dp := t.whereArg(t.Read, arg).Select(
-		`
-		id AS id,
-		member_id AS member_id,
-		activity_id AS activity_id
-		`,
-	)
-
-	result := make([]*resp.IDMemberIDActivityID, 0)
-	if err := dp.Scan(&result).Error; err != nil {
-		return nil, err
-	}
-
 	return result, nil
 }

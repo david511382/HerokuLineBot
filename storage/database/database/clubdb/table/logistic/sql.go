@@ -2,50 +2,39 @@ package logistic
 
 import (
 	"heroku-line-bot/storage/database/common"
-	"heroku-line-bot/storage/database/domain"
-	"heroku-line-bot/storage/database/domain/model/reqs"
+	"heroku-line-bot/storage/database/domain/reqs"
+	"strings"
 
 	"gorm.io/gorm"
 )
 
 func (t Logistic) Insert(trans *gorm.DB, datas ...*LogisticTable) error {
-	var createValue interface{}
-	if len(datas) == 0 {
-		return domain.DB_NO_AFFECTED_ERROR
-	} else if len(datas) > 1 {
-		createValue = &datas
-	} else if len(datas) == 1 {
-		createValue = datas[0]
-	}
-
-	dp := trans
-	if dp == nil {
-		dp = t.Write
-	}
-
-	return t.BaseTable.Insert(dp, createValue)
+	return t.BaseTable.Insert(trans, datas)
 }
 
 func (t Logistic) MigrationData(datas ...*LogisticTable) error {
-	if err := t.MigrationTable(); err != nil {
-		return err
-	}
-	return t.Insert(nil, datas...)
+	return t.BaseTable.MigrationData(len(datas), datas)
 }
 
-func (t Logistic) All(arg reqs.Logistic) ([]*LogisticTable, error) {
-	dp := t.whereArg(t.Read, arg).Select(
-		`
-		*
-		`,
-	)
-
+func (t Logistic) Select(arg reqs.Logistic, columns ...Column) ([]*LogisticTable, error) {
 	result := make([]*LogisticTable, 0)
+
+	columnsStr := "*"
+	if len(columns) > 0 {
+		columnStrs := make([]string, 0)
+		for _, column := range columns {
+			columnStrs = append(columnStrs, string(column))
+		}
+		columnsStr = strings.Join(columnStrs, ",")
+	}
+
+	dp := t.WhereArg(t.Read, arg).Select(columnsStr)
 	if err := dp.Scan(&result).Error; err != nil {
 		return nil, err
 	}
 
-	common.ConverTimeZone(result)
-
+	if t.IsRequireTimeConver {
+		common.ConverTimeZone(result)
+	}
 	return result, nil
 }

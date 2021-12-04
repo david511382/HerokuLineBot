@@ -12,7 +12,7 @@ import (
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledger"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledgercourt"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtrefundledger"
-	"heroku-line-bot/storage/database/domain/model/reqs"
+	"heroku-line-bot/storage/database/domain/reqs"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"sort"

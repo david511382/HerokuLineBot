@@ -4,7 +4,8 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogicDomain "heroku-line-bot/logic/club/lineuser/domain"
 	"heroku-line-bot/storage/database"
-	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/table/member"
+	dbReqs "heroku-line-bot/storage/database/domain/reqs"
 	"heroku-line-bot/storage/redis"
 	redisDomain "heroku-line-bot/storage/redis/domain"
 	errUtil "heroku-line-bot/util/error"
@@ -56,9 +57,13 @@ func Get(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo er
 }
 
 func GetDb(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo errUtil.IError) {
-	if dbDatas, err := database.Club.Member.IDNameRole(dbReqs.Member{
+	if dbDatas, err := database.Club.Member.Select(dbReqs.Member{
 		LineID: &lineID,
-	}); err != nil {
+	},
+		member.COLUMN_ID,
+		member.COLUMN_Name,
+		member.COLUMN_Role,
+	); err != nil {
 		errInfo := errUtil.NewError(err)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
@@ -67,7 +72,7 @@ func GetDb(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo 
 		result = &clubLineuserLogicDomain.Model{
 			ID:   v.ID,
 			Name: v.Name,
-			Role: domain.ClubRole(v.Role.Role),
+			Role: domain.ClubRole(v.Role),
 		}
 	}
 

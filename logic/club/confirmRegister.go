@@ -7,7 +7,8 @@ import (
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/storage/database"
-	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/table/member"
+	dbReqs "heroku-line-bot/storage/database/domain/reqs"
 	"heroku-line-bot/storage/redis"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
@@ -67,7 +68,14 @@ func (b *confirmRegister) GetInputTemplate(requireRawParamAttr string) interface
 
 func (b *confirmRegister) LoadUsers(arg dbReqs.Member) (confirmRegisterUsers []*confirmRegisterUser, resultErr error) {
 	confirmRegisterUsers = make([]*confirmRegisterUser, 0)
-	if dbDatas, err := database.Club.Member.NameRoleDepartmentLineIDCompanyID(arg); err != nil {
+	if dbDatas, err := database.Club.Member.Select(
+		arg,
+		member.COLUMN_Name,
+		member.COLUMN_Role,
+		member.COLUMN_Department,
+		member.COLUMN_LineID,
+		member.COLUMN_CompanyID,
+	); err != nil {
 		return nil, err
 	} else {
 		for _, v := range dbDatas {
@@ -75,7 +83,7 @@ func (b *confirmRegister) LoadUsers(arg dbReqs.Member) (confirmRegisterUsers []*
 				Department: Department(v.Department),
 				Name:       v.Name,
 				CompanyID:  v.CompanyID,
-				Role:       domain.ClubRole(v.Role.Role),
+				Role:       domain.ClubRole(v.Role),
 				LineID:     *v.LineID,
 			}
 

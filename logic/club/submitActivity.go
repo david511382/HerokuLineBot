@@ -9,8 +9,11 @@ import (
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
+	"heroku-line-bot/storage/database/database/clubdb/table/activity"
 	logisticDb "heroku-line-bot/storage/database/database/clubdb/table/logistic"
-	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/table/member"
+	"heroku-line-bot/storage/database/database/clubdb/table/memberactivity"
+	dbReqs "heroku-line-bot/storage/database/domain/reqs"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"sort"
@@ -83,7 +86,16 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 	arg := dbReqs.Activity{
 		ID: util.GetIntP(b.ActivityID),
 	}
-	if dbDatas, err := database.Club.Activity.IDDatePlaceIDCourtsSubsidyDescriptionPeopleLimit(arg); err != nil {
+	if dbDatas, err := database.Club.Activity.Select(
+		arg,
+		activity.COLUMN_ID,
+		activity.COLUMN_Date,
+		activity.COLUMN_PlaceID,
+		activity.COLUMN_CourtsAndTime,
+		activity.COLUMN_ClubSubsidy,
+		activity.COLUMN_Description,
+		activity.COLUMN_PeopleLimit,
+	); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	} else if len(dbDatas) == 0 {
@@ -108,7 +120,11 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 		memberActivityArg := dbReqs.MemberActivity{
 			ActivityID: util.GetIntP(b.ActivityID),
 		}
-		if dbDatas, err := database.Club.MemberActivity.IDMemberID(memberActivityArg); err != nil {
+		if dbDatas, err := database.Club.MemberActivity.Select(
+			memberActivityArg,
+			memberactivity.COLUMN_ID,
+			memberactivity.COLUMN_MemberID,
+		); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		} else {
@@ -124,7 +140,13 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 				IDs: memberIDs,
 			}
 			clubMemberIDMap := make(map[int]isClubMemberName)
-			if dbDatas, err := database.Club.Member.IDNameDepartmentJoinDate(arg); err != nil {
+			if dbDatas, err := database.Club.Member.Select(
+				arg,
+				member.COLUMN_ID,
+				member.COLUMN_Name,
+				member.COLUMN_Department,
+				member.COLUMN_JoinDate,
+			); err != nil {
 				resultErrInfo = errUtil.NewError(err)
 				return
 			} else {

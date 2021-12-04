@@ -13,7 +13,7 @@ import (
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledger"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledgercourt"
 	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtrefundledger"
-	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
+	dbReqs "heroku-line-bot/storage/database/domain/reqs"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"time"
@@ -107,7 +107,7 @@ func GetCourts(
 	}
 
 	ledgerCourtRefundMap := make(map[int]map[int][]*rentalcourtrefundledger.RentalCourtRefundLedgerTable)
-	if dbDatas, err := database.Club.RentalCourtRefundLedger.All(dbReqs.RentalCourtRefundLedger{
+	if dbDatas, err := database.Club.RentalCourtRefundLedger.Select(dbReqs.RentalCourtRefundLedger{
 		LedgerIDs: ledgerIDs,
 	}); err != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))

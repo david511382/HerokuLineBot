@@ -10,7 +10,8 @@ import (
 	"heroku-line-bot/service/linebot/domain/model"
 	linebotReqs "heroku-line-bot/service/linebot/domain/model/reqs"
 	"heroku-line-bot/storage/database"
-	dbReqs "heroku-line-bot/storage/database/domain/model/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/table/member"
+	dbReqs "heroku-line-bot/storage/database/domain/reqs"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"strconv"
@@ -142,7 +143,11 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 			arg := dbReqs.Member{
 				Role: (*int16)(&b.Role),
 			}
-			if dbDatas, err := database.Club.Member.NameLineID(arg); err != nil {
+			if dbDatas, err := database.Club.Member.Select(
+				arg,
+				member.COLUMN_Name,
+				member.COLUMN_LineID,
+			); err != nil {
 				resultErrInfo = errUtil.NewError(err)
 				return
 			} else if len(dbDatas) > 0 {

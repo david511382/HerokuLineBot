@@ -46,8 +46,6 @@ type RentalCourtRefundLedger struct {
 
 	LedgerID  *int
 	LedgerIDs []int
-
-	PlaceID *int
 }
 
 type RentalCourtLedgerCourt struct {
