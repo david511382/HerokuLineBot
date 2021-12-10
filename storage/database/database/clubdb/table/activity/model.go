@@ -23,6 +23,7 @@ type Column string
 
 const (
 	COLUMN_ID            Column = "id"
+	COLUMN_TeamID        Column = "team_id"
 	COLUMN_Date          Column = "date"
 	COLUMN_PlaceID       Column = "place_id"
 	COLUMN_CourtsAndTime Column = "courts_and_time"
@@ -39,6 +40,7 @@ const (
 
 type ActivityTable struct {
 	ID            int       `gorm:"column:id;type:serial;primary_key;not null"`
+	TeamID        int       `gorm:"column:team_id;type:int;not null"`
 	Date          time.Time `gorm:"column:date;type:date;not null;index"`
 	PlaceID       int       `gorm:"column:place_id;type:int;not null"`
 	CourtsAndTime string    `gorm:"column:courts_and_time;type:varchar(200);not null"`
@@ -79,6 +81,10 @@ func (t ActivityTable) whereArg(dp *gorm.DB, arg reqs.Activity) *gorm.DB {
 
 	if p := arg.ID; p != nil {
 		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
+	}
+
+	if p := arg.TeamID; p != nil {
+		dp = dp.Where(string(COLUMN_TeamID+" = ?"), p)
 	}
 
 	if p := arg.PlaceID; p != nil {

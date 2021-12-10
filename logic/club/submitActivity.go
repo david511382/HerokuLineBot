@@ -95,6 +95,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 		activity.COLUMN_ClubSubsidy,
 		activity.COLUMN_Description,
 		activity.COLUMN_PeopleLimit,
+		activity.COLUMN_TeamID,
 	); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
@@ -111,6 +112,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 			PeopleLimit: v.PeopleLimit,
 			ClubSubsidy: v.ClubSubsidy,
 			IsComplete:  false,
+			TeamID:      v.TeamID,
 		}
 		if errInfo := b.NewActivity.ParseCourts(v.CourtsAndTime); errInfo != nil {
 			resultErrInfo = errInfo
@@ -280,6 +282,7 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 				Name:        domain.BALL_NAME,
 				Amount:      -b.Rsl4Consume,
 				Description: "打球",
+				TeamID:      b.TeamID,
 			}
 			if err := database.Club.Logistic.Insert(transaction, logisticData); err != nil {
 				resultErrInfo = errUtil.NewError(err)

@@ -125,8 +125,9 @@ func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
 
 func Test_calActivitys(t *testing.T) {
 	type args struct {
+		teamID             int
 		placeDateCourtsMap map[int][]*badmintonCourtLogic.DateCourt
-		rdsSetting         *redisDomain.BadmintonActivity
+		rdsSetting         *redisDomain.BadmintonTeam
 	}
 	tests := []struct {
 		name                    string
@@ -136,7 +137,7 @@ func Test_calActivitys(t *testing.T) {
 		{
 			"refund",
 			args{
-				map[int][]*badmintonCourtLogic.DateCourt{
+				placeDateCourtsMap: map[int][]*badmintonCourtLogic.DateCourt{
 					1: {
 						{
 							Date: *util.NewDateTimeP(global.Location, 2013, 8, 2),
@@ -196,10 +197,10 @@ func Test_calActivitys(t *testing.T) {
 						},
 					},
 				},
-				&redisDomain.BadmintonActivity{
-					Description: "",
-					ClubSubsidy: 8,
-					PeopleLimit: 2,
+				rdsSetting: &redisDomain.BadmintonTeam{
+					Description: nil,
+					ClubSubsidy: util.GetInt16P(8),
+					PeopleLimit: util.GetInt16P(2),
 				},
 			},
 			[]*clubLogic.NewActivity{
@@ -229,7 +230,7 @@ func Test_calActivitys(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotNewActivityHandlers := calActivitys(tt.args.placeDateCourtsMap, tt.args.rdsSetting)
+			gotNewActivityHandlers := calActivitys(tt.args.teamID, tt.args.placeDateCourtsMap, tt.args.rdsSetting)
 			for _, hs := range gotNewActivityHandlers {
 				sort.SliceStable(hs.Courts, func(i, j int) bool {
 					return hs.Courts[i].ToTime.Before(hs.Courts[j].ToTime)

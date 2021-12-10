@@ -8,7 +8,7 @@ type IContext interface {
 	GetParam() (json string)
 	Reply(replyMessges []interface{}) error
 	PushAdmin(replyMessges []interface{}) error
-	PushRoom(replyMessges []interface{}) error
+	PushRoom(roomID string, replyMessges []interface{}) error
 	GetUserID() string
 	GetUserName() string
 	GetBot() *linebot.LineBot

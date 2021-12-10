@@ -66,9 +66,6 @@ func LoadEnv() errUtil.IError {
 	if envStr := os.Getenv("LINE_BOT_ADMIN_ID"); envStr != "" {
 		cfg.LineBot.AdminID = envStr
 	}
-	if envStr := os.Getenv("LINE_BOT_ROOM_ID"); envStr != "" {
-		cfg.LineBot.RoomID = envStr
-	}
 	if envStr := os.Getenv("LINE_BOT_CHANNEL_ACCESS_TOKEN"); envStr != "" {
 		cfg.LineBot.ChannelAccessToken = envStr
 	}

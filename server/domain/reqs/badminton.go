@@ -5,6 +5,7 @@ import "time"
 type AddRentalCourt struct {
 	MustFromToDate
 	PlaceID      int          `json:"place_id" form:"place_id" binding:"required" uri:"place_id" url:"place_id"`
+	TeamID       int          `json:"team_id" form:"team_id" binding:"required" uri:"team_id" url:"team_id"`
 	EveryWeekday *int         `json:"every_weekday" form:"every_weekday" binding:"-" uri:"every_weekday" url:"every_weekday"`
 	ExcludeDates []*time.Time `json:"exclude_dates" form:"exclude_dates" time_format:"2006-01-02T15:04:05Z07:00" binding:"-" url:"exclude_dates"`
 

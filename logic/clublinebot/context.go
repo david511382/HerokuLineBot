@@ -73,11 +73,11 @@ func (c *Context) PushAdmin(replyMessges []interface{}) error {
 	)
 }
 
-func (c *Context) PushRoom(replyMessges []interface{}) error {
+func (c *Context) PushRoom(roomID string, replyMessges []interface{}) error {
 	return c.lineBot.tryLine(
 		func() error {
 			_, err := c.lineBot.PushMessage(&reqs.PushMessage{
-				To:       c.lineBot.lineRoomID,
+				To:       roomID,
 				Messages: replyMessges,
 			})
 			return err

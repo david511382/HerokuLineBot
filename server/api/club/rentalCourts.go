@@ -45,9 +45,10 @@ func GetRentalCourts(c *gin.Context) {
 		},
 	}
 
-	placeDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(
+	teamPlaceDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(
 		*util.NewDateTimePOf(&reqs.FromDate),
 		*util.NewDateTimePOf(&reqs.ToDate),
+		&reqs.TeamID,
 		nil,
 	)
 	if errInfo != nil {
@@ -55,13 +56,13 @@ func GetRentalCourts(c *gin.Context) {
 		return
 	}
 
-	if len(placeDateCourtsMap) == 0 {
+	if _, exist := teamPlaceDateCourtsMap[reqs.TeamID]; !exist {
 		common.Success(c, result)
 		return
 	}
 
 	placeIDs := make([]int, 0)
-	for placeID := range placeDateCourtsMap {
+	for placeID := range teamPlaceDateCourtsMap[reqs.TeamID] {
 		placeIDs = append(placeIDs, placeID)
 	}
 	idPlaceMap, errInfo := badmintonPlaceLogic.Load(placeIDs...)
@@ -74,7 +75,7 @@ func GetRentalCourts(c *gin.Context) {
 	dateIntCourtsMap := make(map[util.DateInt][]*resp.GetRentalCourtsDayCourtsInfo)
 	notPayDateIntCourtsMap := make(map[util.DateInt][]*resp.GetRentalCourtsCourtInfo)
 	notRefundDateIntCourtsMap := make(map[util.DateInt][]*resp.GetRentalCourtsCourtInfo)
-	for placeID, dateCourts := range placeDateCourtsMap {
+	for placeID, dateCourts := range teamPlaceDateCourtsMap[reqs.TeamID] {
 		for _, dateCourt := range dateCourts {
 			courtDateInt := dateCourt.Date.Int()
 			for _, court := range dateCourt.Courts {

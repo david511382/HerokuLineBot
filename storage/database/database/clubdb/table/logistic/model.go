@@ -23,6 +23,7 @@ type Column string
 
 const (
 	COLUMN_ID          Column = "id"
+	COLUMN_TeamID      Column = "team_id"
 	COLUMN_Date        Column = "date"
 	COLUMN_Name        Column = "name"
 	COLUMN_Amount      Column = "amount"
@@ -31,6 +32,7 @@ const (
 
 type LogisticTable struct {
 	ID          int       `gorm:"column:id;type:serial;primary_key;not null"`
+	TeamID      int       `gorm:"column:team_id;type:int;not null"`
 	Date        time.Time `gorm:"column:date;type:date;not null;index"`
 	Name        string    `gorm:"column:name;type:varchar(50);not null;index"`
 	Amount      int16     `gorm:"column:amount;type:smallint;not null"`

@@ -6,4 +6,5 @@ type Activity struct {
 	ClubSubsidyNotEqual *int16
 	IsComplete          *bool
 	ID                  *int
+	TeamID              *int
 }

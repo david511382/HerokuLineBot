@@ -21,7 +21,8 @@ var (
 	cadreRichMenuImg,
 	guestRichMenuImg []byte
 
-	liffUrl string
+	liffUrl    string
+	clubTeamID int
 )
 
 func Init(cfg *bootstrap.Config, resourceFS embed.FS) errUtil.IError {
@@ -41,6 +42,7 @@ func Init(cfg *bootstrap.Config, resourceFS embed.FS) errUtil.IError {
 		guestRichMenuImg = bs
 	}
 
+	clubTeamID = cfg.Badminton.ClubTeamID
 	liffUrl = cfg.Badminton.LiffUrl
 	return nil
 }

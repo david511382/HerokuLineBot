@@ -1,17 +1,18 @@
 package activitycreator
 
 import (
+	"fmt"
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/global"
 	badmintonCourtLogic "heroku-line-bot/logic/badminton/court"
 	badmintonCourtLogicDomain "heroku-line-bot/logic/badminton/court/domain"
+	badmintonteamLogic "heroku-line-bot/logic/badminton/team"
 	clubLogic "heroku-line-bot/logic/club"
 	"heroku-line-bot/logic/club/domain"
 	clubLineBotLogic "heroku-line-bot/logic/clublinebot"
 	commonLogic "heroku-line-bot/logic/common"
 	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/storage/database"
-	"heroku-line-bot/storage/redis"
 	redisDomain "heroku-line-bot/storage/redis/domain"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
@@ -32,8 +33,18 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 		}
 	}()
 
+	teamSettingMap, errInfo := badmintonteamLogic.Load()
+	if errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
+			return
+		}
+	}
+	if teamSettingMap == nil {
+		return
+	}
 	currentDate := *util.NewDateTimePOf(&runTime)
-	newActivityHandlers, errInfo := calDateActivity(currentDate)
+	newActivityHandlers, errInfo := calDateActivity(teamSettingMap, currentDate)
 	if errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
@@ -44,11 +55,17 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 		return
 	}
 
+	newActivityTeamSettingMap := make(map[int]*redisDomain.BadmintonTeam)
 	if transaction := database.Club.Begin(); transaction.Error != nil {
 		resultErrInfo = errUtil.NewError(transaction.Error)
 		return
 	} else {
 		for _, newActivityHandler := range newActivityHandlers {
+			teamID := newActivityHandler.TeamID
+			if newActivityTeamSettingMap[teamID] == nil {
+				newActivityTeamSettingMap[teamID] = teamSettingMap[teamID]
+			}
+
 			if resultErrInfo = newActivityHandler.InsertActivity(transaction); resultErrInfo != nil {
 				return
 			}
@@ -62,7 +79,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 		}
 	}
 
-	if errInfo := notifyGroup(); errInfo != nil {
+	if errInfo := notifyGroup(newActivityTeamSettingMap); errInfo != nil {
 		errInfo.SetLevel(errUtil.WARN)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 	}
@@ -70,49 +87,40 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	return
 }
 
-func calDateActivity(currentDate util.DateTime) (
-	newActivityHandlers []*clubLogic.NewActivity,
+func calDateActivity(teamSettingMap map[int]*redisDomain.BadmintonTeam, currentDate util.DateTime) (
+	resultActivityHandlers []*clubLogic.NewActivity,
 	resultErrInfo errUtil.IError,
 ) {
-	newActivityHandlers = make([]*clubLogic.NewActivity, 0)
+	resultActivityHandlers = make([]*clubLogic.NewActivity, 0)
 
-	rdsSetting, errInfo := redis.BadmintonSetting.Load()
-	if errInfo != nil {
-		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-		if resultErrInfo.IsError() {
-			return
+	for teamID, settting := range teamSettingMap {
+		if settting.ActivityCreateDays == nil {
+			continue
 		}
-	}
-	if rdsSetting == nil {
-		errInfo := errUtil.New("no redis setting", errUtil.WARN)
-		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 
-		rdsSetting = &redisDomain.BadmintonActivity{
-			Description: "7人出團",
-			ClubSubsidy: 0,
+		createActivityDate := currentDate.Next(int(*settting.ActivityCreateDays))
+		teamPlaceDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(createActivityDate, createActivityDate, &teamID, nil)
+		if errInfo != nil {
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			if resultErrInfo.IsError() {
+				return
+			}
 		}
-	}
-	if rdsSetting.ActivityCreateDays == nil {
-		rdsSetting.ActivityCreateDays = util.GetInt16P(6)
-	}
-
-	createActivityDate := currentDate.Next(int(*rdsSetting.ActivityCreateDays))
-	placeDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(createActivityDate, createActivityDate, nil)
-	if errInfo != nil {
-		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-		if resultErrInfo.IsError() {
-			return
+		if _, exist := teamPlaceDateCourtsMap[teamID]; !exist {
+			continue
 		}
-	}
 
-	newActivityHandlers = calActivitys(placeDateCourtsMap, rdsSetting)
+		newActivityHandlers := calActivitys(teamID, teamPlaceDateCourtsMap[teamID], settting)
+		resultActivityHandlers = append(resultActivityHandlers, newActivityHandlers...)
+	}
 
 	return
 }
 
 func calActivitys(
+	teamID int,
 	placeDateCourtsMap map[int][]*badmintonCourtLogic.DateCourt,
-	rdsSetting *redisDomain.BadmintonActivity,
+	rdsSetting *redisDomain.BadmintonTeam,
 ) (
 	newActivityHandlers []*clubLogic.NewActivity,
 ) {
@@ -133,16 +141,22 @@ func calActivitys(
 			newActivityHandler := &clubLogic.NewActivity{
 				Date:        dateInt.DateTime(global.Location),
 				PlaceID:     place,
-				Description: rdsSetting.Description,
-				ClubSubsidy: rdsSetting.ClubSubsidy,
+				TeamID:      teamID,
+				Description: "",
+				ClubSubsidy: 0,
 				IsComplete:  false,
+				PeopleLimit: rdsSetting.PeopleLimit,
 				Courts:      make([]*badmintonCourtLogicDomain.ActivityCourt, 0),
 			}
-			peopleLimit := rdsSetting.PeopleLimit
-			if peopleLimit == 0 {
-				peopleLimit = int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2)
+			if v := rdsSetting.Description; v != nil {
+				newActivityHandler.Description = *v
 			}
-			newActivityHandler.PeopleLimit = util.GetInt16P(peopleLimit)
+			if v := rdsSetting.ClubSubsidy; v != nil {
+				newActivityHandler.ClubSubsidy = *v
+			}
+			if newActivityHandler.PeopleLimit == nil {
+				newActivityHandler.PeopleLimit = util.GetInt16P(int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2))
+			}
 
 			for _, dateCourt := range dateCourts {
 				for _, court := range dateCourt.Courts {
@@ -173,23 +187,39 @@ func calActivitys(
 	return
 }
 
-func notifyGroup() (resultErrInfo errUtil.IError) {
-	getActivityHandler := &clubLogic.GetActivities{}
-	pushMessage, err := getActivityHandler.GetActivitiesMessage("開放活動報名", false, false)
-	if err != nil {
-		errInfo := errUtil.NewError(err)
-		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-		return
-	}
-	pushMessages := []interface{}{
-		linebot.GetTextMessage("活動開放報名，請私下與我報名"),
-		pushMessage,
-	}
-	linebotContext := clubLineBotLogic.NewContext("", "", &clubLineBotLogic.Bot)
-	if err := linebotContext.PushRoom(pushMessages); err != nil {
-		errInfo := errUtil.NewError(err)
-		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-		return
+func notifyGroup(teamSettingMap map[int]*redisDomain.BadmintonTeam) (resultErrInfo errUtil.IError) {
+	for teamID, v := range teamSettingMap {
+		if v.NotifyLineRommID == nil {
+			continue
+		}
+		notifyRoomID := *v.NotifyLineRommID
+
+		getActivityHandler := &clubLogic.GetActivities{}
+		if errInfo := getActivityHandler.Init(nil); errInfo != nil {
+			if errInfo.IsError() {
+				errInfo.SetLevel(errUtil.WARN)
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+				continue
+			}
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		}
+		getActivityHandler.TeamID = teamID
+		pushMessage, err := getActivityHandler.GetActivitiesMessage("開放活動報名", false, false)
+		if err != nil {
+			errInfo := errUtil.NewError(err, errUtil.WARN)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			continue
+		}
+		pushMessages := []interface{}{
+			linebot.GetTextMessage(fmt.Sprintf("%s，活動開放報名，請私下與我報名", v.Name)),
+			pushMessage,
+		}
+		linebotContext := clubLineBotLogic.NewContext("", "", &clubLineBotLogic.Bot)
+		if err := linebotContext.PushRoom(notifyRoomID, pushMessages); err != nil {
+			errInfo := errUtil.NewError(err, errUtil.WARN)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			continue
+		}
 	}
 
 	return

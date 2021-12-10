@@ -28,6 +28,7 @@ type NewActivity struct {
 	Context     domain.ICmdHandlerContext    `json:"-"`
 	Date        util.DateTime                `json:"date"`
 	PlaceID     int                          `json:"place_id"`
+	TeamID      int                          `json:"team_id"`
 	Description string                       `json:"description"`
 	PeopleLimit *int16                       `json:"people_limit"`
 	ClubSubsidy int16                        `json:"club_subsidy"`
@@ -57,6 +58,7 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 				PricePerHour: 480,
 			},
 		},
+		TeamID: clubTeamID,
 	}
 	totalHours := b.getCourtHours()
 	b.PeopleLimit = util.GetInt16P(int16(totalHours.MulFloat(float64(domain.PEOPLE_PER_HOUR)).ToInt()))
@@ -351,6 +353,7 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errUti
 		Description:   b.Description,
 		PeopleLimit:   b.PeopleLimit,
 		IsComplete:    b.IsComplete,
+		TeamID:        b.TeamID,
 	}
 	if err := database.Club.Activity.Insert(transaction, data); err != nil {
 		resultErrInfo = errUtil.NewError(err)

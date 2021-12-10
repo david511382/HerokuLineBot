@@ -24,6 +24,7 @@ type NewLogistic struct {
 	Name        string                    `json:"name"`
 	Description string                    `json:"description"`
 	Amount      int16                     `json:"amount"`
+	TeamID      int                       `json:"team_id"`
 }
 
 func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
@@ -34,6 +35,7 @@ func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 		Name:        domain.BALL_NAME,
 		Description: "買球 https://shopee.tw/product/4013408/4461135276",
 		Amount:      180,
+		TeamID:      clubTeamID,
 	}
 
 	return nil
@@ -364,6 +366,7 @@ func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErrInfo errUti
 		Name:        b.Name,
 		Amount:      b.Amount,
 		Description: b.Description,
+		TeamID:      b.TeamID,
 	}
 	if err := database.Club.Logistic.BaseTable.Insert(transaction, data); err != nil {
 		resultErrInfo = errUtil.NewError(err)

@@ -60,6 +60,7 @@ func AddRentalCourt(c *gin.Context) {
 	{
 		errInfo := badmintoncourtLogic.VerifyAddCourt(
 			reqs.PlaceID,
+			reqs.TeamID,
 			reqs.PricePerHour,
 			courtDetail,
 			reqs.DespositMoney,
@@ -85,6 +86,7 @@ func AddRentalCourt(c *gin.Context) {
 	}
 	if errInfo := badmintoncourtLogic.AddCourt(
 		reqs.PlaceID,
+		reqs.TeamID,
 		reqs.PricePerHour,
 		courtDetail,
 		reqs.DespositMoney, reqs.BalanceMoney,

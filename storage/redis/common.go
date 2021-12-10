@@ -5,7 +5,7 @@ import (
 	"heroku-line-bot/storage/redis/conn"
 	"heroku-line-bot/storage/redis/domain"
 	"heroku-line-bot/storage/redis/key/badmintonplace"
-	"heroku-line-bot/storage/redis/key/badmintonsetting"
+	"heroku-line-bot/storage/redis/key/badmintonteam"
 	"heroku-line-bot/storage/redis/key/lineuser"
 	"heroku-line-bot/storage/redis/key/userusingstatus"
 	errUtil "heroku-line-bot/util/error"
@@ -13,10 +13,10 @@ import (
 )
 
 var (
-	UserUsingStatus  userusingstatus.Key
-	LineUser         lineuser.Key
-	BadmintonSetting badmintonsetting.Key
-	BadmintonPlace   badmintonplace.Key
+	UserUsingStatus userusingstatus.Key
+	LineUser        lineuser.Key
+	BadmintonPlace  badmintonplace.Key
+	BadmintonTeam   badmintonteam.Key
 )
 
 func Init(cfg *bootstrap.Config) errUtil.IError {
@@ -32,11 +32,11 @@ func Init(cfg *bootstrap.Config) errUtil.IError {
 		LineUser = lineuser.New(connection, connection, domain.CLUB_BASE_KEY)
 		LineUser.SetConnection(maxConnAge)
 
-		BadmintonSetting = badmintonsetting.New(connection, connection, domain.CLUB_BASE_KEY)
-		BadmintonSetting.SetConnection(maxConnAge)
-
 		BadmintonPlace = badmintonplace.New(connection, connection, domain.CLUB_BASE_KEY)
 		BadmintonPlace.SetConnection(maxConnAge)
+
+		BadmintonTeam = badmintonteam.New(connection, connection, domain.CLUB_BASE_KEY)
+		BadmintonTeam.SetConnection(maxConnAge)
 	}
 
 	return nil
@@ -45,6 +45,6 @@ func Init(cfg *bootstrap.Config) errUtil.IError {
 func Dispose() {
 	UserUsingStatus.Dispose()
 	LineUser.Dispose()
-	BadmintonSetting.Dispose()
 	BadmintonPlace.Dispose()
+	BadmintonTeam.Dispose()
 }

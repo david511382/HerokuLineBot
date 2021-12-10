@@ -23,6 +23,7 @@ func TestGetCourts(t *testing.T) {
 	type args struct {
 		fromDate util.DateTime
 		toDate   util.DateTime
+		teamID   *int
 		placeID  *int
 	}
 	type migrations struct {
@@ -34,7 +35,7 @@ func TestGetCourts(t *testing.T) {
 		rentalCourtDetail        []*rentalcourtdetail.RentalCourtDetailTable
 	}
 	type wants struct {
-		gotPlaceDateCourtsMap map[int][]*DateCourt
+		teamPlaceDateCourtsMap map[int]map[int][]*DateCourt
 	}
 	tests := []struct {
 		name       string
@@ -42,6 +43,131 @@ func TestGetCourts(t *testing.T) {
 		migrations migrations
 		wants      wants
 	}{
+		{
+			"team place",
+			args{
+				fromDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+				toDate:   *util.NewDateTimeP(global.Location, 2013, 8, 2),
+				teamID:   util.GetIntP(1),
+				placeID:  util.GetIntP(1),
+			},
+			migrations{
+				rentalCourts: []*rentalcourt.RentalCourtTable{
+					{
+						ID:      1,
+						Date:    commonLogic.GetTime(2013, 8, 2),
+						PlaceID: 1,
+					},
+					{
+						ID:      2,
+						Date:    commonLogic.GetTime(2013, 8, 2),
+						PlaceID: 2,
+					},
+				},
+				rentalCourtLedgers: []*rentalcourtledger.RentalCourtLedgerTable{
+					{
+						ID:                  1,
+						RentalCourtDetailID: 1,
+						IncomeID:            nil,
+						DepositIncomeID:     nil,
+						TeamID:              1,
+						PlaceID:             1,
+						PricePerHour:        2,
+						PayDate:             nil,
+						StartDate:           commonLogic.GetTime(2013, 8, 2),
+						EndDate:             commonLogic.GetTime(2013, 8, 2),
+					},
+					// false
+					{
+						ID:                  2,
+						RentalCourtDetailID: 1,
+						IncomeID:            nil,
+						DepositIncomeID:     nil,
+						TeamID:              2,
+						PlaceID:             1,
+						PricePerHour:        8,
+						PayDate:             nil,
+						StartDate:           commonLogic.GetTime(2013, 8, 2),
+						EndDate:             commonLogic.GetTime(2013, 8, 2),
+					},
+					{
+						ID:                  3,
+						RentalCourtDetailID: 1,
+						IncomeID:            nil,
+						DepositIncomeID:     nil,
+						TeamID:              1,
+						PlaceID:             2,
+						PricePerHour:        8,
+						PayDate:             nil,
+						StartDate:           commonLogic.GetTime(2013, 8, 2),
+						EndDate:             commonLogic.GetTime(2013, 8, 2),
+					},
+				},
+				rentalCourtRefundLedgers: []*rentalcourtrefundledger.RentalCourtRefundLedgerTable{},
+				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{
+					{
+						RentalCourtID:       1,
+						RentalCourtLedgerID: 1,
+						TeamID:              1,
+					},
+					{
+						RentalCourtID:       1,
+						RentalCourtLedgerID: 2,
+						TeamID:              2,
+					},
+					{
+						RentalCourtID:       2,
+						RentalCourtLedgerID: 3,
+						TeamID:              1,
+					},
+				},
+				rentalCourtDetail: []*rentalcourtdetail.RentalCourtDetailTable{
+					{
+						ID:        1,
+						StartTime: string(commonLogic.NewHourMinTime(1, 00)),
+						EndTime:   string(commonLogic.NewHourMinTime(3, 00)),
+						Count:     1,
+					},
+				},
+				incomes: []*income.IncomeTable{},
+			},
+			wants{
+				teamPlaceDateCourtsMap: map[int]map[int][]*DateCourt{
+					1: {
+						1: {
+							{
+								ID:   1,
+								Date: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+								Courts: []*Court{
+									{
+										CourtDetailPrice: CourtDetailPrice{
+											DbCourtDetail: DbCourtDetail{
+												ID: 1,
+												CourtDetail: CourtDetail{
+													TimeRange: util.TimeRange{
+														From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+														To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+													},
+													Count: 1,
+												},
+											},
+											PricePerHour: 2,
+										},
+										Desposit:       nil,
+										BalanceCourIDs: []int{1},
+										Balance: LedgerIncome{
+											ID:     1,
+											Income: nil,
+										},
+										Refunds: nil,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 		{
 			"refund",
 			args{
@@ -62,6 +188,7 @@ func TestGetCourts(t *testing.T) {
 						ID:                  11,
 						RentalCourtDetailID: 1,
 						IncomeID:            util.GetIntP(1),
+						TeamID:              1,
 						DepositIncomeID:     nil,
 						PlaceID:             1,
 						PricePerHour:        2,
@@ -74,6 +201,7 @@ func TestGetCourts(t *testing.T) {
 						RentalCourtDetailID: 1,
 						IncomeID:            nil,
 						DepositIncomeID:     nil,
+						TeamID:              1,
 						PlaceID:             1,
 						PricePerHour:        2,
 						PayDate:             nil,
@@ -86,6 +214,7 @@ func TestGetCourts(t *testing.T) {
 						RentalCourtDetailID: 2,
 						IncomeID:            util.GetIntP(2),
 						DepositIncomeID:     nil,
+						TeamID:              1,
 						PlaceID:             1,
 						PricePerHour:        2,
 						PayDate:             commonLogic.GetTimeP(2013, 8, 2),
@@ -122,22 +251,27 @@ func TestGetCourts(t *testing.T) {
 					{
 						RentalCourtID:       1,
 						RentalCourtLedgerID: 11,
+						TeamID:              1,
 					},
 					{
 						RentalCourtID:       1,
 						RentalCourtLedgerID: 13,
+						TeamID:              1,
 					},
 					{
 						RentalCourtID:       1,
 						RentalCourtLedgerID: 12,
+						TeamID:              1,
 					},
 					{
 						RentalCourtID:       1,
 						RentalCourtLedgerID: 1,
+						TeamID:              1,
 					},
 					{
 						RentalCourtID:       1,
 						RentalCourtLedgerID: 2,
+						TeamID:              1,
 					},
 				},
 				rentalCourtDetail: []*rentalcourtdetail.RentalCourtDetailTable{
@@ -172,6 +306,7 @@ func TestGetCourts(t *testing.T) {
 						Date:        commonLogic.GetTime(2013, 8, 2),
 						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 						Description: "",
+						TeamID:      1,
 						ReferenceID: nil,
 						Income:      -4,
 					},
@@ -180,6 +315,7 @@ func TestGetCourts(t *testing.T) {
 						Date:        commonLogic.GetTime(2013, 8, 2),
 						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 						Description: "",
+						TeamID:      1,
 						ReferenceID: nil,
 						Income:      -4,
 					},
@@ -188,136 +324,139 @@ func TestGetCourts(t *testing.T) {
 						Date:        commonLogic.GetTime(2013, 8, 2),
 						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 						Description: "",
+						TeamID:      1,
 						ReferenceID: nil,
 						Income:      2,
 					},
 				},
 			},
 			wants{
-				gotPlaceDateCourtsMap: map[int][]*DateCourt{
+				teamPlaceDateCourtsMap: map[int]map[int][]*DateCourt{
 					1: {
-						{
-							ID:   1,
-							Date: *util.NewDateTimeP(global.Location, 2013, 8, 2),
-							Courts: []*Court{
-								{
-									CourtDetailPrice: CourtDetailPrice{
-										DbCourtDetail: DbCourtDetail{
-											ID: 1,
-											CourtDetail: CourtDetail{
-												TimeRange: util.TimeRange{
-													From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
-													To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+						1: {
+							{
+								ID:   1,
+								Date: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+								Courts: []*Court{
+									{
+										CourtDetailPrice: CourtDetailPrice{
+											DbCourtDetail: DbCourtDetail{
+												ID: 1,
+												CourtDetail: CourtDetail{
+													TimeRange: util.TimeRange{
+														From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+														To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+													},
+													Count: 1,
 												},
-												Count: 1,
 											},
+											PricePerHour: 2,
 										},
-										PricePerHour: 2,
-									},
-									Desposit:       nil,
-									BalanceCourIDs: []int{1},
-									Balance: LedgerIncome{
-										ID: 11,
-										Income: &Income{
-											ID:      1,
-											PayDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
-											Money:   -4,
-										},
-									},
-									Refunds: []*RefundMulCourtIncome{
-										{
-											ID: 1,
+										Desposit:       nil,
+										BalanceCourIDs: []int{1},
+										Balance: LedgerIncome{
+											ID: 11,
 											Income: &Income{
-												ID:      3,
+												ID:      1,
 												PayDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
-												Money:   2,
+												Money:   -4,
 											},
+										},
+										Refunds: []*RefundMulCourtIncome{
+											{
+												ID: 1,
+												Income: &Income{
+													ID:      3,
+													PayDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+													Money:   2,
+												},
+												DbCourtDetail: DbCourtDetail{
+													ID: 3,
+													CourtDetail: CourtDetail{
+														TimeRange: util.TimeRange{
+															From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
+															To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+														},
+														Count: 1,
+													},
+												},
+											},
+											{
+												ID:     2,
+												Income: nil,
+												DbCourtDetail: DbCourtDetail{
+													ID: 3,
+													CourtDetail: CourtDetail{
+														TimeRange: util.TimeRange{
+															From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
+															To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+														},
+														Count: 1,
+													},
+												},
+											},
+										},
+									},
+									{
+										CourtDetailPrice: CourtDetailPrice{
 											DbCourtDetail: DbCourtDetail{
-												ID: 3,
+												ID: 1,
 												CourtDetail: CourtDetail{
 													TimeRange: util.TimeRange{
-														From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
+														From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
 														To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
 													},
 													Count: 1,
 												},
 											},
+											PricePerHour: 2,
 										},
-										{
-											ID:     2,
+										Desposit:       nil,
+										BalanceCourIDs: []int{1},
+										Balance: LedgerIncome{
+											ID:     12,
 											Income: nil,
-											DbCourtDetail: DbCourtDetail{
-												ID: 3,
-												CourtDetail: CourtDetail{
-													TimeRange: util.TimeRange{
-														From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
-														To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
-													},
-													Count: 1,
-												},
-											},
 										},
+										Refunds: nil,
 									},
-								},
-								{
-									CourtDetailPrice: CourtDetailPrice{
-										DbCourtDetail: DbCourtDetail{
-											ID: 1,
-											CourtDetail: CourtDetail{
-												TimeRange: util.TimeRange{
-													From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
-													To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
-												},
-												Count: 1,
-											},
-										},
-										PricePerHour: 2,
-									},
-									Desposit:       nil,
-									BalanceCourIDs: []int{1},
-									Balance: LedgerIncome{
-										ID:     12,
-										Income: nil,
-									},
-									Refunds: nil,
-								},
 
-								{
-									CourtDetailPrice: CourtDetailPrice{
-										DbCourtDetail: DbCourtDetail{
-											ID: 2,
-											CourtDetail: CourtDetail{
-												TimeRange: util.TimeRange{
-													From: commonLogic.NewHourMinTime(3, 0).ForceTime(),
-													To:   commonLogic.NewHourMinTime(6, 0).ForceTime(),
-												},
-												Count: 1,
-											},
-										},
-										PricePerHour: 2,
-									},
-									Desposit:       nil,
-									BalanceCourIDs: []int{1},
-									Balance: LedgerIncome{
-										ID: 13,
-										Income: &Income{
-											ID:      2,
-											PayDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
-											Money:   -4,
-										},
-									},
-									Refunds: []*RefundMulCourtIncome{
-										{
-											ID:     3,
-											Income: nil,
+									{
+										CourtDetailPrice: CourtDetailPrice{
 											DbCourtDetail: DbCourtDetail{
-												ID: 4,
+												ID: 2,
 												CourtDetail: CourtDetail{
 													TimeRange: util.TimeRange{
 														From: commonLogic.NewHourMinTime(3, 0).ForceTime(),
-														To:   commonLogic.NewHourMinTime(4, 0).ForceTime(),
+														To:   commonLogic.NewHourMinTime(6, 0).ForceTime(),
 													},
 													Count: 1,
+												},
+											},
+											PricePerHour: 2,
+										},
+										Desposit:       nil,
+										BalanceCourIDs: []int{1},
+										Balance: LedgerIncome{
+											ID: 13,
+											Income: &Income{
+												ID:      2,
+												PayDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+												Money:   -4,
+											},
+										},
+										Refunds: []*RefundMulCourtIncome{
+											{
+												ID:     3,
+												Income: nil,
+												DbCourtDetail: DbCourtDetail{
+													ID: 4,
+													CourtDetail: CourtDetail{
+														TimeRange: util.TimeRange{
+															From: commonLogic.NewHourMinTime(3, 0).ForceTime(),
+															To:   commonLogic.NewHourMinTime(4, 0).ForceTime(),
+														},
+														Count: 1,
+													},
 												},
 											},
 										},
@@ -351,28 +490,30 @@ func TestGetCourts(t *testing.T) {
 				t.Fatal(err.Error())
 			}
 
-			gotPlaceDateCourtsMap, gotResultErrInfo := GetCourts(tt.args.fromDate, tt.args.toDate, tt.args.placeID)
+			gotTeamPlaceDateCourtsMap, gotResultErrInfo := GetCourts(tt.args.fromDate, tt.args.toDate, tt.args.teamID, tt.args.placeID)
 			if gotResultErrInfo != nil {
 				t.Errorf("GetCourts() error = %v", gotResultErrInfo.ErrorWithTrace())
 				return
 			}
 
-			for _, dateCourts := range gotPlaceDateCourtsMap {
-				sort.Slice(dateCourts, func(i, j int) bool {
-					return dateCourts[i].Date.Time().Before(dateCourts[j].Date.Time())
-				})
-				for _, dateCourt := range dateCourts {
-					sort.Slice(dateCourt.Courts, func(i, j int) bool {
-						return dateCourt.Courts[i].Balance.ID < dateCourt.Courts[j].Balance.ID
+			for _, placeDateCourtsMap := range gotTeamPlaceDateCourtsMap {
+				for _, dateCourts := range placeDateCourtsMap {
+					sort.Slice(dateCourts, func(i, j int) bool {
+						return dateCourts[i].Date.Time().Before(dateCourts[j].Date.Time())
 					})
-					for _, court := range dateCourt.Courts {
-						sort.Slice(court.Refunds, func(i, j int) bool {
-							return court.Refunds[i].ID < court.Refunds[j].ID
+					for _, dateCourt := range dateCourts {
+						sort.Slice(dateCourt.Courts, func(i, j int) bool {
+							return dateCourt.Courts[i].Balance.ID < dateCourt.Courts[j].Balance.ID
 						})
+						for _, court := range dateCourt.Courts {
+							sort.Slice(court.Refunds, func(i, j int) bool {
+								return court.Refunds[i].ID < court.Refunds[j].ID
+							})
+						}
 					}
 				}
 			}
-			if ok, msg := util.Comp(gotPlaceDateCourtsMap, tt.wants.gotPlaceDateCourtsMap); !ok {
+			if ok, msg := util.Comp(gotTeamPlaceDateCourtsMap, tt.wants.teamPlaceDateCourtsMap); !ok {
 				t.Fatal(msg)
 			}
 		})
@@ -382,6 +523,7 @@ func TestGetCourts(t *testing.T) {
 func TestAddCourt(t *testing.T) {
 	type args struct {
 		placeID         int
+		teamID          int
 		pricePerHour    int
 		courtDetail     CourtDetail
 		despositMoney   *int
@@ -416,6 +558,7 @@ func TestAddCourt(t *testing.T) {
 			args{
 				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
 				placeID:      1,
+				teamID:       1,
 				pricePerHour: 10,
 				courtDetail: CourtDetail{
 					TimeRange: util.TimeRange{
@@ -447,6 +590,7 @@ func TestAddCourt(t *testing.T) {
 				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{
 					{
 						ID:                  1,
+						TeamID:              1,
 						RentalCourtID:       1,
 						RentalCourtLedgerID: 1,
 					},
@@ -455,6 +599,7 @@ func TestAddCourt(t *testing.T) {
 					{
 						ID:                  1,
 						RentalCourtDetailID: 1,
+						TeamID:              1,
 						PlaceID:             1,
 						PricePerHour:        10,
 						IncomeID:            util.GetIntP(2),
@@ -468,6 +613,7 @@ func TestAddCourt(t *testing.T) {
 					{
 						ID:          1,
 						Date:        *util.GetTimePLoc(global.Location, 2013, 8, 1),
+						TeamID:      1,
 						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 						Description: domain.INCOME_DESCRIPTION_DESPOSIT,
 						Income:      5,
@@ -475,6 +621,7 @@ func TestAddCourt(t *testing.T) {
 					{
 						ID:          2,
 						Date:        *util.GetTimePLoc(global.Location, 2013, 8, 3),
+						TeamID:      1,
 						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 						Description: domain.INCOME_DESCRIPTION_BALANCE,
 						Income:      15,
@@ -496,6 +643,7 @@ func TestAddCourt(t *testing.T) {
 			args{
 				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
 				placeID:      1,
+				teamID:       1,
 				pricePerHour: 10,
 				courtDetail: CourtDetail{
 					TimeRange: util.TimeRange{
@@ -527,6 +675,7 @@ func TestAddCourt(t *testing.T) {
 			args{
 				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
 				placeID:      1,
+				teamID:       1,
 				pricePerHour: 10,
 				courtDetail: CourtDetail{
 					TimeRange: util.TimeRange{
@@ -561,6 +710,7 @@ func TestAddCourt(t *testing.T) {
 			args{
 				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
 				placeID:      1,
+				teamID:       1,
 				pricePerHour: 10,
 				courtDetail: CourtDetail{
 					TimeRange: util.TimeRange{
@@ -601,6 +751,7 @@ func TestAddCourt(t *testing.T) {
 				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{
 					{
 						ID:                  1,
+						TeamID:              1,
 						RentalCourtID:       2,
 						RentalCourtLedgerID: 1,
 					},
@@ -610,6 +761,7 @@ func TestAddCourt(t *testing.T) {
 						ID:                  1,
 						RentalCourtDetailID: 2,
 						PlaceID:             1,
+						TeamID:              1,
 						PricePerHour:        10,
 						StartDate:           *util.GetTimePLoc(global.Location, 2013, 8, 2),
 						EndDate:             *util.GetTimePLoc(global.Location, 2013, 8, 2),
@@ -646,7 +798,7 @@ func TestAddCourt(t *testing.T) {
 				t.Fatal(err.Error())
 			}
 
-			gotResultErrInfo := AddCourt(tt.args.placeID, tt.args.pricePerHour, tt.args.courtDetail, tt.args.despositMoney, tt.args.balanceMoney, tt.args.despositPayDate, tt.args.balancePayDate, tt.args.rentalDates)
+			gotResultErrInfo := AddCourt(tt.args.placeID, tt.args.teamID, tt.args.pricePerHour, tt.args.courtDetail, tt.args.despositMoney, tt.args.balanceMoney, tt.args.despositPayDate, tt.args.balancePayDate, tt.args.rentalDates)
 			if !errUtil.Equal(gotResultErrInfo, tt.wants.wantResultErrInfo) {
 				if gotResultErrInfo == nil {
 					t.Errorf("error = %v", gotResultErrInfo)

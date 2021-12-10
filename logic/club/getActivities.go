@@ -26,6 +26,7 @@ type GetActivities struct {
 	context               domain.ICmdHandlerContext `json:"-"`
 	activities            []*getActivitiesActivity
 	JoinActivityID        int                           `json:"join_activity_id"`
+	TeamID                int                           `json:"team_id"`
 	LeaveActivityID       int                           `json:"leave_activity_id"`
 	currentUser           clubLineuserLogicDomain.Model `json:"-"`
 	ListMembersActivityID int                           `json:"list_members_activity_id"`
@@ -46,6 +47,7 @@ func (b *GetActivities) Init(context domain.ICmdHandlerContext) (resultErrInfo e
 	*b = GetActivities{
 		context:    context,
 		activities: make([]*getActivitiesActivity, 0),
+		TeamID:     clubTeamID,
 	}
 
 	return nil
@@ -73,6 +75,7 @@ func (b *GetActivities) GetInputTemplate(requireRawParamAttr string) interface{}
 func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 	context := b.context
 	arg := dbReqs.Activity{
+		TeamID:     &b.TeamID,
 		IsComplete: util.GetBoolP(false),
 	}
 	if dbDatas, err := database.Club.Activity.Select(
@@ -521,7 +524,7 @@ func (b *GetActivities) loadCurrentUserID() (replyMsg *string, resultErrInfo err
 		replyMsg = util.GetStringP(domain.USER_NOT_REGISTERED.Error())
 		return
 	}
-
+	// TODO get member teamIDs
 	b.currentUser = *userData
 
 	return

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"heroku-line-bot/service/googlescript"
 	"heroku-line-bot/service/linebot"
-	"heroku-line-bot/service/linebot/domain"
 	lineBotModel "heroku-line-bot/service/linebot/domain/model"
 	lineBotReqs "heroku-line-bot/service/linebot/domain/model/reqs"
 	"heroku-line-bot/util"
@@ -15,8 +14,7 @@ import (
 )
 
 type ClubLineBot struct {
-	lineAdminID,
-	lineRoomID string
+	lineAdminID string
 	*linebot.LineBot
 	OAuth *linebot.OAuth
 	*googlescript.GoogleScript
@@ -39,7 +37,7 @@ func (b *ClubLineBot) handleEvent(eventJson *util.Json) error {
 	eventType := lineBotDomain.EventType(eventTypeJs.String())
 
 	switch eventType {
-	case domain.MEMBER_JOINED_EVENT_TYPE:
+	case lineBotDomain.MEMBER_JOINED_EVENT_TYPE:
 		event := &lineBotModel.MemberJoinEvent{}
 		if err := eventJson.Parse(event); err != nil {
 			return err
@@ -47,7 +45,7 @@ func (b *ClubLineBot) handleEvent(eventJson *util.Json) error {
 		if err := b.handleMemberJoinedEvent(event); err != nil {
 			return err
 		}
-	case domain.POSTBACK_EVENT_TYPE:
+	case lineBotDomain.POSTBACK_EVENT_TYPE:
 		event := &lineBotModel.PostbackEvent{}
 		if err := eventJson.Parse(event); err != nil {
 			return err
@@ -55,7 +53,7 @@ func (b *ClubLineBot) handleEvent(eventJson *util.Json) error {
 		if err := b.handlePostbackEvent(event); err != nil {
 			return err
 		}
-	case domain.MESSAGE_EVENT_TYPE:
+	case lineBotDomain.MESSAGE_EVENT_TYPE:
 		event := &lineBotModel.MessageEvent{}
 		if err := eventJson.Parse(event); err != nil {
 			return err
@@ -64,7 +62,7 @@ func (b *ClubLineBot) handleEvent(eventJson *util.Json) error {
 		if err := b.handleMessageEvent(event); err != nil {
 			return err
 		}
-	case domain.FOLLOW_EVENT_TYPE:
+	case lineBotDomain.FOLLOW_EVENT_TYPE:
 		event := &lineBotModel.FollowEvent{}
 		if err := eventJson.Parse(event); err != nil {
 			return err

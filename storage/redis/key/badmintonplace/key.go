@@ -20,7 +20,7 @@ func New(write, read *rds.Client, baseKey string) Key {
 			Base: common.Base{
 				Read:  read,
 				Write: write,
-				Key:   baseKey + "badmintonPlace",
+				Key:   baseKey + "Badminton:Place",
 			},
 		},
 	}

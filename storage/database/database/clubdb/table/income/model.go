@@ -23,6 +23,7 @@ type Column string
 
 const (
 	COLUMN_ID          Column = "id"
+	COLUMN_TeamID      Column = "team_id"
 	COLUMN_Date        Column = "date"
 	COLUMN_Type        Column = "type"
 	COLUMN_Description Column = "description"
@@ -32,6 +33,7 @@ const (
 
 type IncomeTable struct {
 	ID          int       `gorm:"column:id;type:serial;primary_key;not null"`
+	TeamID      int       `gorm:"column:team_id;type:int;not null"`
 	Date        time.Time `gorm:"column:date;type:date;not null;index"`
 	Type        int16     `gorm:"column:type;type:smallint;not null"`
 	Description string    `gorm:"column:description;type:varchar(50);not null"`

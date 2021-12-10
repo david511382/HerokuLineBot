@@ -4,6 +4,7 @@ import (
 	"heroku-line-bot/global"
 	"heroku-line-bot/logic/badminton/court/domain"
 	badmintonplaceLogic "heroku-line-bot/logic/badminton/place"
+	badmintonteamLogic "heroku-line-bot/logic/badminton/team"
 	commonLogic "heroku-line-bot/logic/common"
 	incomeLogicDomain "heroku-line-bot/logic/income/domain"
 	"heroku-line-bot/storage/database"
@@ -21,14 +22,15 @@ import (
 
 func GetCourts(
 	fromDate, toDate util.DateTime,
+	teamID,
 	placeID *int,
 ) (
-	placeDateCourtsMap map[int][]*DateCourt,
+	teamPlaceDateCourtsMap map[int]map[int][]*DateCourt,
 	resultErrInfo errUtil.IError,
 ) {
-	placeDateCourtsMap = make(map[int][]*DateCourt)
+	teamPlaceDateCourtsMap = make(map[int]map[int][]*DateCourt)
 
-	courtIDDetailIDCourtsMap := make(map[int]map[int][]*Court)
+	courtIDTeamDetailIDCourtsMap := make(map[int]map[int]map[int][]*Court)
 	courtIDs := make([]int, 0)
 	courtIDMap := make(map[int]*rentalcourt.RentalCourtTable)
 	if dbDatas, err := database.Club.RentalCourt.Select(dbReqs.RentalCourt{
@@ -45,7 +47,7 @@ func GetCourts(
 			courtIDMap[v.ID] = v
 			courtIDs = append(courtIDs, v.ID)
 
-			courtIDDetailIDCourtsMap[v.ID] = make(map[int][]*Court)
+			courtIDTeamDetailIDCourtsMap[v.ID] = make(map[int]map[int][]*Court)
 		}
 	}
 
@@ -57,6 +59,7 @@ func GetCourts(
 	ledgerCourtMap := make(map[int][]int)
 	courtLedgerMap := make(map[int][]int)
 	if dbDatas, err := database.Club.RentalCourtLedgerCourt.Select(dbReqs.RentalCourtLedgerCourt{
+		TeamID:         teamID,
 		RentalCourtIDs: courtIDs,
 	}); err != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
@@ -186,6 +189,7 @@ func GetCourts(
 	}
 
 	for ledgerID, ledger := range balanceLedgerIDMap {
+		teamID := ledger.TeamID
 		detailID := ledger.RentalCourtDetailID
 		dbDetailP := detailIDMap[detailID]
 		dbDetail := *dbDetailP
@@ -264,29 +268,37 @@ func GetCourts(
 				}
 			}
 
-			if courtIDDetailIDCourtsMap[courtID][detailID] == nil {
-				courtIDDetailIDCourtsMap[courtID][detailID] = make([]*Court, 0)
+			if courtIDTeamDetailIDCourtsMap[courtID][teamID] == nil {
+				courtIDTeamDetailIDCourtsMap[courtID][teamID] = make(map[int][]*Court)
 			}
-			courtIDDetailIDCourtsMap[courtID][detailID] = append(courtIDDetailIDCourtsMap[courtID][detailID], court)
+			if courtIDTeamDetailIDCourtsMap[courtID][teamID][detailID] == nil {
+				courtIDTeamDetailIDCourtsMap[courtID][teamID][detailID] = make([]*Court, 0)
+			}
+			courtIDTeamDetailIDCourtsMap[courtID][teamID][detailID] = append(courtIDTeamDetailIDCourtsMap[courtID][teamID][detailID], court)
 		}
 	}
-	for courtID, detailIDCourtsMap := range courtIDDetailIDCourtsMap {
+	for courtID, teamDetailIDCourtsMap := range courtIDTeamDetailIDCourtsMap {
 		dbCourt := courtIDMap[courtID]
 		placeID := dbCourt.PlaceID
 		date := *util.NewDateTimePOf(&dbCourt.Date)
 
-		dateCourt := &DateCourt{
-			ID:     dbCourt.ID,
-			Date:   date,
-			Courts: make([]*Court, 0),
-		}
-		if placeDateCourtsMap[placeID] == nil {
-			placeDateCourtsMap[placeID] = make([]*DateCourt, 0)
-		}
-		placeDateCourtsMap[placeID] = append(placeDateCourtsMap[placeID], dateCourt)
+		for teamID, detailIDCourtsMap := range teamDetailIDCourtsMap {
+			dateCourt := &DateCourt{
+				ID:     dbCourt.ID,
+				Date:   date,
+				Courts: make([]*Court, 0),
+			}
+			if teamPlaceDateCourtsMap[teamID] == nil {
+				teamPlaceDateCourtsMap[teamID] = make(map[int][]*DateCourt)
+			}
+			if teamPlaceDateCourtsMap[teamID][placeID] == nil {
+				teamPlaceDateCourtsMap[teamID][placeID] = make([]*DateCourt, 0)
+			}
+			teamPlaceDateCourtsMap[teamID][placeID] = append(teamPlaceDateCourtsMap[teamID][placeID], dateCourt)
 
-		for _, courts := range detailIDCourtsMap {
-			dateCourt.Courts = append(dateCourt.Courts, courts...)
+			for _, courts := range detailIDCourtsMap {
+				dateCourt.Courts = append(dateCourt.Courts, courts...)
+			}
 		}
 	}
 
@@ -295,6 +307,7 @@ func GetCourts(
 
 func VerifyAddCourt(
 	placeID,
+	teamID,
 	pricePerHour int,
 	courtDetail CourtDetail,
 	despositMoney,
@@ -345,11 +358,22 @@ func VerifyAddCourt(
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
+
+	if resultTeamIDMap, errInfo := badmintonteamLogic.Load(teamID); errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	} else if resultTeamIDMap[teamID] == nil {
+		errInfo := errUtil.NewErrorMsg(domain.ERROR_MSG_WRONG_TEAM)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	}
+
 	return
 }
 
 func AddCourt(
 	placeID,
+	teamID,
 	pricePerHour int,
 	courtDetail CourtDetail,
 	despositMoney,
@@ -457,6 +481,7 @@ func AddCourt(
 			payDate != nil {
 			incomeInsertData := &income.IncomeTable{
 				Date:        payDate.Time(),
+				TeamID:      teamID,
 				Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 				Income:      int16(*money),
 				Description: domain.INCOME_DESCRIPTION_DESPOSIT,
@@ -468,6 +493,7 @@ func AddCourt(
 		if money, payDate := balanceMoney, balancePayDate; money != nil &&
 			payDate != nil {
 			incomeInsertData := &income.IncomeTable{
+				TeamID:      teamID,
 				Date:        payDate.Time(),
 				Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 				Income:      int16(*money),
@@ -485,6 +511,7 @@ func AddCourt(
 	{
 		rentalCourtLedgerInsertDatas := make([]*rentalcourtledger.RentalCourtLedgerTable, 0)
 		rentalCourtLedgerInsertData := &rentalcourtledger.RentalCourtLedgerTable{
+			TeamID:       teamID,
 			PlaceID:      placeID,
 			PricePerHour: float64(pricePerHour),
 			StartDate:    startDate,
@@ -512,6 +539,7 @@ func AddCourt(
 			for _, rentalCourtID := range rentalCourtIDs {
 				rentalCourtLedgerCourtInsertData := &rentalcourtledgercourt.RentalCourtLedgerCourtTable{
 					RentalCourtID:       *rentalCourtID,
+					TeamID:              teamID,
 					RentalCourtLedgerID: *rentalCourtLedgerIDP,
 				}
 				rentalCourtLedgerCourtInsertDatas = append(rentalCourtLedgerCourtInsertDatas, rentalCourtLedgerCourtInsertData)

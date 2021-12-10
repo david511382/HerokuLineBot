@@ -6,7 +6,6 @@ line_bot:
   message_bot:
     admin_id: "admin line id"
     channel_access_token: "access token"
-  room_id: "using room id"
   line_login_channel_id: 123
 
 telegram_bot:
@@ -15,6 +14,7 @@ telegram_bot:
 
 badminton:
   liff_url: "line login"
+  club_team_id: 1
 
 google_script:
   url: "https://script.google.com/macros/s/google script/exec"

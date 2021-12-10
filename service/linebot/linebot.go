@@ -80,6 +80,7 @@ func (lb *LineBot) ReplyMessage(param *reqs.ReplyMessage) (*resp.ReplyMessage, e
 	return response, nil
 }
 
+// Limit 5 Messages
 func (lb *LineBot) PushMessage(param *reqs.PushMessage) (*resp.PushMessage, error) {
 	url := domain.LINE_URL + "/message/push"
 	request, err := lb.getPostRequest(url, param)

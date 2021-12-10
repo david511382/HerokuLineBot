@@ -23,6 +23,7 @@ type Column string
 
 const (
 	COLUMN_ID                  Column = "id"
+	COLUMN_TeamID              Column = "team_id"
 	COLUMN_RentalCourtDetailID Column = "rental_court_detail_id"
 	COLUMN_IncomeID            Column = "income_id"
 	COLUMN_DepositIncomeID     Column = "deposit_income_id"
@@ -35,6 +36,7 @@ const (
 
 type RentalCourtLedgerTable struct {
 	ID                  int        `gorm:"column:id;type:serial;primary_key;not null"`
+	TeamID              int        `gorm:"column:team_id;type:int;not null;index:rental_court_ledger_idx_teamid"`
 	RentalCourtDetailID int        `gorm:"column:rental_court_detail_id;type:int;not null;unique_index:uniq_place_rentalcourtdetailid,priority:2"`
 	IncomeID            *int       `gorm:"column:income_id;type:int;unique_index:uniq_place_entalcourtdetailid,priority:2"`
 	DepositIncomeID     *int       `gorm:"column:deposit_income_id;type:int"`

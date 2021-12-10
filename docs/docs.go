@@ -116,6 +116,7 @@ var doc = `{
                 "from_date",
                 "place_id",
                 "price_per_hour",
+                "team_id",
                 "to_date"
             ],
             "properties": {
@@ -157,6 +158,9 @@ var doc = `{
                     "type": "integer"
                 },
                 "price_per_hour": {
+                    "type": "integer"
+                },
+                "team_id": {
                     "type": "integer"
                 },
                 "to_date": {

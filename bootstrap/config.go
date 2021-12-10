@@ -34,7 +34,6 @@ func (c *Server) Addr() string {
 
 type LineBot struct {
 	MessageBot         `yaml:"message_bot"`
-	RoomID             string `yaml:"room_id"`
 	LineLoginChannelID uint64 `yaml:"line_login_channel_id"`
 }
 
@@ -44,7 +43,8 @@ type MessageBot struct {
 }
 
 type Badminton struct {
-	LiffUrl string `yaml:"liff_url"`
+	LiffUrl    string `yaml:"liff_url"`
+	ClubTeamID int    `yaml:"club_team_id"`
 }
 
 type GoogleScript struct {

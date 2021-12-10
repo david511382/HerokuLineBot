@@ -29,6 +29,8 @@ definitions:
         type: integer
       price_per_hour:
         type: integer
+      team_id:
+        type: integer
       to_date:
         default: "2013-08-02T00:00:00+08:00"
         type: string
@@ -39,6 +41,7 @@ definitions:
     - from_date
     - place_id
     - price_per_hour
+    - team_id
     - to_date
     type: object
   resp.Base:

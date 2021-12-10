@@ -52,6 +52,9 @@ type RentalCourtLedgerCourt struct {
 	ID  *int
 	IDs []int
 
+	TeamID  *int
+	TeamIDs []int
+
 	RentalCourtLedgerID  *int
 	RentalCourtLedgerIDs []int
 
