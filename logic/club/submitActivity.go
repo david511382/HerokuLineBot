@@ -10,6 +10,7 @@ import (
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
 	"heroku-line-bot/storage/database/database/clubdb/table/activity"
+	"heroku-line-bot/storage/database/database/clubdb/table/activityfinished"
 	logisticDb "heroku-line-bot/storage/database/database/clubdb/table/logistic"
 	"heroku-line-bot/storage/database/database/clubdb/table/member"
 	"heroku-line-bot/storage/database/database/clubdb/table/memberactivity"
@@ -111,7 +112,6 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 			Description: v.Description,
 			PeopleLimit: v.PeopleLimit,
 			ClubSubsidy: v.ClubSubsidy,
-			IsComplete:  false,
 			TeamID:      v.TeamID,
 		}
 		if errInfo := b.NewActivity.ParseCourts(v.CourtsAndTime); errInfo != nil {
@@ -262,12 +262,82 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if b.context.IsComfirmed() {
+		var currentActivity *activity.ActivityTable
+		{
+			dbDatas, err := database.Club.Activity.Select(dbReqs.Activity{
+				ID: &b.ActivityID,
+			})
+			if err != nil {
+				errInfo := errUtil.NewError(err)
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+				return
+			} else if len(dbDatas) == 0 {
+				replyMessges := []interface{}{
+					linebot.GetTextMessage("活動不存在"),
+				}
+				if err := b.context.Reply(replyMessges); err != nil {
+					resultErrInfo = errUtil.NewError(err)
+					return
+				}
+
+				if err := b.context.DeleteParam(); err != nil {
+					resultErrInfo = errUtil.NewError(err)
+					return
+				}
+
+				return
+			}
+
+			currentActivity = dbDatas[0]
+		}
+
+		memberActivityIDs := make([]int, 0)
+		finishedActivity := &activityfinished.ActivityFinishedTable{
+			ID:            currentActivity.ID,
+			TeamID:        currentActivity.TeamID,
+			Date:          currentActivity.Date,
+			PlaceID:       currentActivity.PlaceID,
+			CourtsAndTime: currentActivity.CourtsAndTime,
+			ClubSubsidy:   currentActivity.ClubSubsidy,
+			// LogisticID new
+			Description: currentActivity.Description,
+			PeopleLimit: currentActivity.PeopleLimit,
+		}
+		{
+			memberCount := 0
+			for _, member := range b.JoinedMembers {
+				if member.IsAttend {
+					memberCount++
+					memberActivityIDs = append(memberActivityIDs, member.MemberActivityID)
+				}
+			}
+			guestCount := 0
+			for _, member := range b.JoinedGuests {
+				if member.IsAttend {
+					guestCount++
+					memberActivityIDs = append(memberActivityIDs, member.MemberActivityID)
+				}
+			}
+			peopleCount := memberCount + guestCount
+			courtFee := b.getCourtFee()
+			_, memberFee, guestFee := calculateActivityPay(
+				peopleCount,
+				util.NewFloat(float64(b.Rsl4Consume)),
+				courtFee,
+				util.NewFloat(float64(b.ClubSubsidy)),
+			)
+
+			finishedActivity.MemberCount = int16(memberCount)
+			finishedActivity.GuestCount = int16(guestCount)
+			finishedActivity.MemberFee = int16(memberFee)
+			finishedActivity.GuestFee = int16(guestFee)
+		}
+
 		transaction := database.Club.Begin()
 		if err := transaction.Error; err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
-
 		defer func() {
 			if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -290,44 +360,17 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 			}
 			logisticID = logisticData.ID
 		}
-
-		courtFee := b.getCourtFee()
-		memberActivityIDs := make([]int, 0)
-		memberCount := 0
-		for _, member := range b.JoinedMembers {
-			if member.IsAttend {
-				memberCount++
-				memberActivityIDs = append(memberActivityIDs, member.MemberActivityID)
-			}
-		}
-		guestCount := 0
-		for _, member := range b.JoinedGuests {
-			if member.IsAttend {
-				guestCount++
-				memberActivityIDs = append(memberActivityIDs, member.MemberActivityID)
-			}
-		}
-		peopleCount := memberCount + guestCount
-		_, memberFee, guestFee := calculateActivityPay(
-			peopleCount,
-			util.NewFloat(float64(b.Rsl4Consume)),
-			courtFee,
-			util.NewFloat(float64(b.ClubSubsidy)),
-		)
-		updateFields := map[string]interface{}{
-			"is_complete":  true,
-			"member_count": memberCount,
-			"guest_count":  guestCount,
-			"member_fee":   memberFee,
-			"guest_fee":    guestFee,
-		}
 		if isConsumeBall {
-			updateFields["logistic_id"] = logisticID
+			finishedActivity.LogisticID = &logisticID
 		}
-		arg := dbReqs.Activity{
-			ID: &b.ActivityID,
+
+		if err := database.Club.Activity.Delete(transaction, dbReqs.Activity{
+			ID: &currentActivity.ID,
+		}); err != nil {
+			resultErrInfo = errUtil.NewError(err)
+			return
 		}
-		if err := database.Club.Activity.Update(transaction, arg, updateFields); err != nil {
+		if err := database.Club.ActivityFinished.Insert(transaction, finishedActivity); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}

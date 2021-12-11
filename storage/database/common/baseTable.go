@@ -106,6 +106,10 @@ func (t BaseTable) Delete(trans *gorm.DB, arg interface{}) error {
 }
 
 func (t BaseTable) Update(trans *gorm.DB, arg interface{}, fields map[string]interface{}) error {
+	if len(fields) == 0 {
+		return nil
+	}
+
 	dp := trans
 	if dp == nil {
 		dp = t.Write

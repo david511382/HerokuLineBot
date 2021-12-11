@@ -1,4 +1,4 @@
-package activity
+package activityfinished
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	db Activity
+	db ActivityFinished
 )
 
 func TestMain(m *testing.M) {

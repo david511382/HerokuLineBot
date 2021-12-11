@@ -1,4 +1,4 @@
-package activity
+package activityfinished
 
 import (
 	"heroku-line-bot/storage/database/common"
@@ -8,13 +8,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type Activity struct {
+type ActivityFinished struct {
 	*common.BaseTable
 }
 
-func New(writeDb, readDb *gorm.DB) Activity {
-	result := Activity{}
-	table := ActivityTable{}
+func New(writeDb, readDb *gorm.DB) ActivityFinished {
+	result := ActivityFinished{}
+	table := ActivityFinishedTable{}
 	result.BaseTable = common.NewBaseTable(table, writeDb, readDb)
 	return result
 }
@@ -37,7 +37,7 @@ const (
 	COLUMN_PeopleLimit   Column = "people_limit"
 )
 
-type ActivityTable struct {
+type ActivityFinishedTable struct {
 	ID            int       `gorm:"column:id;type:serial;primary_key;not null"`
 	TeamID        int       `gorm:"column:team_id;type:int;not null"`
 	Date          time.Time `gorm:"column:date;type:date;not null;index"`
@@ -53,28 +53,28 @@ type ActivityTable struct {
 	PeopleLimit   *int16    `gorm:"column:people_limit;type:smallint"`
 }
 
-func (ActivityTable) TableName() string {
-	return "activity"
+func (ActivityFinishedTable) TableName() string {
+	return "activity_finished"
 }
 
-func (t ActivityTable) IsRequireTimeConver() bool {
+func (t ActivityFinishedTable) IsRequireTimeConver() bool {
 	return true
 }
 
-func (t ActivityTable) GetTable() interface{} {
+func (t ActivityFinishedTable) GetTable() interface{} {
 	return t.getTable()
 }
 
-func (t ActivityTable) getTable() ActivityTable {
-	return ActivityTable{}
+func (t ActivityFinishedTable) getTable() ActivityFinishedTable {
+	return ActivityFinishedTable{}
 }
 
-func (t ActivityTable) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
-	arg := argI.(reqs.Activity)
+func (t ActivityFinishedTable) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
+	arg := argI.(reqs.ActivityFinished)
 	return t.getTable().whereArg(dp, arg)
 }
 
-func (t ActivityTable) whereArg(dp *gorm.DB, arg reqs.Activity) *gorm.DB {
+func (t ActivityFinishedTable) whereArg(dp *gorm.DB, arg reqs.ActivityFinished) *gorm.DB {
 	dp = dp.Model(t)
 
 	if p := arg.ID; p != nil {
@@ -87,10 +87,6 @@ func (t ActivityTable) whereArg(dp *gorm.DB, arg reqs.Activity) *gorm.DB {
 
 	if p := arg.PlaceID; p != nil {
 		dp = dp.Where(string(COLUMN_PlaceID+" = ?"), p)
-	}
-
-	if p := arg.ClubSubsidyNotEqual; p != nil {
-		dp = dp.Where(string(COLUMN_ClubSubsidy+" != ?"), p)
 	}
 
 	if p := arg.Date.Date; p != nil && !p.IsZero() {

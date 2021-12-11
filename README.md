@@ -22,6 +22,7 @@ go test ./server/... --count=1
 
 ```
 SELECT SETVAL('activity_id_seq', (SELECT MAX(id) FROM activity));
+SELECT SETVAL('activity_finished_id_seq', (SELECT MAX(id) FROM activity_finished));
 SELECT SETVAL('income_id_seq', (SELECT MAX(id) FROM income));
 SELECT SETVAL('logistic_id_seq', (SELECT MAX(id) FROM logistic));
 SELECT SETVAL('member_id_seq', (SELECT MAX(id) FROM member));
@@ -32,6 +33,7 @@ SELECT SETVAL('rental_court_detail_id_seq', (SELECT MAX(id) FROM rental_court_de
 SELECT SETVAL('rental_court_ledger_id_seq', (SELECT MAX(id) FROM rental_court_ledger));
 SELECT SETVAL('rental_court_ledger_court_id_seq', (SELECT MAX(id) FROM rental_court_ledger_court));
 SELECT SETVAL('rental_court_refund_ledger_id_seq', (SELECT MAX(id) FROM rental_court_refund_ledger));
+SELECT SETVAL('team_id_seq', (SELECT MAX(id) FROM team));
 ```
 
 ## 羽球業務邏輯

@@ -3,6 +3,7 @@ package clubdb
 import (
 	"heroku-line-bot/storage/database/common"
 	"heroku-line-bot/storage/database/database/clubdb/table/activity"
+	"heroku-line-bot/storage/database/database/clubdb/table/activityfinished"
 	"heroku-line-bot/storage/database/database/clubdb/table/income"
 	"heroku-line-bot/storage/database/database/clubdb/table/logistic"
 	"heroku-line-bot/storage/database/database/clubdb/table/member"
@@ -23,6 +24,7 @@ type Database struct {
 	Member                  member.Member
 	Income                  income.Income
 	Activity                activity.Activity
+	ActivityFinished        activityfinished.ActivityFinished
 	MemberActivity          memberactivity.MemberActivity
 	RentalCourt             rentalcourt.RentalCourt
 	RentalCourtLedgerCourt  rentalcourtledgercourt.RentalCourtLedgerCourt
@@ -43,6 +45,7 @@ func New(writeDb, readDb *gorm.DB) Database {
 		Member:                  member.New(writeDb, readDb),
 		Income:                  income.New(writeDb, readDb),
 		Activity:                activity.New(writeDb, readDb),
+		ActivityFinished:        activityfinished.New(writeDb, readDb),
 		MemberActivity:          memberactivity.New(writeDb, readDb),
 		RentalCourt:             rentalcourt.New(writeDb, readDb),
 		RentalCourtLedgerCourt:  rentalcourtledgercourt.New(writeDb, readDb),

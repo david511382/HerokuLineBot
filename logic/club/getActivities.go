@@ -75,8 +75,7 @@ func (b *GetActivities) GetInputTemplate(requireRawParamAttr string) interface{}
 func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 	context := b.context
 	arg := dbReqs.Activity{
-		TeamID:     &b.TeamID,
-		IsComplete: util.GetBoolP(false),
+		TeamID: &b.TeamID,
 	}
 	if dbDatas, err := database.Club.Activity.Select(
 		arg,
@@ -194,7 +193,6 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 					Description: v.Description,
 					PeopleLimit: v.PeopleLimit,
 					ClubSubsidy: v.ClubSubsidy,
-					IsComplete:  false,
 				},
 				JoinedMembers: activityIDMap[v.ID],
 				ActivityID:    v.ID,
@@ -574,8 +572,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
 	} else if isJoin := b.JoinActivityID > 0; isJoin {
 		activityID := b.JoinActivityID
 		arg := dbReqs.Activity{
-			ID:         &activityID,
-			IsComplete: util.GetBoolP(false),
+			ID: &activityID,
 		}
 		if count, err := database.Club.Activity.Count(arg); err != nil {
 			resultErrInfo = errUtil.NewError(err)
@@ -606,8 +603,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
 	} else if isLeave := b.LeaveActivityID > 0; isLeave {
 		activityID := b.LeaveActivityID
 		arg := dbReqs.Activity{
-			ID:         &activityID,
-			IsComplete: util.GetBoolP(false),
+			ID: &activityID,
 		}
 		if count, err := database.Club.Activity.Count(arg); err != nil {
 			resultErrInfo = errUtil.NewError(err)

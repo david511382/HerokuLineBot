@@ -32,7 +32,6 @@ type NewActivity struct {
 	Description string                       `json:"description"`
 	PeopleLimit *int16                       `json:"people_limit"`
 	ClubSubsidy int16                        `json:"club_subsidy"`
-	IsComplete  bool                         `json:"is_complete"`
 	Courts      []*courtDomain.ActivityCourt `json:"courts"`
 }
 
@@ -43,7 +42,6 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 		Date:        util.DateTime(util.DateOf(nowTime)),
 		PlaceID:     1,
 		Description: "7人出團",
-		IsComplete:  false,
 		Courts: []*courtDomain.ActivityCourt{
 			{
 				FromTime:     commonLogic.GetTime(1, 1, 1, 18),
@@ -352,7 +350,6 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errUti
 		ClubSubsidy:   b.ClubSubsidy,
 		Description:   b.Description,
 		PeopleLimit:   b.PeopleLimit,
-		IsComplete:    b.IsComplete,
 		TeamID:        b.TeamID,
 	}
 	if err := database.Club.Activity.Insert(transaction, data); err != nil {

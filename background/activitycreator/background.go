@@ -144,7 +144,6 @@ func calActivitys(
 				TeamID:      teamID,
 				Description: "",
 				ClubSubsidy: 0,
-				IsComplete:  false,
 				PeopleLimit: rdsSetting.PeopleLimit,
 				Courts:      make([]*badmintonCourtLogicDomain.ActivityCourt, 0),
 			}
