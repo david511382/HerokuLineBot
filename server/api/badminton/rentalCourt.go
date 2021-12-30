@@ -124,7 +124,7 @@ func addRentalCourtGetRentalDates(
 		for _, date := range dates {
 			dateInt := date.Int()
 			if excludeDateIntMap[dateInt] {
-				return
+				continue
 			}
 			rentalDates = append(rentalDates, date)
 		}

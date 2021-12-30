@@ -34,6 +34,20 @@ func Test_addRentalCourtGetRentalDates(t *testing.T) {
 				*util.NewDateTimeP(global.Location, 2013, 8, 2),
 			},
 		},
+		{
+			"everyweekdate exclude date",
+			args{
+				fromDate:     *util.NewDateTimeP(global.Location, 2013, 8, 2),
+				toDate:       *util.NewDateTimeP(global.Location, 2013, 8, 9),
+				everyWeekday: util.GetIntP(5),
+				excludeDates: []*time.Time{
+					util.GetTimePLoc(global.Location, 2013, 8, 2),
+				},
+			},
+			[]util.DateTime{
+				*util.NewDateTimeP(global.Location, 2013, 8, 9),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

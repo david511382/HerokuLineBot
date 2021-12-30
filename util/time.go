@@ -121,7 +121,7 @@ func GetDatesInWeekday(fromDate, toDate DateTime, weekDay time.Weekday) (result 
 		}
 	}
 
-	TimeSlice(firstDate.Time(), toDate.Time(),
+	TimeSlice(firstDate.Time(), toDate.Next(1).Time(),
 		WEEK_TIME_TYPE.Next1,
 		func(runTime, next time.Time) (isContinue bool) {
 			result = append(result, *NewDateTimePOf(&runTime))
