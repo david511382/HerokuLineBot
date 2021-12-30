@@ -483,7 +483,7 @@ func AddCourt(
 				Date:        payDate.Time(),
 				TeamID:      teamID,
 				Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
-				Income:      int16(*money),
+				Income:      int16(-*money),
 				Description: domain.INCOME_DESCRIPTION_DESPOSIT,
 			}
 			despositIncomeID = &incomeInsertData.ID
@@ -496,7 +496,7 @@ func AddCourt(
 				TeamID:      teamID,
 				Date:        payDate.Time(),
 				Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
-				Income:      int16(*money),
+				Income:      int16(-*money),
 				Description: domain.INCOME_DESCRIPTION_BALANCE,
 			}
 			balanceIncomeID = &incomeInsertData.ID
