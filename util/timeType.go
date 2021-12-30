@@ -219,6 +219,24 @@ func NewYearTimePOf(t *time.Time) *YearTime {
 	return &r
 }
 
+func (t YearTime) MarshalText() (text []byte, err error) {
+	return t.Time().MarshalText()
+}
+
+func (t *YearTime) UnmarshalJSON(data []byte) error {
+	if t == nil {
+		return nil
+	}
+
+	ti := t.TimeP()
+	if err := ti.UnmarshalJSON(data); err != nil {
+		return err
+	}
+
+	*t = *NewYearTimePOf(ti)
+	return nil
+}
+
 func (t YearTime) GetUtilCompareValue() string {
 	return t.Time().String()
 }
@@ -272,6 +290,24 @@ func NewDateTimePOf(t *time.Time) *DateTime {
 	return &r
 }
 
+func (t DateTime) MarshalText() (text []byte, err error) {
+	return t.Time().MarshalText()
+}
+
+func (t *DateTime) UnmarshalJSON(data []byte) error {
+	if t == nil {
+		return nil
+	}
+
+	ti := t.TimeP()
+	if err := ti.UnmarshalJSON(data); err != nil {
+		return err
+	}
+
+	*t = *NewDateTimePOf(ti)
+	return nil
+}
+
 func (t DateTime) GetUtilCompareValue() string {
 	return t.Time().String()
 }
@@ -323,6 +359,24 @@ func NewHourTimePOf(t *time.Time) *HourTime {
 
 	r := HourTime(HOUR_TIME_TYPE.Of(*t))
 	return &r
+}
+
+func (t HourTime) MarshalText() (text []byte, err error) {
+	return t.Time().MarshalText()
+}
+
+func (t *HourTime) UnmarshalJSON(data []byte) error {
+	if t == nil {
+		return nil
+	}
+
+	ti := t.TimeP()
+	if err := ti.UnmarshalJSON(data); err != nil {
+		return err
+	}
+
+	*t = *NewHourTimePOf(ti)
+	return nil
 }
 
 func (t HourTime) GetUtilCompareValue() string {
