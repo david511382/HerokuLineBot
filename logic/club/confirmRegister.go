@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
+	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/storage/database"
-	"heroku-line-bot/storage/database/database/clubdb/table/member"
-	dbReqs "heroku-line-bot/storage/database/domain/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/member"
 	"heroku-line-bot/storage/redis"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
@@ -66,7 +66,7 @@ func (b *confirmRegister) GetInputTemplate(requireRawParamAttr string) interface
 	}
 }
 
-func (b *confirmRegister) LoadUsers(arg dbReqs.Member) (confirmRegisterUsers []*confirmRegisterUser, resultErr error) {
+func (b *confirmRegister) LoadUsers(arg dbModel.ReqsClubMember) (confirmRegisterUsers []*confirmRegisterUser, resultErr error) {
 	confirmRegisterUsers = make([]*confirmRegisterUser, 0)
 	if dbDatas, err := database.Club.Member.Select(
 		arg,
@@ -96,9 +96,10 @@ func (b *confirmRegister) LoadUsers(arg dbReqs.Member) (confirmRegisterUsers []*
 func (b *confirmRegister) ComfirmDb() (resultErrInfo errUtil.IError) {
 	isChangeRole := b.isMemberAble() && b.User.Role == domain.GUEST_CLUB_ROLE
 
-	transaction := database.Club.Begin()
-	if err := transaction.Error; err != nil {
-		resultErrInfo = errUtil.NewError(err)
+	db, transaction, err := database.Club.Begin()
+	if err != nil {
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 	defer func() {
@@ -107,7 +108,7 @@ func (b *confirmRegister) ComfirmDb() (resultErrInfo errUtil.IError) {
 		}
 	}()
 
-	arg := dbReqs.Member{
+	arg := dbModel.ReqsClubMember{
 		ID: &b.MemberID,
 	}
 	fields := map[string]interface{}{
@@ -116,7 +117,7 @@ func (b *confirmRegister) ComfirmDb() (resultErrInfo errUtil.IError) {
 	if isChangeRole {
 		fields["role"] = int16(domain.MEMBER_CLUB_ROLE)
 	}
-	if err := database.Club.Member.Update(transaction, arg, fields); err != nil {
+	if err := db.Member.Update(arg, fields); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}
@@ -142,7 +143,7 @@ func (b *confirmRegister) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if b.User == nil {
-		arg := dbReqs.Member{
+		arg := dbModel.ReqsClubMember{
 			ID: &b.MemberID,
 		}
 		if confirmRegisterUsers, err := b.LoadUsers(arg); err != nil {

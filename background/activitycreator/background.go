@@ -56,17 +56,21 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	}
 
 	newActivityTeamSettingMap := make(map[int]*redisDomain.BadmintonTeam)
-	if transaction := database.Club.Begin(); transaction.Error != nil {
-		resultErrInfo = errUtil.NewError(transaction.Error)
-		return
-	} else {
+	{
+		db, transaction, err := database.Club.Begin()
+		if err != nil {
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			return
+		}
+
 		for _, newActivityHandler := range newActivityHandlers {
 			teamID := newActivityHandler.TeamID
 			if newActivityTeamSettingMap[teamID] == nil {
 				newActivityTeamSettingMap[teamID] = teamSettingMap[teamID]
 			}
 
-			if resultErrInfo = newActivityHandler.InsertActivity(transaction); resultErrInfo != nil {
+			if resultErrInfo = newActivityHandler.InsertActivity(db); resultErrInfo != nil {
 				return
 			}
 		}

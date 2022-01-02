@@ -8,20 +8,18 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	commonLogic "heroku-line-bot/logic/common"
+	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
-	activityDb "heroku-line-bot/storage/database/database/clubdb/table/activity"
-	"heroku-line-bot/storage/database/database/clubdb/table/place"
-	dbReqs "heroku-line-bot/storage/database/domain/reqs"
+	"heroku-line-bot/storage/database/database/clubdb"
+	"heroku-line-bot/storage/database/database/clubdb/place"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"strconv"
 	"strings"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type NewActivity struct {
@@ -103,7 +101,7 @@ func (b *NewActivity) LoadSingleParam(attr, text string) (resultErrInfo errUtil.
 		b.Date = util.DateTime(t)
 	case "ICmdLogic.place_id":
 		if dbDatas, err := database.Club.Place.Select(
-			dbReqs.Place{
+			dbModel.ReqsClubPlace{
 				Name: &text,
 			},
 			place.COLUMN_ID,
@@ -174,24 +172,31 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if b.Context.IsComfirmed() {
-		transaction := database.Club.Begin()
-		if err := transaction.Error; err != nil {
-			resultErrInfo = errUtil.NewError(err)
+		db, transaction, err := database.Club.Begin()
+		if err != nil {
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
-
 		defer func() {
 			if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+				if resultErrInfo.IsError() {
+					return
+				}
 			}
 		}()
 
-		if resultErrInfo = b.InsertActivity(transaction); resultErrInfo != nil {
-			return
+		if errInfo := b.InsertActivity(db); errInfo != nil {
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			if resultErrInfo.IsError() {
+				return
+			}
 		}
 
 		if err := b.Context.DeleteParam(); err != nil {
-			resultErrInfo = errUtil.NewError(err)
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 
@@ -199,7 +204,8 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 			linebot.GetTextMessage("完成"),
 		}
 		if err := b.Context.Reply(replyMessges); err != nil {
-			resultErrInfo = errUtil.NewError(err)
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 
@@ -207,8 +213,10 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if errInfo := b.Context.CacheParams(); errInfo != nil {
-		resultErrInfo = errInfo
-		return
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
+			return
+		}
 	}
 
 	contents := []interface{}{}
@@ -328,11 +336,11 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	return nil
 }
 
-func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errUtil.IError) {
+func (b *NewActivity) InsertActivity(db *clubdb.Database) (resultErrInfo errUtil.IError) {
 	courtsStr := b.getCourtsStr()
-	if transaction == nil {
-		transaction = database.Club.Begin()
-		if err := transaction.Error; err != nil {
+	if db == nil {
+		dbConn, transaction, err := database.Club.Begin()
+		if err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
@@ -341,9 +349,10 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errUti
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			}
 		}()
+		db = dbConn
 	}
 
-	data := &activityDb.ActivityTable{
+	data := &dbModel.ClubActivity{
 		Date:          b.Date.Time(),
 		PlaceID:       b.PlaceID,
 		CourtsAndTime: courtsStr,
@@ -352,12 +361,12 @@ func (b *NewActivity) InsertActivity(transaction *gorm.DB) (resultErrInfo errUti
 		PeopleLimit:   b.PeopleLimit,
 		TeamID:        b.TeamID,
 	}
-	if err := database.Club.Activity.Insert(transaction, data); err != nil {
+	if err := db.Activity.Insert(data); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
-	return nil
+	return
 }
 
 func (b *NewActivity) getPlaceTimeTemplate() (result []interface{}) {

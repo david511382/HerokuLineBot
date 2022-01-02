@@ -5,12 +5,12 @@ import (
 	"heroku-line-bot/global"
 	"heroku-line-bot/logger"
 	"heroku-line-bot/logic/club/domain"
+	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
-	memberDb "heroku-line-bot/storage/database/database/clubdb/table/member"
-	dbReqs "heroku-line-bot/storage/database/domain/reqs"
+	memberDb "heroku-line-bot/storage/database/database/clubdb/member"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"strings"
@@ -161,7 +161,7 @@ func (b *register) GetInputTemplate(requireRawParamAttr string) interface{} {
 			bodyComponents = append(bodyComponents, comfirmButtonComponent)
 		} else {
 			lineID := b.context.GetUserID()
-			arg := dbReqs.Member{
+			arg := dbModel.ReqsClubMember{
 				LineID: &lineID,
 			}
 			if count, err := database.Club.Member.Count(arg); err == nil && count > 0 {
@@ -370,7 +370,7 @@ func (b *register) Do(text string) (resultErrInfo errUtil.IError) {
 			resultErrInfo = errInfo
 			return
 		}
-		arg := dbReqs.Member{
+		arg := dbModel.ReqsClubMember{
 			CompanyID: b.CompanyID,
 		}
 		if dbDatas, err := database.Club.Member.Select(
@@ -416,12 +416,12 @@ func (b *register) Do(text string) (resultErrInfo errUtil.IError) {
 	b.init()
 
 	if b.context.IsComfirmed() {
-		transaction := database.Club.Begin()
-		if err := transaction.Error; err != nil {
-			resultErrInfo = errUtil.NewError(err)
+		db, transaction, err := database.Club.Begin()
+		if err != nil {
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
-
 		defer func() {
 			if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -430,7 +430,7 @@ func (b *register) Do(text string) (resultErrInfo errUtil.IError) {
 
 		lineID := b.context.GetUserID()
 		if b.MemberID > 0 {
-			arg := dbReqs.Member{
+			arg := dbModel.ReqsClubMember{
 				ID: &b.MemberID,
 			}
 			fields := map[string]interface{}{
@@ -439,19 +439,19 @@ func (b *register) Do(text string) (resultErrInfo errUtil.IError) {
 				"company_id": b.CompanyID,
 				"line_id":    &lineID,
 			}
-			if err := database.Club.Member.Update(transaction, arg, fields); err != nil {
+			if err := db.Member.Update(arg, fields); err != nil {
 				resultErrInfo = errUtil.NewError(err)
 				return
 			}
 		} else {
-			data := &memberDb.MemberTable{
+			data := &dbModel.ClubMember{
 				Department: string(b.Department),
 				Name:       b.Name,
 				CompanyID:  b.CompanyID,
 				Role:       int16(b.Role),
 				LineID:     &lineID,
 			}
-			if err := database.Club.Member.BaseTable.Insert(transaction, data); err != nil {
+			if err := db.Member.BaseTable.Insert(data); err != nil {
 				resultErrInfo = errUtil.NewError(err)
 				return
 			}

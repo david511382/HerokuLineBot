@@ -6,15 +6,15 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	clubLineuserLogicDomain "heroku-line-bot/logic/club/lineuser/domain"
+	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	linebotReqs "heroku-line-bot/service/linebot/domain/model/reqs"
 	"heroku-line-bot/storage/database"
-	"heroku-line-bot/storage/database/database/clubdb/table/activity"
-	"heroku-line-bot/storage/database/database/clubdb/table/member"
-	"heroku-line-bot/storage/database/database/clubdb/table/memberactivity"
-	dbReqs "heroku-line-bot/storage/database/domain/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/activity"
+	"heroku-line-bot/storage/database/database/clubdb/member"
+	"heroku-line-bot/storage/database/database/clubdb/memberactivity"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"sort"
@@ -74,7 +74,7 @@ func (b *GetActivities) GetInputTemplate(requireRawParamAttr string) interface{}
 
 func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 	context := b.context
-	arg := dbReqs.Activity{
+	arg := dbModel.ReqsClubActivity{
 		TeamID: &b.TeamID,
 	}
 	if dbDatas, err := database.Club.Activity.Select(
@@ -120,7 +120,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 		}
 
 		activityIDMap := make(map[int][]*getActivitiesActivityJoinedMembers)
-		memberActivityArg := dbReqs.MemberActivity{
+		memberActivityArg := dbModel.ReqsClubMemberActivity{
 			ActivityIDs: activityIDs,
 		}
 		if dbDatas, err := database.Club.MemberActivity.Select(
@@ -146,7 +146,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 				name   string
 			}
 			memberIDNameMap := make(map[int]lineName)
-			memberArg := dbReqs.Member{
+			memberArg := dbModel.ReqsClubMember{
 				IDs: memberIDs,
 			}
 			if dbDatas, err := database.Club.Member.Select(
@@ -216,7 +216,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 	var date time.Time
 	var place string
 	var peopleLimit *int16
-	arg := dbReqs.Activity{
+	arg := dbModel.ReqsClubActivity{
 		ID: &b.ListMembersActivityID,
 	}
 	if dbDatas, err := database.Club.Activity.Select(
@@ -256,7 +256,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 	}
 
 	memberComponents := []interface{}{}
-	memberActivityArg := dbReqs.MemberActivity{
+	memberActivityArg := dbModel.ReqsClubMemberActivity{
 		ActivityID: &b.ListMembersActivityID,
 	}
 	if dbDatas, err := database.Club.MemberActivity.Select(
@@ -272,7 +272,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 			memberIDs = append(memberIDs, v.MemberID)
 		}
 		memberIDNameMap := make(map[int]string)
-		memberArg := dbReqs.Member{
+		memberArg := dbModel.ReqsClubMember{
 			IDs: memberIDs,
 		}
 		if dbDatas, err := database.Club.Member.Select(
@@ -361,7 +361,7 @@ func (b *GetActivities) joinActivity() (resultErrInfo errUtil.IError) {
 	activityID := b.JoinActivityID
 	uID := userData.ID
 
-	insertData := &memberactivity.MemberActivityTable{
+	insertData := &dbModel.ClubMemberActivity{
 		ActivityID: activityID,
 		MemberID:   uID,
 		IsAttend:   false,
@@ -380,7 +380,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 	var peopleLimit *int16
 	activityPlace := ""
 	var activityDate *time.Time
-	activityArg := dbReqs.Activity{
+	activityArg := dbModel.ReqsClubActivity{
 		ID: util.GetIntP(b.LeaveActivityID),
 	}
 	if dbDatas, err := database.Club.Activity.Select(
@@ -414,7 +414,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 
 	var notifyWaitingMemberID *int
 	deleteMemberActivityID := 0
-	arg := dbReqs.MemberActivity{
+	arg := dbModel.ReqsClubMemberActivity{
 		ActivityID: util.GetIntP(b.LeaveActivityID),
 	}
 	if dbDatas, err := database.Club.MemberActivity.Select(
@@ -447,16 +447,16 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 		}
 	}
 
-	arg = dbReqs.MemberActivity{
+	arg = dbModel.ReqsClubMemberActivity{
 		ID: &deleteMemberActivityID,
 	}
-	if err := database.Club.MemberActivity.Delete(nil, arg); err != nil {
+	if err := database.Club.MemberActivity.Delete(arg); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}
 
 	if isNotifyWaitingPerson := notifyWaitingMemberID != nil; isNotifyWaitingPerson {
-		memberArg := dbReqs.Member{
+		memberArg := dbModel.ReqsClubMember{
 			ID: notifyWaitingMemberID,
 		}
 		if dbDatas, err := database.Club.Member.Select(
@@ -571,7 +571,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
 		return nil
 	} else if isJoin := b.JoinActivityID > 0; isJoin {
 		activityID := b.JoinActivityID
-		arg := dbReqs.Activity{
+		arg := dbModel.ReqsClubActivity{
 			ID: &activityID,
 		}
 		if count, err := database.Club.Activity.Count(arg); err != nil {
@@ -602,7 +602,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
 		}
 	} else if isLeave := b.LeaveActivityID > 0; isLeave {
 		activityID := b.LeaveActivityID
-		arg := dbReqs.Activity{
+		arg := dbModel.ReqsClubActivity{
 			ID: &activityID,
 		}
 		if count, err := database.Club.Activity.Count(arg); err != nil {

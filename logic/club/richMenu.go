@@ -5,13 +5,13 @@ import (
 	"heroku-line-bot/logger"
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
+	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	"heroku-line-bot/service/linebot/domain/model"
 	linebotReqs "heroku-line-bot/service/linebot/domain/model/reqs"
 	"heroku-line-bot/storage/database"
-	"heroku-line-bot/storage/database/database/clubdb/table/member"
-	dbReqs "heroku-line-bot/storage/database/domain/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/member"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"strconv"
@@ -140,7 +140,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 
 		if b.Role == domain.ADMIN_CLUB_ROLE ||
 			b.Role == domain.CADRE_CLUB_ROLE {
-			arg := dbReqs.Member{
+			arg := dbModel.ReqsClubMember{
 				Role: (*int16)(&b.Role),
 			}
 			if dbDatas, err := database.Club.Member.Select(

@@ -5,17 +5,16 @@ import (
 	"heroku-line-bot/global"
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
+	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
-	logisticDb "heroku-line-bot/storage/database/database/clubdb/table/logistic"
+	"heroku-line-bot/storage/database/database/clubdb"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"strconv"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type NewLogistic struct {
@@ -98,19 +97,19 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if b.Context.IsComfirmed() {
-		transaction := database.Club.Begin()
-		if err := transaction.Error; err != nil {
-			resultErrInfo = errUtil.NewError(err)
+		db, transaction, err := database.Club.Begin()
+		if err != nil {
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
-
 		defer func() {
 			if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			}
 		}()
 
-		if resultErrInfo = b.InsertLogistic(transaction); resultErrInfo != nil {
+		if resultErrInfo = b.InsertLogistic(db); resultErrInfo != nil {
 			return
 		}
 
@@ -347,10 +346,10 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 	return nil
 }
 
-func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErrInfo errUtil.IError) {
-	if transaction == nil {
-		transaction = database.Club.Begin()
-		if err := transaction.Error; err != nil {
+func (b *NewLogistic) InsertLogistic(db *clubdb.Database) (resultErrInfo errUtil.IError) {
+	if db == nil {
+		dbConn, transaction, err := database.Club.Begin()
+		if err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
@@ -359,16 +358,17 @@ func (b *NewLogistic) InsertLogistic(transaction *gorm.DB) (resultErrInfo errUti
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			}
 		}()
+		db = dbConn
 	}
 
-	data := &logisticDb.LogisticTable{
+	data := &dbModel.ClubLogistic{
 		Date:        b.Date,
 		Name:        b.Name,
 		Amount:      b.Amount,
 		Description: b.Description,
 		TeamID:      b.TeamID,
 	}
-	if err := database.Club.Logistic.BaseTable.Insert(transaction, data); err != nil {
+	if err := db.Logistic.BaseTable.Insert(data); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}

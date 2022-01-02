@@ -1,9 +1,9 @@
 package place
 
 import (
+	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/storage/database"
-	"heroku-line-bot/storage/database/database/clubdb/table/place"
-	dbReqs "heroku-line-bot/storage/database/domain/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/place"
 	"heroku-line-bot/storage/redis"
 	redisDomain "heroku-line-bot/storage/redis/domain"
 	errUtil "heroku-line-bot/util/error"
@@ -34,7 +34,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*redisDomain.BadmintonPlace, res
 
 	if len(reLoadIDs) > 0 {
 		idPlaceMap := make(map[int]*redisDomain.BadmintonPlace)
-		if dbDatas, err := database.Club.Place.Select(dbReqs.Place{
+		if dbDatas, err := database.Club.Place.Select(dbModel.ReqsClubPlace{
 			IDs: reLoadIDs,
 		},
 			place.COLUMN_ID,

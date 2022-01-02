@@ -4,12 +4,12 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	commonLogic "heroku-line-bot/logic/common"
+	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
-	"heroku-line-bot/storage/database/database/clubdb/table/member"
-	dbReqs "heroku-line-bot/storage/database/domain/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/member"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 )
@@ -53,7 +53,7 @@ func (b *GetComfirmRegisters) GetInputTemplate(requireRawParamAttr string) inter
 }
 
 func (b *GetComfirmRegisters) LoadComfirmRegisterUsers() (resultErrInfo errUtil.IError) {
-	arg := dbReqs.Member{
+	arg := dbModel.ReqsClubMember{
 		CompanyIDIsNull: util.GetBoolP(false),
 		LineIDIsNull:    util.GetBoolP(false),
 		JoinDateIsNull:  util.GetBoolP(true),

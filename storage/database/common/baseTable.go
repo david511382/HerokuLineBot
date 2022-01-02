@@ -3,6 +3,7 @@ package common
 import (
 	"errors"
 	"heroku-line-bot/storage/database/domain"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -10,36 +11,55 @@ import (
 type ITable interface {
 	WhereArg(connection *gorm.DB, arg interface{}) *gorm.DB
 	GetTable() interface{}
-	IsRequireTimeConver() bool
+	IsRequireTimeConvert() bool
+}
+
+type IConnectionCreator interface {
+	GetSlave() *gorm.DB
+	GetMaster() *gorm.DB
 }
 
 type BaseTable struct {
-	BaseDatabase
-	table               ITable
-	IsRequireTimeConver bool
+	IConnectionCreator
+	table                ITable
+	IsRequireTimeConvert bool
 }
 
 func NewBaseTable(
 	table ITable,
-	writeDb, readDb *gorm.DB,
+	connectionCreator IConnectionCreator,
 ) *BaseTable {
 	result := &BaseTable{
-		table: table,
-		BaseDatabase: BaseDatabase{
-			Write: writeDb,
-			Read:  readDb,
-		},
-		IsRequireTimeConver: table.IsRequireTimeConver(),
+		table:                table,
+		IConnectionCreator:   connectionCreator,
+		IsRequireTimeConvert: table.IsRequireTimeConvert(),
 	}
 	return result
 }
 
-func (t BaseTable) WhereArg(connection *gorm.DB, arg interface{}) *gorm.DB {
-	return t.table.WhereArg(connection, arg)
+// response: pointer of slice / struct
+func (t BaseTable) SelectColumns(arg interface{}, response interface{}, columns ...string) error {
+	if len(columns) == 0 {
+		return nil
+	}
+
+	columnsStr := strings.Join(columns, ",")
+	dp := t.GetSlave()
+	dp = t.table.WhereArg(dp, arg)
+	dp = dp.Select(columnsStr)
+	if err := dp.Scan(response).Error; err != nil {
+		return err
+	}
+
+	if t.IsRequireTimeConvert {
+		ConverTimeZone(response)
+	}
+
+	return nil
 }
 
 func (t BaseTable) Count(arg interface{}) (int64, error) {
-	dp := t.table.WhereArg(t.Read, arg)
+	dp := t.table.WhereArg(t.GetSlave(), arg)
 
 	var result int64
 	if err := dp.Count(&result).Error; err != nil {
@@ -49,11 +69,8 @@ func (t BaseTable) Count(arg interface{}) (int64, error) {
 	return result, nil
 }
 
-func (t BaseTable) Insert(trans *gorm.DB, datas interface{}) error {
-	dp := trans
-	if dp == nil {
-		dp = t.Write
-	}
+func (t BaseTable) Insert(datas interface{}) error {
+	dp := t.GetMaster()
 	if err := dp.Create(datas).Error; err != nil {
 		return err
 	}
@@ -61,7 +78,7 @@ func (t BaseTable) Insert(trans *gorm.DB, datas interface{}) error {
 }
 
 func (t BaseTable) MigrationTable() error {
-	dp := t.Write
+	dp := t.GetMaster()
 	table := t.table.GetTable()
 	if t.IsExist() {
 		if err := dp.Migrator().DropTable(table); err != nil {
@@ -84,17 +101,14 @@ func (t BaseTable) MigrationData(length int, datas interface{}) error {
 		return nil
 	}
 
-	if err := t.Insert(nil, datas); err != nil && !errors.Is(err, domain.DB_NO_AFFECTED_ERROR) {
+	if err := t.Insert(datas); err != nil && !errors.Is(err, domain.DB_NO_AFFECTED_ERROR) {
 		return err
 	}
 	return nil
 }
 
-func (t BaseTable) Delete(trans *gorm.DB, arg interface{}) error {
-	dp := trans
-	if dp == nil {
-		dp = t.Write
-	}
+func (t BaseTable) Delete(arg interface{}) error {
+	dp := t.GetMaster()
 
 	dp = t.table.WhereArg(dp, arg)
 	table := t.table.GetTable()
@@ -105,15 +119,8 @@ func (t BaseTable) Delete(trans *gorm.DB, arg interface{}) error {
 	return nil
 }
 
-func (t BaseTable) Update(trans *gorm.DB, arg interface{}, fields map[string]interface{}) error {
-	if len(fields) == 0 {
-		return nil
-	}
-
-	dp := trans
-	if dp == nil {
-		dp = t.Write
-	}
+func (t BaseTable) Update(arg interface{}, fields map[string]interface{}) error {
+	dp := t.GetMaster()
 
 	dp = t.table.WhereArg(dp, arg)
 	dp = dp.Updates(fields)
@@ -127,13 +134,13 @@ func (t BaseTable) Update(trans *gorm.DB, arg interface{}, fields map[string]int
 }
 
 func (t BaseTable) IsExist() bool {
-	dp := t.Read
+	dp := t.GetSlave()
 	table := t.table.GetTable()
 	return dp.Migrator().HasTable(table)
 }
 
 func (t BaseTable) CreateTable() error {
-	dp := t.Read
+	dp := t.GetSlave()
 	table := t.table.GetTable()
 	if err := dp.Migrator().CreateTable(table); err != nil {
 		return err

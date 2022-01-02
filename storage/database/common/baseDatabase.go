@@ -8,22 +8,34 @@ import (
 )
 
 type BaseDatabase struct {
-	Read  *gorm.DB
-	Write *gorm.DB
+	read  *gorm.DB
+	write *gorm.DB
 }
 
-func (d *BaseDatabase) Begin() *gorm.DB {
-	return d.Write.Begin()
+func NewBaseDatabase(read, write *gorm.DB) *BaseDatabase {
+	result := &BaseDatabase{
+		read:  read,
+		write: write,
+	}
+	return result
+}
+
+func (d *BaseDatabase) GetSlave() *gorm.DB {
+	return d.read
+}
+
+func (d *BaseDatabase) GetMaster() *gorm.DB {
+	return d.write
 }
 
 func (d *BaseDatabase) SetConnection(maxIdleConns, maxOpenConns int, maxLifetime time.Duration) errUtil.IError {
-	if d.Read != nil {
-		if errInfo := d.setConnection(d.Read, maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
+	if d.read != nil {
+		if errInfo := d.setConnection(d.read, maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
 			return errInfo
 		}
 	}
-	if d.Write != nil {
-		if errInfo := d.setConnection(d.Read, maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
+	if d.write != nil {
+		if errInfo := d.setConnection(d.write, maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
 			return errInfo
 		}
 	}
@@ -48,8 +60,8 @@ func (d *BaseDatabase) setConnection(db *gorm.DB, maxIdleConns, maxOpenConns int
 }
 
 func (d *BaseDatabase) Dispose() errUtil.IError {
-	if d.Read != nil {
-		sqlDB, err := d.Read.DB()
+	if d.read != nil {
+		sqlDB, err := d.read.DB()
 		if err != nil {
 			return errUtil.NewError(err)
 		}
@@ -59,8 +71,8 @@ func (d *BaseDatabase) Dispose() errUtil.IError {
 		}
 	}
 
-	if d.Write != nil {
-		sqlDB, err := d.Write.DB()
+	if d.write != nil {
+		sqlDB, err := d.write.DB()
 		if err != nil {
 			return errUtil.NewError(err)
 		}

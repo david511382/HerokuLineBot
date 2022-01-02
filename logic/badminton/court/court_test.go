@@ -5,14 +5,8 @@ import (
 	"heroku-line-bot/logic/badminton/court/domain"
 	commonLogic "heroku-line-bot/logic/common"
 	incomeLogicDomain "heroku-line-bot/logic/income/domain"
+	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/storage/database"
-	"heroku-line-bot/storage/database/database/clubdb/table/income"
-	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourt"
-	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtdetail"
-	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledger"
-	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtledgercourt"
-	"heroku-line-bot/storage/database/database/clubdb/table/rentalcourtrefundledger"
-	"heroku-line-bot/storage/database/domain/reqs"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"sort"
@@ -27,12 +21,12 @@ func TestGetCourts(t *testing.T) {
 		placeID  *int
 	}
 	type migrations struct {
-		rentalCourts             []*rentalcourt.RentalCourtTable
-		rentalCourtLedgerCourts  []*rentalcourtledgercourt.RentalCourtLedgerCourtTable
-		rentalCourtLedgers       []*rentalcourtledger.RentalCourtLedgerTable
-		rentalCourtRefundLedgers []*rentalcourtrefundledger.RentalCourtRefundLedgerTable
-		incomes                  []*income.IncomeTable
-		rentalCourtDetail        []*rentalcourtdetail.RentalCourtDetailTable
+		rentalCourts             []*dbModel.ClubRentalCourt
+		rentalCourtLedgerCourts  []*dbModel.ClubRentalCourtLedgerCourt
+		rentalCourtLedgers       []*dbModel.ClubRentalCourtLedger
+		rentalCourtRefundLedgers []*dbModel.ClubRentalCourtRefundLedger
+		incomes                  []*dbModel.ClubIncome
+		rentalCourtDetail        []*dbModel.ClubRentalCourtDetail
 	}
 	type wants struct {
 		teamPlaceDateCourtsMap map[int]map[int][]*DateCourt
@@ -52,7 +46,7 @@ func TestGetCourts(t *testing.T) {
 				placeID:  util.GetIntP(1),
 			},
 			migrations{
-				rentalCourts: []*rentalcourt.RentalCourtTable{
+				rentalCourts: []*dbModel.ClubRentalCourt{
 					{
 						ID:      1,
 						Date:    commonLogic.GetTime(2013, 8, 2),
@@ -64,7 +58,7 @@ func TestGetCourts(t *testing.T) {
 						PlaceID: 2,
 					},
 				},
-				rentalCourtLedgers: []*rentalcourtledger.RentalCourtLedgerTable{
+				rentalCourtLedgers: []*dbModel.ClubRentalCourtLedger{
 					{
 						ID:                  1,
 						RentalCourtDetailID: 1,
@@ -103,8 +97,8 @@ func TestGetCourts(t *testing.T) {
 						EndDate:             commonLogic.GetTime(2013, 8, 2),
 					},
 				},
-				rentalCourtRefundLedgers: []*rentalcourtrefundledger.RentalCourtRefundLedgerTable{},
-				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{
+				rentalCourtRefundLedgers: []*dbModel.ClubRentalCourtRefundLedger{},
+				rentalCourtLedgerCourts: []*dbModel.ClubRentalCourtLedgerCourt{
 					{
 						RentalCourtID:       1,
 						RentalCourtLedgerID: 1,
@@ -121,7 +115,7 @@ func TestGetCourts(t *testing.T) {
 						TeamID:              1,
 					},
 				},
-				rentalCourtDetail: []*rentalcourtdetail.RentalCourtDetailTable{
+				rentalCourtDetail: []*dbModel.ClubRentalCourtDetail{
 					{
 						ID:        1,
 						StartTime: string(commonLogic.NewHourMinTime(1, 00)),
@@ -129,7 +123,7 @@ func TestGetCourts(t *testing.T) {
 						Count:     1,
 					},
 				},
-				incomes: []*income.IncomeTable{},
+				incomes: []*dbModel.ClubIncome{},
 			},
 			wants{
 				teamPlaceDateCourtsMap: map[int]map[int][]*DateCourt{
@@ -175,14 +169,14 @@ func TestGetCourts(t *testing.T) {
 				toDate:   *util.NewDateTimeP(global.Location, 2013, 8, 2),
 			},
 			migrations{
-				rentalCourts: []*rentalcourt.RentalCourtTable{
+				rentalCourts: []*dbModel.ClubRentalCourt{
 					{
 						ID:      1,
 						Date:    commonLogic.GetTime(2013, 8, 2),
 						PlaceID: 1,
 					},
 				},
-				rentalCourtLedgers: []*rentalcourtledger.RentalCourtLedgerTable{
+				rentalCourtLedgers: []*dbModel.ClubRentalCourtLedger{
 					// 1 3
 					{
 						ID:                  11,
@@ -222,7 +216,7 @@ func TestGetCourts(t *testing.T) {
 						EndDate:             commonLogic.GetTime(2013, 8, 2),
 					},
 				},
-				rentalCourtRefundLedgers: []*rentalcourtrefundledger.RentalCourtRefundLedgerTable{
+				rentalCourtRefundLedgers: []*dbModel.ClubRentalCourtRefundLedger{
 					// 2 3
 					{
 						ID:                  1,
@@ -247,7 +241,7 @@ func TestGetCourts(t *testing.T) {
 						IncomeID:            nil,
 					},
 				},
-				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{
+				rentalCourtLedgerCourts: []*dbModel.ClubRentalCourtLedgerCourt{
 					{
 						RentalCourtID:       1,
 						RentalCourtLedgerID: 11,
@@ -274,7 +268,7 @@ func TestGetCourts(t *testing.T) {
 						TeamID:              1,
 					},
 				},
-				rentalCourtDetail: []*rentalcourtdetail.RentalCourtDetailTable{
+				rentalCourtDetail: []*dbModel.ClubRentalCourtDetail{
 					{
 						ID:        1,
 						StartTime: string(commonLogic.NewHourMinTime(1, 00)),
@@ -300,7 +294,7 @@ func TestGetCourts(t *testing.T) {
 						Count:     1,
 					},
 				},
-				incomes: []*income.IncomeTable{
+				incomes: []*dbModel.ClubIncome{
 					{
 						ID:          1,
 						Date:        commonLogic.GetTime(2013, 8, 2),
@@ -533,18 +527,18 @@ func TestAddCourt(t *testing.T) {
 		rentalDates     []util.DateTime
 	}
 	type migrations struct {
-		rentalCourts            []*rentalcourt.RentalCourtTable
-		rentalCourtLedgerCourts []*rentalcourtledgercourt.RentalCourtLedgerCourtTable
-		rentalCourtLedgers      []*rentalcourtledger.RentalCourtLedgerTable
-		incomes                 []*income.IncomeTable
-		rentalCourtDetail       []*rentalcourtdetail.RentalCourtDetailTable
+		rentalCourts            []*dbModel.ClubRentalCourt
+		rentalCourtLedgerCourts []*dbModel.ClubRentalCourtLedgerCourt
+		rentalCourtLedgers      []*dbModel.ClubRentalCourtLedger
+		incomes                 []*dbModel.ClubIncome
+		rentalCourtDetail       []*dbModel.ClubRentalCourtDetail
 	}
 	type wants struct {
-		rentalCourts            []*rentalcourt.RentalCourtTable
-		rentalCourtLedgerCourts []*rentalcourtledgercourt.RentalCourtLedgerCourtTable
-		rentalCourtLedgers      []*rentalcourtledger.RentalCourtLedgerTable
-		incomes                 []*income.IncomeTable
-		rentalCourtDetail       []*rentalcourtdetail.RentalCourtDetailTable
+		rentalCourts            []*dbModel.ClubRentalCourt
+		rentalCourtLedgerCourts []*dbModel.ClubRentalCourtLedgerCourt
+		rentalCourtLedgers      []*dbModel.ClubRentalCourtLedger
+		incomes                 []*dbModel.ClubIncome
+		rentalCourtDetail       []*dbModel.ClubRentalCourtDetail
 		wantResultErrInfo       errUtil.IError
 	}
 	tests := []struct {
@@ -573,21 +567,21 @@ func TestAddCourt(t *testing.T) {
 				balancePayDate:  util.NewDateTimeP(global.Location, 2013, 8, 3),
 			},
 			migrations{
-				rentalCourts:            []*rentalcourt.RentalCourtTable{},
-				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
-				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
-				incomes:                 []*income.IncomeTable{},
-				rentalCourtDetail:       []*rentalcourtdetail.RentalCourtDetailTable{},
+				rentalCourts:            []*dbModel.ClubRentalCourt{},
+				rentalCourtLedgerCourts: []*dbModel.ClubRentalCourtLedgerCourt{},
+				rentalCourtLedgers:      []*dbModel.ClubRentalCourtLedger{},
+				incomes:                 []*dbModel.ClubIncome{},
+				rentalCourtDetail:       []*dbModel.ClubRentalCourtDetail{},
 			},
 			wants{
-				rentalCourts: []*rentalcourt.RentalCourtTable{
+				rentalCourts: []*dbModel.ClubRentalCourt{
 					{
 						ID:      1,
 						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
 						PlaceID: 1,
 					},
 				},
-				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{
+				rentalCourtLedgerCourts: []*dbModel.ClubRentalCourtLedgerCourt{
 					{
 						ID:                  1,
 						TeamID:              1,
@@ -595,7 +589,7 @@ func TestAddCourt(t *testing.T) {
 						RentalCourtLedgerID: 1,
 					},
 				},
-				rentalCourtLedgers: []*rentalcourtledger.RentalCourtLedgerTable{
+				rentalCourtLedgers: []*dbModel.ClubRentalCourtLedger{
 					{
 						ID:                  1,
 						RentalCourtDetailID: 1,
@@ -609,14 +603,14 @@ func TestAddCourt(t *testing.T) {
 						EndDate:             *util.GetTimePLoc(global.Location, 2013, 8, 2),
 					},
 				},
-				incomes: []*income.IncomeTable{
+				incomes: []*dbModel.ClubIncome{
 					{
 						ID:          1,
 						Date:        *util.GetTimePLoc(global.Location, 2013, 8, 1),
 						TeamID:      1,
 						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 						Description: domain.INCOME_DESCRIPTION_DESPOSIT,
-						Income:      5,
+						Income:      -5,
 					},
 					{
 						ID:          2,
@@ -624,10 +618,10 @@ func TestAddCourt(t *testing.T) {
 						TeamID:      1,
 						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 						Description: domain.INCOME_DESCRIPTION_BALANCE,
-						Income:      15,
+						Income:      -15,
 					},
 				},
-				rentalCourtDetail: []*rentalcourtdetail.RentalCourtDetailTable{
+				rentalCourtDetail: []*dbModel.ClubRentalCourtDetail{
 					{
 						ID:        1,
 						StartTime: string(commonLogic.NewHourMinTime(1, 0)),
@@ -655,18 +649,18 @@ func TestAddCourt(t *testing.T) {
 				balanceMoney: util.GetIntP(10),
 			},
 			migrations{
-				rentalCourts:            []*rentalcourt.RentalCourtTable{},
-				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
-				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
-				incomes:                 []*income.IncomeTable{},
-				rentalCourtDetail:       []*rentalcourtdetail.RentalCourtDetailTable{},
+				rentalCourts:            []*dbModel.ClubRentalCourt{},
+				rentalCourtLedgerCourts: []*dbModel.ClubRentalCourtLedgerCourt{},
+				rentalCourtLedgers:      []*dbModel.ClubRentalCourtLedger{},
+				incomes:                 []*dbModel.ClubIncome{},
+				rentalCourtDetail:       []*dbModel.ClubRentalCourtDetail{},
 			},
 			wants{
-				rentalCourts:            []*rentalcourt.RentalCourtTable{},
-				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
-				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
-				incomes:                 []*income.IncomeTable{},
-				rentalCourtDetail:       []*rentalcourtdetail.RentalCourtDetailTable{},
+				rentalCourts:            []*dbModel.ClubRentalCourt{},
+				rentalCourtLedgerCourts: []*dbModel.ClubRentalCourtLedgerCourt{},
+				rentalCourtLedgers:      []*dbModel.ClubRentalCourtLedger{},
+				incomes:                 []*dbModel.ClubIncome{},
+				rentalCourtDetail:       []*dbModel.ClubRentalCourtDetail{},
 				wantResultErrInfo:       errUtil.New(domain.ERROR_MSG_WRONG_PAY),
 			},
 		},
@@ -690,18 +684,18 @@ func TestAddCourt(t *testing.T) {
 				balancePayDate:  util.NewDateTimeP(global.Location, 2013, 8, 2),
 			},
 			migrations{
-				rentalCourts:            []*rentalcourt.RentalCourtTable{},
-				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
-				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
-				incomes:                 []*income.IncomeTable{},
-				rentalCourtDetail:       []*rentalcourtdetail.RentalCourtDetailTable{},
+				rentalCourts:            []*dbModel.ClubRentalCourt{},
+				rentalCourtLedgerCourts: []*dbModel.ClubRentalCourtLedgerCourt{},
+				rentalCourtLedgers:      []*dbModel.ClubRentalCourtLedger{},
+				incomes:                 []*dbModel.ClubIncome{},
+				rentalCourtDetail:       []*dbModel.ClubRentalCourtDetail{},
 			},
 			wants{
-				rentalCourts:            []*rentalcourt.RentalCourtTable{},
-				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
-				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
-				incomes:                 []*income.IncomeTable{},
-				rentalCourtDetail:       []*rentalcourtdetail.RentalCourtDetailTable{},
+				rentalCourts:            []*dbModel.ClubRentalCourt{},
+				rentalCourtLedgerCourts: []*dbModel.ClubRentalCourtLedgerCourt{},
+				rentalCourtLedgers:      []*dbModel.ClubRentalCourtLedger{},
+				incomes:                 []*dbModel.ClubIncome{},
+				rentalCourtDetail:       []*dbModel.ClubRentalCourtDetail{},
 				wantResultErrInfo:       errUtil.New(domain.ERROR_MSG_WRONG_PAY),
 			},
 		},
@@ -721,17 +715,17 @@ func TestAddCourt(t *testing.T) {
 				},
 			},
 			migrations{
-				rentalCourts: []*rentalcourt.RentalCourtTable{
+				rentalCourts: []*dbModel.ClubRentalCourt{
 					{
 						ID:      2,
 						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
 						PlaceID: 1,
 					},
 				},
-				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{},
-				rentalCourtLedgers:      []*rentalcourtledger.RentalCourtLedgerTable{},
-				incomes:                 []*income.IncomeTable{},
-				rentalCourtDetail: []*rentalcourtdetail.RentalCourtDetailTable{
+				rentalCourtLedgerCourts: []*dbModel.ClubRentalCourtLedgerCourt{},
+				rentalCourtLedgers:      []*dbModel.ClubRentalCourtLedger{},
+				incomes:                 []*dbModel.ClubIncome{},
+				rentalCourtDetail: []*dbModel.ClubRentalCourtDetail{
 					{
 						ID:        2,
 						StartTime: string(commonLogic.NewHourMinTime(1, 0)),
@@ -741,14 +735,14 @@ func TestAddCourt(t *testing.T) {
 				},
 			},
 			wants{
-				rentalCourts: []*rentalcourt.RentalCourtTable{
+				rentalCourts: []*dbModel.ClubRentalCourt{
 					{
 						ID:      2,
 						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
 						PlaceID: 1,
 					},
 				},
-				rentalCourtLedgerCourts: []*rentalcourtledgercourt.RentalCourtLedgerCourtTable{
+				rentalCourtLedgerCourts: []*dbModel.ClubRentalCourtLedgerCourt{
 					{
 						ID:                  1,
 						TeamID:              1,
@@ -756,7 +750,7 @@ func TestAddCourt(t *testing.T) {
 						RentalCourtLedgerID: 1,
 					},
 				},
-				rentalCourtLedgers: []*rentalcourtledger.RentalCourtLedgerTable{
+				rentalCourtLedgers: []*dbModel.ClubRentalCourtLedger{
 					{
 						ID:                  1,
 						RentalCourtDetailID: 2,
@@ -767,8 +761,8 @@ func TestAddCourt(t *testing.T) {
 						EndDate:             *util.GetTimePLoc(global.Location, 2013, 8, 2),
 					},
 				},
-				incomes: []*income.IncomeTable{},
-				rentalCourtDetail: []*rentalcourtdetail.RentalCourtDetailTable{
+				incomes: []*dbModel.ClubIncome{},
+				rentalCourtDetail: []*dbModel.ClubRentalCourtDetail{
 					{
 						ID:        2,
 						StartTime: string(commonLogic.NewHourMinTime(1, 0)),
@@ -808,7 +802,7 @@ func TestAddCourt(t *testing.T) {
 				return
 			}
 
-			if dbDatas, err := database.Club.RentalCourt.Select(reqs.RentalCourt{}); err != nil {
+			if dbDatas, err := database.Club.RentalCourt.Select(dbModel.ReqsClubRentalCourt{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -818,7 +812,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club.RentalCourtLedgerCourt.Select(reqs.RentalCourtLedgerCourt{}); err != nil {
+			if dbDatas, err := database.Club.RentalCourtLedgerCourt.Select(dbModel.ReqsClubRentalCourtLedgerCourt{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -828,7 +822,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club.RentalCourtLedger.Select(reqs.RentalCourtLedger{}); err != nil {
+			if dbDatas, err := database.Club.RentalCourtLedger.Select(dbModel.ReqsClubRentalCourtLedger{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -838,7 +832,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club.Income.Select(reqs.Income{}); err != nil {
+			if dbDatas, err := database.Club.Income.Select(dbModel.ReqsClubIncome{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -848,7 +842,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club.RentalCourtDetail.Select(reqs.RentalCourtDetail{}); err != nil {
+			if dbDatas, err := database.Club.RentalCourtDetail.Select(dbModel.ReqsClubRentalCourtDetail{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {

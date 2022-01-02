@@ -5,16 +5,14 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/logic/club/lineuser"
 	clubLineuserLogicDomain "heroku-line-bot/logic/club/lineuser/domain"
+	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/service/linebot"
 	linebotDomain "heroku-line-bot/service/linebot/domain"
 	linebotModel "heroku-line-bot/service/linebot/domain/model"
 	"heroku-line-bot/storage/database"
-	"heroku-line-bot/storage/database/database/clubdb/table/activity"
-	"heroku-line-bot/storage/database/database/clubdb/table/activityfinished"
-	logisticDb "heroku-line-bot/storage/database/database/clubdb/table/logistic"
-	"heroku-line-bot/storage/database/database/clubdb/table/member"
-	"heroku-line-bot/storage/database/database/clubdb/table/memberactivity"
-	dbReqs "heroku-line-bot/storage/database/domain/reqs"
+	"heroku-line-bot/storage/database/database/clubdb/activity"
+	"heroku-line-bot/storage/database/database/clubdb/member"
+	"heroku-line-bot/storage/database/database/clubdb/memberactivity"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"sort"
@@ -84,7 +82,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 	}
 
 	context := b.context
-	arg := dbReqs.Activity{
+	arg := dbModel.ReqsClubActivity{
 		ID: util.GetIntP(b.ActivityID),
 	}
 	if dbDatas, err := database.Club.Activity.Select(
@@ -119,7 +117,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 			return
 		}
 
-		memberActivityArg := dbReqs.MemberActivity{
+		memberActivityArg := dbModel.ReqsClubMemberActivity{
 			ActivityID: util.GetIntP(b.ActivityID),
 		}
 		if dbDatas, err := database.Club.MemberActivity.Select(
@@ -138,7 +136,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 			for _, v := range dbDatas {
 				memberIDs = append(memberIDs, v.MemberID)
 			}
-			arg := dbReqs.Member{
+			arg := dbModel.ReqsClubMember{
 				IDs: memberIDs,
 			}
 			clubMemberIDMap := make(map[int]isClubMemberName)
@@ -262,9 +260,9 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if b.context.IsComfirmed() {
-		var currentActivity *activity.ActivityTable
+		var currentActivity *dbModel.ClubActivity
 		{
-			dbDatas, err := database.Club.Activity.Select(dbReqs.Activity{
+			dbDatas, err := database.Club.Activity.Select(dbModel.ReqsClubActivity{
 				ID: &b.ActivityID,
 			})
 			if err != nil {
@@ -292,7 +290,7 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		}
 
 		memberActivityIDs := make([]int, 0)
-		finishedActivity := &activityfinished.ActivityFinishedTable{
+		finishedActivity := &dbModel.ClubActivityFinished{
 			ID:            currentActivity.ID,
 			TeamID:        currentActivity.TeamID,
 			Date:          currentActivity.Date,
@@ -333,9 +331,10 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 			finishedActivity.GuestFee = int16(guestFee)
 		}
 
-		transaction := database.Club.Begin()
-		if err := transaction.Error; err != nil {
-			resultErrInfo = errUtil.NewError(err)
+		db, transaction, err := database.Club.Begin()
+		if err != nil {
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 		defer func() {
@@ -347,14 +346,14 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		isConsumeBall := b.Rsl4Consume > 0
 		logisticID := 0
 		if isConsumeBall {
-			logisticData := &logisticDb.LogisticTable{
+			logisticData := &dbModel.ClubLogistic{
 				Date:        b.Date.Time(),
 				Name:        domain.BALL_NAME,
 				Amount:      -b.Rsl4Consume,
 				Description: "打球",
 				TeamID:      b.TeamID,
 			}
-			if err := database.Club.Logistic.Insert(transaction, logisticData); err != nil {
+			if err := db.Logistic.Insert(logisticData); err != nil {
 				resultErrInfo = errUtil.NewError(err)
 				return
 			}
@@ -364,25 +363,25 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 			finishedActivity.LogisticID = &logisticID
 		}
 
-		if err := database.Club.Activity.Delete(transaction, dbReqs.Activity{
+		if err := db.Activity.Delete(dbModel.ReqsClubActivity{
 			ID: &currentActivity.ID,
 		}); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
-		if err := database.Club.ActivityFinished.Insert(transaction, finishedActivity); err != nil {
+		if err := db.ActivityFinished.Insert(finishedActivity); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
 		if len(memberActivityIDs) > 0 {
-			arg := dbReqs.MemberActivity{
+			arg := dbModel.ReqsClubMemberActivity{
 				IDs: memberActivityIDs,
 			}
 			fields := map[string]interface{}{
 				"is_attend": true,
 			}
-			if err := database.Club.MemberActivity.Update(transaction, arg, fields); err != nil && !database.IsUniqErr(err) {
+			if err := db.MemberActivity.Update(arg, fields); err != nil && !database.IsUniqErr(err) {
 				resultErrInfo = errUtil.NewError(err)
 				return
 			}
