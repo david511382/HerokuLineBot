@@ -11,9 +11,9 @@ import (
 	"heroku-line-bot/logic/club/domain"
 	clubLineBotLogic "heroku-line-bot/logic/clublinebot"
 	commonLogic "heroku-line-bot/logic/common"
+	rdsModel "heroku-line-bot/model/redis"
 	"heroku-line-bot/service/linebot"
 	"heroku-line-bot/storage/database"
-	redisDomain "heroku-line-bot/storage/redis/domain"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"time"
@@ -55,7 +55,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 		return
 	}
 
-	newActivityTeamSettingMap := make(map[int]*redisDomain.BadmintonTeam)
+	newActivityTeamSettingMap := make(map[int]*rdsModel.ClubBadmintonTeam)
 	{
 		db, transaction, err := database.Club.Begin()
 		if err != nil {
@@ -70,8 +70,11 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 				newActivityTeamSettingMap[teamID] = teamSettingMap[teamID]
 			}
 
-			if resultErrInfo = newActivityHandler.InsertActivity(db); resultErrInfo != nil {
-				return
+			if errInfo := newActivityHandler.InsertActivity(db); errInfo != nil {
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+				if resultErrInfo.IsError() {
+					return
+				}
 			}
 		}
 
@@ -91,7 +94,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	return
 }
 
-func calDateActivity(teamSettingMap map[int]*redisDomain.BadmintonTeam, currentDate util.DateTime) (
+func calDateActivity(teamSettingMap map[int]*rdsModel.ClubBadmintonTeam, currentDate util.DateTime) (
 	resultActivityHandlers []*clubLogic.NewActivity,
 	resultErrInfo errUtil.IError,
 ) {
@@ -124,7 +127,7 @@ func calDateActivity(teamSettingMap map[int]*redisDomain.BadmintonTeam, currentD
 func calActivitys(
 	teamID int,
 	placeDateCourtsMap map[int][]*badmintonCourtLogic.DateCourt,
-	rdsSetting *redisDomain.BadmintonTeam,
+	rdsSetting *rdsModel.ClubBadmintonTeam,
 ) (
 	newActivityHandlers []*clubLogic.NewActivity,
 ) {
@@ -190,7 +193,7 @@ func calActivitys(
 	return
 }
 
-func notifyGroup(teamSettingMap map[int]*redisDomain.BadmintonTeam) (resultErrInfo errUtil.IError) {
+func notifyGroup(teamSettingMap map[int]*rdsModel.ClubBadmintonTeam) (resultErrInfo errUtil.IError) {
 	for teamID, v := range teamSettingMap {
 		if v.NotifyLineRommID == nil {
 			continue

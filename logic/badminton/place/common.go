@@ -2,14 +2,14 @@ package place
 
 import (
 	dbModel "heroku-line-bot/model/database"
+	rdsModel "heroku-line-bot/model/redis"
 	"heroku-line-bot/storage/database"
 	"heroku-line-bot/storage/database/database/clubdb/place"
 	"heroku-line-bot/storage/redis"
-	redisDomain "heroku-line-bot/storage/redis/domain"
 	errUtil "heroku-line-bot/util/error"
 )
 
-func Load(ids ...int) (resultPlaceIDMap map[int]*redisDomain.BadmintonPlace, resultErrInfo errUtil.IError) {
+func Load(ids ...int) (resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace, resultErrInfo errUtil.IError) {
 	if len(ids) == 0 {
 		return
 	}
@@ -21,7 +21,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*redisDomain.BadmintonPlace, res
 	}
 	resultPlaceIDMap = placeIDMap
 	if resultPlaceIDMap == nil {
-		resultPlaceIDMap = make(map[int]*redisDomain.BadmintonPlace)
+		resultPlaceIDMap = make(map[int]*rdsModel.ClubBadmintonPlace)
 	}
 
 	reLoadIDs := make([]int, 0)
@@ -33,7 +33,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*redisDomain.BadmintonPlace, res
 	}
 
 	if len(reLoadIDs) > 0 {
-		idPlaceMap := make(map[int]*redisDomain.BadmintonPlace)
+		idPlaceMap := make(map[int]*rdsModel.ClubBadmintonPlace)
 		if dbDatas, err := database.Club.Place.Select(dbModel.ReqsClubPlace{
 			IDs: reLoadIDs,
 		},
@@ -44,7 +44,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*redisDomain.BadmintonPlace, res
 			return
 		} else {
 			for _, v := range dbDatas {
-				result := &redisDomain.BadmintonPlace{
+				result := &rdsModel.ClubBadmintonPlace{
 					Name: v.Name,
 				}
 				resultPlaceIDMap[v.ID] = result

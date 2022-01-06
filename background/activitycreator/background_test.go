@@ -4,12 +4,17 @@ import (
 	"heroku-line-bot/global"
 	badmintonCourtLogic "heroku-line-bot/logic/badminton/court"
 	badmintonCourtLogicDomain "heroku-line-bot/logic/badminton/court/domain"
+	badmintonteamLogic "heroku-line-bot/logic/badminton/team"
 	clubLogic "heroku-line-bot/logic/club"
 	commonLogic "heroku-line-bot/logic/common"
-	redisDomain "heroku-line-bot/storage/redis/domain"
+	dbModel "heroku-line-bot/model/database"
+	rdsModel "heroku-line-bot/model/redis"
+	"heroku-line-bot/storage/database"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"sort"
 	"testing"
+	"time"
 )
 
 func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
@@ -127,7 +132,7 @@ func Test_calActivitys(t *testing.T) {
 	type args struct {
 		teamID             int
 		placeDateCourtsMap map[int][]*badmintonCourtLogic.DateCourt
-		rdsSetting         *redisDomain.BadmintonTeam
+		rdsSetting         *rdsModel.ClubBadmintonTeam
 	}
 	tests := []struct {
 		name                    string
@@ -197,7 +202,7 @@ func Test_calActivitys(t *testing.T) {
 						},
 					},
 				},
-				rdsSetting: &redisDomain.BadmintonTeam{
+				rdsSetting: &rdsModel.ClubBadmintonTeam{
 					Description: nil,
 					ClubSubsidy: util.GetInt16P(8),
 					PeopleLimit: util.GetInt16P(2),
@@ -241,6 +246,141 @@ func Test_calActivitys(t *testing.T) {
 			}
 			if ok, msg := util.Comp(gotNewActivityHandlers, tt.wantNewActivityHandlers); !ok {
 				t.Errorf(msg)
+			}
+		})
+	}
+}
+
+func TestBackGround_Run(t *testing.T) {
+	type args struct {
+		runTime time.Time
+	}
+	type migrations struct {
+		activity      []*dbModel.ClubActivity
+		mockGetCourts func(
+			fromDate, toDate util.DateTime,
+			teamID,
+			placeID *int,
+		) (
+			teamPlaceDateCourtsMap map[int]map[int][]*badmintonCourtLogic.DateCourt,
+			resultErrInfo errUtil.IError,
+		)
+		mockTeamLoad func(ids ...int) (
+			resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam,
+			resultErrInfo errUtil.IError,
+		)
+	}
+	type wants struct {
+		activity []*dbModel.ClubActivity
+	}
+	tests := []struct {
+		name       string
+		args       args
+		migrations migrations
+		wants      wants
+	}{
+		{
+			"activity create days",
+			args{
+				runTime: util.NewDateTimeP(global.Location, 2013, 8, 2).Time(),
+			},
+			migrations{
+				activity: []*dbModel.ClubActivity{},
+				mockGetCourts: func(
+					fromDate, toDate util.DateTime,
+					teamID,
+					placeID *int,
+				) (
+					teamPlaceDateCourtsMap map[int]map[int][]*badmintonCourtLogic.DateCourt,
+					resultErrInfo errUtil.IError,
+				) {
+					teamPlaceDateCourtsMap = map[int]map[int][]*badmintonCourtLogic.DateCourt{
+						1: {
+							1: {},
+						},
+					}
+					util.TimeSlice(fromDate.Time(), toDate.Next(1).Time(),
+						util.DATE_TIME_TYPE.Next1,
+						func(runTime, next time.Time) (isContinue bool) {
+							teamPlaceDateCourtsMap[1][1] = append(teamPlaceDateCourtsMap[1][1], &badmintonCourtLogic.DateCourt{
+								ID:   0,
+								Date: *util.NewDateTimePOf(&runTime),
+								Courts: []*badmintonCourtLogic.Court{
+									{
+										CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{},
+										Desposit:         nil,
+										Balance:          badmintonCourtLogic.LedgerIncome{},
+										BalanceCourIDs:   []int{},
+										Refunds:          []*badmintonCourtLogic.RefundMulCourtIncome{},
+									},
+								},
+							})
+							return true
+						},
+					)
+
+					return
+				},
+				mockTeamLoad: func(ids ...int) (
+					resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam,
+					resultErrInfo errUtil.IError,
+				) {
+					resultTeamIDMap = map[int]*rdsModel.ClubBadmintonTeam{
+						1: {
+							Name:               "",
+							OwnerMemberID:      1,
+							ClubSubsidy:        util.GetInt16P(0),
+							PeopleLimit:        util.GetInt16P(14),
+							ActivityCreateDays: util.GetInt16P(6),
+						},
+					}
+					return
+				},
+			},
+			wants{
+				activity: []*dbModel.ClubActivity{
+					{
+						ID:            1,
+						TeamID:        1,
+						Date:          util.NewDateTimeP(global.Location, 2013, 8, 8).Time(),
+						PlaceID:       1,
+						CourtsAndTime: "",
+						MemberCount:   0,
+						GuestCount:    0,
+						MemberFee:     0,
+						GuestFee:      0,
+						ClubSubsidy:   0,
+						LogisticID:    nil,
+						Description:   "",
+						PeopleLimit:   util.GetInt16P(14),
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := database.Club.Activity.MigrationData(tt.migrations.activity...); err != nil {
+				t.Fatal(err.Error())
+			}
+			badmintonCourtLogic.MockGetCourts = tt.migrations.mockGetCourts
+			badmintonteamLogic.MockLoad = tt.migrations.mockTeamLoad
+
+			b := BackGround{}
+			errInfo := b.Run(tt.args.runTime)
+			if errInfo != nil {
+				t.Error(errInfo.Error())
+				return
+			}
+
+			if gotDbDatas, err := database.Club.Activity.Select(dbModel.ReqsClubActivity{}); err != nil {
+				t.Error(errInfo.Error())
+				return
+			} else {
+				if ok, msg := util.Comp(gotDbDatas, tt.wants.activity); !ok {
+					t.Errorf(msg)
+					return
+				}
 			}
 		})
 	}

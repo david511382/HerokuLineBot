@@ -2,8 +2,8 @@ package badmintonplace
 
 import (
 	"encoding/json"
+	rdsModel "heroku-line-bot/model/redis"
 	"heroku-line-bot/storage/redis/common"
-	"heroku-line-bot/storage/redis/domain"
 	errUtil "heroku-line-bot/util/error"
 	"strconv"
 
@@ -26,8 +26,8 @@ func New(write, read *rds.Client, baseKey string) Key {
 	}
 }
 
-func (k Key) Load(ids ...int) (placeIDMap map[int]*domain.BadmintonPlace, resultErrInfo errUtil.IError) {
-	placeIDMap = make(map[int]*domain.BadmintonPlace)
+func (k Key) Load(ids ...int) (placeIDMap map[int]*rdsModel.ClubBadmintonPlace, resultErrInfo errUtil.IError) {
+	placeIDMap = make(map[int]*rdsModel.ClubBadmintonPlace)
 
 	if len(ids) == 0 {
 		return
@@ -54,7 +54,7 @@ func (k Key) Load(ids ...int) (placeIDMap map[int]*domain.BadmintonPlace, result
 			continue
 		}
 
-		result := &domain.BadmintonPlace{}
+		result := &rdsModel.ClubBadmintonPlace{}
 		if err := json.Unmarshal([]byte(v), result); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
@@ -67,7 +67,7 @@ func (k Key) Load(ids ...int) (placeIDMap map[int]*domain.BadmintonPlace, result
 	return
 }
 
-func (k Key) Set(idPlaceMap map[int]*domain.BadmintonPlace) (resultErrInfo errUtil.IError) {
+func (k Key) Set(idPlaceMap map[int]*rdsModel.ClubBadmintonPlace) (resultErrInfo errUtil.IError) {
 	m := make(map[string]interface{})
 	for id, place := range idPlaceMap {
 		if js, err := json.Marshal(place); err != nil {

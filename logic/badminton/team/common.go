@@ -2,11 +2,11 @@ package team
 
 import (
 	dbModel "heroku-line-bot/model/database"
+	rdsModel "heroku-line-bot/model/redis"
 	"heroku-line-bot/storage/database"
 	"heroku-line-bot/storage/database/database/clubdb/member"
 	"heroku-line-bot/storage/database/database/clubdb/team"
 	"heroku-line-bot/storage/redis"
-	redisDomain "heroku-line-bot/storage/redis/domain"
 	errUtil "heroku-line-bot/util/error"
 )
 
@@ -15,7 +15,17 @@ const (
 	DEFAULT_CREATE_DAYS int16 = 6
 )
 
-func Load(ids ...int) (resultTeamIDMap map[int]*redisDomain.BadmintonTeam, resultErrInfo errUtil.IError) {
+var MockLoad func(ids ...int) (
+	resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam,
+	resultErrInfo errUtil.IError,
+)
+
+// empty for all
+func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resultErrInfo errUtil.IError) {
+	if MockLoad != nil {
+		return MockLoad(ids...)
+	}
+
 	teamIDMap, errInfo := redis.BadmintonTeam.Load(ids...)
 	if errInfo != nil {
 		errInfo.SetLevel(errUtil.WARN)
@@ -23,7 +33,7 @@ func Load(ids ...int) (resultTeamIDMap map[int]*redisDomain.BadmintonTeam, resul
 	}
 	resultTeamIDMap = teamIDMap
 	if resultTeamIDMap == nil {
-		resultTeamIDMap = make(map[int]*redisDomain.BadmintonTeam)
+		resultTeamIDMap = make(map[int]*rdsModel.ClubBadmintonTeam)
 	}
 
 	reLoadIDs := make([]int, 0)
@@ -34,8 +44,8 @@ func Load(ids ...int) (resultTeamIDMap map[int]*redisDomain.BadmintonTeam, resul
 		}
 	}
 
-	if len(reLoadIDs) > 0 {
-		idTeamMap := make(map[int]*redisDomain.BadmintonTeam)
+	if len(ids) == 0 || len(reLoadIDs) > 0 {
+		idTeamMap := make(map[int]*rdsModel.ClubBadmintonTeam)
 		ownerMemberIDTeamIDsMap := make(map[int][]int)
 		{
 			dbDatas, err := database.Club.Team.Select(dbModel.ReqsClubTeam{
@@ -60,7 +70,7 @@ func Load(ids ...int) (resultTeamIDMap map[int]*redisDomain.BadmintonTeam, resul
 				teamID := v.ID
 				notifyLineRommID := v.NotifyLineRommID
 
-				result := &redisDomain.BadmintonTeam{
+				result := &rdsModel.ClubBadmintonTeam{
 					Name:               v.Name,
 					OwnerMemberID:      ownerMemberID,
 					NotifyLineRommID:   notifyLineRommID,

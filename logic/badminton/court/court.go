@@ -16,6 +16,15 @@ import (
 	"time"
 )
 
+var MockGetCourts func(
+	fromDate, toDate util.DateTime,
+	teamID,
+	placeID *int,
+) (
+	teamPlaceDateCourtsMap map[int]map[int][]*DateCourt,
+	resultErrInfo errUtil.IError,
+)
+
 func GetCourts(
 	fromDate, toDate util.DateTime,
 	teamID,
@@ -24,6 +33,10 @@ func GetCourts(
 	teamPlaceDateCourtsMap map[int]map[int][]*DateCourt,
 	resultErrInfo errUtil.IError,
 ) {
+	if MockGetCourts != nil {
+		return MockGetCourts(fromDate, toDate, teamID, placeID)
+	}
+
 	teamPlaceDateCourtsMap = make(map[int]map[int][]*DateCourt)
 
 	courtIDTeamDetailIDCourtsMap := make(map[int]map[int]map[int][]*Court)
