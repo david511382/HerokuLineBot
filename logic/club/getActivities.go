@@ -366,7 +366,7 @@ func (b *GetActivities) joinActivity() (resultErrInfo errUtil.IError) {
 		MemberID:   uID,
 		IsAttend:   false,
 	}
-	if err := database.Club.MemberActivity.Insert(nil, insertData); err != nil && !database.IsUniqErr(err) {
+	if err := database.Club.MemberActivity.Insert(insertData); err != nil && !database.IsUniqErr(err) {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}
