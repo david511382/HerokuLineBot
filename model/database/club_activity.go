@@ -26,9 +26,12 @@ func (ClubActivity) TableName() string {
 
 type ReqsClubActivity struct {
 	Date
+	Dates               []*time.Time
 	PlaceID             *int
+	PlaceIDs            []int
 	ClubSubsidyNotEqual *int16
 	ID                  *int
+	IDs                 []int
 	TeamID              *int
 }
 

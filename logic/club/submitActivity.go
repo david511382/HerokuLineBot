@@ -297,9 +297,8 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 			PlaceID:       currentActivity.PlaceID,
 			CourtsAndTime: currentActivity.CourtsAndTime,
 			ClubSubsidy:   currentActivity.ClubSubsidy,
-			// LogisticID new
-			Description: currentActivity.Description,
-			PeopleLimit: currentActivity.PeopleLimit,
+			Description:   currentActivity.Description,
+			PeopleLimit:   currentActivity.PeopleLimit,
 		}
 		{
 			memberCount := 0

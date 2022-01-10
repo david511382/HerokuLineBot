@@ -131,30 +131,6 @@ info:
   version: "1.0"
 paths:
   /badminton/rental-courts:
-    post:
-      consumes:
-      - application/json
-      description: 新增租場
-      parameters:
-      - description: 參數
-        in: body
-        name: param
-        required: true
-        schema:
-          $ref: '#/definitions/reqs.AddRentalCourt'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 資料
-          schema:
-            $ref: '#/definitions/resp.Base'
-      security:
-      - ApiKeyAuth: []
-      summary: 新增租場
-      tags:
-      - Badminton
-  /club/rental-courts:
     get:
       description: 租場狀況
       parameters:
@@ -181,7 +157,30 @@ paths:
       - ApiKeyAuth: []
       summary: 租場狀況
       tags:
-      - Club
+      - Badminton
+    post:
+      consumes:
+      - application/json
+      description: 新增租場
+      parameters:
+      - description: 參數
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/reqs.AddRentalCourt'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 資料
+          schema:
+            $ref: '#/definitions/resp.Base'
+      security:
+      - ApiKeyAuth: []
+      summary: 新增租場
+      tags:
+      - Badminton
 securityDefinitions:
   ApiKeyAuth:
     in: header

@@ -36,6 +36,13 @@ func (eis *ErrorInfos) Errors(getErrInfo func(errInfo *ErrorInfo)) {
 	}
 }
 
+func (eis *ErrorInfos) ToTraceError() error {
+	if eis == nil {
+		return nil
+	}
+	return New(eis.ErrorWithTrace())
+}
+
 func (eis *ErrorInfos) ToErrInfo() *ErrorInfo {
 	if eis == nil {
 		return nil

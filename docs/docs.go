@@ -24,6 +24,47 @@ var doc = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/badminton/rental-courts": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "租場狀況",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Badminton"
+                ],
+                "summary": "租場狀況",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "2013-08-02T00:00:00+08:00",
+                        "description": "起始日期",
+                        "name": "from_date",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "2013-08-02T00:00:00+08:00",
+                        "description": "結束日期",
+                        "name": "to_date",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "資料",
+                        "schema": {
+                            "$ref": "#/definitions/resp.GetRentalCourts"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -57,49 +98,6 @@ var doc = `{
                         "description": "資料",
                         "schema": {
                             "$ref": "#/definitions/resp.Base"
-                        }
-                    }
-                }
-            }
-        },
-        "/club/rental-courts": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "租場狀況",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Club"
-                ],
-                "summary": "租場狀況",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "2013-08-02T00:00:00+08:00",
-                        "description": "起始日期",
-                        "name": "from_date",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "2013-08-02T00:00:00+08:00",
-                        "description": "結束日期",
-                        "name": "to_date",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "資料",
-                        "schema": {
-                            "$ref": "#/definitions/resp.GetRentalCourts"
                         }
                     }
                 }

@@ -6,6 +6,7 @@ type IError interface {
 
 	NewParent(datas ...interface{}) IError
 
+	ToTraceError() error
 	ToErrInfo() *ErrorInfo
 	Append(errInfo IError) *ErrorInfos
 

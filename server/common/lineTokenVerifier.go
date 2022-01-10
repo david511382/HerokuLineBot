@@ -12,14 +12,14 @@ import (
 	"time"
 )
 
+type lineTokenVerifier struct {
+	OAuth *linebot.OAuth
+}
+
 func NewLineTokenVerifier() lineTokenVerifier {
 	return lineTokenVerifier{
 		OAuth: clublinebot.Bot.OAuth,
 	}
-}
-
-type lineTokenVerifier struct {
-	OAuth *linebot.OAuth
 }
 
 func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resultErrInfo errUtil.IError) {

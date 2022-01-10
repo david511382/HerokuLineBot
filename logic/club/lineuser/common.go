@@ -57,9 +57,10 @@ func Get(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo er
 }
 
 func GetDb(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo errUtil.IError) {
-	if dbDatas, err := database.Club.Member.Select(dbModel.ReqsClubMember{
-		LineID: &lineID,
-	},
+	if dbDatas, err := database.Club.Member.Select(
+		dbModel.ReqsClubMember{
+			LineID: &lineID,
+		},
 		member.COLUMN_ID,
 		member.COLUMN_Name,
 		member.COLUMN_Role,

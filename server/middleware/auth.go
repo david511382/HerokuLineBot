@@ -19,22 +19,28 @@ func GetToken(c *gin.Context) string {
 	return token
 }
 
-func GetTokenAuthorize(tokenVerifier domain.TokenVerifier, require bool) gin.HandlerFunc {
+func AuthorizeToken(tokenVerifier domain.ITokenVerifier, require bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accessToken := GetToken(c)
-		if accessToken != "" {
-			claims, errInfo := tokenVerifier.Parse(accessToken)
-			if errInfo != nil {
-				if require && errInfo.IsError() {
-					common.FailForbidden(c, errInfo)
-					return
-				} else {
-					errInfo.SetLevel(errUtil.INFO)
+		_, exist := c.Get(domain.KEY_JWT_CLAIMS)
+		if !exist {
+			accessToken := GetToken(c)
+			if accessToken != "" {
+				claims, errInfo := tokenVerifier.Parse(accessToken)
+				if errInfo != nil {
+					if require && errInfo.IsError() {
+						common.FailForbidden(c, errInfo)
+						return
+					} else {
+						errInfo.SetLevel(errUtil.INFO)
+					}
+					logger.Log(common.GetLogName(c), errInfo)
 				}
-				logger.Log(common.GetLogName(c), errInfo)
+				c.Set(domain.KEY_JWT_CLAIMS, claims)
+				exist = true
 			}
-			c.Set(domain.KEY_JWT_CLAIMS, claims)
-		} else if require {
+		}
+
+		if require && !exist {
 			common.FailAuth(c, nil)
 			return
 		}

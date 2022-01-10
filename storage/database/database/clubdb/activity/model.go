@@ -1,6 +1,7 @@
 package activity
 
 import (
+	"fmt"
 	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/storage/database/common"
 
@@ -51,37 +52,47 @@ func (t Activity) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
 func (t Activity) whereArg(dp *gorm.DB, arg dbModel.ReqsClubActivity) *gorm.DB {
 	m := t.newModel()
 	dp = dp.Model(m)
+	tableName := m.TableName()
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
+		dp = dp.Where(fmt.Sprintf("%s.%s = ?", tableName, COLUMN_ID), p)
+	}
+	if p := arg.IDs; len(p) > 0 {
+		dp = dp.Where(fmt.Sprintf("%s.%s IN (?)", tableName, COLUMN_ID), p)
 	}
 
 	if p := arg.TeamID; p != nil {
-		dp = dp.Where(string(COLUMN_TeamID+" = ?"), p)
+		dp = dp.Where(fmt.Sprintf("%s.%s = ?", tableName, COLUMN_TeamID), p)
 	}
 
 	if p := arg.PlaceID; p != nil {
-		dp = dp.Where(string(COLUMN_PlaceID+" = ?"), p)
+		dp = dp.Where(fmt.Sprintf("%s.%s = ?", tableName, COLUMN_PlaceID), p)
+	}
+	if p := arg.PlaceIDs; len(p) > 0 {
+		dp = dp.Where(fmt.Sprintf("%s.%s IN (?)", tableName, COLUMN_PlaceID), p)
 	}
 
 	if p := arg.ClubSubsidyNotEqual; p != nil {
-		dp = dp.Where(string(COLUMN_ClubSubsidy+" != ?"), p)
+		dp = dp.Where(fmt.Sprintf("%s.%s != ?", tableName, COLUMN_ClubSubsidy), p)
 	}
 
 	if p := arg.Date.Date; p != nil && !p.IsZero() {
-		dp = dp.Where(string(COLUMN_Date+" = ?"), p)
+		dp = dp.Where(fmt.Sprintf("%s.%s = ?", tableName, COLUMN_Date), p)
+	}
+	if p := arg.Dates; len(p) > 0 {
+		dp = dp.Where(fmt.Sprintf("%s.%s IN (?)", tableName, COLUMN_Date), p)
 	}
 	if p := arg.FromDate; p != nil && !p.IsZero() {
-		dp = dp.Where(string(COLUMN_Date+" >= ?"), p)
+		dp = dp.Where(fmt.Sprintf("%s.%s >= ?", tableName, COLUMN_Date), p)
 	}
 	if p := arg.ToDate; p != nil && !p.IsZero() {
-		dp = dp.Where(string(COLUMN_Date+" <= ?"), p)
+		dp = dp.Where(fmt.Sprintf("%s.%s <= ?", tableName, COLUMN_Date), p)
 	}
 	if p := arg.BeforeDate; p != nil && !p.IsZero() {
-		dp = dp.Where(string(COLUMN_Date+" < ?"), p)
+		dp = dp.Where(fmt.Sprintf("%s.%s < ?", tableName, COLUMN_Date), p)
 	}
 	if p := arg.AfterDate; p != nil && !p.IsZero() {
-		dp = dp.Where(string(COLUMN_Date+" > ?"), p)
+		dp = dp.Where(fmt.Sprintf("%s.%s > ?", tableName, COLUMN_Date), p)
 	}
 
 	return dp

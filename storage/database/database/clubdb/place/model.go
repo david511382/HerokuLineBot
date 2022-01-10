@@ -44,7 +44,7 @@ func (t Place) whereArg(dp *gorm.DB, arg dbModel.ReqsClubPlace) *gorm.DB {
 	if p := arg.ID; p != nil {
 		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
 	}
-	if p := arg.IDs; p != nil {
+	if p := arg.IDs; len(p) > 0 {
 		dp = dp.Where(string(COLUMN_ID+" IN (?)"), p)
 	}
 

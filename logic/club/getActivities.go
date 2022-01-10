@@ -74,18 +74,65 @@ func (b *GetActivities) GetInputTemplate(requireRawParamAttr string) interface{}
 
 func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 	context := b.context
-	arg := dbModel.ReqsClubActivity{
-		TeamID: &b.TeamID,
+
+	activitys := make([]*dbModel.ClubActivity, 0)
+	{
+		dbDatas, err := database.Club.Activity.Select(
+			dbModel.ReqsClubActivity{
+				TeamID: &b.TeamID,
+			},
+			activity.COLUMN_ID,
+			activity.COLUMN_Date,
+			activity.COLUMN_PlaceID,
+			activity.COLUMN_CourtsAndTime,
+			activity.COLUMN_ClubSubsidy,
+			activity.COLUMN_Description,
+			activity.COLUMN_PeopleLimit,
+		)
+		if err != nil {
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			return
+		}
+
+		activitys = append(activitys, dbDatas...)
 	}
-	if dbDatas, err := database.Club.Activity.Select(
-		arg,
-		activity.COLUMN_ID,
-		activity.COLUMN_Date,
-		activity.COLUMN_PlaceID,
-		activity.COLUMN_CourtsAndTime,
-		activity.COLUMN_ClubSubsidy,
-		activity.COLUMN_Description,
-		activity.COLUMN_PeopleLimit,
+
+	if len(activitys) == 0 {
+		return
+	}
+
+	activityIDs := []int{}
+	idPlaceMap := make(map[int]string)
+	for _, v := range activitys {
+		activityIDs = append(activityIDs, v.ID)
+		idPlaceMap[v.PlaceID] = ""
+	}
+
+	placeIDs := make([]int, 0)
+	for id := range idPlaceMap {
+		placeIDs = append(placeIDs, id)
+	}
+	if dbDatas, errInfo := badmintonPlaceLogic.Load(placeIDs...); errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
+			return
+		}
+	} else {
+		for id, v := range dbDatas {
+			idPlaceMap[id] = v.Name
+		}
+	}
+
+	activityIDMap := make(map[int][]*getActivitiesActivityJoinedMembers)
+	memberActivityArg := dbModel.ReqsClubMemberActivity{
+		ActivityIDs: activityIDs,
+	}
+	if dbDatas, err := database.Club.MemberActivity.Select(
+		memberActivityArg,
+		memberactivity.COLUMN_ID,
+		memberactivity.COLUMN_MemberID,
+		memberactivity.COLUMN_ActivityID,
 	); err != nil {
 		errInfo := errUtil.NewError(err)
 		if resultErrInfo == nil {
@@ -95,118 +142,75 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 		}
 		return
 	} else if len(dbDatas) > 0 {
-		activityIDs := []int{}
-		idPlaceMap := make(map[int]string)
+		memberIDs := make([]int, 0)
 		for _, v := range dbDatas {
-			activityIDs = append(activityIDs, v.ID)
-			idPlaceMap[v.PlaceID] = ""
+			memberIDs = append(memberIDs, v.MemberID)
 		}
-
-		placeIDs := make([]int, 0)
-		for id := range idPlaceMap {
-			placeIDs = append(placeIDs, id)
+		type lineName struct {
+			lineID *string
+			name   string
 		}
-		if dbDatas, errInfo := badmintonPlaceLogic.Load(placeIDs...); errInfo != nil {
-			errInfo := errUtil.NewError(err)
-			if resultErrInfo == nil {
-				resultErrInfo = errInfo
-			} else {
-				resultErrInfo = resultErrInfo.Append(errInfo)
-			}
-		} else {
-			for id, v := range dbDatas {
-				idPlaceMap[id] = v.Name
-			}
+		memberIDNameMap := make(map[int]lineName)
+		memberArg := dbModel.ReqsClubMember{
+			IDs: memberIDs,
 		}
-
-		activityIDMap := make(map[int][]*getActivitiesActivityJoinedMembers)
-		memberActivityArg := dbModel.ReqsClubMemberActivity{
-			ActivityIDs: activityIDs,
-		}
-		if dbDatas, err := database.Club.MemberActivity.Select(
-			memberActivityArg,
-			memberactivity.COLUMN_ID,
-			memberactivity.COLUMN_MemberID,
-			memberactivity.COLUMN_ActivityID,
+		if dbDatas, err := database.Club.Member.Select(
+			memberArg,
+			member.COLUMN_ID,
+			member.COLUMN_Name,
+			member.COLUMN_LineID,
 		); err != nil {
-			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.NewError(err)
+			return
+		} else {
+			for _, v := range dbDatas {
+				memberIDNameMap[v.ID] = lineName{
+					lineID: v.LineID,
+					name:   v.Name,
+				}
+			}
+		}
+
+		sort.Slice(dbDatas, func(i, j int) bool {
+			return dbDatas[i].ID < dbDatas[j].ID
+		})
+		for _, v := range dbDatas {
+			activityID := v.ActivityID
+			if activityIDMap[activityID] == nil {
+				activityIDMap[activityID] = make([]*getActivitiesActivityJoinedMembers, 0)
+			}
+			activityIDMap[activityID] = append(activityIDMap[activityID], &getActivitiesActivityJoinedMembers{
+				ID:   v.MemberID,
+				Name: memberIDNameMap[v.MemberID].name,
+			})
+		}
+	}
+
+	sort.Slice(activitys, func(i, j int) bool {
+		return activitys[i].Date.Before(activitys[j].Date)
+	})
+	for _, v := range activitys {
+		activity := &getActivitiesActivity{
+			NewActivity: NewActivity{
+				Context:     context,
+				Date:        util.DateTime(v.Date),
+				PlaceID:     v.PlaceID,
+				Description: v.Description,
+				PeopleLimit: v.PeopleLimit,
+				ClubSubsidy: v.ClubSubsidy,
+			},
+			JoinedMembers: activityIDMap[v.ID],
+			ActivityID:    v.ID,
+		}
+		if errInfo := activity.ParseCourts(v.CourtsAndTime); errInfo != nil {
 			if resultErrInfo == nil {
 				resultErrInfo = errInfo
 			} else {
 				resultErrInfo = resultErrInfo.Append(errInfo)
 			}
 			return
-		} else if len(dbDatas) > 0 {
-			memberIDs := make([]int, 0)
-			for _, v := range dbDatas {
-				memberIDs = append(memberIDs, v.MemberID)
-			}
-			type lineName struct {
-				lineID *string
-				name   string
-			}
-			memberIDNameMap := make(map[int]lineName)
-			memberArg := dbModel.ReqsClubMember{
-				IDs: memberIDs,
-			}
-			if dbDatas, err := database.Club.Member.Select(
-				memberArg,
-				member.COLUMN_ID,
-				member.COLUMN_Name,
-				member.COLUMN_LineID,
-			); err != nil {
-				resultErrInfo = errUtil.NewError(err)
-				return
-			} else {
-				for _, v := range dbDatas {
-					memberIDNameMap[v.ID] = lineName{
-						lineID: v.LineID,
-						name:   v.Name,
-					}
-				}
-			}
-
-			sort.Slice(dbDatas, func(i, j int) bool {
-				return dbDatas[i].ID < dbDatas[j].ID
-			})
-			for _, v := range dbDatas {
-				activityID := v.ActivityID
-				if activityIDMap[activityID] == nil {
-					activityIDMap[activityID] = make([]*getActivitiesActivityJoinedMembers, 0)
-				}
-				activityIDMap[activityID] = append(activityIDMap[activityID], &getActivitiesActivityJoinedMembers{
-					ID:   v.MemberID,
-					Name: memberIDNameMap[v.MemberID].name,
-				})
-			}
 		}
-
-		sort.Slice(dbDatas, func(i, j int) bool {
-			return dbDatas[i].Date.Before(dbDatas[j].Date)
-		})
-		for _, v := range dbDatas {
-			activity := &getActivitiesActivity{
-				NewActivity: NewActivity{
-					Context:     context,
-					Date:        util.DateTime(v.Date),
-					PlaceID:     v.PlaceID,
-					Description: v.Description,
-					PeopleLimit: v.PeopleLimit,
-					ClubSubsidy: v.ClubSubsidy,
-				},
-				JoinedMembers: activityIDMap[v.ID],
-				ActivityID:    v.ID,
-			}
-			if errInfo := activity.ParseCourts(v.CourtsAndTime); errInfo != nil {
-				if resultErrInfo == nil {
-					resultErrInfo = errInfo
-				} else {
-					resultErrInfo = resultErrInfo.Append(errInfo)
-				}
-				return
-			}
-			b.activities = append(b.activities, activity)
-		}
+		b.activities = append(b.activities, activity)
 	}
 
 	return

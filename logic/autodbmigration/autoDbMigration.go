@@ -9,6 +9,7 @@ import (
 func MigrationNotExist() errUtil.IError {
 	tables := []*common.BaseTable{
 		database.Club.Activity.BaseTable,
+		database.Club.ActivityFinished.BaseTable,
 		database.Club.Income.BaseTable,
 		database.Club.Logistic.BaseTable,
 		database.Club.Member.BaseTable,

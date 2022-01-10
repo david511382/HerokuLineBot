@@ -31,6 +31,6 @@ func Abort(c *gin.Context, code int, errInfo errUtil.IError) {
 	if errInfo == nil {
 		c.AbortWithStatus(code)
 	} else {
-		c.AbortWithError(code, errInfo)
+		c.AbortWithError(code, errInfo.ToTraceError())
 	}
 }

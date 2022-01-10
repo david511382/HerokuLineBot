@@ -1,19 +1,16 @@
 package common
 
+// index: 0 開始
+// from: -1 沒資料
 func PageSlice(l int, size, index uint) (from, before int) {
 	if size == 0 {
 		from = -1
 		before = -1
 		return
 	}
-	if index == 0 {
-		from = 0
-		before = l
-		return
-	}
 
 	sizeI := int(size)
-	before = sizeI * int(index)
+	before = sizeI * int(index+1)
 	from = before - sizeI
 
 	if before > l {

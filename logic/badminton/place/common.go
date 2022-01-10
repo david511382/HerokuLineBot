@@ -9,9 +9,15 @@ import (
 	errUtil "heroku-line-bot/util/error"
 )
 
+var MockLoad func(ids ...int) (
+	resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace,
+	resultErrInfo errUtil.IError,
+)
+
+// empty for all
 func Load(ids ...int) (resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace, resultErrInfo errUtil.IError) {
-	if len(ids) == 0 {
-		return
+	if MockLoad != nil {
+		return MockLoad(ids...)
 	}
 
 	placeIDMap, errInfo := redis.BadmintonPlace.Load(ids...)
@@ -32,7 +38,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace, re
 		}
 	}
 
-	if len(reLoadIDs) > 0 {
+	if len(ids) == 0 || len(reLoadIDs) > 0 {
 		idPlaceMap := make(map[int]*rdsModel.ClubBadmintonPlace)
 		if dbDatas, err := database.Club.Place.Select(dbModel.ReqsClubPlace{
 			IDs: reLoadIDs,

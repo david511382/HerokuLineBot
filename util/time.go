@@ -81,6 +81,10 @@ func GetUTCTimeP(ts ...int) *time.Time {
 }
 
 func GetTimePLoc(loc *time.Location, ts ...int) *time.Time {
+	if loc == nil {
+		loc = time.UTC
+	}
+
 	for l := len(ts); l < 7; l = len(ts) {
 		t := 0
 		if l < 3 {
@@ -96,38 +100,42 @@ func GetWeekDayName(weekDay time.Weekday) string {
 	return WeekDayName[weekDay]
 }
 
-func GetDatesInWeekday(fromDate, toDate DateTime, weekDay time.Weekday) (result []DateTime) {
+func GetDatesInWeekdays(fromDate, toDate DateTime, weekdays ...time.Weekday) (result []DateTime) {
 	result = make([]DateTime, 0)
-
-	var firstDate DateTime
-	{
-		fromWeekday := fromDate.Time().Weekday()
-		if fromWeekday > weekDay {
-			firstDate = DateTime(WEEK_TIME_TYPE.Next1(
-				fromDate.Next(
-					int(weekDay - fromWeekday),
-				).Time(),
-			))
-		} else {
-			firstDate = DateTime(
-				fromDate.Next(
-					int(weekDay - fromWeekday),
-				).Time(),
-			)
-		}
-
-		if firstDate.Time().After(toDate.Time()) {
-			return
-		}
+	if len(weekdays) == 0 {
+		return
 	}
 
-	TimeSlice(firstDate.Time(), toDate.Next(1).Time(),
-		WEEK_TIME_TYPE.Next1,
-		func(runTime, next time.Time) (isContinue bool) {
-			result = append(result, *NewDateTimePOf(&runTime))
-			return true
-		},
-	)
+	fromWeekday := fromDate.Time().Weekday()
+	for _, weekday := range weekdays {
+		var firstDate DateTime
+		{
+			if fromWeekday > weekday {
+				firstDate = DateTime(WEEK_TIME_TYPE.Next1(
+					fromDate.Next(
+						int(weekday - fromWeekday),
+					).Time(),
+				))
+			} else {
+				firstDate = DateTime(
+					fromDate.Next(
+						int(weekday - fromWeekday),
+					).Time(),
+				)
+			}
+			if firstDate.Time().After(toDate.Time()) {
+				continue
+			}
+		}
+
+		TimeSlice(firstDate.Time(), toDate.Next(1).Time(),
+			WEEK_TIME_TYPE.Next1,
+			func(runTime, next time.Time) (isContinue bool) {
+				result = append(result, *NewDateTimePOf(&runTime))
+				return true
+			},
+		)
+	}
 
 	return
 }

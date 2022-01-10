@@ -29,6 +29,13 @@ func (ei *ErrorInfo) NewParent(datas ...interface{}) IError {
 	return ei.NewParentLevel(ei.Level, datas...)
 }
 
+func (ei *ErrorInfo) ToTraceError() error {
+	if ei == nil {
+		return nil
+	}
+	return New(ei.ErrorWithTrace())
+}
+
 func (ei *ErrorInfo) ToErrInfo() *ErrorInfo {
 	return ei
 }

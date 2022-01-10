@@ -2,6 +2,11 @@ package reqs
 
 import "time"
 
+type GetRentalCourts struct {
+	MustFromToDate
+	TeamID int `json:"team_id" form:"team_id" binding:"required" uri:"team_id" url:"team_id"`
+}
+
 type AddRentalCourt struct {
 	MustFromToDate
 	PlaceID      int          `json:"place_id" form:"place_id" binding:"required" uri:"place_id" url:"place_id"`

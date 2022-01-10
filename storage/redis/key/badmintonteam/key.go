@@ -26,13 +26,13 @@ func New(write, read *rds.Client, baseKey string) Key {
 	}
 }
 
-func (k Key) Migration(idPlaceMap map[int]*rdsModel.ClubBadmintonTeam) (resultErrInfo errUtil.IError) {
+func (k Key) Migration(idTeamMap map[int]*rdsModel.ClubBadmintonTeam) (resultErrInfo errUtil.IError) {
 	if _, err := k.Del(); err != nil {
 		errInfo := errUtil.NewError(err)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
-	if errInfo := k.Set(idPlaceMap); errInfo != nil {
+	if errInfo := k.Set(idTeamMap); errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
 			return
