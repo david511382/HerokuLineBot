@@ -27,13 +27,13 @@ func SetupApiRouter(router *gin.Engine) *gin.Engine {
 
 	// api/badminton
 	apiBadminton := api.Group("/badminton")
-	apiBadminton.GET("/rental-courts", badmintonApi.GetRentalCourts)
 	// api/badminton auth
 	apiBadminton.Use(middleware.AuthorizeToken(lineTokenVerifier, true))
 	apiBadminton.Use(middleware.VerifyAuthorize(map[int16]bool{
 		int16(clubLogicDomain.ADMIN_CLUB_ROLE): true,
 		int16(clubLogicDomain.CADRE_CLUB_ROLE): true,
 	}))
+	apiBadminton.GET("/rental-courts", badmintonApi.GetRentalCourts)
 	apiBadminton.POST("/rental-courts", badmintonApi.AddRentalCourt)
 
 	// TODO wait for delete

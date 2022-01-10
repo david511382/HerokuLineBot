@@ -7,6 +7,20 @@ import (
 	"github.com/tidwall/sjson"
 )
 
+func ParseMap(data interface{}) (want map[string]interface{}, err error) {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(jsonData, &want)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func IsJSON(s string) bool {
 	var js map[string]interface{}
 	return json.Unmarshal([]byte(s), &js) == nil
