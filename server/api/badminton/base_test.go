@@ -92,7 +92,6 @@ func setupRouter() *gin.Engine {
 		int16(clubLogicDomain.ADMIN_CLUB_ROLE): true,
 		int16(clubLogicDomain.CADRE_CLUB_ROLE): true,
 	}))
-	// TODO test auth
 	apiBadminton.GET("/rental-courts", GetRentalCourts)
 	apiBadminton.POST("/rental-courts", AddRentalCourt)
 
