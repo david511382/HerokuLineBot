@@ -27,6 +27,7 @@ func SetupApiRouter(router *gin.Engine) *gin.Engine {
 
 	// api/badminton
 	apiBadminton := api.Group("/badminton")
+	apiBadminton.GET("/activitys", badmintonApi.GetActivitys)
 	// api/badminton auth
 	apiBadminton.Use(middleware.AuthorizeToken(lineTokenVerifier, true))
 	apiBadminton.Use(middleware.VerifyAuthorize(map[int16]bool{

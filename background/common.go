@@ -5,10 +5,9 @@ import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/global"
 	"heroku-line-bot/util"
+	errUtil "heroku-line-bot/util/error"
 	"strconv"
 	"strings"
-
-	errUtil "heroku-line-bot/util/error"
 
 	"github.com/robfig/cron"
 )

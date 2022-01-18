@@ -38,5 +38,8 @@ func SystemRouter() *gin.Engine {
 	clubLineBotEvent := router.Group("/")
 	clubLineBotEvent.POST("/club-line-bot", clubLineBotApi.Index)
 
+	// ws
+	SetupWsRouter(router)
+
 	return router
 }

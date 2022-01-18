@@ -36,8 +36,12 @@ func NewHourMinTimeOf(t time.Time) HourMinTime {
 	return NewHourMinTime(uint(t.Hour()), uint(t.Minute()))
 }
 
+func (t HourMinTime) ToString() string {
+	return string(t)
+}
+
 func (t HourMinTime) Time() (resultTime time.Time, resultErr error) {
-	rawT, err := time.Parse("15:04", string(t))
+	rawT, err := time.Parse("15:04", t.ToString())
 	if err != nil {
 		resultErr = err
 		return
@@ -76,8 +80,12 @@ func NewMinSecTime(min, sec uint) MinSecTime {
 	return MinSecTime(fmt.Sprintf("%s:%s", minStr, secStr))
 }
 
+func (t MinSecTime) ToString() string {
+	return string(t)
+}
+
 func (t MinSecTime) Time() (resultTime time.Time, resultErr error) {
-	rawT, err := time.Parse("04:05", string(t))
+	rawT, err := time.Parse("04:05", t.ToString())
 	if err != nil {
 		resultErr = err
 		return

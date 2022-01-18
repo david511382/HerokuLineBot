@@ -365,6 +365,10 @@ func TestBackGround_Run(t *testing.T) {
 			}
 			badmintonCourtLogic.MockGetCourts = tt.migrations.mockGetCourts
 			badmintonteamLogic.MockLoad = tt.migrations.mockTeamLoad
+			defer func() {
+				badmintonCourtLogic.MockGetCourts = nil
+				badmintonteamLogic.MockLoad = nil
+			}()
 
 			b := BackGround{}
 			errInfo := b.Run(tt.args.runTime)

@@ -50,6 +50,62 @@ definitions:
       message:
         type: string
     type: object
+  resp.GetActivitys:
+    properties:
+      activitys:
+        items:
+          $ref: '#/definitions/resp.GetActivitysActivity'
+        type: array
+      data_count:
+        type: integer
+    type: object
+  resp.GetActivitysActivity:
+    properties:
+      activity_id:
+        type: integer
+      courts:
+        items:
+          $ref: '#/definitions/resp.GetActivitysCourt'
+        type: array
+      date:
+        type: string
+      description:
+        type: string
+      is_show_members:
+        type: boolean
+      members:
+        items:
+          $ref: '#/definitions/resp.GetActivitysMember'
+        type: array
+      people_limit:
+        type: integer
+      place_id:
+        type: integer
+      place_name:
+        type: string
+      price:
+        type: integer
+      team_id:
+        type: integer
+      team_name:
+        type: string
+    type: object
+  resp.GetActivitysCourt:
+    properties:
+      count:
+        type: integer
+      from_time:
+        type: string
+      to_time:
+        type: string
+    type: object
+  resp.GetActivitysMember:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   resp.GetRentalCourts:
     properties:
       not_pay_day_courts:
@@ -130,6 +186,57 @@ info:
   title: Heroku-Line-Bot
   version: "1.0"
 paths:
+  /badminton/activitys:
+    get:
+      description: 尚未截止的活動
+      parameters:
+      - description: 起始日期
+        in: query
+        name: from_date
+        type: string
+      - description: 結束日期
+        in: query
+        name: to_date
+        type: string
+      - description: 場館IDs
+        in: query
+        items:
+          type: integer
+        name: place_ids
+        type: array
+      - description: 球隊IDs
+        in: query
+        items:
+          type: integer
+        name: team_ids
+        type: array
+      - description: 分頁每頁資料量
+        in: query
+        name: page_size
+        required: true
+        type: integer
+      - description: 分頁第幾頁，1開始
+        in: query
+        name: page_index
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 資料
+          schema:
+            allOf:
+            - $ref: '#/definitions/resp.Base'
+            - properties:
+                data:
+                  $ref: '#/definitions/resp.GetActivitys'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 活動列表
+      tags:
+      - Badminton
   /badminton/rental-courts:
     get:
       description: 租場狀況

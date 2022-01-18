@@ -1,7 +1,9 @@
 package activity
 
 import (
+	"fmt"
 	dbModel "heroku-line-bot/model/database"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -55,4 +57,25 @@ func (t Activity) Select(arg dbModel.ReqsClubActivity, columns ...Column) ([]*db
 	}
 
 	return result, nil
+}
+
+func (t Activity) MinMaxDate(arg dbModel.ReqsClubActivity) (maxDate, minDate time.Time, resultErr error) {
+	type MinMaxID struct {
+		MaxDate time.Time
+		MinDate time.Time
+	}
+
+	response := &MinMaxID{}
+	if err := t.SelectColumns(
+		arg, response,
+		fmt.Sprintf("MIN(%s) AS min_date", COLUMN_Date),
+		fmt.Sprintf("MAX(%s) AS max_date", COLUMN_Date),
+	); err != nil {
+		resultErr = err
+		return
+	}
+
+	maxDate = response.MaxDate
+	minDate = response.MinDate
+	return
 }

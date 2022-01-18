@@ -10,6 +10,7 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/google/go-querystring v1.0.0
+	github.com/gorilla/websocket v0.0.0-20170926233335-4201258b820c
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/onsi/ginkgo v1.15.2 // indirect
 	github.com/onsi/gomega v1.11.0 // indirect

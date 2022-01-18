@@ -80,6 +80,32 @@ func (t BaseTable) Insert(datas interface{}) error {
 func (t BaseTable) MigrationTable() error {
 	dp := t.GetMaster()
 	table := t.table.GetTable()
+
+	// for postgre
+	{
+		type b struct {
+			Lock bool
+		}
+		tryLock := true
+		for tryLock {
+			db := dp.Raw("SELECT pg_try_advisory_lock(?) AS lock", 1)
+			if dp.Error != nil {
+				return dp.Error
+			}
+			rs := make([]*b, 0)
+			if err := db.Scan(&rs).Error; err != nil {
+				return err
+			}
+			tryLock = false
+			for _, r := range rs {
+				if !r.Lock {
+					tryLock = true
+					break
+				}
+			}
+		}
+	}
+
 	if t.IsExist() {
 		if err := dp.Migrator().DropTable(table); err != nil {
 			return err

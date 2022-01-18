@@ -24,3 +24,11 @@ type AddRentalCourt struct {
 	CourtCount    int       `json:"court_count" form:"court_count" binding:"required" uri:"court_count" url:"court_count"`
 	PricePerHour  int       `json:"price_per_hour" form:"price_per_hour" binding:"required" uri:"price_per_hour" url:"price_per_hour"`
 }
+
+type GetActivitys struct {
+	FromToDate
+	Page
+	PlaceIDs      []int `json:"place_ids" form:"place_ids" binding:"-" uri:"place_ids" url:"place_ids"`
+	TeamIDs       []int `json:"team_ids" form:"team_ids" binding:"-" uri:"team_ids" url:"team_ids"`
+	EveryWeekdays []int `json:"every_weekdays" form:"every_weekdays" binding:"-" uri:"every_weekdays" url:"every_weekdays"`
+}

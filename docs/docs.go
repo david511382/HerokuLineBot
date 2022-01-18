@@ -23,6 +23,89 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/badminton/activitys": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "尚未截止的活動",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Badminton"
+                ],
+                "summary": "活動列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "起始日期",
+                        "name": "from_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "結束日期",
+                        "name": "to_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "description": "場館IDs",
+                        "name": "place_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "description": "球隊IDs",
+                        "name": "team_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "分頁每頁資料量",
+                        "name": "page_size",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "分頁第幾頁，1開始",
+                        "name": "page_index",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "資料",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/resp.Base"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/resp.GetActivitys"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/badminton/rental-courts": {
             "get": {
                 "security": [
@@ -172,6 +255,92 @@ var doc = `{
             "properties": {
                 "data": {},
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "resp.GetActivitys": {
+            "type": "object",
+            "properties": {
+                "activitys": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/resp.GetActivitysActivity"
+                    }
+                },
+                "data_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "resp.GetActivitysActivity": {
+            "type": "object",
+            "properties": {
+                "activity_id": {
+                    "type": "integer"
+                },
+                "courts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/resp.GetActivitysCourt"
+                    }
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "is_show_members": {
+                    "type": "boolean"
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/resp.GetActivitysMember"
+                    }
+                },
+                "people_limit": {
+                    "type": "integer"
+                },
+                "place_id": {
+                    "type": "integer"
+                },
+                "place_name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "integer"
+                },
+                "team_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "resp.GetActivitysCourt": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "from_time": {
+                    "type": "string"
+                },
+                "to_time": {
+                    "type": "string"
+                }
+            }
+        },
+        "resp.GetActivitysMember": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
                     "type": "string"
                 }
             }
