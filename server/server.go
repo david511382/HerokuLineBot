@@ -15,7 +15,7 @@ var (
 )
 
 func Init(cfg *bootstrap.Config) {
-	serverRouter = router.SystemRouter()
+	serverRouter = router.SystemRouter(cfg)
 	serverAddr = cfg.Server.Addr()
 }
 

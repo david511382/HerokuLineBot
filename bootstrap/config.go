@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+	Var          Var          `yaml:"var"`
 	Server       Server       `yaml:"server"`
 	LineBot      LineBot      `yaml:"line_bot"`
 	TelegramBot  MessageBot   `yaml:"telegram_bot"`
@@ -18,6 +19,10 @@ type Config struct {
 	ClubDb       Db           `yaml:"club_db"`
 	RedisConfig  DbConfig     `yaml:"redis"`
 	ClubRedis    Db           `yaml:"club_redis"`
+}
+
+type Var struct {
+	UseDebug bool `yaml:"use_debug"`
 }
 
 type Server struct {

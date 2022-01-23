@@ -1,25 +1,33 @@
 package router
 
 import (
+	"heroku-line-bot/bootstrap"
 	clubLogicDomain "heroku-line-bot/logic/club/domain"
 	indexApi "heroku-line-bot/server/api"
 	badmintonApi "heroku-line-bot/server/api/badminton"
 	"heroku-line-bot/server/common"
+	"heroku-line-bot/server/domain"
 	"heroku-line-bot/server/middleware"
 	"heroku-line-bot/server/validation"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetupApiRouter(router *gin.Engine) *gin.Engine {
+func SetupApiRouter(cfg *bootstrap.Config, router *gin.Engine) *gin.Engine {
+	isDebug := cfg.Var.UseDebug
+
 	// 客製參數驗證
 	validation.RegisterValidation()
 
 	lineTokenVerifier := common.NewLineTokenVerifier()
+	var defaultTokenVerifier domain.ITokenVerifier = lineTokenVerifier
+	if isDebug {
+		defaultTokenVerifier = common.NewDebugTokenVerifier()
+	}
 
 	// api
 	api := router.Group("/api")
-	api.Use(middleware.AuthorizeToken(lineTokenVerifier, false))
+	api.Use(middleware.AuthorizeToken(defaultTokenVerifier, false))
 	// api auth
 	apiAuth := api.Group("/")
 	apiAuth.Use(middleware.AuthorizeToken(lineTokenVerifier, true))

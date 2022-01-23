@@ -1,6 +1,7 @@
 package router
 
 import (
+	"heroku-line-bot/bootstrap"
 	clubLineBotApi "heroku-line-bot/server/api/clublinebot"
 	"heroku-line-bot/server/middleware"
 	docsView "heroku-line-bot/server/view/docs"
@@ -10,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SystemRouter() *gin.Engine {
+func SystemRouter(cfg *bootstrap.Config) *gin.Engine {
 	// 取消打印文字顏色
 	gin.DisableConsoleColor()
 	// 使用打印文字顏色
@@ -33,7 +34,7 @@ func SystemRouter() *gin.Engine {
 	router.Use(gin.Logger())
 
 	// api
-	SetupApiRouter(router)
+	SetupApiRouter(cfg, router)
 
 	clubLineBotEvent := router.Group("/")
 	clubLineBotEvent.POST("/club-line-bot", clubLineBotApi.Index)

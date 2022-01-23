@@ -78,17 +78,17 @@ func setupRouter() *gin.Engine {
 	// 客製參數驗證
 	validation.RegisterValidation()
 
-	testTokenVerifier := common.NewTestTokenVerifier()
+	jsonTokenVerifier := common.NewJsonTokenVerifier()
 
 	// api
 	api := r.Group("/api")
-	api.Use(middleware.AuthorizeToken(testTokenVerifier, false))
+	api.Use(middleware.AuthorizeToken(jsonTokenVerifier, false))
 
 	// api/badminton
 	apiBadminton := api.Group("/badminton")
 	apiBadminton.GET("/activitys", GetActivitys)
 	// api/badminton auth
-	apiBadminton.Use(middleware.AuthorizeToken(testTokenVerifier, true))
+	apiBadminton.Use(middleware.AuthorizeToken(jsonTokenVerifier, true))
 	apiBadminton.Use(middleware.VerifyAuthorize(map[int16]bool{
 		int16(clubLogicDomain.ADMIN_CLUB_ROLE): true,
 		int16(clubLogicDomain.CADRE_CLUB_ROLE): true,

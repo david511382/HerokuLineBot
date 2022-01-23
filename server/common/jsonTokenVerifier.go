@@ -6,15 +6,15 @@ import (
 	errUtil "heroku-line-bot/util/error"
 )
 
-type testTokenVerifier struct {
+type jsonTokenVerifier struct {
 }
 
-func NewTestTokenVerifier() testTokenVerifier {
-	return testTokenVerifier{}
+func NewJsonTokenVerifier() jsonTokenVerifier {
+	return jsonTokenVerifier{}
 }
 
 // token is json of JwtClaims
-func (l testTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resultErrInfo errUtil.IError) {
+func (l jsonTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resultErrInfo errUtil.IError) {
 	jwtClaimsP := &domain.JwtClaims{}
 	if err := json.Unmarshal([]byte(token), jwtClaimsP); err != nil {
 		errInfo := errUtil.NewError(err)
