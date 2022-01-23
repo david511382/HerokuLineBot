@@ -4,7 +4,7 @@ import "time"
 
 type GetRentalCourts struct {
 	MustFromToDate
-	TeamID int `json:"team_id" form:"team_id" binding:"required" uri:"team_id" url:"team_id"`
+	TeamID int `json:"team_id" form:"team_id" binding:"-" uri:"team_id" url:"team_id"`
 }
 
 type AddRentalCourt struct {

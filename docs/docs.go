@@ -137,6 +137,12 @@ var doc = `{
                         "name": "to_date",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "球隊id",
+                        "name": "team_id",
+                        "in": "query"
                     }
                 ],
                 "responses": {

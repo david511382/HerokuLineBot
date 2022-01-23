@@ -25,6 +25,7 @@ import (
 // @Produce  json
 // @Param from_date query string true "起始日期" default(2013-08-02T00:00:00+08:00)
 // @Param to_date query string true "結束日期" default(2013-08-02T00:00:00+08:00)
+// @Param team_id query int false "球隊id"
 // @Success 200 {object} resp.GetRentalCourts "資料"
 // @Security ApiKeyAuth
 // @Router /badminton/rental-courts [get]
@@ -48,10 +49,14 @@ func GetRentalCourts(c *gin.Context) {
 		},
 	}
 
+	var teamIDP *int
+	if reqs.TeamID != 0 {
+		teamIDP = &reqs.TeamID
+	}
 	teamPlaceDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(
 		*util.NewDateTimePOf(&reqs.FromDate),
 		*util.NewDateTimePOf(&reqs.ToDate),
-		&reqs.TeamID,
+		teamIDP,
 		nil,
 	)
 	if errInfo != nil {

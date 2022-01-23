@@ -253,6 +253,10 @@ paths:
         name: to_date
         required: true
         type: string
+      - description: 球隊id
+        in: query
+        name: team_id
+        type: integer
       produces:
       - application/json
       responses:
