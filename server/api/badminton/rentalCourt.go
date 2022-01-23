@@ -49,14 +49,14 @@ func GetRentalCourts(c *gin.Context) {
 		},
 	}
 
-	var teamIDP *int
-	if reqs.TeamID != 0 {
-		teamIDP = &reqs.TeamID
+	// TODO 之後要改回必填
+	if reqs.TeamID == 0 {
+		reqs.TeamID = 1
 	}
 	teamPlaceDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(
 		*util.NewDateTimePOf(&reqs.FromDate),
 		*util.NewDateTimePOf(&reqs.ToDate),
-		teamIDP,
+		&reqs.TeamID,
 		nil,
 	)
 	if errInfo != nil {
