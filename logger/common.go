@@ -28,7 +28,12 @@ func init() {
 	PanicWriter = &panicWriter{}
 }
 
-func Init(cfg *bootstrap.Config) errUtil.IError {
+func Init() errUtil.IError {
+	cfg, errInfo := bootstrap.Get()
+	if errInfo != nil {
+		return errInfo
+	}
+
 	channelAccessToken := cfg.TelegramBot.ChannelAccessToken
 	if telegramID, err := strconv.Atoi(cfg.TelegramBot.AdminID); err != nil {
 		return errUtil.NewError(err)

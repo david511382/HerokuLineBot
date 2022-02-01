@@ -15,15 +15,11 @@ func TestMain(m *testing.M) {
 	if err := bootstrap.SetEnvConfig("local"); err != nil {
 		panic(err)
 	}
-	cfg, errInfo := bootstrap.LoadConfig()
+
+	cfg, errInfo := bootstrap.Get()
 	if errInfo != nil {
 		panic(errInfo.ErrorWithTrace())
 	}
-
-	if errInfo := bootstrap.LoadEnv(); errInfo != nil {
-		panic(errInfo.ErrorWithTrace())
-	}
-
 	if connection, err := conn.Connect(cfg.ClubDb); err != nil {
 		panic(err)
 	} else {

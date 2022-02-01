@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"heroku-line-bot/background"
-	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/logger"
 	"heroku-line-bot/logic"
 	"heroku-line-bot/server"
@@ -24,42 +23,35 @@ func init() {
 }
 
 func run(cmd *cobra.Command, args []string) {
-	var errInfo errUtil.IError
+	var resultErrInfo errUtil.IError
 	defer func() {
-		if errInfo != nil {
-			logger.LogRightNow("system", errInfo)
-			panic(errInfo.ErrorWithTrace())
+		if resultErrInfo != nil {
+			logger.LogRightNow("system", resultErrInfo)
+			panic(resultErrInfo.ErrorWithTrace())
 		}
 	}()
 
-	cfg, errInfo := bootstrap.LoadConfig()
-	if errInfo != nil {
+	if resultErrInfo = logger.Init(); resultErrInfo != nil {
 		return
 	}
 
-	if errInfo := bootstrap.LoadEnv(); errInfo != nil {
-		return
-	}
-
-	if errInfo := logger.Init(cfg); errInfo != nil {
-		return
-	}
-
-	if errInfo := storage.Init(cfg); errInfo != nil {
+	if resultErrInfo = storage.Init(); resultErrInfo != nil {
 		return
 	}
 	defer storage.Dispose()
 
-	if errInfo := logic.Init(cfg); errInfo != nil {
+	if resultErrInfo = logic.Init(); resultErrInfo != nil {
 		return
 	}
 
-	if errInfo := background.Init(cfg); errInfo != nil {
+	if resultErrInfo = background.Init(); resultErrInfo != nil {
 		return
 	}
 
-	server.Init(cfg)
-	if errInfo := server.Run(); errInfo != nil {
+	if resultErrInfo = server.Init(); resultErrInfo != nil {
+		return
+	}
+	if resultErrInfo = server.Run(); resultErrInfo != nil {
 		return
 	}
 }

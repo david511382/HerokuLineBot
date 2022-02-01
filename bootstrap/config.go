@@ -22,8 +22,7 @@ type Config struct {
 }
 
 type Var struct {
-	UseDebug bool   `yaml:"use_debug"`
-	WorkDir  string `yaml:"work_dir"`
+	UseDebug bool `yaml:"use_debug"`
 }
 
 type Server struct {

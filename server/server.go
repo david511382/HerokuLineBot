@@ -14,9 +14,15 @@ var (
 	serverAddr   string
 )
 
-func Init(cfg *bootstrap.Config) {
+func Init() errUtil.IError {
+	cfg, errInfo := bootstrap.Get()
+	if errInfo != nil {
+		return errInfo
+	}
+
 	serverRouter = router.SystemRouter(cfg)
 	serverAddr = cfg.Server.Addr()
+	return nil
 }
 
 func Run() errUtil.IError {

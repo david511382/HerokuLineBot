@@ -5,7 +5,6 @@ import (
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strconv"
 
@@ -16,27 +15,36 @@ var (
 	cfg *Config
 )
 
-func Get() *Config {
-	return cfg
+func Get() (*Config, errUtil.IError) {
+	if cfg == nil {
+		errInfo := loadConfig()
+		if errInfo != nil {
+			return nil, errInfo
+		}
+	}
+	return cfg, nil
 }
 
-func SetEnvConfig(s string) error {
-	return os.Setenv("CONFIG", s)
-}
-
-// ReadConfig read config from filepath
-func LoadConfig() (*Config, errUtil.IError) {
-	configName := os.Getenv("CONFIG")
+func loadConfig() errUtil.IError {
+	configName := GetEnvConfig()
 	if configName == "" {
 		configName = "master"
 	}
 
-	cfg = &Config{}
+	var errInfo errUtil.IError
+	cfg, errInfo = loadYmlConfig(configName)
+	if errInfo != nil {
+		return errInfo
+	}
 
-	return loadConfig(configName)
+	if errInfo := loadEnv(); errInfo != nil {
+		return errInfo
+	}
+
+	return nil
 }
 
-func loadConfig(fileName string) (*Config, errUtil.IError) {
+func loadYmlConfig(fileName string) (*Config, errUtil.IError) {
 	root, err := GetRootDirPath()
 	if err != nil {
 		return nil, errUtil.NewError(err)
@@ -57,12 +65,12 @@ func loadConfig(fileName string) (*Config, errUtil.IError) {
 	return cfg, nil
 }
 
-func LoadEnv() errUtil.IError {
+func loadEnv() errUtil.IError {
 	if cfg == nil {
 		cfg = &Config{}
 	}
 
-	if envStr := os.Getenv("PORT"); envStr != "" {
+	if envStr := GetEnvPort(); envStr != "" {
 		port, err := strconv.Atoi(envStr)
 		if err != nil {
 			return errUtil.NewError(err)
@@ -70,31 +78,31 @@ func LoadEnv() errUtil.IError {
 		cfg.Server.Port = port
 	}
 
-	if envStr := os.Getenv("LINE_BOT_ADMIN_ID"); envStr != "" {
+	if envStr := GetEnvLineBotAdminID(); envStr != "" {
 		cfg.LineBot.AdminID = envStr
 	}
-	if envStr := os.Getenv("LINE_BOT_CHANNEL_ACCESS_TOKEN"); envStr != "" {
+	if envStr := GetEnvLineBotChannelAccessToken(); envStr != "" {
 		cfg.LineBot.ChannelAccessToken = envStr
 	}
 
-	if envStr := os.Getenv("TELEGRAM_BOT_ADMIN_ID"); envStr != "" {
+	if envStr := GetEnvTelegramBotAdminID(); envStr != "" {
 		cfg.TelegramBot.AdminID = envStr
 	}
-	if envStr := os.Getenv("TELEGRAM_BOT_CHANNEL_ACCESS_TOKEN"); envStr != "" {
+	if envStr := GetEnvTelegramBotChannelAccessToken(); envStr != "" {
 		cfg.TelegramBot.ChannelAccessToken = envStr
 	}
 
-	if envStr := os.Getenv("GOOGLE_SCRIPT_URL"); envStr != "" {
+	if envStr := GetEnvGoogleScriptUrl(); envStr != "" {
 		cfg.GoogleScript.Url = envStr
 	}
 
-	if envStr := os.Getenv("DATABASE_URL"); envStr != "" {
+	if envStr := GetEnvDatabaseUrl(); envStr != "" {
 		if err := cfg.ClubDb.ScanUrl(envStr); err != nil {
 			return errUtil.NewError(err)
 		}
 	}
 
-	if envStr := os.Getenv("REDIS_URL"); envStr != "" {
+	if envStr := GetEnvRedisUrl(); envStr != "" {
 		if err := cfg.ClubRedis.ScanUrl(envStr); err != nil {
 			return errUtil.NewError(err)
 		}
@@ -104,7 +112,7 @@ func LoadEnv() errUtil.IError {
 }
 
 func GetRootDirPath() (string, error) {
-	dir := cfg.Var.WorkDir
+	dir := GetEnvWorkDir()
 	if dir == "" {
 		dir = "HerokuLineBot"
 	}

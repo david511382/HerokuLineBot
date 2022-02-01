@@ -8,7 +8,12 @@ import (
 	errUtil "heroku-line-bot/util/error"
 )
 
-func Init(cfg *bootstrap.Config) errUtil.IError {
+func Init() errUtil.IError {
+	cfg, errInfo := bootstrap.Get()
+	if errInfo != nil {
+		return errInfo
+	}
+
 	if errInfo := autodbmigration.MigrationNotExist(); errInfo != nil {
 		return errInfo
 	}
