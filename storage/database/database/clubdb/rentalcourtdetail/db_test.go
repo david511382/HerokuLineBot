@@ -1,7 +1,6 @@
 package rentalcourtdetail
 
 import (
-	"fmt"
 	"heroku-line-bot/bootstrap"
 	dbModel "heroku-line-bot/model/database"
 	"heroku-line-bot/storage/database/common"
@@ -15,8 +14,10 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	configName := fmt.Sprintf("../../../../../config/%s.yml", "local")
-	cfg, errInfo := bootstrap.LoadConfig(configName)
+	if err := bootstrap.SetEnvConfig("local"); err != nil {
+		panic(err)
+	}
+	cfg, errInfo := bootstrap.LoadConfig()
 	if errInfo != nil {
 		panic(errInfo.ErrorWithTrace())
 	}

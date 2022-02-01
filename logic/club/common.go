@@ -1,14 +1,14 @@
 package club
 
 import (
-	"embed"
-	"fmt"
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/logic/clublinebot/domain"
 	"heroku-line-bot/service/linebot"
 	commonRedis "heroku-line-bot/storage/redis/common"
 	"heroku-line-bot/util"
+	"io/ioutil"
+	"path/filepath"
 
 	errUtil "heroku-line-bot/util/error"
 
@@ -25,21 +25,14 @@ var (
 	clubTeamID int
 )
 
-func Init(cfg *bootstrap.Config, resourceFS embed.FS) errUtil.IError {
-	if bs, err := readImg(resourceFS, "adminRichMenu.png"); err != nil {
+func Init(cfg *bootstrap.Config) errUtil.IError {
+	root, err := bootstrap.GetRootDirPath()
+	if err != nil {
 		return errUtil.NewError(err)
-	} else {
-		adminRichMenuImg = bs
 	}
-	if bs, err := readImg(resourceFS, "cadreRichMenu.png"); err != nil {
-		return errUtil.NewError(err)
-	} else {
-		cadreRichMenuImg = bs
-	}
-	if bs, err := readImg(resourceFS, "guestRichMenu.png"); err != nil {
-		return errUtil.NewError(err)
-	} else {
-		guestRichMenuImg = bs
+
+	if errInfo := readImg(root); errInfo != nil {
+		return errInfo
 	}
 
 	clubTeamID = cfg.Badminton.ClubTeamID
@@ -47,9 +40,35 @@ func Init(cfg *bootstrap.Config, resourceFS embed.FS) errUtil.IError {
 	return nil
 }
 
-func readImg(resourceFS embed.FS, fileName string) ([]byte, error) {
-	fileName = fmt.Sprintf("resource/img/%s", fileName)
-	return resourceFS.ReadFile(fileName)
+func readImg(rootPath string) errUtil.IError {
+	var err error
+	rootPath = filepath.Join(rootPath, "resource", "img")
+
+	{
+		fileName := filepath.Join(rootPath, "adminRichMenu.png")
+		adminRichMenuImg, err = ioutil.ReadFile(fileName)
+		if err != nil {
+			return errUtil.NewError(err)
+		}
+	}
+
+	{
+		fileName := filepath.Join(rootPath, "cadreRichMenu.png")
+		cadreRichMenuImg, err = ioutil.ReadFile(fileName)
+		if err != nil {
+			return errUtil.NewError(err)
+		}
+	}
+
+	{
+		fileName := filepath.Join(rootPath, "guestRichMenu.png")
+		guestRichMenuImg, err = ioutil.ReadFile(fileName)
+		if err != nil {
+			return errUtil.NewError(err)
+		}
+	}
+
+	return nil
 }
 
 func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (resultErrInfo errUtil.IError) {

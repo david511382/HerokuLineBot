@@ -1,10 +1,12 @@
 package bootstrap
 
 import (
-	"embed"
+	"fmt"
 	"heroku-line-bot/util"
 	errUtil "heroku-line-bot/util/error"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"gopkg.in/yaml.v2"
@@ -12,34 +14,39 @@ import (
 
 var (
 	cfg *Config
-
-	fs *embed.FS
 )
 
 func Get() *Config {
 	return cfg
 }
 
-func LoadFS(f *embed.FS) {
-	fs = f
+func SetEnvConfig(s string) error {
+	return os.Setenv("CONFIG", s)
 }
 
 // ReadConfig read config from filepath
-func LoadConfig(fileName string) (*Config, errUtil.IError) {
-	f := fs
-	var cfgBytes []byte
-	if f != nil {
-		fileBs, err := f.ReadFile(fileName)
-		if err != nil {
-			return nil, errUtil.NewError(err)
-		}
-		cfgBytes = fileBs
-	} else {
-		fileBs, err := util.ReadFile(fileName)
-		if err != nil {
-			return nil, errUtil.NewError(err)
-		}
-		cfgBytes = fileBs
+func LoadConfig() (*Config, errUtil.IError) {
+	configName := os.Getenv("CONFIG")
+	if configName == "" {
+		configName = "master"
+	}
+
+	cfg = &Config{}
+
+	return loadConfig(configName)
+}
+
+func loadConfig(fileName string) (*Config, errUtil.IError) {
+	root, err := GetRootDirPath()
+	if err != nil {
+		return nil, errUtil.NewError(err)
+	}
+	configDir := filepath.Join("config")
+	path := fmt.Sprintf("%s/%s/%s.yml", root, configDir, fileName)
+
+	cfgBytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, errUtil.NewError(err)
 	}
 
 	cfg = &Config{}
@@ -94,4 +101,12 @@ func LoadEnv() errUtil.IError {
 	}
 
 	return nil
+}
+
+func GetRootDirPath() (string, error) {
+	dir := cfg.Var.WorkDir
+	if dir == "" {
+		dir = "HerokuLineBot"
+	}
+	return util.GetRootOf(dir)
 }

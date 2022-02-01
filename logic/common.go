@@ -1,7 +1,6 @@
 package logic
 
 import (
-	"embed"
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/logic/autodbmigration"
 	"heroku-line-bot/logic/club"
@@ -9,12 +8,12 @@ import (
 	errUtil "heroku-line-bot/util/error"
 )
 
-func Init(resourceFS embed.FS, cfg *bootstrap.Config) errUtil.IError {
+func Init(cfg *bootstrap.Config) errUtil.IError {
 	if errInfo := autodbmigration.MigrationNotExist(); errInfo != nil {
 		return errInfo
 	}
 
-	if errInfo := club.Init(cfg, resourceFS); errInfo != nil {
+	if errInfo := club.Init(cfg); errInfo != nil {
 		return errInfo
 	}
 

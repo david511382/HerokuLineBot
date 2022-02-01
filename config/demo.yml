@@ -1,5 +1,6 @@
 var:
   use_debug: true
+  work_dir: "HerokuLineBot"
 
 server:
   host: "0.0.0.0"

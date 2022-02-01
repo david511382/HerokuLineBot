@@ -1,16 +1,8 @@
 package main
 
 import (
-	"embed"
-	"heroku-line-bot/entry"
-	"heroku-line-bot/logger"
+	"heroku-line-bot/cmd"
 )
-
-//go:embed config/*
-var configFS embed.FS
-
-//go:embed resource/*
-var resourceFS embed.FS
 
 // @title Heroku-Line-Bot
 // @version 1.0
@@ -20,10 +12,7 @@ var resourceFS embed.FS
 // @in header
 // @name Authorization
 func main() {
-	if errInfo := entry.Run(configFS, resourceFS); errInfo != nil {
-		logger.LogRightNow("system", errInfo)
-		panic(errInfo.ErrorWithTrace())
-	}
+	cmd.Execute()
 }
 
 // TODO: 清除richmenu

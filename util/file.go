@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -62,4 +63,26 @@ func ReadFile(filename string) ([]byte, error) {
 
 func MakeFolderOn(folderPath string) error {
 	return os.MkdirAll(folderPath, os.ModePerm)
+}
+
+func GetRootOf(
+	folder string,
+) (
+	path string,
+	resultErr error,
+) {
+	path, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	for filepath.Base(path) != folder {
+		p := filepath.Dir(path)
+		if path == p {
+			resultErr = fmt.Errorf("No Dir %s", folder)
+			return
+		}
+		path = p
+	}
+
+	return
 }

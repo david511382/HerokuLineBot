@@ -1,7 +1,6 @@
 package court
 
 import (
-	"fmt"
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/storage"
 	"os"
@@ -9,8 +8,10 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	configName := fmt.Sprintf("../../../config/%s.yml", "local")
-	cfg, errInfo := bootstrap.LoadConfig(configName)
+	if err := bootstrap.SetEnvConfig("local"); err != nil {
+		panic(err)
+	}
+	cfg, errInfo := bootstrap.LoadConfig()
 	if errInfo != nil {
 		panic(errInfo.ErrorWithTrace())
 	}
