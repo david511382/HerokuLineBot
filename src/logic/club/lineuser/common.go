@@ -4,16 +4,16 @@ import (
 	"heroku-line-bot/src/logic/club/domain"
 	clubLineuserLogicDomain "heroku-line-bot/src/logic/club/lineuser/domain"
 	dbModel "heroku-line-bot/src/model/database"
-	"heroku-line-bot/src/storage/database"
-	"heroku-line-bot/src/storage/database/database/clubdb/member"
-	"heroku-line-bot/src/storage/redis"
-	redisDomain "heroku-line-bot/src/storage/redis/domain"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb/member"
+	"heroku-line-bot/src/repo/redis"
+	redisDomain "heroku-line-bot/src/repo/redis/domain"
 	errUtil "heroku-line-bot/src/util/error"
 )
 
 func Get(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo errUtil.IError) {
 	{
-		lineIDUserMap, errInfo := redis.LineUser.Load(lineID)
+		lineIDUserMap, errInfo := redis.Badminton.LineUser.Load(lineID)
 		if errInfo != nil {
 			errInfo.SetLevel(errUtil.INFO)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -41,7 +41,7 @@ func Get(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo er
 		result = dbData
 	}
 
-	errInfo := redis.LineUser.Set(map[string]*redisDomain.LineUser{
+	errInfo := redis.Badminton.LineUser.Set(map[string]*redisDomain.LineUser{
 		lineID: {
 			ID:   result.ID,
 			Name: result.Name,

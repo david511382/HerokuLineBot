@@ -3,8 +3,8 @@ package place
 import (
 	dbModel "heroku-line-bot/src/model/database"
 	rdsModel "heroku-line-bot/src/model/redis"
-	"heroku-line-bot/src/storage/database"
-	"heroku-line-bot/src/storage/redis"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/redis"
 	"heroku-line-bot/src/util"
 	"testing"
 )
@@ -118,7 +118,7 @@ func TestLoad(t *testing.T) {
 			if err := database.Club.Place.MigrationData(tt.migrations.place...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := redis.BadmintonPlace.Migration(tt.migrations.redisPlaceIDMap); err != nil {
+			if err := redis.Badminton.BadmintonPlace.Migration(tt.migrations.redisPlaceIDMap); err != nil {
 				t.Fatal(err.Error())
 			}
 
@@ -132,7 +132,7 @@ func TestLoad(t *testing.T) {
 				return
 			}
 
-			if got, err := redis.BadmintonPlace.Load(); err != nil {
+			if got, err := redis.Badminton.BadmintonPlace.Load(); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				if ok, msg := util.Comp(got, tt.wants.redisPlaceIDMap); !ok {

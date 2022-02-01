@@ -4,8 +4,8 @@ import (
 	"heroku-line-bot/src/background"
 	"heroku-line-bot/src/logger"
 	"heroku-line-bot/src/logic"
+	"heroku-line-bot/src/repo"
 	"heroku-line-bot/src/server"
-	"heroku-line-bot/src/storage"
 	errUtil "heroku-line-bot/src/util/error"
 
 	"github.com/spf13/cobra"
@@ -35,10 +35,10 @@ func run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if resultErrInfo = storage.Init(); resultErrInfo != nil {
+	if resultErrInfo = repo.Init(); resultErrInfo != nil {
 		return
 	}
-	defer storage.Dispose()
+	defer repo.Dispose()
 
 	if resultErrInfo = logic.Init(); resultErrInfo != nil {
 		return

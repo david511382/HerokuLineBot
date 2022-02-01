@@ -5,11 +5,11 @@ import (
 	clubLineuserLogic "heroku-line-bot/src/logic/club/lineuser"
 	commonLogic "heroku-line-bot/src/logic/common"
 	dbModel "heroku-line-bot/src/model/database"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb/member"
 	"heroku-line-bot/src/service/linebot"
 	linebotDomain "heroku-line-bot/src/service/linebot/domain"
 	linebotModel "heroku-line-bot/src/service/linebot/domain/model"
-	"heroku-line-bot/src/storage/database"
-	"heroku-line-bot/src/storage/database/database/clubdb/member"
 	"heroku-line-bot/src/util"
 	errUtil "heroku-line-bot/src/util/error"
 )

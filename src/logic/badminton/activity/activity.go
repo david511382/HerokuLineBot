@@ -2,7 +2,7 @@ package activity
 
 import (
 	dbModel "heroku-line-bot/src/model/database"
-	"heroku-line-bot/src/storage/database"
+	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/util"
 	errUtil "heroku-line-bot/src/util/error"
 	"time"

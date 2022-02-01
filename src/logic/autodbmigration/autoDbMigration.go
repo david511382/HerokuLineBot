@@ -1,8 +1,8 @@
 package autodbmigration
 
 import (
-	"heroku-line-bot/src/storage/database"
-	"heroku-line-bot/src/storage/database/common"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/common"
 	errUtil "heroku-line-bot/src/util/error"
 )
 

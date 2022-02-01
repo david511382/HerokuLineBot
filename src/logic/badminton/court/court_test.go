@@ -6,7 +6,7 @@ import (
 	commonLogic "heroku-line-bot/src/logic/common"
 	incomeLogicDomain "heroku-line-bot/src/logic/income/domain"
 	dbModel "heroku-line-bot/src/model/database"
-	"heroku-line-bot/src/storage/database"
+	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/util"
 	errUtil "heroku-line-bot/src/util/error"
 	"sort"

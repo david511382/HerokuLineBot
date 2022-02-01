@@ -3,9 +3,9 @@ package place
 import (
 	dbModel "heroku-line-bot/src/model/database"
 	rdsModel "heroku-line-bot/src/model/redis"
-	"heroku-line-bot/src/storage/database"
-	"heroku-line-bot/src/storage/database/database/clubdb/place"
-	"heroku-line-bot/src/storage/redis"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb/place"
+	"heroku-line-bot/src/repo/redis"
 	errUtil "heroku-line-bot/src/util/error"
 )
 
@@ -20,7 +20,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace, re
 		return MockLoad(ids...)
 	}
 
-	placeIDMap, errInfo := redis.BadmintonPlace.Load(ids...)
+	placeIDMap, errInfo := redis.Badminton.BadmintonPlace.Load(ids...)
 	if errInfo != nil {
 		errInfo.SetLevel(errUtil.WARN)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -58,7 +58,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace, re
 			}
 		}
 
-		if errInfo := redis.BadmintonPlace.Set(idPlaceMap); errInfo != nil {
+		if errInfo := redis.Badminton.BadmintonPlace.Set(idPlaceMap); errInfo != nil {
 			errInfo.SetLevel(errUtil.WARN)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}

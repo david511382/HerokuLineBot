@@ -11,7 +11,7 @@ go test ./src/util/... --count=1
 
 go test ./bootstrap/... --count=1
 
-go test ./src/storage/database/... --count=1
+go test ./src/repo/database/... --count=1
 
 go test ./src/logic/... --count=1
 

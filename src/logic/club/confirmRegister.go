@@ -5,11 +5,11 @@ import (
 	"heroku-line-bot/src/logic/club/domain"
 	clubLineuserLogic "heroku-line-bot/src/logic/club/lineuser"
 	dbModel "heroku-line-bot/src/model/database"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb/member"
+	"heroku-line-bot/src/repo/redis"
 	"heroku-line-bot/src/service/linebot"
 	linebotDomain "heroku-line-bot/src/service/linebot/domain"
-	"heroku-line-bot/src/storage/database"
-	"heroku-line-bot/src/storage/database/database/clubdb/member"
-	"heroku-line-bot/src/storage/redis"
 	"heroku-line-bot/src/util"
 	errUtil "heroku-line-bot/src/util/error"
 	"time"
@@ -123,7 +123,7 @@ func (b *confirmRegister) ComfirmDb() (resultErrInfo errUtil.IError) {
 	}
 
 	if isChangeRole {
-		if errInfo := redis.LineUser.Del(b.User.LineID); errInfo != nil {
+		if errInfo := redis.Badminton.LineUser.Del(b.User.LineID); errInfo != nil {
 			errInfo.SetLevel(errUtil.WARN)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}

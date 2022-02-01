@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"heroku-line-bot/bootstrap"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
+	"heroku-line-bot/src/repo"
 	"heroku-line-bot/src/server/common"
 	"heroku-line-bot/src/server/domain"
 	"heroku-line-bot/src/server/middleware"
 	"heroku-line-bot/src/server/validation"
-	"heroku-line-bot/src/storage"
 	"heroku-line-bot/src/util"
 	"net/http"
 	"os"
@@ -34,10 +34,10 @@ func TestMain(m *testing.M) {
 	}
 	location = loc
 
-	if errInfo := storage.Init(); errInfo != nil {
+	if errInfo := repo.Init(); errInfo != nil {
 		panic(errInfo.ErrorWithTrace())
 	}
-	defer storage.Dispose()
+	defer repo.Dispose()
 
 	r := setupRouter()
 	testServer = util.NewTestServer(r)

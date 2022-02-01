@@ -3,10 +3,10 @@ package team
 import (
 	dbModel "heroku-line-bot/src/model/database"
 	rdsModel "heroku-line-bot/src/model/redis"
-	"heroku-line-bot/src/storage/database"
-	"heroku-line-bot/src/storage/database/database/clubdb/member"
-	"heroku-line-bot/src/storage/database/database/clubdb/team"
-	"heroku-line-bot/src/storage/redis"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb/member"
+	"heroku-line-bot/src/repo/database/database/clubdb/team"
+	"heroku-line-bot/src/repo/redis"
 	errUtil "heroku-line-bot/src/util/error"
 )
 
@@ -26,7 +26,7 @@ func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resu
 		return MockLoad(ids...)
 	}
 
-	teamIDMap, errInfo := redis.BadmintonTeam.Load(ids...)
+	teamIDMap, errInfo := redis.Badminton.BadmintonTeam.Load(ids...)
 	if errInfo != nil {
 		errInfo.SetLevel(errUtil.WARN)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -114,7 +114,7 @@ func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resu
 			}
 		}
 
-		if errInfo := redis.BadmintonTeam.Set(idTeamMap); errInfo != nil {
+		if errInfo := redis.Badminton.BadmintonTeam.Set(idTeamMap); errInfo != nil {
 			errInfo.SetLevel(errUtil.WARN)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}

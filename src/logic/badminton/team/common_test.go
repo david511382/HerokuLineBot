@@ -4,8 +4,8 @@ import (
 	"heroku-line-bot/src/global"
 	dbModel "heroku-line-bot/src/model/database"
 	rdsModel "heroku-line-bot/src/model/redis"
-	"heroku-line-bot/src/storage/database"
-	"heroku-line-bot/src/storage/redis"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/redis"
 	"heroku-line-bot/src/util"
 	"testing"
 )
@@ -137,7 +137,7 @@ func TestLoad(t *testing.T) {
 			if err := database.Club.Member.MigrationData(tt.migrations.member...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := redis.BadmintonTeam.Migration(tt.migrations.redisTeamIDPlaceMap); err != nil {
+			if err := redis.Badminton.BadmintonTeam.Migration(tt.migrations.redisTeamIDPlaceMap); err != nil {
 				t.Fatal(err.Error())
 			}
 
@@ -151,7 +151,7 @@ func TestLoad(t *testing.T) {
 				return
 			}
 
-			if got, err := redis.BadmintonTeam.Load(); err != nil {
+			if got, err := redis.Badminton.BadmintonTeam.Load(); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				if ok, msg := util.Comp(got, tt.wants.redisTeamIDPlaceMap); !ok {

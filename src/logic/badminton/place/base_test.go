@@ -2,7 +2,7 @@ package place
 
 import (
 	"heroku-line-bot/bootstrap"
-	"heroku-line-bot/src/storage"
+	"heroku-line-bot/src/repo"
 	"os"
 	"testing"
 )
@@ -12,10 +12,10 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	if errInfo := storage.Init(); errInfo != nil {
+	if errInfo := repo.Init(); errInfo != nil {
 		panic(errInfo.ErrorWithTrace())
 	}
-	defer storage.Dispose()
+	defer repo.Dispose()
 
 	exitVal := m.Run()
 
