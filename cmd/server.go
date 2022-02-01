@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"heroku-line-bot/background"
-	"heroku-line-bot/logger"
-	"heroku-line-bot/logic"
-	"heroku-line-bot/server"
-	"heroku-line-bot/storage"
-	errUtil "heroku-line-bot/util/error"
+	"heroku-line-bot/src/background"
+	"heroku-line-bot/src/logger"
+	"heroku-line-bot/src/logic"
+	"heroku-line-bot/src/server"
+	"heroku-line-bot/src/storage"
+	errUtil "heroku-line-bot/src/util/error"
 
 	"github.com/spf13/cobra"
 )

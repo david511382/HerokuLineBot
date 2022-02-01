@@ -1,7 +1,7 @@
 package bootstrap
 
 import (
-	"heroku-line-bot/util"
+	"heroku-line-bot/src/util"
 	"testing"
 )
 

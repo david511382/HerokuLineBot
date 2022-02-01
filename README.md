@@ -7,17 +7,17 @@ token:`{"RoleID":1}`
 ## test
 
 ```
-go test ./util/... --count=1
+go test ./src/util/... --count=1
 
 go test ./bootstrap/... --count=1
 
-go test ./storage/database/... --count=1
+go test ./src/storage/database/... --count=1
 
-go test ./logic/... --count=1
+go test ./src/logic/... --count=1
 
-go test ./background/... --count=1
+go test ./src/background/... --count=1
 
-go test ./server/... --count=1
+go test ./src/server/... --count=1
 ```
 
 ## db migration

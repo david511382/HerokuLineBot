@@ -42,7 +42,7 @@ services:
     container_name: heroku-line-bot-api
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: deploy/docker/Dockerfile
     depends_on:
       - db
       - redis

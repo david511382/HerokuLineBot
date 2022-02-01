@@ -2,8 +2,8 @@ package bootstrap
 
 import (
 	"fmt"
-	"heroku-line-bot/util"
-	errUtil "heroku-line-bot/util/error"
+	"heroku-line-bot/src/util"
+	errUtil "heroku-line-bot/src/util/error"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
