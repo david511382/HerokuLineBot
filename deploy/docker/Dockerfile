@@ -6,8 +6,7 @@ COPY . /app
 WORKDIR /app
 
 # 進行編譯
-RUN go mod tidy \
-    && go build -o heroku-line-bot
+RUN go build -o heroku-line-bot
 
 # Final Stage
 FROM golang:1.16
@@ -15,4 +14,6 @@ COPY --from=builder /app/heroku-line-bot /app/heroku-line-bot
 COPY --from=builder /app/resource /app/resource
 WORKDIR /app
 
-CMD [ "sh", "-c","./heroku-line-bot" ]
+ENV WORK_DIR=app
+
+CMD [ "sh", "-c", "./heroku-line-bot server" ]
