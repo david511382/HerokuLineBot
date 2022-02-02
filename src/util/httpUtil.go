@@ -137,7 +137,7 @@ func ReadBody(resp *http.Response, respP interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	if !IsNilInterfaceObject(respP) {
+	if respP != nil && !IsNilInterfaceObject(respP) {
 		return body, json.Unmarshal(body, respP)
 	}
 
