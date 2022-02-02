@@ -14,6 +14,7 @@ type Config struct {
 	TelegramBot  MessageBot   `yaml:"telegram_bot"`
 	Badminton    Badminton    `yaml:"badminton"`
 	GoogleScript GoogleScript `yaml:"google_script"`
+	Loki         Loki         `yaml:"loki"`
 	Backgrounds  Backgrounds  `yaml:"backgrounds"`
 	DbConfig     DbConfig     `yaml:"db"`
 	ClubDb       Db           `yaml:"club_db"`
@@ -53,6 +54,10 @@ type Badminton struct {
 }
 
 type GoogleScript struct {
+	Url string `yaml:"url"`
+}
+
+type Loki struct {
 	Url string `yaml:"url"`
 }
 

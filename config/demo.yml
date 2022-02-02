@@ -22,6 +22,9 @@ badminton:
 google_script:
   url: "https://script.google.com/macros/s/google script/exec"
 
+loki:
+  url: "http://localhost:3100"
+
 backgrounds:
   activity_creator:
     spec: "0 0 9 * * *"

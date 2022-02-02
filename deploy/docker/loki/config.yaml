@@ -1,0 +1,59 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+common:
+  path_prefix: /loki
+  storage:
+    # is the directory where marked chunks and temporary tables will be saved.
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+
+limits_config:
+  # 保留資料時間
+  # The minimum retention period is 24h.
+  retention_period: 24h
+
+compactor:
+  # is the directory where marked chunks and temporary tables will be saved.
+  working_directory: /loki
+  shared_store: filesystem
+  compaction_interval: 10m
+  retention_enabled: true
+  # is the delay after which the compactor will delete marked chunks.
+  retention_delete_delay: 2h
+  # specifies the maximum quantity of goroutine workers instantiated to delete chunks.
+  retention_delete_worker_count: 150
+
+storage_config:
+  # 一種儲存資料方式
+  # 這種方式最佳的資料整合週期是24h
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    # It would also keep downloading BoltDB files from shared bucket uploaded by other ingesters to /loki/boltdb-cache folder locally.
+    shared_store: filesystem
+    # 儲存資料位置
+    cache_location: /loki/boltdb-cache
+
+schema_config:
+  configs:
+    - from: 2022-01-01
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        # The index tables will be prefixed with "index_".
+        prefix: index_
+        # 資料整合週期是24h
+        # using 24h periodic tables and chunks on filesystem.
+        period: 24h
+
+ruler:
+  alertmanager_url: http://localhost:9093

@@ -15,6 +15,10 @@ type ErrorInfo struct {
 	childError   *ErrorInfo
 }
 
+func (ei *ErrorInfo) TraceMessage() string {
+	return ei.traceMessage
+}
+
 func (ei *ErrorInfo) Trace() *ErrorInfo {
 	if ei == nil {
 		return nil

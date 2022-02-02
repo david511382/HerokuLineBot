@@ -38,6 +38,20 @@ services:
     ports:
       - "8081:8081"
 
+  loki:
+      image: grafana/loki
+      ports:
+          - "3100:3100"
+      volumes:
+          - loki:/loki
+          - "./deploy/docker/loki/config.yaml:/etc/loki/config.yaml"
+      command: -config.file=/etc/loki/config.yaml
+
+  grafana:
+      image: grafana/grafana
+      ports:
+          - "3000:3000"
+
   api:
     container_name: heroku-line-bot-api
     build:
@@ -54,3 +68,4 @@ services:
 
 volumes:
   heroku-line-bot-db-volume:
+  loki:

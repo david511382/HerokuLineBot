@@ -7,12 +7,16 @@ import (
 	errUtil "heroku-line-bot/src/util/error"
 	"io"
 	"strconv"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/pkgerrors"
 )
 
 var (
 	telegramLogger *telegramLoggerHandler
 	fileLogger     *fileLoggerHandler
 	teminalLogger  *teminalLoggerHandler
+	lokiLogger     *lokiLoggerHandler
 	PanicWriter    io.Writer
 
 	telegramBot      *telegram.Bot
@@ -20,12 +24,25 @@ var (
 )
 
 func init() {
+	zerolog.LevelFieldName = "lvl"
+	zerolog.ErrorStackMarshaler = func(err error) interface{} {
+		e, ok := err.(*errUtil.ErrorInfo)
+		if ok {
+			return e.TraceMessage()
+		}
+		return pkgerrors.MarshalStack(err)
+	}
+	zerolog.ErrorHandler = func(err error) {
+		logOnTelegram(fmt.Sprintf("Log Fail:%s", err.Error()))
+	}
+
 	telegramLogger = &telegramLoggerHandler{
 		limit: 4096,
 	}
 	fileLogger = &fileLoggerHandler{}
 	teminalLogger = &teminalLoggerHandler{}
 	PanicWriter = &panicWriter{}
+	lokiLogger = NewLokiLog(nil)
 }
 
 func Init() errUtil.IError {
@@ -44,25 +61,25 @@ func Init() errUtil.IError {
 	return nil
 }
 
-func Log(name string, LogErrInfo errUtil.IError) {
+func Log(name string, logErrInfo errUtil.IError) {
 	go func() {
-		LogRightNow(name, LogErrInfo)
+		LogRightNow(name, logErrInfo)
 	}()
 }
 
-func LogRightNow(name string, LogErrInfo errUtil.IError) {
-	if LogErrInfo == nil {
+func LogRightNow(name string, logErrInfo errUtil.IError) {
+	if logErrInfo == nil {
 		return
 	}
 
-	msg := message(name, LogErrInfo)
-	if LogErrInfo.IsError() || LogErrInfo.IsWarn() {
+	msg := message(name, logErrInfo)
+	if logErrInfo.IsError() || logErrInfo.IsWarn() {
 		if telegramBot == nil || notifyTelegramID == 0 {
 			logOnFile(name, msg)
 		} else {
 			logOnTelegram(msg)
 		}
-	} else if LogErrInfo.IsInfo() {
+	} else if logErrInfo.IsInfo() {
 		logOnFile(name, msg)
 	}
 }
@@ -94,6 +111,21 @@ func logOnTeminal(msg string) {
 		errInfo = errInfo.NewParent("log teminal fail")
 		errInfo = errInfo.NewParent(msg)
 		fmt.Println(errInfo.ErrorWithTrace())
+	}
+}
+
+func logOnLoki(msg string) {
+	errInfo := lokiLogger.log(
+		LoggerInfo{
+			Message: msg,
+		},
+	)
+	if errInfo != nil {
+		logOnTeminal(msg)
+
+		errInfo = errInfo.NewParent("log loki fail")
+		errInfo = errInfo.NewParent(msg)
+		logOnTeminal(errInfo.ErrorWithTrace())
 	}
 }
 
