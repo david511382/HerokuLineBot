@@ -13,6 +13,8 @@ import (
 	"heroku-line-bot/src/util"
 	errUtil "heroku-line-bot/src/util/error"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 type confirmRegister struct {
@@ -124,7 +126,7 @@ func (b *confirmRegister) ComfirmDb() (resultErrInfo errUtil.IError) {
 
 	if isChangeRole {
 		if errInfo := redis.Badminton.LineUser.Del(b.User.LineID); errInfo != nil {
-			errInfo.SetLevel(errUtil.WARN)
+			errInfo.SetLevel(zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}
 	}
@@ -151,7 +153,6 @@ func (b *confirmRegister) Do(text string) (resultErrInfo errUtil.IError) {
 			return
 		} else if len(confirmRegisterUsers) == 0 {
 			errInfo := errUtil.New("查無用戶")
-			errInfo = errInfo.Trace()
 			resultErrInfo = errInfo
 			return
 		} else {

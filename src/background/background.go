@@ -11,6 +11,7 @@ import (
 	"time"
 
 	cron "github.com/robfig/cron"
+	"github.com/rs/zerolog"
 )
 
 type Background struct {
@@ -56,7 +57,7 @@ func (b *Background) Run() {
 	runTime := b.timeType.Of(nowTime)
 	b.logF("Run At %s", runTime.String())
 	if errInfo := b.bg.Run(runTime); errInfo != nil {
-		errInfo = errInfo.NewParent("runTime", runTime.String())
+		errInfo.Attr("runTime", runTime.String())
 		b.logErrInfo(errInfo)
 	}
 }
@@ -69,7 +70,7 @@ func (b *Background) recover() {
 
 func (b *Background) logF(format string, a ...interface{}) {
 	msg := fmt.Sprintf(format, a...)
-	errInfo := errUtil.New(msg, errUtil.INFO)
+	errInfo := errUtil.New(msg, zerolog.InfoLevel)
 	b.logErrInfo(errInfo)
 }
 

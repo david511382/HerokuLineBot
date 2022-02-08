@@ -8,6 +8,8 @@ import (
 	"heroku-line-bot/src/repo/database/database/clubdb/team"
 	"heroku-line-bot/src/repo/redis"
 	errUtil "heroku-line-bot/src/util/error"
+
+	"github.com/rs/zerolog"
 )
 
 // TODO for add new team
@@ -28,7 +30,7 @@ func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resu
 
 	teamIDMap, errInfo := redis.Badminton.BadmintonTeam.Load(ids...)
 	if errInfo != nil {
-		errInfo.SetLevel(errUtil.WARN)
+		errInfo.SetLevel(zerolog.WarnLevel)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 	}
 	resultTeamIDMap = teamIDMap
@@ -115,7 +117,7 @@ func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resu
 		}
 
 		if errInfo := redis.Badminton.BadmintonTeam.Set(idTeamMap); errInfo != nil {
-			errInfo.SetLevel(errUtil.WARN)
+			errInfo.SetLevel(zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}
 	}

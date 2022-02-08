@@ -519,7 +519,6 @@ func (b *NewActivity) ParseCourts(courtsStr string) (resultErrInfo errUtil.IErro
 		times := strings.Split(timeStr, "~")
 		if len(times) != 2 {
 			errInfo := errUtil.New("時間格式錯誤")
-			errInfo = errInfo.Trace()
 			resultErrInfo = errInfo
 			return
 		}

@@ -10,6 +10,8 @@ import (
 	linebotDomainReqs "heroku-line-bot/src/service/linebot/domain/model/reqs"
 	errUtil "heroku-line-bot/src/util/error"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 type lineTokenVerifier struct {
@@ -45,7 +47,7 @@ func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resu
 
 		data, errInfo := clubLineuserLogic.Get(claims.Sub)
 		if errInfo != nil {
-			errInfo := errUtil.NewError(err, errUtil.WARN)
+			errInfo := errUtil.NewError(err, zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}
 		if data != nil {

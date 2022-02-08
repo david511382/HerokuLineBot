@@ -17,6 +17,8 @@ import (
 	"heroku-line-bot/src/util"
 	errUtil "heroku-line-bot/src/util/error"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 // 自動開場
@@ -29,7 +31,7 @@ func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg
 func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	defer func() {
 		if resultErrInfo != nil {
-			resultErrInfo = resultErrInfo.NewParent(runTime.String())
+			resultErrInfo.Attr("runTime", runTime.String())
 		}
 	}()
 
@@ -87,7 +89,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	}
 
 	if errInfo := notifyGroup(newActivityTeamSettingMap); errInfo != nil {
-		errInfo.SetLevel(errUtil.WARN)
+		errInfo.SetLevel(zerolog.WarnLevel)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 	}
 
@@ -203,7 +205,7 @@ func notifyGroup(teamSettingMap map[int]*rdsModel.ClubBadmintonTeam) (resultErrI
 		getActivityHandler := &clubLogic.GetActivities{}
 		if errInfo := getActivityHandler.Init(nil); errInfo != nil {
 			if errInfo.IsError() {
-				errInfo.SetLevel(errUtil.WARN)
+				errInfo.SetLevel(zerolog.WarnLevel)
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				continue
 			}
@@ -212,7 +214,7 @@ func notifyGroup(teamSettingMap map[int]*rdsModel.ClubBadmintonTeam) (resultErrI
 		getActivityHandler.TeamID = teamID
 		pushMessage, err := getActivityHandler.GetActivitiesMessage("開放活動報名", false, false)
 		if err != nil {
-			errInfo := errUtil.NewError(err, errUtil.WARN)
+			errInfo := errUtil.NewError(err, zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			continue
 		}
@@ -222,7 +224,7 @@ func notifyGroup(teamSettingMap map[int]*rdsModel.ClubBadmintonTeam) (resultErrI
 		}
 		linebotContext := clubLineBotLogic.NewContext("", "", &clubLineBotLogic.Bot)
 		if err := linebotContext.PushRoom(notifyRoomID, pushMessages); err != nil {
-			errInfo := errUtil.NewError(err, errUtil.WARN)
+			errInfo := errUtil.NewError(err, zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			continue
 		}

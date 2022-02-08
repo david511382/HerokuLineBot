@@ -9,13 +9,15 @@ import (
 	"heroku-line-bot/src/repo/redis"
 	redisDomain "heroku-line-bot/src/repo/redis/domain"
 	errUtil "heroku-line-bot/src/util/error"
+
+	"github.com/rs/zerolog"
 )
 
 func Get(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo errUtil.IError) {
 	{
 		lineIDUserMap, errInfo := redis.Badminton.LineUser.Load(lineID)
 		if errInfo != nil {
-			errInfo.SetLevel(errUtil.INFO)
+			errInfo.SetLevel(zerolog.InfoLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}
 
@@ -49,7 +51,7 @@ func Get(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo er
 		},
 	})
 	if errInfo != nil {
-		errInfo.SetLevel(errUtil.WARN)
+		errInfo.SetLevel(zerolog.WarnLevel)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 	}
 

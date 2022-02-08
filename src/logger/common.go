@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/pkgerrors"
 )
 
 var (
@@ -25,24 +24,42 @@ var (
 
 func init() {
 	zerolog.LevelFieldName = "lvl"
-	zerolog.ErrorStackMarshaler = func(err error) interface{} {
-		e, ok := err.(*errUtil.ErrorInfo)
-		if ok {
-			return e.TraceMessage()
-		}
-		return pkgerrors.MarshalStack(err)
-	}
+	zerolog.ErrorStackMarshaler = errUtil.ErrorStackMarshaler
 	zerolog.ErrorHandler = func(err error) {
 		logOnTelegram(fmt.Sprintf("Log Fail:%s", err.Error()))
 	}
 
-	telegramLogger = &telegramLoggerHandler{
-		limit: 4096,
-	}
-	fileLogger = &fileLoggerHandler{}
-	teminalLogger = &teminalLoggerHandler{}
 	PanicWriter = &panicWriter{}
-	lokiLogger = NewLokiLog(nil)
+}
+
+func getTelegramLogger() *telegramLoggerHandler {
+	if telegramLogger == nil {
+		telegramLogger = &telegramLoggerHandler{
+			limit: 4096,
+		}
+	}
+	return telegramLogger
+}
+
+func getFileLogger() *fileLoggerHandler {
+	if fileLogger == nil {
+		fileLogger = &fileLoggerHandler{}
+	}
+	return fileLogger
+}
+
+func getTeminalLogger() *teminalLoggerHandler {
+	if teminalLogger == nil {
+		teminalLogger = &teminalLoggerHandler{}
+	}
+	return teminalLogger
+}
+
+func getLokiLogger() *lokiLoggerHandler {
+	if lokiLogger == nil {
+		lokiLogger = NewLokiLog(nil)
+	}
+	return lokiLogger
 }
 
 func Init() errUtil.IError {
@@ -85,48 +102,37 @@ func LogRightNow(name string, logErrInfo errUtil.IError) {
 }
 
 func logOnTelegram(msg string) {
-	if errInfo := telegramLogger.log(notifyTelegramID, msg); errInfo != nil {
+	if errInfo := getTelegramLogger().log(notifyTelegramID, msg); errInfo != nil {
 		logOnFile("System", msg)
 
-		errInfo = errInfo.NewParent("log telegram fail")
-		errInfo = errInfo.NewParent(msg)
+		errInfo.AppendMessage("log telegram fail")
+		errInfo.AppendMessage(msg)
 		logOnTeminal(errInfo.ErrorWithTrace())
 	}
 }
 
 func logOnFile(name, msg string) {
-	if errInfo := fileLogger.log(name, msg); errInfo != nil {
+	if errInfo := getFileLogger().log(name, msg); errInfo != nil {
 		logOnTeminal(msg)
 
-		errInfo = errInfo.NewParent("log file fail")
-		errInfo = errInfo.NewParent(msg)
+		errInfo.AppendMessage("log file fail")
+		errInfo.AppendMessage(msg)
 		logOnTeminal(errInfo.ErrorWithTrace())
 	}
 }
 
 func logOnTeminal(msg string) {
-	if errInfo := teminalLogger.log("", msg); errInfo != nil {
+	if errInfo := getTeminalLogger().log("", msg); errInfo != nil {
 		fmt.Println(msg)
 
-		errInfo = errInfo.NewParent("log teminal fail")
-		errInfo = errInfo.NewParent(msg)
+		errInfo.AppendMessage("log teminal fail")
+		errInfo.AppendMessage(msg)
 		fmt.Println(errInfo.ErrorWithTrace())
 	}
 }
 
-func logOnLoki(msg string) {
-	errInfo := lokiLogger.log(
-		LoggerInfo{
-			Message: msg,
-		},
-	)
-	if errInfo != nil {
-		logOnTeminal(msg)
-
-		errInfo = errInfo.NewParent("log loki fail")
-		errInfo = errInfo.NewParent(msg)
-		logOnTeminal(errInfo.ErrorWithTrace())
-	}
+func logOnLoki(name string, err error) {
+	getLokiLogger().log(name, err)
 }
 
 func message(name string, errInfo errUtil.IError) string {

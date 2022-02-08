@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"fmt"
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/model"
 	lokiService "heroku-line-bot/src/service/loki"
@@ -15,10 +14,8 @@ import (
 )
 
 type LoggerInfo struct {
-	Level   zerolog.Level
-	Name    string
-	Message string
-	Error   error
+	Name  string
+	Error error
 }
 
 type lokiLoggerHandler struct {
@@ -41,32 +38,37 @@ func NewLokiLog(w io.Writer) *lokiLoggerHandler {
 		w = defaultWriter
 	}
 
-	result.logger = zerolog.New(zerolog.ConsoleWriter{
-		Out: w,
-		FormatLevel: func(i interface{}) string {
-			s, ok := i.(string)
-			if !ok {
-				s = ""
-			}
-			return fmt.Sprintf("%s=%s", zerolog.LevelFieldName, s)
-		},
-		FormatTimestamp: func(i interface{}) string { return "" },
-	}).With().
+	result.logger = zerolog.New(errUtil.NewConsoleLogWriter(w)).With().
 		Stack().
 		Logger()
 
 	return result
 }
 
-func (lh lokiLoggerHandler) log(info LoggerInfo) errUtil.IError {
-	l := lh.logger.WithLevel(info.Level).
-		Err(info.Error)
-	if msg := info.Message; msg != "" {
-		l.Msgf(info.Message)
+func (lh lokiLoggerHandler) log(name string, err error) {
+	loggerWriter, ok := err.(errUtil.ILoggerWriter)
+	if ok {
+		loggerWriter.WriteLog(&lh.logger)
+		return
+	}
+
+	var level zerolog.Level = zerolog.ErrorLevel
+	levelErr, ok := err.(errUtil.ILevelError)
+	if ok {
+		level = levelErr.GetLevel()
+	}
+	l := lh.logger.WithLevel(level)
+
+	errInfo, ok := err.(errUtil.IError)
+	if !ok {
+		errInfo = errUtil.NewError(err)
+	}
+
+	if msg := errInfo.ErrorWithTrace(); msg != "" {
+		l.Msgf(msg)
 	} else {
 		l.Send()
 	}
-	return nil
 }
 
 func (lh lokiLoggerHandler) Write(p []byte) (n int, resultErr error) {
@@ -75,25 +77,14 @@ func (lh lokiLoggerHandler) Write(p []byte) (n int, resultErr error) {
 	now := time.Now()
 	ti := strconv.FormatInt(now.UnixNano(), 10)
 
-	type S struct {
+	type Lable struct {
 		Project string `json:"project"`
-		Service string `json:"service"`
 	}
 	reqs := model.Reqs_Service_LokiSend{
 		Streams: []*model.Reqs_Service_LokiSendStream{
 			{
-				Stream: S{
-					Service: "kero",
-					Project: "tango",
-				},
-				Values: [][]string{
-					{ti, string(p)},
-				},
-			},
-			{
-				Stream: S{
-					Service: "kero",
-					Project: "tango",
+				Stream: Lable{
+					Project: "heroku-line-bot",
 				},
 				Values: [][]string{
 					{ti, string(p)},
@@ -114,7 +105,7 @@ func (lh lokiLoggerHandler) WriteLevel(l zerolog.Level, p []byte) (n int, result
 		logOnTeminal(string(p))
 
 		var errInfo errUtil.IError = errUtil.NewError(err)
-		errInfo = errInfo.NewParent("log loki fail")
+		errInfo.AppendMessage("log loki fail")
 		resultErr = errInfo
 		return
 	}

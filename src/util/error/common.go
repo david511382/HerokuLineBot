@@ -2,46 +2,39 @@ package error
 
 import (
 	"fmt"
+	"io"
 	"strings"
+
+	"github.com/rs/zerolog/pkgerrors"
 )
 
-func New(errMsg string, level ...ErrorLevel) *ErrorInfo {
-	result := &ErrorInfo{
-		rawMessage: errMsg,
-		Level:      ERROR,
+var (
+	DefaultWriter func(out io.Writer) io.Writer = func(out io.Writer) io.Writer {
+		return NewConsoleLogWriter(out)
 	}
-	if len(level) > 0 {
-		result.Level = level[0]
+)
+
+func ErrorStackMarshaler(err error) interface{} {
+	e, ok := err.(*ErrorInfo)
+	if ok {
+		return pkgerrors.MarshalStack(e.traceError)
+	} else if err := pkgerrors.MarshalStack(e.traceError); err != nil {
+		return err
 	}
-	return result.Trace()
+	return err
 }
 
-func NewOnLevel(level ErrorLevel, errMsgs ...interface{}) *ErrorInfo {
-	errMsg := msgCreator(errMsgs...)
-	return New(errMsg, level)
-}
-
-func Newf(errMsgFormat string, a ...interface{}) *ErrorInfo {
-	return New(fmt.Sprintf(errMsgFormat, a...), ERROR)
-}
-
-func NewValue(errMsg string, errValue interface{}, level ...ErrorLevel) *ErrorInfo {
-	result := New(errMsg, level...)
-	result.Value = errValue
+func Split(err error) []error {
+	result := make([]error, 0)
+	e, ok := err.(*ErrorInfos)
+	if ok {
+		for _, v := range e.Errors() {
+			result = append(result, v)
+		}
+	} else {
+		result = append(result, err)
+	}
 	return result
-}
-
-func NewErrorMsg(datas ...interface{}) *ErrorInfo {
-	return NewOnLevel(ERROR, datas...)
-}
-
-func NewError(err error, level ...ErrorLevel) *ErrorInfo {
-	if err == nil {
-		return nil
-	}
-
-	errInfo := New(err.Error(), level...)
-	return errInfo.Trace()
 }
 
 func msgCreator(datas ...interface{}) string {
@@ -50,18 +43,6 @@ func msgCreator(datas ...interface{}) string {
 		msgs = append(msgs, fmt.Sprint(data))
 	}
 	return strings.Join(msgs, " ")
-}
-
-func LevelName(level ErrorLevel) string {
-	switch level {
-	case ERROR:
-		return ERROR_NAME
-	case WARN:
-		return WARN_NAME
-	case INFO:
-		return INFO_NAME
-	}
-	return ""
 }
 
 func Append(result, errInfo IError) IError {

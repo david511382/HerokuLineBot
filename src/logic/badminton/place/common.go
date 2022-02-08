@@ -7,6 +7,8 @@ import (
 	"heroku-line-bot/src/repo/database/database/clubdb/place"
 	"heroku-line-bot/src/repo/redis"
 	errUtil "heroku-line-bot/src/util/error"
+
+	"github.com/rs/zerolog"
 )
 
 var MockLoad func(ids ...int) (
@@ -22,7 +24,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace, re
 
 	placeIDMap, errInfo := redis.Badminton.BadmintonPlace.Load(ids...)
 	if errInfo != nil {
-		errInfo.SetLevel(errUtil.WARN)
+		errInfo.SetLevel(zerolog.WarnLevel)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 	}
 	resultPlaceIDMap = placeIDMap
@@ -59,7 +61,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace, re
 		}
 
 		if errInfo := redis.Badminton.BadmintonPlace.Set(idPlaceMap); errInfo != nil {
-			errInfo.SetLevel(errUtil.WARN)
+			errInfo.SetLevel(zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}
 	}

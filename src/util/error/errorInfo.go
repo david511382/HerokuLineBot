@@ -1,36 +1,107 @@
 package error
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
-	"runtime/debug"
+	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 )
 
 type ErrorInfo struct {
-	rawMessage   string
-	traceMessage string
-	Value        interface{}
-	Level        ErrorLevel
-	childError   *ErrorInfo
+	attrsMap       map[string]interface{}
+	rawMessages    []string
+	traceError     error
+	Level          zerolog.Level
+	logger         zerolog.Logger
+	resultMessages [][]byte
 }
 
-func (ei *ErrorInfo) TraceMessage() string {
-	return ei.traceMessage
+func New(errMsg string, level ...zerolog.Level) *ErrorInfo {
+	return NewError(fmt.Errorf(errMsg), level...)
 }
 
-func (ei *ErrorInfo) Trace() *ErrorInfo {
-	if ei == nil {
-		return nil
+func NewError(err error, level ...zerolog.Level) *ErrorInfo {
+	result := &ErrorInfo{
+		rawMessages:    []string{err.Error()},
+		Level:          zerolog.ErrorLevel,
+		attrsMap:       make(map[string]interface{}),
+		traceError:     errors.WithStack(err),
+		resultMessages: make([][]byte, 0),
+	}
+	if len(level) > 0 {
+		result.Level = level[0]
 	}
 
-	traceMsg := string(debug.Stack())
-	ei.traceMessage = traceMsg
-	return ei
+	logger := zerolog.New(DefaultWriter(result)).With().
+		Stack().
+		Logger()
+	loggerP := result.SetLogger(&logger)
+	result.logger = *loggerP
+
+	return result
 }
 
-func (ei *ErrorInfo) NewParent(datas ...interface{}) IError {
-	return ei.NewParentLevel(ei.Level, datas...)
+func NewOnLevel(level zerolog.Level, errMsgs ...interface{}) *ErrorInfo {
+	errMsg := msgCreator(errMsgs...)
+	return New(errMsg, level)
+}
+
+func Newf(errMsgFormat string, a ...interface{}) *ErrorInfo {
+	return New(fmt.Sprintf(errMsgFormat, a...), zerolog.ErrorLevel)
+}
+
+func NewValue(errMsg string, errValue interface{}, level ...zerolog.Level) *ErrorInfo {
+	result := New(errMsg, level...)
+	result.Attr("value", errValue)
+	return result
+}
+
+func NewErrorMsg(datas ...interface{}) *ErrorInfo {
+	return NewOnLevel(zerolog.ErrorLevel, datas...)
+}
+
+func (ei *ErrorInfo) SetLogger(logger *zerolog.Logger) *zerolog.Logger {
+	log := logger.Hook(zerolog.HookFunc(func(e *zerolog.Event, level zerolog.Level, message string) {
+		for k, v := range ei.attrsMap {
+			e = e.Interface(k, v)
+		}
+	}))
+	return &log
+}
+
+func (ei *ErrorInfo) WriteLog(logger *zerolog.Logger) {
+	logger = ei.SetLogger(logger)
+	e := logger.WithLevel(ei.GetLevel())
+	ei.writeEventLog(e)
+}
+
+// write error
+func (ei *ErrorInfo) MarshalZerologObject(e *zerolog.Event) {
+	for i, msg := range ei.rawMessages {
+		key := strconv.Itoa(i)
+		e.Str(key, msg)
+	}
+}
+
+func (ei *ErrorInfo) writeEventLog(e *zerolog.Event) {
+	if !ei.IsInfo() &&
+		ei.traceError != nil {
+		e.Err(ei)
+	}
+
+	// ConsoleWriter print raw message
+	ei.Attr(zerolog.MessageFieldName, ei.RawError())
+	e.Send()
+	delete(ei.attrsMap, zerolog.MessageFieldName)
+}
+
+func (ei *ErrorInfo) Write(p []byte) (n int, err error) {
+	ei.resultMessages = append(ei.resultMessages, p)
+	n = len(p)
+	return
 }
 
 func (ei *ErrorInfo) ToTraceError() error {
@@ -49,83 +120,64 @@ func (ei *ErrorInfo) Append(errInfo IError) *ErrorInfos {
 		return nil
 	}
 
-	result := &ErrorInfos{}
+	result := newErrInfos()
 	if ei != nil {
-		result.Append(ei)
+		result = result.Append(ei)
 	}
-	if errInfo == nil {
-		result.Append(errInfo)
+	if errInfo != nil {
+		result = result.Append(errInfo)
 	}
 
 	return result
 }
 
-func (ei *ErrorInfo) NewParentLevel(level ErrorLevel, datas ...interface{}) *ErrorInfo {
+func (ei *ErrorInfo) Attr(name string, value interface{}) {
 	if ei == nil {
-		return nil
+		return
 	}
 
-	childError := *ei
-	errMsg := msgCreator(datas...)
-	ei = NewValue(errMsg, childError.Value, ei.Level)
-	ei.childError = &childError
-	return ei
+	ei.attrsMap[name] = value
+}
+
+func (ei *ErrorInfo) AppendMessage(msg string) {
+	if ei == nil {
+		return
+	}
+	ei.rawMessages = append(ei.rawMessages, msg)
+}
+
+func (ei *ErrorInfo) RawError() string {
+	if ei == nil {
+		return ""
+	}
+
+	return strings.Join(ei.rawMessages, "->")
 }
 
 func (ei *ErrorInfo) Error() string {
 	if ei == nil {
 		return ""
 	}
-	return ei.rawMessage
+
+	e := ei.logger.WithLevel(ei.Level)
+	msg := ei.RawError()
+	e.Msg(msg)
+
+	return ei.popResultMessages()
 }
 
-func (ei *ErrorInfo) ErrorWithTrace() string {
-	if ei == nil {
-		return ""
-	}
+func (ei ErrorInfo) ErrorWithTrace() string {
+	e := ei.logger.WithLevel(ei.Level)
 
-	errMsgs := make([]string, 0)
-	for e := ei; e != nil; e = e.childError {
-		errMsg := e.Error()
-		if isLast := e.childError == nil; !e.IsInfo() &&
-			e.traceMessage != "" &&
-			isLast {
-			errMsg = fmt.Sprintf("%s\nSTACK: %s", errMsg, e.traceMessage)
-		}
-		errMsgs = append(errMsgs, errMsg)
-	}
+	ei.writeEventLog(e)
 
-	errMsg := strings.Join(errMsgs, " <-- ")
-	return errMsg
+	return ei.popResultMessages()
 }
 
-func (ei *ErrorInfo) MinChild() (errInfo *ErrorInfo) {
-	if ei == nil {
-		return nil
-	}
-	for e := ei; e != nil; e = e.childError {
-		errInfo = e
-	}
-	return
-}
-
-func (ei *ErrorInfo) Contain(e *ErrorInfo) bool {
-	if e == nil {
-		return false
-	}
-
-	if ei.Level != e.Level {
-		return false
-	}
-	if !errors.Is(ei, e) {
-		if ei.childError != nil {
-			return ei.childError.Contain(e)
-		} else {
-			return false
-		}
-	}
-
-	return true
+func (ei ErrorInfo) popResultMessages() string {
+	result := string(bytes.Join(ei.resultMessages, make([]byte, 0)))
+	ei.resultMessages = make([][]byte, 0)
+	return result
 }
 
 func (ei *ErrorInfo) Equal(e *ErrorInfo) bool {
@@ -142,18 +194,6 @@ func (ei *ErrorInfo) Equal(e *ErrorInfo) bool {
 		return false
 	}
 
-	if ei.childError != nil {
-		if e.childError == nil {
-			return false
-		}
-
-		return ei.childError.Equal(e.childError)
-	} else {
-		if e.childError != nil {
-			return false
-		}
-	}
-
 	return true
 }
 
@@ -167,11 +207,11 @@ func (ei *ErrorInfo) RawErrorEqual(err error) bool {
 	return errors.Is(ei, err)
 }
 
-func (ei *ErrorInfo) GetLevel() ErrorLevel {
+func (ei *ErrorInfo) GetLevel() zerolog.Level {
 	return ei.Level
 }
 
-func (ei *ErrorInfo) SetLevel(level ErrorLevel) {
+func (ei *ErrorInfo) SetLevel(level zerolog.Level) {
 	if ei == nil {
 		return
 	}
@@ -183,19 +223,19 @@ func (ei *ErrorInfo) IsError() bool {
 	if ei == nil {
 		return false
 	}
-	return ei.Level == ERROR
+	return ei.Level == zerolog.ErrorLevel
 }
 
 func (ei *ErrorInfo) IsWarn() bool {
 	if ei == nil {
 		return false
 	}
-	return ei.Level == WARN
+	return ei.Level == zerolog.WarnLevel
 }
 
 func (ei *ErrorInfo) IsInfo() bool {
 	if ei == nil {
 		return false
 	}
-	return ei.Level == INFO
+	return ei.Level == zerolog.InfoLevel
 }

@@ -7,6 +7,7 @@ import (
 	errUtil "heroku-line-bot/src/util/error"
 
 	"github.com/go-redis/redis"
+	"github.com/rs/zerolog"
 )
 
 type Key struct {
@@ -37,7 +38,7 @@ func (k Key) Load(lineIDs ...string) (lineIDUserMap map[string]*domain.LineUser,
 	if err != nil {
 		errInfo := errUtil.NewError(err)
 		if !common.IsRedisError(err) {
-			errInfo.Level = errUtil.WARN
+			errInfo.Level = zerolog.WarnLevel
 		}
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
@@ -78,7 +79,7 @@ func (k Key) Set(lineIDUserMap map[string]*domain.LineUser) (resultErrInfo errUt
 	if err := k.HMSet(m); err != nil {
 		errInfo := errUtil.NewError(err)
 		if !common.IsRedisError(err) {
-			errInfo.SetLevel(errUtil.WARN)
+			errInfo.SetLevel(zerolog.WarnLevel)
 		}
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {

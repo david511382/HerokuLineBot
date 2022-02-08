@@ -1,18 +1,30 @@
 package error
 
+import "github.com/rs/zerolog"
+
 type IError interface {
 	error
 	ErrorWithTrace() string
 
-	NewParent(datas ...interface{}) IError
-
 	ToTraceError() error
 	ToErrInfo() *ErrorInfo
 	Append(errInfo IError) *ErrorInfos
+	Attr(name string, value interface{})
+	AppendMessage(msg string)
 
-	GetLevel() ErrorLevel
-	SetLevel(ErrorLevel)
+	ILevelError
+}
+
+type ILevelError interface {
+	error
+
+	GetLevel() zerolog.Level
+	SetLevel(zerolog.Level)
 	IsError() bool
 	IsWarn() bool
 	IsInfo() bool
+}
+
+type ILoggerWriter interface {
+	WriteLog(logger *zerolog.Logger)
 }

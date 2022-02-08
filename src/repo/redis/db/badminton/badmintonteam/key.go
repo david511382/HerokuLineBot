@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/go-redis/redis"
+	"github.com/rs/zerolog"
 )
 
 type Key struct {
@@ -50,7 +51,7 @@ func (k Key) Load(ids ...int) (teamIDMap map[int]*rdsModel.ClubBadmintonTeam, re
 		if err != nil {
 			errInfo := errUtil.NewError(err)
 			if !common.IsRedisError(err) {
-				errInfo.Level = errUtil.WARN
+				errInfo.Level = zerolog.WarnLevel
 			}
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {
@@ -62,9 +63,8 @@ func (k Key) Load(ids ...int) (teamIDMap map[int]*rdsModel.ClubBadmintonTeam, re
 		for field, data := range fieldDataMap {
 			id, err := strconv.Atoi(field)
 			if err != nil {
-				var errInfo errUtil.IError
-				errInfo = errUtil.NewError(err)
-				errInfo = errInfo.NewParent(field)
+				errInfo := errUtil.NewError(err)
+				errInfo.Attr("field", field)
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			}
@@ -81,7 +81,7 @@ func (k Key) Load(ids ...int) (teamIDMap map[int]*rdsModel.ClubBadmintonTeam, re
 		if err != nil {
 			errInfo := errUtil.NewError(err)
 			if !common.IsRedisError(err) {
-				errInfo.Level = errUtil.WARN
+				errInfo.Level = zerolog.WarnLevel
 			}
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {
@@ -126,7 +126,7 @@ func (k Key) Set(idPlaceMap map[int]*rdsModel.ClubBadmintonTeam) (resultErrInfo 
 	if err := k.HMSet(m); err != nil {
 		errInfo := errUtil.NewError(err)
 		if !common.IsRedisError(err) {
-			errInfo.Level = errUtil.WARN
+			errInfo.Level = zerolog.WarnLevel
 		}
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {

@@ -7,6 +7,7 @@ import (
 	errUtil "heroku-line-bot/src/util/error"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 )
 
 func GetToken(c *gin.Context) string {
@@ -31,7 +32,7 @@ func AuthorizeToken(tokenVerifier domain.ITokenVerifier, require bool) gin.Handl
 						common.FailForbidden(c, errInfo)
 						return
 					} else {
-						errInfo.SetLevel(errUtil.INFO)
+						errInfo.SetLevel(zerolog.InfoLevel)
 					}
 					logger.Log(common.GetLogName(c), errInfo)
 				}
@@ -54,7 +55,7 @@ func VerifyAuthorize(roleIDAllowMap map[int16]bool) gin.HandlerFunc {
 		if len(roleIDAllowMap) > 0 {
 			if jwtClaims := common.GetClaims(c); jwtClaims == nil ||
 				!roleIDAllowMap[jwtClaims.RoleID] {
-				errInfo := errUtil.New("No Allow", errUtil.INFO)
+				errInfo := errUtil.New("No Allow", zerolog.InfoLevel)
 				common.FailForbidden(c, errInfo)
 				return
 			}
