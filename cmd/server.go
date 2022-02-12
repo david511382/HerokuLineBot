@@ -31,10 +31,6 @@ func run(cmd *cobra.Command, args []string) {
 		}
 	}()
 
-	if resultErrInfo = logger.Init(); resultErrInfo != nil {
-		return
-	}
-
 	if resultErrInfo = repo.Init(); resultErrInfo != nil {
 		return
 	}

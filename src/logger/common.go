@@ -1,149 +1,97 @@
 package logger
 
 import (
-	"fmt"
-	"heroku-line-bot/bootstrap"
-	"heroku-line-bot/src/service/telegram"
 	errUtil "heroku-line-bot/src/util/error"
 	"io"
-	"strconv"
+	"os"
 
 	"github.com/rs/zerolog"
 )
 
-var (
-	telegramLogger *telegramLoggerHandler
-	fileLogger     *fileLoggerHandler
-	teminalLogger  *teminalLoggerHandler
-	lokiLogger     *lokiLoggerHandler
-	PanicWriter    io.Writer
+type iIndexWriter interface {
+	getIndex() int
+}
 
-	telegramBot      *telegram.Bot
-	notifyTelegramID int
+type ILogger interface {
+	log(name string, err error)
+}
+
+var (
+	consoleLogger ILogger
+
+	loggers []ILogger
 )
 
 func init() {
+	consoleLogger = newLogger(os.Stdout)
+
 	zerolog.LevelFieldName = "lvl"
 	zerolog.ErrorStackMarshaler = errUtil.ErrorStackMarshaler
-	zerolog.ErrorHandler = func(err error) {
-		logOnTelegram(fmt.Sprintf("Log Fail:%s", err.Error()))
-	}
-
-	PanicWriter = &panicWriter{}
+	zerolog.ErrorHandler = handleErr
 }
 
-func getTelegramLogger() *telegramLoggerHandler {
-	if telegramLogger == nil {
-		telegramLogger = &telegramLoggerHandler{
-			limit: 4096,
+func getLogger(out io.Writer) zerolog.Logger {
+	return zerolog.New(errUtil.NewConsoleLogWriter(out)).With().
+		Stack().
+		Logger()
+}
+
+func handleErr(err error) {
+	var logger ILogger
+	{
+		failWriter, ok := err.(iIndexWriter)
+		if ok {
+			loggerIndex := failWriter.getIndex()
+			if loggerIndex < len(loggers)-1 {
+				logger = loggers[loggerIndex+1]
+			}
 		}
 	}
-	return telegramLogger
+
+	if logger == nil {
+		logger = consoleLogger
+	}
+	logger.log("Log_Fail", err)
 }
 
-func getFileLogger() *fileLoggerHandler {
-	if fileLogger == nil {
-		fileLogger = &fileLoggerHandler{}
-	}
-	return fileLogger
-}
-
-func getTeminalLogger() *teminalLoggerHandler {
-	if teminalLogger == nil {
-		teminalLogger = &teminalLoggerHandler{}
-	}
-	return teminalLogger
-}
-
-func getLokiLogger() *lokiLoggerHandler {
-	if lokiLogger == nil {
-		lokiLogger = NewLokiLog(nil)
-	}
-	return lokiLogger
-}
-
-func Init() errUtil.IError {
-	cfg, errInfo := bootstrap.Get()
-	if errInfo != nil {
-		return errInfo
-	}
-
-	channelAccessToken := cfg.TelegramBot.ChannelAccessToken
-	if telegramID, err := strconv.Atoi(cfg.TelegramBot.AdminID); err != nil {
-		return errUtil.NewError(err)
-	} else {
-		notifyTelegramID = telegramID
-	}
-	telegramBot = telegram.NewBot(channelAccessToken)
-	return nil
-}
-
-func Log(name string, logErrInfo errUtil.IError) {
+func Log(name string, err error) {
 	go func() {
-		LogRightNow(name, logErrInfo)
+		LogRightNow(name, err)
 	}()
 }
 
-func LogRightNow(name string, logErrInfo errUtil.IError) {
-	if logErrInfo == nil {
+func LogRightNow(name string, err error) {
+	if err == nil {
 		return
 	}
+	errs := errUtil.Split(err)
+	for _, err := range errs {
+		logError(name, err)
+	}
+}
 
-	msg := message(name, logErrInfo)
-	if logErrInfo.IsError() || logErrInfo.IsWarn() {
-		if telegramBot == nil || notifyTelegramID == 0 {
-			logOnFile(name, msg)
-		} else {
-			logOnTelegram(msg)
+func logError(name string, err error) {
+	for _, logger := range getLoggers() {
+		logger.log(name, err)
+		break
+	}
+}
+
+func getLoggers() []ILogger {
+	if len(loggers) == 0 {
+		loggers = make([]ILogger, 0)
+		if logger := NewLokiLogger(); logger != nil {
+			w := newIndexWriter(logger, len(loggers))
+			loggers = append(loggers, newLogger(w))
 		}
-	} else if logErrInfo.IsInfo() {
-		logOnFile(name, msg)
+		if logger := NewTelegramLogger(); logger != nil {
+			w := newIndexWriter(logger, len(loggers))
+			loggers = append(loggers, newLogger(w))
+		}
+		if logger := NewFileLogger(); logger != nil {
+			loggers = append(loggers, logger)
+		}
+		loggers = append(loggers, consoleLogger)
 	}
-}
-
-func logOnTelegram(msg string) {
-	if errInfo := getTelegramLogger().log(notifyTelegramID, msg); errInfo != nil {
-		logOnFile("System", msg)
-
-		errInfo.AppendMessage("log telegram fail")
-		errInfo.AppendMessage(msg)
-		logOnTeminal(errInfo.ErrorWithTrace())
-	}
-}
-
-func logOnFile(name, msg string) {
-	if errInfo := getFileLogger().log(name, msg); errInfo != nil {
-		logOnTeminal(msg)
-
-		errInfo.AppendMessage("log file fail")
-		errInfo.AppendMessage(msg)
-		logOnTeminal(errInfo.ErrorWithTrace())
-	}
-}
-
-func logOnTeminal(msg string) {
-	if errInfo := getTeminalLogger().log("", msg); errInfo != nil {
-		fmt.Println(msg)
-
-		errInfo.AppendMessage("log teminal fail")
-		errInfo.AppendMessage(msg)
-		fmt.Println(errInfo.ErrorWithTrace())
-	}
-}
-
-func logOnLoki(name string, err error) {
-	getLokiLogger().log(name, err)
-}
-
-func message(name string, errInfo errUtil.IError) string {
-	msg := errInfo.ErrorWithTrace()
-	if errInfo.IsError() {
-		return fmt.Sprintf("%s: ERROR: %s\n", name, msg)
-	} else if errInfo.IsWarn() {
-		return fmt.Sprintf("%s: WARN: %s\n", name, msg)
-	} else if errInfo.IsInfo() {
-		return fmt.Sprintf("%s: %s\n", name, msg)
-	} else {
-		return fmt.Sprintf("UNDEFIND ERROR: %s ON NAME: %s\n", msg, name)
-	}
+	return loggers
 }
