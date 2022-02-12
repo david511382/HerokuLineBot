@@ -1,4 +1,4 @@
-package income
+package rentalcourtrefundledger
 
 import (
 	"heroku-line-bot/bootstrap"
@@ -9,10 +9,13 @@ import (
 )
 
 var (
-	db *Income
+	db *RentalCourtRefundLedger
 )
 
 func TestMain(m *testing.M) {
+	if err := bootstrap.SetEnvWorkDir(bootstrap.DEFAULT_WORK_DIR); err != nil {
+		panic(err)
+	}
 	if err := bootstrap.SetEnvConfig("local"); err != nil {
 		panic(err)
 	}

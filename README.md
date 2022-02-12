@@ -1,5 +1,12 @@
 # HerokuLineBot
 
+## Start Local
+
+1. `docker-compose up db adminer -d`
+2. http://localhost:8882/?pgsql=db&username=root
+3. `CREATE DATABASE club;`
+4. `docker-compose up -d`
+
 ## dev
 
 token:`{"RoleID":1}`

@@ -1,18 +1,20 @@
-package rentalcourt
+package clubdb
 
 import (
 	"heroku-line-bot/bootstrap"
-	"heroku-line-bot/src/repo/database/common"
 	"heroku-line-bot/src/repo/database/conn"
 	"os"
 	"testing"
 )
 
 var (
-	db *RentalCourt
+	db *Database
 )
 
 func TestMain(m *testing.M) {
+	if err := bootstrap.SetEnvWorkDir(bootstrap.DEFAULT_WORK_DIR); err != nil {
+		panic(err)
+	}
 	if err := bootstrap.SetEnvConfig("local"); err != nil {
 		panic(err)
 	}
@@ -24,7 +26,7 @@ func TestMain(m *testing.M) {
 	if connection, err := conn.Connect(cfg.ClubDb); err != nil {
 		panic(err)
 	} else {
-		db = New(common.NewBaseDatabase(connection, connection))
+		db = NewDatabase(connection, connection)
 	}
 
 	exitVal := m.Run()

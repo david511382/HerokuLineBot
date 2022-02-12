@@ -1,4 +1,4 @@
-package place
+package activity
 
 import (
 	"heroku-line-bot/bootstrap"
@@ -9,10 +9,13 @@ import (
 )
 
 var (
-	db *Place
+	db *Activity
 )
 
 func TestMain(m *testing.M) {
+	if err := bootstrap.SetEnvWorkDir(bootstrap.DEFAULT_WORK_DIR); err != nil {
+		panic(err)
+	}
 	if err := bootstrap.SetEnvConfig("local"); err != nil {
 		panic(err)
 	}
@@ -25,6 +28,10 @@ func TestMain(m *testing.M) {
 		panic(err)
 	} else {
 		db = New(common.NewBaseDatabase(connection, connection))
+	}
+
+	if err := db.MigrationTable(); err != nil {
+		panic(err)
 	}
 
 	exitVal := m.Run()

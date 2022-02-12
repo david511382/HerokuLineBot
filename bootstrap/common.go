@@ -11,6 +11,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	DEFAULT_WORK_DIR = "HerokuLineBot"
+)
+
 var (
 	cfg *Config
 )
@@ -112,9 +116,9 @@ func loadEnv() errUtil.IError {
 }
 
 func GetRootDirPath() (string, error) {
-	dir := GetEnvWorkDir()
-	if dir == "" {
-		dir = "HerokuLineBot"
+	if dir := GetEnvWorkDir(); dir != "" {
+		return util.GetRootOf(dir)
 	}
-	return util.GetRootOf(dir)
+
+	return ".", nil
 }

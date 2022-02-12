@@ -1,6 +1,6 @@
 var:
   use_debug: true
-  log_dir: "log"
+  log_dir: ""
 
 server:
   host: "0.0.0.0"
@@ -8,23 +8,29 @@ server:
 
 line_bot:
   message_bot:
-    admin_id: "admin line id"
-    channel_access_token: "access token"
-  line_login_channel_id: 123
+    # admin line id
+    admin_id: ""
+    # access token
+    channel_access_token: ""
+  line_login_channel_id: 0
 
 telegram_bot:
-  admin_id: 123
-  channel_access_token: "access token"
+  admin_id: 0
+  # access token
+  channel_access_token: ""
 
 badminton:
-  liff_url: "line login"
-  club_team_id: 1
+  # line login url
+  liff_url: ""
+  # default team
+  club_team_id: 0
 
 google_script:
-  url: "https://script.google.com/macros/s/google script/exec"
+  # example https://script.google.com/macros/s/<google script>/exec
+  url: ""
 
 loki:
-  url: "http://localhost:3100"
+  url: "http://loki:3100"
 
 backgrounds:
   activity_creator:
@@ -39,7 +45,7 @@ db:
 club_db:
   protocol: "postgre"
   server:
-    host: "localhost"
+    host: "db"
     port: 5432
   database: "club"
   user: "root"
@@ -52,7 +58,7 @@ redis:
 club_redis:
   protocol: "redis"
   server:
-    host: "localhost"
+    host: "redis"
     port: 6379
   database: "0"
   password: ""

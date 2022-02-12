@@ -1,17 +1,21 @@
-package clubdb
+package memberactivity
 
 import (
 	"heroku-line-bot/bootstrap"
+	"heroku-line-bot/src/repo/database/common"
 	"heroku-line-bot/src/repo/database/conn"
 	"os"
 	"testing"
 )
 
 var (
-	db *Database
+	db *MemberActivity
 )
 
 func TestMain(m *testing.M) {
+	if err := bootstrap.SetEnvWorkDir(bootstrap.DEFAULT_WORK_DIR); err != nil {
+		panic(err)
+	}
 	if err := bootstrap.SetEnvConfig("local"); err != nil {
 		panic(err)
 	}
@@ -23,7 +27,7 @@ func TestMain(m *testing.M) {
 	if connection, err := conn.Connect(cfg.ClubDb); err != nil {
 		panic(err)
 	} else {
-		db = NewDatabase(connection, connection)
+		db = New(common.NewBaseDatabase(connection, connection))
 	}
 
 	exitVal := m.Run()

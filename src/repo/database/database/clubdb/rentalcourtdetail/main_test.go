@@ -1,7 +1,8 @@
-package activity
+package rentalcourtdetail
 
 import (
 	"heroku-line-bot/bootstrap"
+	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database/common"
 	"heroku-line-bot/src/repo/database/conn"
 	"os"
@@ -9,10 +10,13 @@ import (
 )
 
 var (
-	db *Activity
+	db *RentalCourtDetail
 )
 
 func TestMain(m *testing.M) {
+	if err := bootstrap.SetEnvWorkDir(bootstrap.DEFAULT_WORK_DIR); err != nil {
+		panic(err)
+	}
 	if err := bootstrap.SetEnvConfig("local"); err != nil {
 		panic(err)
 	}
@@ -27,7 +31,11 @@ func TestMain(m *testing.M) {
 		db = New(common.NewBaseDatabase(connection, connection))
 	}
 
-	if err := db.MigrationTable(); err != nil {
+	if err := db.MigrationData(&dbModel.ClubRentalCourtDetail{
+		StartTime: "08:02",
+		EndTime:   "08:00",
+		Count:     2,
+	}); err != nil {
 		panic(err)
 	}
 

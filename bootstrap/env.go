@@ -47,3 +47,7 @@ func GetEnvRedisUrl() string {
 func GetEnvWorkDir() string {
 	return os.Getenv("WORK_DIR")
 }
+
+func SetEnvWorkDir(s string) error {
+	return os.Setenv("WORK_DIR", s)
+}

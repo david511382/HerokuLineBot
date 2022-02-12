@@ -7,7 +7,7 @@ heroku-line-bot.exe
 heroku-line-bot
 *.log
 config/*
-!config/demo.yml
+!config/docker.yml
 !config/master.yml
 
 # Frontend
