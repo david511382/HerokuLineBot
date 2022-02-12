@@ -1,6 +1,10 @@
 .vscode/
 
 # Backend
+## windows
+heroku-line-bot.exe
+## mac
+heroku-line-bot
 *.log
 config/*
 !config/demo.yml
