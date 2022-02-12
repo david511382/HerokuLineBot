@@ -7,6 +7,10 @@
 3. `CREATE DATABASE club;`
 4. `docker-compose up -d`
 
+## Start Debug
+
+`docker-compose -f ./docker-compose.yaml -f ./deploy/docker/debug-docker-compose.yaml up -d`
+
 ## dev
 
 token:`{"RoleID":1}`
