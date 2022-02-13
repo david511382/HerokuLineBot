@@ -9,3 +9,8 @@ heroku-line-bot
 config/*
 !config/docker.yml
 !config/master.yml
+
+*.stage.yaml
+*.prod.yaml
+
+Deploy.md

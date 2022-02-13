@@ -1,4 +1,5 @@
-version: "3.8"
+version: "3.3"
+
 services:
   db:
     restart: always
@@ -24,6 +25,8 @@ services:
     restart: always
     environment:
       - REDIS_HOSTS=local:redis:6379
+      - HTTP_USER=root
+      - HTTP_PASSWORD=root
     ports:
       - "8081:8081"
 
