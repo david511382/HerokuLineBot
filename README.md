@@ -2,13 +2,23 @@
 
 ## Start Local
 
-1. `docker-compose up db adminer -d`
-2. http://localhost:8882/?pgsql=db&username=root&sql=CREATE%20DATABASE%20club%3B
-3. `docker-compose up -d`
+``` bash
+make up-d
+```
+
+http://localhost:8882/?pgsql=db&username=root&sql=CREATE%20DATABASE%20club%3B
+
+``` bash
+make up
+```
 
 ## Start Debug
 
-`docker-compose -f ./docker-compose.yaml -f ./deploy/docker/docker-compose.debug.yaml up -d`
+``` bash
+make up-d
+```
+
+http://localhost:8882/?pgsql=db&username=root&sql=CREATE%20DATABASE%20club%3B
 
 ## dev
 
