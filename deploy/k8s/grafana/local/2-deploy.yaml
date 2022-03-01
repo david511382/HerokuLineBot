@@ -1,0 +1,61 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: grafana
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: client
+      nodePort: 31000
+  selector:
+    app: grafana
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64M"
+              cpu: "100m"
+            limits:
+              memory: "512M"
+              cpu: "1.5"
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana
+                  key: GF_SECURITY_ADMIN_USER
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana
+                  key: GF_SECURITY_ADMIN_PASSWORD
+          ports:
+            - containerPort: 3000
+              name: client
+              protocol: TCP
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

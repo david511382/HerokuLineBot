@@ -2,11 +2,26 @@
 
 ## Start Local
 
+### docker
+
 ``` bash
 make up-d
 ```
-
 http://localhost:8882/?pgsql=db&username=root&sql=CREATE%20DATABASE%20club%3B
+
+``` bash
+make up
+```
+
+### k8s
+
+``` bash
+docker build -f ./deploy/docker/without-config.Dockerfile -t line-bot .
+
+make kup
+```
+
+http://localhost:31882/?pgsql=postgres&username=root&sql=CREATE%20DATABASE%20club%3B
 
 ``` bash
 make up
@@ -54,6 +69,7 @@ SELECT SETVAL('member_activity_id_seq', (SELECT MAX(id) FROM member_activity));
 SELECT SETVAL('place_id_seq', (SELECT MAX(id) FROM place));
 SELECT SETVAL('rental_court_id_seq', (SELECT MAX(id) FROM rental_court));
 SELECT SETVAL('rental_court_detail_id_seq', (SELECT MAX(id) FROM rental_court_detail));
+SELECT SETVAL('rental_court_exception_id_seq', (SELECT MAX(id) FROM rental_court_exception));
 SELECT SETVAL('rental_court_ledger_id_seq', (SELECT MAX(id) FROM rental_court_ledger));
 SELECT SETVAL('rental_court_ledger_court_id_seq', (SELECT MAX(id) FROM rental_court_ledger_court));
 SELECT SETVAL('rental_court_refund_ledger_id_seq', (SELECT MAX(id) FROM rental_court_refund_ledger));

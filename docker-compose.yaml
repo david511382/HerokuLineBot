@@ -9,7 +9,7 @@ services:
       - db
 
   redis:
-    image: redis
+    image: redis:6.2
 
   redis-commander:
     image: rediscommander/redis-commander:latest

@@ -1,0 +1,50 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: adminer
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: client
+      nodePort: 31882
+  selector:
+    app: adminer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adminer
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: adminer
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: adminer
+    spec:
+      containers:
+        - name: adminer
+          image: adminer:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64M"
+              cpu: "100m"
+            limits:
+              memory: "512M"
+              cpu: "1000m"
+          ports:
+            - containerPort: 8080
+              name: client
+              protocol: TCP
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

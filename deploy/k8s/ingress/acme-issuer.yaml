@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    email: email@yahoo.com.tw
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      # provides the name of a secret containing the private key for this user’s ACME server account (this is tied to the email address you provide in the manifest file). The ACME server will use this key to identify you.
+      name: letsencrypt-secret
+    # To ensure that you own the domain for which you will create a certificate, the ACME server will issue a challenge to a client. cert-manager provides two options for solving challenges, http01 and DNS01. In this example, the http01 challenge solver will be used and it is configured in the solvers array. cert-manager will spin up challenge solver Pods to solve the issued challenges and use Ingress resources to route the challenge to the appropriate Pod.
+    solvers:
+      - http01:
+          ingress:
+            class: nginx

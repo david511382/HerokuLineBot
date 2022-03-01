@@ -12,5 +12,3 @@ config/*
 
 *.stage.yaml
 *.prod.yaml
-
-Deploy.md

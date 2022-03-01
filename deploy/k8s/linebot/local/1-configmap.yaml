@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: line-bot
+  namespace: default
+data:
+  k8s.yml: |
+    var:
+      use_debug: true
+      log_dir: ""
+
+    server:
+      host: "0.0.0.0"
+      port: 80
+
+    line_bot:
+      message_bot:
+        # admin line id
+        admin_id: ""
+        # access token
+        channel_access_token: ""
+      line_login_channel_id: 0
+
+    telegram_bot:
+      admin_id: 0
+      # access token
+      channel_access_token: ""
+
+    badminton:
+      # line login url
+      liff_url: ""
+      # default team
+      club_team_id: 0
+
+    google_script:
+      # example https://script.google.com/macros/s/<google script>/exec
+      url: ""
+
+    loki:
+      url: "http://loki:3100"
+
+    backgrounds:
+      activity_creator:
+        spec: "0 0 9 * * *"
+        period_type: 3
+
+    db:
+      max_idle_conns: 5
+      max_open_conns: 10
+      max_life_hour: 1
+
+    club_db:
+      protocol: "postgre"
+      server:
+        host: "postgres"
+        port: 5432
+      database: "club"
+      user: "root"
+      password: "root"
+      param: "sslmode=prefer"
+
+    redis:
+      max_life_hour: 1
+
+    club_redis:
+      protocol: "redis"
+      server:
+        host: "redis"
+        port: 6379
+      database: "0"
+      password: ""

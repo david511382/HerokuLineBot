@@ -1,0 +1,67 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgres
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: client
+  selector:
+    app: postgres
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: postgres
+          image: postgres:13.2
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64M"
+              cpu: "100m"
+            limits:
+              memory: "512M"
+              cpu: "1000m"
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: POSTGRES_PASSWORD
+          ports:
+            - containerPort: 5432
+              name: client
+              protocol: TCP
+          volumeMounts:
+            - name: storage
+              mountPath: /var/lib/postgresql
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: postgres

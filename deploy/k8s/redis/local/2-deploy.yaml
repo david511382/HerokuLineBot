@@ -1,0 +1,56 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: redis
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: client
+  selector:
+    app: redis
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:6.2
+          imagePullPolicy: IfNotPresent
+          args:
+            - "/conf/single.conf"
+          resources:
+            requests:
+              memory: "512M"
+              cpu: "100m"
+            limits:
+              memory: "1024M"
+              cpu: "1000m"
+          ports:
+            - containerPort: 6379
+              name: client
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+      volumes:
+        - name: config
+          configMap:
+            name: redis

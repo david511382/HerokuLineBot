@@ -1,0 +1,53 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: phpmyadmin
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: client
+      nodePort: 31882
+  selector:
+    app: phpmyadmin
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phpmyadmin
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phpmyadmin
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: phpmyadmin
+    spec:
+      containers:
+        - name: phpmyadmin
+          image: phpmyadmin:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "512M"
+              cpu: "0.5"
+            limits:
+              memory: "1024M"
+              cpu: "1"
+          env:
+            - name: PMA_HOST
+              value: mysql
+          ports:
+            - containerPort: 80
+              name: client
+              protocol: TCP
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

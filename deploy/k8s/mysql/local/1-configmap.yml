@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: migration-conf
+  namespace: default
+  labels:
+    tier: db
+data:
+  migration.sql: |
+    D

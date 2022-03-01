@@ -1,0 +1,67 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: loki
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 3100
+      targetPort: client
+  selector:
+    app: loki
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: loki
+          image: grafana/loki
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-config.file=/etc/loki/config.yaml"
+          resources:
+            requests:
+              memory: "64M"
+              cpu: "100m"
+            limits:
+              memory: "512M"
+              cpu: "1.5"
+          ports:
+            - containerPort: 3100
+              name: client
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /etc/loki
+              name: config
+            - mountPath: /loki
+              name: storage
+      # 賦予權限增修檔案，某些時候需要
+      # run as root
+      securityContext:
+        privileged: true
+      volumes:
+        - name: config
+          configMap:
+            name: loki
+        - name: storage
+          persistentVolumeClaim:
+            claimName: loki

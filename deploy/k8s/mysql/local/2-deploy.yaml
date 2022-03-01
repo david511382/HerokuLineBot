@@ -1,0 +1,62 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: mysql
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: client
+  selector:
+    app: mysql
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0.21
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64M"
+              cpu: "100m"
+            limits:
+              memory: "512M"
+              cpu: "1.5"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql
+                  key: MYSQL_ROOT_PASSWORD
+          ports:
+            - containerPort: 3306
+              name: client
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mysql-storage
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: mysql

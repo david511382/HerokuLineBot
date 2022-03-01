@@ -1,0 +1,43 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: line-bot
+  namespace: default
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - domain.com
+      secretName: letsencrypt-secret
+  rules:
+    - host: domain.com
+      http:
+        paths:
+          - path: /adminer
+            pathType: Prefix
+            backend:
+              service:
+                name: adminer
+                port:
+                  number: 8080
+          - path: /commander
+            pathType: Prefix
+            backend:
+              service:
+                name: redis-commander
+                port:
+                  number: 8081
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: line-bot
+                port:
+                  number: 80
