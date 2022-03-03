@@ -1,6 +1,8 @@
 package common
 
 import (
+	"encoding/json"
+	"heroku-line-bot/src/server/domain"
 	errUtil "heroku-line-bot/src/util/error"
 	"net/http"
 
@@ -8,6 +10,10 @@ import (
 )
 
 func Success(c *gin.Context, data interface{}) {
+	if bs, err := json.Marshal(data); err == nil {
+		c.Set(domain.KEY_RESPONSE_CONTEXT, string(bs))
+	}
+
 	c.JSON(http.StatusOK, data)
 }
 
