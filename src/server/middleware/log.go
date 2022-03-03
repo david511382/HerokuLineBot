@@ -6,7 +6,6 @@ import (
 	"heroku-line-bot/src/logger"
 	"heroku-line-bot/src/server/common"
 	"heroku-line-bot/src/server/domain"
-	"heroku-line-bot/src/util"
 	errUtil "heroku-line-bot/src/util/error"
 	"io"
 	"io/ioutil"
@@ -57,7 +56,6 @@ func Logger() gin.HandlerFunc {
 		// Log only when path is not being skipped
 
 		resultErrInfo.Attr("ClientIP", c.ClientIP())
-		resultErrInfo.Attr("Time", nowTime.Format(util.DATE_TIME_FORMAT))
 		resultErrInfo.Attr("Method", c.Request.Method)
 		if raw != "" {
 			path = path + "?" + raw
