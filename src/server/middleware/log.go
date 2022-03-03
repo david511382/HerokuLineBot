@@ -1,12 +1,14 @@
 package middleware
 
 import (
+	"bytes"
 	"encoding/json"
 	"heroku-line-bot/src/logger"
 	"heroku-line-bot/src/server/common"
 	"heroku-line-bot/src/server/domain"
 	"heroku-line-bot/src/util"
 	errUtil "heroku-line-bot/src/util/error"
+	"io"
 	"io/ioutil"
 	"time"
 
@@ -33,6 +35,14 @@ func Logger() gin.HandlerFunc {
 		start := time.Now()
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
+		resultErrInfo := errUtil.New(
+			"API Log",
+			zerolog.InfoLevel,
+		)
+		if bs, err := ioutil.ReadAll(c.Request.Body); err == nil {
+			resultErrInfo.Attr("Body", string(bs))
+			c.Request.Body = io.NopCloser(bytes.NewReader(bs))
+		}
 
 		// Process request
 		c.Next()
@@ -46,14 +56,6 @@ func Logger() gin.HandlerFunc {
 
 		// Log only when path is not being skipped
 
-		resultErrInfo := errUtil.New(
-			"API Log",
-			zerolog.InfoLevel,
-		)
-
-		if bs, err := ioutil.ReadAll(c.Request.Body); err == nil {
-			resultErrInfo.Attr("Body", string(bs))
-		}
 		resultErrInfo.Attr("ClientIP", c.ClientIP())
 		resultErrInfo.Attr("Time", nowTime.Format(util.DATE_TIME_FORMAT))
 		resultErrInfo.Attr("Method", c.Request.Method)
@@ -63,7 +65,7 @@ func Logger() gin.HandlerFunc {
 		resultErrInfo.Attr("Path", path)
 		resultErrInfo.Attr("Proto", c.Request.Proto)
 		resultErrInfo.Attr("Status", c.Writer.Status())
-		resultErrInfo.Attr("Duration", nowTime.Sub(start))
+		resultErrInfo.Attr("Duration", nowTime.Sub(start).String())
 		resultErrInfo.Attr("UserAgent", c.Request.UserAgent())
 		if responseValue, isExist := c.Get(domain.KEY_RESPONSE_CONTEXT); isExist {
 			resultErrInfo.Attr("Response", responseValue)
