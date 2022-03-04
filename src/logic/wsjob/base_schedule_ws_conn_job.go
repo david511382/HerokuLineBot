@@ -3,12 +3,12 @@ package wsjob
 import (
 	"encoding/json"
 	"fmt"
-	"heroku-line-bot/src/global"
 	"heroku-line-bot/src/logger"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/util"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/server/domain/resp"
 	"heroku-line-bot/src/server/ws"
-	"heroku-line-bot/src/util"
-	errUtil "heroku-line-bot/src/util/error"
 	"sync"
 
 	"github.com/gin-gonic/gin"

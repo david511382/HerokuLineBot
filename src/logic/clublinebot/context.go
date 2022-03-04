@@ -1,10 +1,10 @@
 package clublinebot
 
 import (
+	"heroku-line-bot/src/pkg/service/linebot"
+	"heroku-line-bot/src/pkg/service/linebot/domain/model/reqs"
 	"heroku-line-bot/src/repo/redis"
 	commonRedis "heroku-line-bot/src/repo/redis/common"
-	"heroku-line-bot/src/service/linebot"
-	"heroku-line-bot/src/service/linebot/domain/model/reqs"
 )
 
 type Context struct {

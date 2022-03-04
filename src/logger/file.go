@@ -3,8 +3,8 @@ package logger
 import (
 	"fmt"
 	"heroku-line-bot/bootstrap"
-	"heroku-line-bot/src/util"
-	errUtil "heroku-line-bot/src/util/error"
+	"heroku-line-bot/src/pkg/util"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"os"
 )
 

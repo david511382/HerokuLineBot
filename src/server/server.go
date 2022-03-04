@@ -4,7 +4,7 @@ import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/server/router"
 
-	errUtil "heroku-line-bot/src/util/error"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 
 	"github.com/gin-gonic/gin"
 )

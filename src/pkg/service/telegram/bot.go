@@ -2,8 +2,8 @@ package telegram
 
 import (
 	"fmt"
-	"heroku-line-bot/src/service/telegram/domain"
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/service/telegram/domain"
+	"heroku-line-bot/src/pkg/util"
 )
 
 type Bot struct {

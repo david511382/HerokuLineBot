@@ -3,7 +3,6 @@ package activitycreator
 import (
 	"fmt"
 	"heroku-line-bot/bootstrap"
-	"heroku-line-bot/src/global"
 	badmintonCourtLogic "heroku-line-bot/src/logic/badminton/court"
 	badmintonCourtLogicDomain "heroku-line-bot/src/logic/badminton/court/domain"
 	badmintonteamLogic "heroku-line-bot/src/logic/badminton/team"
@@ -12,10 +11,11 @@ import (
 	clubLineBotLogic "heroku-line-bot/src/logic/clublinebot"
 	commonLogic "heroku-line-bot/src/logic/common"
 	rdsModel "heroku-line-bot/src/model/redis"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/service/linebot"
+	"heroku-line-bot/src/pkg/util"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
-	"heroku-line-bot/src/service/linebot"
-	"heroku-line-bot/src/util"
-	errUtil "heroku-line-bot/src/util/error"
 	"time"
 
 	"github.com/rs/zerolog"

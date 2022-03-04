@@ -1,7 +1,7 @@
 package club
 
 import (
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/util"
 	"testing"
 )
 

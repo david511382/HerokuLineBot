@@ -1,17 +1,17 @@
 package badminton
 
 import (
-	"heroku-line-bot/src/global"
 	badmintonCourtLogic "heroku-line-bot/src/logic/badminton/court"
 	badmintoncourtLogic "heroku-line-bot/src/logic/badminton/court"
 	badmintonCourtLogicDomain "heroku-line-bot/src/logic/badminton/court/domain"
 	badmintoncourtLogicDomain "heroku-line-bot/src/logic/badminton/court/domain"
 	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/util"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/server/common"
 	"heroku-line-bot/src/server/domain/reqs"
 	"heroku-line-bot/src/server/domain/resp"
-	"heroku-line-bot/src/util"
-	errUtil "heroku-line-bot/src/util/error"
 	"sort"
 	"time"
 

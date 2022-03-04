@@ -1,9 +1,9 @@
 package common
 
 import (
-	"heroku-line-bot/src/global"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database/domain"
-	"heroku-line-bot/src/util"
 	"time"
 )
 

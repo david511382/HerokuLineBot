@@ -1,8 +1,8 @@
 package validation
 
 import (
+	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/server/domain/reqs"
-	"heroku-line-bot/src/util"
 
 	"github.com/go-playground/validator/v10" //需使用Gin使用的版本
 )

@@ -3,9 +3,9 @@ package background
 import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/background/activitycreator"
-	"heroku-line-bot/src/global"
-	"heroku-line-bot/src/util"
-	errUtil "heroku-line-bot/src/util/error"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/util"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"strconv"
 	"strings"
 

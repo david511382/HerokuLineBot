@@ -2,7 +2,7 @@ package loki
 
 import (
 	"heroku-line-bot/src/model"
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/util"
 	"strings"
 )
 

@@ -7,10 +7,10 @@ import (
 	"heroku-line-bot/src/logger"
 	"heroku-line-bot/src/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/src/logic/clublinebot/domain"
-	"heroku-line-bot/src/service/linebot"
-	linebotDomain "heroku-line-bot/src/service/linebot/domain"
-	"heroku-line-bot/src/service/linebot/domain/model"
-	errUtil "heroku-line-bot/src/util/error"
+	"heroku-line-bot/src/pkg/service/linebot"
+	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
+	"heroku-line-bot/src/pkg/service/linebot/domain/model"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 )
 
 type CmdHandler struct {

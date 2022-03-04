@@ -1,6 +1,6 @@
 package domain
 
-import linebotDomain "heroku-line-bot/src/service/linebot/domain"
+import linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
 
 type CmdBase struct {
 	Cmd                     TextCmd `json:"cmd,omitempty"`

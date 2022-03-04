@@ -2,8 +2,8 @@ package common
 
 import (
 	"encoding/json"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/server/domain"
-	errUtil "heroku-line-bot/src/util/error"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

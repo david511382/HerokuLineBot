@@ -2,10 +2,10 @@ package clublinebot
 
 import (
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
-	"heroku-line-bot/src/service/linebot"
-	"heroku-line-bot/src/service/linebot/domain"
-	lineBotModel "heroku-line-bot/src/service/linebot/domain/model"
-	lineBotReqs "heroku-line-bot/src/service/linebot/domain/model/reqs"
+	"heroku-line-bot/src/pkg/service/linebot"
+	"heroku-line-bot/src/pkg/service/linebot/domain"
+	lineBotModel "heroku-line-bot/src/pkg/service/linebot/domain/model"
+	lineBotReqs "heroku-line-bot/src/pkg/service/linebot/domain/model/reqs"
 )
 
 func (b *ClubLineBot) handleFollowEvent(event *lineBotModel.FollowEvent) error {

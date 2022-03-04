@@ -4,13 +4,13 @@ import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/src/logic/clublinebot/domain"
+	"heroku-line-bot/src/pkg/service/linebot"
+	"heroku-line-bot/src/pkg/util"
 	commonRedis "heroku-line-bot/src/repo/redis/common"
-	"heroku-line-bot/src/service/linebot"
-	"heroku-line-bot/src/util"
 	"io/ioutil"
 	"path/filepath"
 
-	errUtil "heroku-line-bot/src/util/error"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"

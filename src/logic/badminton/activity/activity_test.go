@@ -1,10 +1,10 @@
 package activity
 
 import (
-	"heroku-line-bot/src/global"
 	dbModel "heroku-line-bot/src/model/database"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database"
-	"heroku-line-bot/src/util"
 	"sort"
 	"testing"
 	"time"

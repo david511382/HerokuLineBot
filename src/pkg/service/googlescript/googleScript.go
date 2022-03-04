@@ -1,8 +1,8 @@
 package googlescript
 
 import (
-	"heroku-line-bot/src/service/googlescript/domain/model/reqs"
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/service/googlescript/domain/model/reqs"
+	"heroku-line-bot/src/pkg/util"
 )
 
 type GoogleScript struct {

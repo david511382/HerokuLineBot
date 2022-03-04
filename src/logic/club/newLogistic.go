@@ -2,17 +2,17 @@ package club
 
 import (
 	"fmt"
-	"heroku-line-bot/src/global"
 	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
 	dbModel "heroku-line-bot/src/model/database"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/service/linebot"
+	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
+	linebotModel "heroku-line-bot/src/pkg/service/linebot/domain/model"
+	"heroku-line-bot/src/pkg/util"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
-	"heroku-line-bot/src/service/linebot"
-	linebotDomain "heroku-line-bot/src/service/linebot/domain"
-	linebotModel "heroku-line-bot/src/service/linebot/domain/model"
-	"heroku-line-bot/src/util"
-	errUtil "heroku-line-bot/src/util/error"
 	"strconv"
 	"time"
 )

@@ -1,6 +1,6 @@
 package model
 
-import "heroku-line-bot/src/service/linebot/domain"
+import "heroku-line-bot/src/pkg/service/linebot/domain"
 
 type TextMessage struct {
 	*Type

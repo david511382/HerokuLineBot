@@ -2,7 +2,7 @@ package conn
 
 import (
 	"heroku-line-bot/bootstrap"
-	errUtil "heroku-line-bot/src/util/error"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 
 	"github.com/go-redis/redis"
 )

@@ -4,9 +4,9 @@ import (
 	"heroku-line-bot/src/background"
 	"heroku-line-bot/src/logger"
 	"heroku-line-bot/src/logic"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo"
 	"heroku-line-bot/src/server"
-	errUtil "heroku-line-bot/src/util/error"
 
 	"github.com/spf13/cobra"
 )

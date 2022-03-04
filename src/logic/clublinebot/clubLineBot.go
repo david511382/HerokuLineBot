@@ -2,13 +2,13 @@ package clublinebot
 
 import (
 	"fmt"
-	"heroku-line-bot/src/service/googlescript"
-	"heroku-line-bot/src/service/linebot"
-	lineBotModel "heroku-line-bot/src/service/linebot/domain/model"
-	lineBotReqs "heroku-line-bot/src/service/linebot/domain/model/reqs"
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/service/googlescript"
+	"heroku-line-bot/src/pkg/service/linebot"
+	lineBotModel "heroku-line-bot/src/pkg/service/linebot/domain/model"
+	lineBotReqs "heroku-line-bot/src/pkg/service/linebot/domain/model/reqs"
+	"heroku-line-bot/src/pkg/util"
 
-	lineBotDomain "heroku-line-bot/src/service/linebot/domain"
+	lineBotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
 
 	"github.com/tidwall/gjson"
 )

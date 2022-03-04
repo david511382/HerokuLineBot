@@ -4,11 +4,11 @@ import (
 	"heroku-line-bot/src/logic/account/lineuser/domain"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	dbModel "heroku-line-bot/src/model/database"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
 	"heroku-line-bot/src/repo/redis"
 	redisDomain "heroku-line-bot/src/repo/redis/domain"
-	errUtil "heroku-line-bot/src/util/error"
 
 	"github.com/rs/zerolog"
 )

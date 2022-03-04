@@ -1,8 +1,8 @@
 package domain
 
 import (
-	linebotDomain "heroku-line-bot/src/service/linebot/domain"
-	linebotModel "heroku-line-bot/src/service/linebot/domain/model"
+	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
+	linebotModel "heroku-line-bot/src/pkg/service/linebot/domain/model"
 )
 
 var (

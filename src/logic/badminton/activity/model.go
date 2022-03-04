@@ -2,7 +2,7 @@ package activity
 
 import (
 	courtBadmintonLogicDomain "heroku-line-bot/src/logic/badminton/court/domain"
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/util"
 )
 
 type Activity struct {

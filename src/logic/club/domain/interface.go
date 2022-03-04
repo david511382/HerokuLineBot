@@ -2,7 +2,7 @@ package domain
 
 import (
 	clublinebotDomain "heroku-line-bot/src/logic/clublinebot/domain"
-	errUtil "heroku-line-bot/src/util/error"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 )
 
 type ICmdHandler interface {

@@ -3,8 +3,8 @@ package logger
 import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/model"
-	lokiService "heroku-line-bot/src/service/loki"
-	errUtil "heroku-line-bot/src/util/error"
+	lokiService "heroku-line-bot/src/pkg/service/loki"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"strconv"
 	"time"
 )

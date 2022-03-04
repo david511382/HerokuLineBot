@@ -3,7 +3,7 @@ package court
 import (
 	"heroku-line-bot/src/logic/badminton/court/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/util"
 )
 
 type CourtDetail struct {

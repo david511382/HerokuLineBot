@@ -2,9 +2,9 @@ package logger
 
 import (
 	"heroku-line-bot/bootstrap"
-	"heroku-line-bot/src/service/telegram"
-	telegramDomain "heroku-line-bot/src/service/telegram/domain"
-	errUtil "heroku-line-bot/src/util/error"
+	"heroku-line-bot/src/pkg/service/telegram"
+	telegramDomain "heroku-line-bot/src/pkg/service/telegram/domain"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"strconv"
 )
 

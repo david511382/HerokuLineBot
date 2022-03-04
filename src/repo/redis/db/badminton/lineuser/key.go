@@ -2,9 +2,9 @@ package lineuser
 
 import (
 	"encoding/json"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/redis/common"
 	"heroku-line-bot/src/repo/redis/domain"
-	errUtil "heroku-line-bot/src/util/error"
 
 	"github.com/go-redis/redis"
 	"github.com/rs/zerolog"

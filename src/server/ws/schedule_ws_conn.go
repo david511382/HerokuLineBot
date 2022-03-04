@@ -1,7 +1,7 @@
 package ws
 
 import (
-	"heroku-line-bot/src/global"
+	"heroku-line-bot/src/pkg/global"
 	"time"
 
 	"github.com/gin-gonic/gin"

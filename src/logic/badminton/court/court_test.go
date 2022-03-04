@@ -1,14 +1,14 @@
 package court
 
 import (
-	"heroku-line-bot/src/global"
 	"heroku-line-bot/src/logic/badminton/court/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
 	incomeLogicDomain "heroku-line-bot/src/logic/income/domain"
 	dbModel "heroku-line-bot/src/model/database"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/util"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
-	"heroku-line-bot/src/util"
-	errUtil "heroku-line-bot/src/util/error"
 	"sort"
 	"testing"
 )

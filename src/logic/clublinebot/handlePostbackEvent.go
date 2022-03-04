@@ -2,9 +2,9 @@ package clublinebot
 
 import (
 	"encoding/json"
-	lineBotDomain "heroku-line-bot/src/service/linebot/domain"
-	lineBotModel "heroku-line-bot/src/service/linebot/domain/model"
-	"heroku-line-bot/src/util"
+	lineBotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
+	lineBotModel "heroku-line-bot/src/pkg/service/linebot/domain/model"
+	"heroku-line-bot/src/pkg/util"
 	"time"
 
 	"github.com/tidwall/sjson"

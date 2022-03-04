@@ -3,9 +3,9 @@ package place
 import (
 	dbModel "heroku-line-bot/src/model/database"
 	rdsModel "heroku-line-bot/src/model/redis"
+	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/redis"
-	"heroku-line-bot/src/util"
 	"testing"
 )
 

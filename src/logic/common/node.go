@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/util"
 	"sort"
 	"strconv"
 )

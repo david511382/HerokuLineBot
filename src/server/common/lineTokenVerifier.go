@@ -1,14 +1,14 @@
 package common
 
 import (
-	"heroku-line-bot/src/global"
 	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	"heroku-line-bot/src/logic/clublinebot"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/service/linebot"
+	linebotDomainReqs "heroku-line-bot/src/pkg/service/linebot/domain/model/reqs"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/server/domain"
-	"heroku-line-bot/src/service/linebot"
-	linebotDomainReqs "heroku-line-bot/src/service/linebot/domain/model/reqs"
-	errUtil "heroku-line-bot/src/util/error"
 	"time"
 
 	"github.com/rs/zerolog"

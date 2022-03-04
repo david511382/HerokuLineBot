@@ -2,8 +2,8 @@ package clublinebot
 
 import (
 	clubLogic "heroku-line-bot/src/logic/club"
-	lineBotDomain "heroku-line-bot/src/service/linebot/domain"
-	lineBotModel "heroku-line-bot/src/service/linebot/domain/model"
+	lineBotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
+	lineBotModel "heroku-line-bot/src/pkg/service/linebot/domain/model"
 	"strings"
 )
 

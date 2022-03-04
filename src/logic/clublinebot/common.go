@@ -2,8 +2,8 @@ package clublinebot
 
 import (
 	"heroku-line-bot/bootstrap"
-	"heroku-line-bot/src/service/googlescript"
-	"heroku-line-bot/src/service/linebot"
+	"heroku-line-bot/src/pkg/service/googlescript"
+	"heroku-line-bot/src/pkg/service/linebot"
 )
 
 var (

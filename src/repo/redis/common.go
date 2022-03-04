@@ -2,10 +2,10 @@ package redis
 
 import (
 	"heroku-line-bot/bootstrap"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/redis/common"
 	"heroku-line-bot/src/repo/redis/conn"
 	"heroku-line-bot/src/repo/redis/db/badminton"
-	errUtil "heroku-line-bot/src/util/error"
 	"time"
 )
 

@@ -3,10 +3,10 @@ package place
 import (
 	dbModel "heroku-line-bot/src/model/database"
 	rdsModel "heroku-line-bot/src/model/redis"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/place"
 	"heroku-line-bot/src/repo/redis"
-	errUtil "heroku-line-bot/src/util/error"
 
 	"github.com/rs/zerolog"
 )

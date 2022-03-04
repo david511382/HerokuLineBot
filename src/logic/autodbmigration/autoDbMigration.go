@@ -1,9 +1,9 @@
 package autodbmigration
 
 import (
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/common"
-	errUtil "heroku-line-bot/src/util/error"
 )
 
 func MigrationNotExist() errUtil.IError {

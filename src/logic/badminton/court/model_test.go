@@ -2,7 +2,7 @@ package court
 
 import (
 	commonLogic "heroku-line-bot/src/logic/common"
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/util"
 	"sort"
 	"testing"
 )

@@ -1,8 +1,8 @@
 package linebot
 
 import (
-	"heroku-line-bot/src/service/linebot/domain"
-	"heroku-line-bot/src/service/linebot/domain/model"
+	"heroku-line-bot/src/pkg/service/linebot/domain"
+	"heroku-line-bot/src/pkg/service/linebot/domain/model"
 )
 
 func GetTextMessage(text string) *model.TextMessage {

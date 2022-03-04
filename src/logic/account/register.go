@@ -2,9 +2,9 @@ package account
 
 import (
 	dbModel "heroku-line-bot/src/model/database"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
-	errUtil "heroku-line-bot/src/util/error"
 )
 
 func Registe(

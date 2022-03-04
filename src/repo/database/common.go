@@ -2,10 +2,10 @@ package database
 
 import (
 	"heroku-line-bot/bootstrap"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database/common"
 	"heroku-line-bot/src/repo/database/conn"
 	"heroku-line-bot/src/repo/database/database/clubdb"
-	errUtil "heroku-line-bot/src/util/error"
 	"strings"
 	"time"
 )

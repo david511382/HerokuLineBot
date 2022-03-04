@@ -1,13 +1,13 @@
 package badminton
 
 import (
-	"heroku-line-bot/src/global"
 	apiLogic "heroku-line-bot/src/logic/api/badminton"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/util"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/server/common"
 	"heroku-line-bot/src/server/domain/reqs"
 	"heroku-line-bot/src/server/domain/resp"
-	"heroku-line-bot/src/util"
-	errUtil "heroku-line-bot/src/util/error"
 	"time"
 
 	"github.com/gin-gonic/gin"

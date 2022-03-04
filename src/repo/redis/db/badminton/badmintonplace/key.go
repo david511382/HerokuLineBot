@@ -3,8 +3,8 @@ package badmintonplace
 import (
 	"encoding/json"
 	rdsModel "heroku-line-bot/src/model/redis"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/redis/common"
-	errUtil "heroku-line-bot/src/util/error"
 	"strconv"
 
 	"github.com/go-redis/redis"

@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"heroku-line-bot/src/logger"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/server/common"
 	"heroku-line-bot/src/server/domain"
-	errUtil "heroku-line-bot/src/util/error"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"

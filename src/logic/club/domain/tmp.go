@@ -1,6 +1,6 @@
 package domain
 
-import linebotModel "heroku-line-bot/src/service/linebot/domain/model"
+import linebotModel "heroku-line-bot/src/pkg/service/linebot/domain/model"
 
 type NewActivityLineTemplate struct {
 	DateAction,

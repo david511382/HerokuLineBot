@@ -1,10 +1,10 @@
 package linebot
 
 import (
-	"heroku-line-bot/src/service/linebot/domain"
-	"heroku-line-bot/src/service/linebot/domain/model/reqs"
-	"heroku-line-bot/src/service/linebot/domain/model/resp"
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/service/linebot/domain"
+	"heroku-line-bot/src/pkg/service/linebot/domain/model/reqs"
+	"heroku-line-bot/src/pkg/service/linebot/domain/model/resp"
+	"heroku-line-bot/src/pkg/util"
 	"net/http"
 )
 

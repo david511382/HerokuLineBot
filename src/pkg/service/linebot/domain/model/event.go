@@ -1,8 +1,8 @@
 package model
 
 import (
-	"heroku-line-bot/src/service/linebot/domain"
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/service/linebot/domain"
+	"heroku-line-bot/src/pkg/util"
 )
 
 type EventBase struct {

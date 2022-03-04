@@ -2,10 +2,10 @@ package club
 
 import (
 	"heroku-line-bot/src/logic/club/domain"
-	"heroku-line-bot/src/service/linebot"
-	linebotDomain "heroku-line-bot/src/service/linebot/domain"
-	"heroku-line-bot/src/service/linebot/domain/model"
-	linebotModel "heroku-line-bot/src/service/linebot/domain/model"
+	"heroku-line-bot/src/pkg/service/linebot"
+	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
+	"heroku-line-bot/src/pkg/service/linebot/domain/model"
+	linebotModel "heroku-line-bot/src/pkg/service/linebot/domain/model"
 )
 
 func GetDoubleKeyValueComponent(key1, value1, key2, value2 string, option *linebotModel.FlexMessageBoxComponentOption, keyValueEditComponentOption *domain.KeyValueEditComponentOption) *linebotModel.FlexMessageBoxComponent {

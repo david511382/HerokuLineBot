@@ -1,9 +1,9 @@
 package clubdb
 
 import (
-	"heroku-line-bot/src/global"
 	dbModel "heroku-line-bot/src/model/database"
-	"heroku-line-bot/src/util"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/util"
 	"sort"
 	"testing"
 )

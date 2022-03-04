@@ -2,9 +2,9 @@ package repo
 
 import (
 	"heroku-line-bot/bootstrap"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/redis"
-	errUtil "heroku-line-bot/src/util/error"
 )
 
 func Init() errUtil.IError {

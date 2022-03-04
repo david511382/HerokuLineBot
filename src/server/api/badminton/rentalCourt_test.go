@@ -2,12 +2,12 @@ package badminton
 
 import (
 	"encoding/json"
-	"heroku-line-bot/src/global"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
+	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/server/domain"
 	"heroku-line-bot/src/server/domain/reqs"
 	"heroku-line-bot/src/server/domain/resp"
-	"heroku-line-bot/src/util"
 	"net/http"
 	"testing"
 	"time"

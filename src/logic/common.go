@@ -5,7 +5,7 @@ import (
 	"heroku-line-bot/src/logic/autodbmigration"
 	"heroku-line-bot/src/logic/club"
 	"heroku-line-bot/src/logic/clublinebot"
-	errUtil "heroku-line-bot/src/util/error"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 )
 
 func Init() errUtil.IError {

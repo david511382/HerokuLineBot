@@ -2,7 +2,7 @@ package club
 
 import (
 	"heroku-line-bot/src/logic/club/domain"
-	errUtil "heroku-line-bot/src/util/error"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 
 	"github.com/tidwall/sjson"
 )

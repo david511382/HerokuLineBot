@@ -1,8 +1,8 @@
 package common
 
 import (
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/server/domain"
-	errUtil "heroku-line-bot/src/util/error"
 )
 
 type debugTokenVerifier struct {

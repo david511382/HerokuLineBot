@@ -1,7 +1,7 @@
 package logger
 
 import (
-	errUtil "heroku-line-bot/src/util/error"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"io"
 	"os"
 

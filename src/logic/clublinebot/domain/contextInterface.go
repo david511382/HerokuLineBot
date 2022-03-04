@@ -1,6 +1,6 @@
 package domain
 
-import "heroku-line-bot/src/service/linebot"
+import "heroku-line-bot/src/pkg/service/linebot"
 
 type IContext interface {
 	SaveParam(json string) error
