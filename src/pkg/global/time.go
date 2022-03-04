@@ -1,7 +1,7 @@
 package global
 
 import (
-	"heroku-line-bot/src/logic/common/domain"
+	"heroku-line-bot/bootstrap"
 	"time"
 )
 
@@ -11,7 +11,12 @@ var (
 )
 
 func init() {
-	loc, err := time.LoadLocation(domain.IANA_ZONE)
+	cfg, errInfo := bootstrap.Get()
+	if errInfo != nil {
+		panic(errInfo)
+	}
+
+	loc, err := time.LoadLocation(cfg.Var.TimeZone)
 	if err != nil {
 		panic(err)
 	}

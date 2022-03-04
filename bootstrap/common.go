@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	DEFAULT_WORK_DIR = "HerokuLineBot"
+	DEFAULT_WORK_DIR  = "HerokuLineBot"
+	DEFAULT_IANA_ZONE = "Asia/Taipei"
 )
 
 var (
@@ -41,6 +42,8 @@ func loadConfig() errUtil.IError {
 		return errInfo
 	}
 
+	loadDefault()
+
 	if errInfo := loadEnv(); errInfo != nil {
 		return errInfo
 	}
@@ -67,6 +70,16 @@ func loadYmlConfig(fileName string) (*Config, errUtil.IError) {
 	}
 
 	return cfg, nil
+}
+
+func loadDefault() {
+	if cfg == nil {
+		cfg = &Config{}
+	}
+
+	if cfg.Var.TimeZone == "" {
+		cfg.Var.TimeZone = DEFAULT_IANA_ZONE
+	}
 }
 
 func loadEnv() errUtil.IError {

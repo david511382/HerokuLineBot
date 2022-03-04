@@ -25,6 +25,7 @@ type Config struct {
 type Var struct {
 	UseDebug bool   `yaml:"use_debug"`
 	LogDir   string `yaml:"log_dir"`
+	TimeZone string `yaml:"time_zone"`
 }
 
 type Server struct {

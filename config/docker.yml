@@ -1,6 +1,8 @@
 var:
   use_debug: true
   log_dir: ""
+  # default Asia/Taipei
+  time_zone: "Asia/Taipei"
 
 server:
   host: "0.0.0.0"
