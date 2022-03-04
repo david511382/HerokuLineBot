@@ -2,8 +2,8 @@ package common
 
 import (
 	"heroku-line-bot/src/global"
+	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
-	clubLineuserLogic "heroku-line-bot/src/logic/club/lineuser"
 	"heroku-line-bot/src/logic/clublinebot"
 	"heroku-line-bot/src/server/domain"
 	"heroku-line-bot/src/service/linebot"
@@ -45,7 +45,7 @@ func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resu
 			ExpTime:  expTime,
 		}
 
-		data, errInfo := clubLineuserLogic.Get(claims.Sub)
+		data, errInfo := accountLineuserLogic.Get(claims.Sub)
 		if errInfo != nil {
 			errInfo := errUtil.NewError(err, zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

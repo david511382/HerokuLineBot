@@ -1,8 +1,8 @@
 package lineuser
 
 import (
-	"heroku-line-bot/src/logic/club/domain"
-	clubLineuserLogicDomain "heroku-line-bot/src/logic/club/lineuser/domain"
+	"heroku-line-bot/src/logic/account/lineuser/domain"
+	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func Get(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo errUtil.IError) {
+func Get(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 	{
 		lineIDUserMap, errInfo := redis.Badminton.LineUser.Load(lineID)
 		if errInfo != nil {
@@ -23,10 +23,10 @@ func Get(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo er
 
 		redisData := lineIDUserMap[lineID]
 		if redisData != nil {
-			result = &clubLineuserLogicDomain.Model{
+			result = &domain.Model{
 				ID:   redisData.ID,
 				Name: redisData.Name,
-				Role: domain.ClubRole(redisData.Role),
+				Role: clubLogicDomain.ClubRole(redisData.Role),
 			}
 			return
 		}
@@ -58,7 +58,7 @@ func Get(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo er
 	return
 }
 
-func GetDb(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo errUtil.IError) {
+func GetDb(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 	if dbDatas, err := database.Club.Member.Select(
 		dbModel.ReqsClubMember{
 			LineID: &lineID,
@@ -72,10 +72,10 @@ func GetDb(lineID string) (result *clubLineuserLogicDomain.Model, resultErrInfo 
 		return
 	} else if len(dbDatas) > 0 {
 		v := dbDatas[0]
-		result = &clubLineuserLogicDomain.Model{
+		result = &domain.Model{
 			ID:   v.ID,
 			Name: v.Name,
-			Role: domain.ClubRole(v.Role),
+			Role: clubLogicDomain.ClubRole(v.Role),
 		}
 	}
 

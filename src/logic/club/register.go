@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"heroku-line-bot/src/global"
 	"heroku-line-bot/src/logger"
+	"heroku-line-bot/src/logic/account"
 	"heroku-line-bot/src/logic/club/domain"
 	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database"
@@ -451,8 +452,8 @@ func (b *register) Do(text string) (resultErrInfo errUtil.IError) {
 				Role:       int16(b.Role),
 				LineID:     &lineID,
 			}
-			if err := db.Member.BaseTable.Insert(data); err != nil {
-				resultErrInfo = errUtil.NewError(err)
+			if errInfo := account.Registe(db, data); errInfo != nil {
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			}
 			b.MemberID = data.ID

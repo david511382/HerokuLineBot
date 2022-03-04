@@ -3,8 +3,8 @@ package club
 import (
 	"fmt"
 	"heroku-line-bot/src/logger"
+	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
-	clubLineuserLogic "heroku-line-bot/src/logic/club/lineuser"
 	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
@@ -100,7 +100,7 @@ func (b *richMenu) GetInputTemplate(requireRawParamAttr string) interface{} {
 }
 
 func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
-	if u, err := clubLineuserLogic.Get(b.context.GetUserID()); err != nil {
+	if u, err := accountLineuserLogic.Get(b.context.GetUserID()); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {

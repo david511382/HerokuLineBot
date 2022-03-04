@@ -1,8 +1,8 @@
 package club
 
 import (
+	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
-	clubLineuserLogic "heroku-line-bot/src/logic/club/lineuser"
 	commonLogic "heroku-line-bot/src/logic/common"
 	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database"
@@ -80,7 +80,7 @@ func (b *GetComfirmRegisters) LoadComfirmRegisterUsers() (resultErrInfo errUtil.
 
 func (b *GetComfirmRegisters) Do(text string) (resultErrInfo errUtil.IError) {
 	lineID := b.context.GetUserID()
-	if user, err := clubLineuserLogic.Get(lineID); err != nil {
+	if user, err := accountLineuserLogic.Get(lineID); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	} else if user.Role != domain.ADMIN_CLUB_ROLE {

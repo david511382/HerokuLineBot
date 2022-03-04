@@ -3,10 +3,10 @@ package club
 import (
 	"fmt"
 	"heroku-line-bot/src/global"
+	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	courtDomain "heroku-line-bot/src/logic/badminton/court/domain"
 	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
 	"heroku-line-bot/src/logic/club/domain"
-	clubLineuserLogic "heroku-line-bot/src/logic/club/lineuser"
 	commonLogic "heroku-line-bot/src/logic/common"
 	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database"
@@ -160,7 +160,7 @@ func (b *NewActivity) GetInputTemplate(requireRawParamAttr string) interface{} {
 }
 
 func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
-	if u, err := clubLineuserLogic.Get(b.Context.GetUserID()); err != nil {
+	if u, err := accountLineuserLogic.Get(b.Context.GetUserID()); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {

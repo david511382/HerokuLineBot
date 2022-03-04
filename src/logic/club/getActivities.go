@@ -2,10 +2,10 @@ package club
 
 import (
 	"fmt"
+	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
+	accountLineuserLogicDomain "heroku-line-bot/src/logic/account/lineuser/domain"
 	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
 	"heroku-line-bot/src/logic/club/domain"
-	clubLineuserLogic "heroku-line-bot/src/logic/club/lineuser"
-	clubLineuserLogicDomain "heroku-line-bot/src/logic/club/lineuser/domain"
 	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/activity"
@@ -25,11 +25,11 @@ import (
 type GetActivities struct {
 	context               domain.ICmdHandlerContext `json:"-"`
 	activities            []*getActivitiesActivity
-	JoinActivityID        int                           `json:"join_activity_id"`
-	TeamID                int                           `json:"team_id"`
-	LeaveActivityID       int                           `json:"leave_activity_id"`
-	currentUser           clubLineuserLogicDomain.Model `json:"-"`
-	ListMembersActivityID int                           `json:"list_members_activity_id"`
+	JoinActivityID        int                              `json:"join_activity_id"`
+	TeamID                int                              `json:"team_id"`
+	LeaveActivityID       int                              `json:"leave_activity_id"`
+	currentUser           accountLineuserLogicDomain.Model `json:"-"`
+	ListMembersActivityID int                              `json:"list_members_activity_id"`
 }
 
 type getActivitiesActivity struct {
@@ -517,7 +517,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 
 func (b *GetActivities) loadCurrentUserID() (replyMsg *string, resultErrInfo errUtil.IError) {
 	lineID := b.context.GetUserID()
-	userData, err := clubLineuserLogic.Get(lineID)
+	userData, err := accountLineuserLogic.Get(lineID)
 	if err != nil {
 		errInfo := errUtil.NewError(err)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

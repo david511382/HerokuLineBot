@@ -3,8 +3,8 @@ package club
 import (
 	"fmt"
 	"heroku-line-bot/src/global"
+	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
-	clubLineuserLogic "heroku-line-bot/src/logic/club/lineuser"
 	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
@@ -86,7 +86,7 @@ func (b *NewLogistic) GetInputTemplate(requireRawParamAttr string) interface{} {
 }
 
 func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
-	if u, err := clubLineuserLogic.Get(b.Context.GetUserID()); err != nil {
+	if u, err := accountLineuserLogic.Get(b.Context.GetUserID()); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {
@@ -368,7 +368,7 @@ func (b *NewLogistic) InsertLogistic(db *clubdb.Database) (resultErrInfo errUtil
 		Description: b.Description,
 		TeamID:      b.TeamID,
 	}
-	if err := db.Logistic.BaseTable.Insert(data); err != nil {
+	if err := db.Logistic.Insert(data); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}
