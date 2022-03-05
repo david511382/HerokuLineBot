@@ -4,8 +4,8 @@ import (
 	badmintonCourtLogic "heroku-line-bot/src/logic/badminton/court"
 	badmintoncourtLogic "heroku-line-bot/src/logic/badminton/court"
 	badmintonCourtLogicDomain "heroku-line-bot/src/logic/badminton/court/domain"
-	badmintoncourtLogicDomain "heroku-line-bot/src/logic/badminton/court/domain"
 	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
+	"heroku-line-bot/src/pkg/errorcode"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
@@ -290,12 +290,12 @@ func AddRentalCourt(c *gin.Context) {
 			rentalDates,
 		)
 		if errInfo != nil {
-			switch errInfo.Error() {
-			case badmintoncourtLogicDomain.ERROR_MSG_WRONG_PAY,
-				badmintoncourtLogicDomain.ERROR_MSG_NO_DATES,
-				badmintoncourtLogicDomain.ERROR_MSG_NO_DESPOSIT_DATE,
-				badmintoncourtLogicDomain.ERROR_MSG_NO_BALANCE_DATE,
-				badmintoncourtLogicDomain.ERROR_MSG_WRONG_PLACE:
+			switch errorcode.GetErrorMsg(errInfo) {
+			case errorcode.ERROR_MSG_WRONG_PAY,
+				errorcode.ERROR_MSG_NO_DATES,
+				errorcode.ERROR_MSG_NO_DESPOSIT_DATE,
+				errorcode.ERROR_MSG_NO_BALANCE_DATE,
+				errorcode.ERROR_MSG_WRONG_PLACE:
 				common.FailRequest(c, errInfo)
 				return
 			default:
@@ -313,14 +313,15 @@ func AddRentalCourt(c *gin.Context) {
 		depsitDate, balanceDate,
 		rentalDates,
 	); errInfo != nil {
-		if errInfo.Error() == badmintoncourtLogicDomain.ERROR_MSG_WRONG_PAY {
-			result.Message = "金額不符"
+		switch errorcode.GetErrorMsg(errInfo) {
+		case errorcode.ERROR_MSG_WRONG_PAY:
+			result.Message = string(errorcode.ERROR_MSG_WRONG_PAY)
 			common.Success(c, result)
 			return
+		default:
+			common.FailInternal(c, errInfo)
+			return
 		}
-
-		common.FailInternal(c, errInfo)
-		return
 	}
 
 	common.Success(c, result)

@@ -7,6 +7,7 @@ import (
 	commonLogic "heroku-line-bot/src/logic/common"
 	incomeLogicDomain "heroku-line-bot/src/logic/income/domain"
 	dbModel "heroku-line-bot/src/model/database"
+	"heroku-line-bot/src/pkg/errorcode"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
@@ -326,14 +327,14 @@ func VerifyAddCourt(
 	rentalDates []util.DateTime,
 ) (resultErrInfo errUtil.IError) {
 	if len(rentalDates) == 0 {
-		errInfo := errUtil.NewErrorMsg(domain.ERROR_MSG_NO_DATES)
+		errInfo := errorcode.ERROR_MSG_NO_DATES.New()
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 
 	if despositMoney != nil {
 		if despositPayDate == nil {
-			errInfo := errUtil.NewErrorMsg(domain.ERROR_MSG_NO_DESPOSIT_DATE)
+			errInfo := errorcode.ERROR_MSG_NO_DESPOSIT_DATE.New()
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
@@ -341,7 +342,7 @@ func VerifyAddCourt(
 
 	if balanceMoney != nil {
 		if balancePayDate == nil {
-			errInfo := errUtil.NewErrorMsg(domain.ERROR_MSG_NO_BALANCE_DATE)
+			errInfo := errorcode.ERROR_MSG_NO_BALANCE_DATE.New()
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
@@ -353,7 +354,7 @@ func VerifyAddCourt(
 			currentCost = currentCost.PlusInt64(int64(*despositMoney))
 		}
 		if currentCost.Value() != expectTotalCost.Value() {
-			errInfo := errUtil.New(domain.ERROR_MSG_WRONG_PAY)
+			errInfo := errorcode.ERROR_MSG_WRONG_PAY.New()
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
@@ -363,7 +364,7 @@ func VerifyAddCourt(
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else if resultPlaceIDMap[placeID] == nil {
-		errInfo := errUtil.NewErrorMsg(domain.ERROR_MSG_WRONG_PLACE)
+		errInfo := errorcode.ERROR_MSG_WRONG_PLACE.New()
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
@@ -372,7 +373,7 @@ func VerifyAddCourt(
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else if resultTeamIDMap[teamID] == nil {
-		errInfo := errUtil.NewErrorMsg(domain.ERROR_MSG_WRONG_TEAM)
+		errInfo := errorcode.ERROR_MSG_WRONG_TEAM.New()
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
@@ -402,7 +403,7 @@ func AddCourt(
 			currentCost = currentCost.PlusInt64(int64(*despositMoney))
 		}
 		if currentCost.Value() != expectTotalCost.Value() {
-			errInfo := errUtil.New(domain.ERROR_MSG_WRONG_PAY)
+			errInfo := errorcode.ERROR_MSG_WRONG_PAY.New()
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}

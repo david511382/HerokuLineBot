@@ -5,9 +5,9 @@ import (
 	commonLogic "heroku-line-bot/src/logic/common"
 	incomeLogicDomain "heroku-line-bot/src/logic/income/domain"
 	dbModel "heroku-line-bot/src/model/database"
+	"heroku-line-bot/src/pkg/errorcode"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
-	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"sort"
 	"testing"
@@ -539,7 +539,7 @@ func TestAddCourt(t *testing.T) {
 		rentalCourtLedgers      []*dbModel.ClubRentalCourtLedger
 		incomes                 []*dbModel.ClubIncome
 		rentalCourtDetail       []*dbModel.ClubRentalCourtDetail
-		wantResultErrInfo       errUtil.IError
+		wantErrMsg              errorcode.ErrorMsg
 	}
 	tests := []struct {
 		name       string
@@ -629,7 +629,7 @@ func TestAddCourt(t *testing.T) {
 						Count:     1,
 					},
 				},
-				wantResultErrInfo: nil,
+				wantErrMsg: errorcode.ERROR_MSG_EMPTY,
 			},
 		},
 		{
@@ -661,7 +661,7 @@ func TestAddCourt(t *testing.T) {
 				rentalCourtLedgers:      []*dbModel.ClubRentalCourtLedger{},
 				incomes:                 []*dbModel.ClubIncome{},
 				rentalCourtDetail:       []*dbModel.ClubRentalCourtDetail{},
-				wantResultErrInfo:       errUtil.New(domain.ERROR_MSG_WRONG_PAY),
+				wantErrMsg:              errorcode.ERROR_MSG_WRONG_PAY,
 			},
 		},
 		{
@@ -696,7 +696,7 @@ func TestAddCourt(t *testing.T) {
 				rentalCourtLedgers:      []*dbModel.ClubRentalCourtLedger{},
 				incomes:                 []*dbModel.ClubIncome{},
 				rentalCourtDetail:       []*dbModel.ClubRentalCourtDetail{},
-				wantResultErrInfo:       errUtil.New(domain.ERROR_MSG_WRONG_PAY),
+				wantErrMsg:              errorcode.ERROR_MSG_WRONG_PAY,
 			},
 		},
 		{
@@ -770,7 +770,7 @@ func TestAddCourt(t *testing.T) {
 						Count:     1,
 					},
 				},
-				wantResultErrInfo: nil,
+				wantErrMsg: errorcode.ERROR_MSG_EMPTY,
 			},
 		},
 	}
@@ -793,13 +793,8 @@ func TestAddCourt(t *testing.T) {
 			}
 
 			gotResultErrInfo := AddCourt(tt.args.placeID, tt.args.teamID, tt.args.pricePerHour, tt.args.courtDetail, tt.args.despositMoney, tt.args.balanceMoney, tt.args.despositPayDate, tt.args.balancePayDate, tt.args.rentalDates)
-			if !errUtil.Equal(gotResultErrInfo, tt.wants.wantResultErrInfo) {
-				if gotResultErrInfo == nil {
-					t.Errorf("error = %v", gotResultErrInfo)
-				} else {
-					t.Errorf("error = %v", gotResultErrInfo.Error())
-				}
-				return
+			if ok, msg := util.Comp(errorcode.GetErrorMsg(gotResultErrInfo), tt.wants.wantErrMsg); !ok {
+				t.Fatal(msg)
 			}
 
 			if dbDatas, err := database.Club.RentalCourt.Select(dbModel.ReqsClubRentalCourt{}); err != nil {

@@ -41,23 +41,6 @@ func Append(result, errInfo IError) IError {
 	return result.Append(errInfo)
 }
 
-func Equal(a, b IError) bool {
-	if (a == nil) && (b == nil) {
-		return true
-	} else if b == nil || a == nil {
-		return false
-	}
-
-	if a.GetLevel() != b.GetLevel() {
-		return false
-	}
-	if a.Error() != b.Error() {
-		return false
-	}
-
-	return true
-}
-
 // 取得第 skip 層的呼叫行
 func GetCodeLine(skip int) string {
 	_, filename, line, _ := runtime.Caller(skip)
