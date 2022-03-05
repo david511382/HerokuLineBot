@@ -181,7 +181,7 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 	case domain.CONFIRM_REGISTER_TEXT_CMD:
 		logicHandler = &confirmRegister{}
 	case domain.GET_CONFIRM_REGISTER_TEXT_CMD:
-		logicHandler = &GetComfirmRegisters{}
+		logicHandler = &GetConfirmRegisters{}
 	case domain.SUBMIT_ACTIVITY_TEXT_CMD:
 		logicHandler = &submitActivity{}
 	case domain.RICH_MENU_TEXT_CMD:

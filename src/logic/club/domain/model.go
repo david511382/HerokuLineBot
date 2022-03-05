@@ -9,7 +9,7 @@ type CmdBase struct {
 	RequireRawParamAttrText string  `json:"require_raw_param_attr_text"`
 	IsSingleParamMode       bool    `json:"-"`
 	IsCancel                bool    `json:"is_cancel"`
-	IsComfirm               bool    `json:"is_comfirm,omitempty"`
+	IsConfirm               bool    `json:"is_comfirm,omitempty"`
 }
 
 type TimePostbackParams struct {

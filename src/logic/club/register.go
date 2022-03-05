@@ -416,7 +416,7 @@ func (b *register) Do(text string) (resultErrInfo errUtil.IError) {
 
 	b.init()
 
-	if b.context.IsComfirmed() {
+	if b.context.IsConfirmed() {
 		db, transaction, err := database.Club.Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
@@ -635,14 +635,14 @@ func (b *register) Do(text string) (resultErrInfo errUtil.IError) {
 		return
 	}
 	comfirmSignlJs, errInfo := b.context.
-		GetComfirmMode().
+		GetConfirmMode().
 		GetSignal()
 	if errInfo != nil {
 		resultErrInfo = errInfo
 		return
 	}
 	contents = append(contents,
-		GetComfirmComponent(
+		GetConfirmComponent(
 			linebot.GetPostBackAction(
 				"取消",
 				cancelSignlJs,

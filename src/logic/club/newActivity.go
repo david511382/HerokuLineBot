@@ -171,7 +171,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		}
 	}
 
-	if b.Context.IsComfirmed() {
+	if b.Context.IsConfirmed() {
 		db, transaction, err := database.Club.Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
@@ -296,14 +296,14 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		return
 	}
 	comfirmSignlJs, errInfo := b.Context.
-		GetComfirmMode().
+		GetConfirmMode().
 		GetSignal()
 	if errInfo != nil {
 		resultErrInfo = errInfo
 		return
 	}
 	contents = append(contents,
-		GetComfirmComponent(
+		GetConfirmComponent(
 			linebot.GetPostBackAction(
 				"取消",
 				cancelSignlJs,

@@ -12,6 +12,7 @@ const (
 	ERROR_MSG_NO_BALANCE_DATE  ErrorMsg = "沒尾款日期"
 	ERROR_MSG_WRONG_PLACE      ErrorMsg = "錯誤地點"
 	ERROR_MSG_WRONG_TEAM       ErrorMsg = "錯誤隊伍"
+	ERROR_MSG_NO_ACTIVITY      ErrorMsg = "活動不存在"
 )
 
 func (em ErrorMsg) New() errUtil.IError {

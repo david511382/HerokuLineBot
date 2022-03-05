@@ -5,7 +5,9 @@ import (
 	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	accountLineuserLogicDomain "heroku-line-bot/src/logic/account/lineuser/domain"
 	"heroku-line-bot/src/logic/club/domain"
+	incomeLogicDomain "heroku-line-bot/src/logic/income/domain"
 	dbModel "heroku-line-bot/src/model/database"
+	"heroku-line-bot/src/pkg/errorcode"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
 	linebotModel "heroku-line-bot/src/pkg/service/linebot/domain/model"
@@ -259,17 +261,10 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		}
 	}
 
-	if b.context.IsComfirmed() {
-		var currentActivity *dbModel.ClubActivity
-		{
-			dbDatas, err := database.Club.Activity.Select(dbModel.ReqsClubActivity{
-				ID: &b.ActivityID,
-			})
-			if err != nil {
-				errInfo := errUtil.NewError(err)
-				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-				return
-			} else if len(dbDatas) == 0 {
+	if b.context.IsConfirmed() {
+		if errInfo := b.Submit(); errInfo != nil {
+			switch errorcode.GetErrorMsg(errInfo) {
+			case errorcode.ERROR_MSG_NO_ACTIVITY:
 				replyMessges := []interface{}{
 					linebot.GetTextMessage("活動不存在"),
 				}
@@ -284,110 +279,17 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 				}
 
 				return
-			}
-
-			currentActivity = dbDatas[0]
-		}
-
-		memberActivityIDs := make([]int, 0)
-		finishedActivity := &dbModel.ClubActivityFinished{
-			ID:            currentActivity.ID,
-			TeamID:        currentActivity.TeamID,
-			Date:          currentActivity.Date,
-			PlaceID:       currentActivity.PlaceID,
-			CourtsAndTime: currentActivity.CourtsAndTime,
-			ClubSubsidy:   currentActivity.ClubSubsidy,
-			Description:   currentActivity.Description,
-			PeopleLimit:   currentActivity.PeopleLimit,
-		}
-		{
-			memberCount := 0
-			for _, member := range b.JoinedMembers {
-				if member.IsAttend {
-					memberCount++
-					memberActivityIDs = append(memberActivityIDs, member.MemberActivityID)
-				}
-			}
-			guestCount := 0
-			for _, member := range b.JoinedGuests {
-				if member.IsAttend {
-					guestCount++
-					memberActivityIDs = append(memberActivityIDs, member.MemberActivityID)
-				}
-			}
-			peopleCount := memberCount + guestCount
-			courtFee := b.getCourtFee()
-			_, memberFee, guestFee := calculateActivityPay(
-				peopleCount,
-				util.NewFloat(float64(b.Rsl4Consume)),
-				courtFee,
-				util.NewFloat(float64(b.ClubSubsidy)),
-			)
-
-			finishedActivity.MemberCount = int16(memberCount)
-			finishedActivity.GuestCount = int16(guestCount)
-			finishedActivity.MemberFee = int16(memberFee)
-			finishedActivity.GuestFee = int16(guestFee)
-		}
-
-		db, transaction, err := database.Club.Begin()
-		if err != nil {
-			errInfo := errUtil.NewError(err)
-			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-			return
-		}
-		defer func() {
-			if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
+			default:
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-			}
-		}()
-
-		isConsumeBall := b.Rsl4Consume > 0
-		logisticID := 0
-		if isConsumeBall {
-			logisticData := &dbModel.ClubLogistic{
-				Date:        b.Date.Time(),
-				Name:        domain.BALL_NAME,
-				Amount:      -b.Rsl4Consume,
-				Description: "打球",
-				TeamID:      b.TeamID,
-			}
-			if err := db.Logistic.Insert(logisticData); err != nil {
-				resultErrInfo = errUtil.NewError(err)
-				return
-			}
-			logisticID = logisticData.ID
-		}
-		if isConsumeBall {
-			finishedActivity.LogisticID = &logisticID
-		}
-
-		if err := db.Activity.Delete(dbModel.ReqsClubActivity{
-			ID: &currentActivity.ID,
-		}); err != nil {
-			resultErrInfo = errUtil.NewError(err)
-			return
-		}
-		if err := db.ActivityFinished.Insert(finishedActivity); err != nil {
-			resultErrInfo = errUtil.NewError(err)
-			return
-		}
-
-		if len(memberActivityIDs) > 0 {
-			arg := dbModel.ReqsClubMemberActivity{
-				IDs: memberActivityIDs,
-			}
-			fields := map[string]interface{}{
-				"is_attend": true,
-			}
-			if err := db.MemberActivity.Update(arg, fields); err != nil && !database.IsUniqErr(err) {
-				resultErrInfo = errUtil.NewError(err)
-				return
+				if resultErrInfo.IsError() {
+					return
+				}
 			}
 		}
 
 		if err := b.context.DeleteParam(); err != nil {
-			resultErrInfo = errUtil.NewError(err)
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 
@@ -395,11 +297,12 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 			linebot.GetTextMessage("完成"),
 		}
 		if err := b.context.Reply(replyMessges); err != nil {
-			resultErrInfo = errUtil.NewError(err)
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 
-		return nil
+		return
 	}
 
 	if b.AttendIndex != nil {
@@ -504,7 +407,7 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if js, errInfo := b.context.
-		GetComfirmMode().
+		GetConfirmMode().
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -937,4 +840,136 @@ func (b *submitActivity) getFeeContents() []interface{} {
 	}
 
 	return result
+}
+
+func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
+	var currentActivity *dbModel.ClubActivity
+	{
+		dbDatas, err := database.Club.Activity.Select(dbModel.ReqsClubActivity{
+			ID: &b.ActivityID,
+		})
+		if err != nil {
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			return
+		} else if len(dbDatas) == 0 {
+			resultErrInfo = errorcode.ERROR_MSG_NO_ACTIVITY.New()
+			return
+		}
+
+		currentActivity = dbDatas[0]
+	}
+
+	memberActivityIDs := make([]int, 0)
+	finishedActivity := &dbModel.ClubActivityFinished{
+		ID:            currentActivity.ID,
+		TeamID:        currentActivity.TeamID,
+		Date:          currentActivity.Date,
+		PlaceID:       currentActivity.PlaceID,
+		CourtsAndTime: currentActivity.CourtsAndTime,
+		ClubSubsidy:   currentActivity.ClubSubsidy,
+		Description:   currentActivity.Description,
+		PeopleLimit:   currentActivity.PeopleLimit,
+	}
+	{
+		memberCount := 0
+		for _, member := range b.JoinedMembers {
+			if member.IsAttend {
+				memberCount++
+				memberActivityIDs = append(memberActivityIDs, member.MemberActivityID)
+			}
+		}
+		guestCount := 0
+		for _, member := range b.JoinedGuests {
+			if member.IsAttend {
+				guestCount++
+				memberActivityIDs = append(memberActivityIDs, member.MemberActivityID)
+			}
+		}
+		peopleCount := memberCount + guestCount
+		courtFee := b.getCourtFee()
+		_, memberFee, guestFee := calculateActivityPay(
+			peopleCount,
+			util.NewFloat(float64(b.Rsl4Consume)),
+			courtFee,
+			util.NewFloat(float64(b.ClubSubsidy)),
+		)
+
+		finishedActivity.MemberCount = int16(memberCount)
+		finishedActivity.GuestCount = int16(guestCount)
+		finishedActivity.MemberFee = int16(memberFee)
+		finishedActivity.GuestFee = int16(guestFee)
+	}
+
+	income := finishedActivity.MemberFee*finishedActivity.MemberCount + finishedActivity.GuestFee*finishedActivity.GuestCount
+
+	db, transaction, err := database.Club.Begin()
+	if err != nil {
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	}
+	defer func() {
+		if errInfo := database.CommitTransaction(transaction, resultErrInfo); errInfo != nil {
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		}
+	}()
+
+	{
+		data := &dbModel.ClubIncome{
+			Date:        b.Date.Time(),
+			Type:        int16(incomeLogicDomain.INCOME_TYPE_ACTIVITY),
+			ReferenceID: util.GetIntP(finishedActivity.ID),
+			Income:      income,
+			Description: "活動收入",
+			TeamID:      b.TeamID,
+		}
+		if err := db.Income.Insert(data); err != nil {
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			return
+		}
+	}
+
+	isConsumeBall := b.Rsl4Consume > 0
+	if isConsumeBall {
+		logisticData := &dbModel.ClubLogistic{
+			Date:        b.Date.Time(),
+			Name:        domain.BALL_NAME,
+			Amount:      -b.Rsl4Consume,
+			Description: "打球",
+			TeamID:      b.TeamID,
+		}
+		if err := db.Logistic.Insert(logisticData); err != nil {
+			resultErrInfo = errUtil.NewError(err)
+			return
+		}
+		finishedActivity.LogisticID = util.GetIntP(logisticData.ID)
+	}
+
+	if err := db.Activity.Delete(dbModel.ReqsClubActivity{
+		ID: &currentActivity.ID,
+	}); err != nil {
+		resultErrInfo = errUtil.NewError(err)
+		return
+	}
+	if err := db.ActivityFinished.Insert(finishedActivity); err != nil {
+		resultErrInfo = errUtil.NewError(err)
+		return
+	}
+
+	if len(memberActivityIDs) > 0 {
+		arg := dbModel.ReqsClubMemberActivity{
+			IDs: memberActivityIDs,
+		}
+		fields := map[string]interface{}{
+			"is_attend": true,
+		}
+		if err := db.MemberActivity.Update(arg, fields); err != nil && !database.IsUniqErr(err) {
+			resultErrInfo = errUtil.NewError(err)
+			return
+		}
+	}
+
+	return
 }

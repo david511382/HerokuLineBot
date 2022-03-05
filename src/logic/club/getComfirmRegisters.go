@@ -14,7 +14,7 @@ import (
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
 )
 
-type GetComfirmRegisters struct {
+type GetConfirmRegisters struct {
 	context               domain.ICmdHandlerContext `json:"-"`
 	confirmRegistersUsers []*confirmRegistersUser
 }
@@ -24,8 +24,8 @@ type confirmRegistersUser struct {
 	Name     string `json:"name"`
 }
 
-func (b *GetComfirmRegisters) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
-	*b = GetComfirmRegisters{
+func (b *GetConfirmRegisters) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
+	*b = GetConfirmRegisters{
 		context:               context,
 		confirmRegistersUsers: make([]*confirmRegistersUser, 0),
 	}
@@ -33,14 +33,14 @@ func (b *GetComfirmRegisters) Init(context domain.ICmdHandlerContext) (resultErr
 	return nil
 }
 
-func (b *GetComfirmRegisters) GetSingleParam(attr string) string {
+func (b *GetConfirmRegisters) GetSingleParam(attr string) string {
 	switch attr {
 	default:
 		return ""
 	}
 }
 
-func (b *GetComfirmRegisters) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
+func (b *GetConfirmRegisters) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	default:
 	}
@@ -48,11 +48,11 @@ func (b *GetComfirmRegisters) LoadSingleParam(attr, text string) (resultErrInfo 
 	return nil
 }
 
-func (b *GetComfirmRegisters) GetInputTemplate(requireRawParamAttr string) interface{} {
+func (b *GetConfirmRegisters) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
-func (b *GetComfirmRegisters) LoadComfirmRegisterUsers() (resultErrInfo errUtil.IError) {
+func (b *GetConfirmRegisters) LoadConfirmRegisterUsers() (resultErrInfo errUtil.IError) {
 	arg := dbModel.ReqsClubMember{
 		CompanyIDIsNull: util.GetBoolP(false),
 		LineIDIsNull:    util.GetBoolP(false),
@@ -78,7 +78,7 @@ func (b *GetComfirmRegisters) LoadComfirmRegisterUsers() (resultErrInfo errUtil.
 	return nil
 }
 
-func (b *GetComfirmRegisters) Do(text string) (resultErrInfo errUtil.IError) {
+func (b *GetConfirmRegisters) Do(text string) (resultErrInfo errUtil.IError) {
 	lineID := b.context.GetUserID()
 	if user, err := accountLineuserLogic.Get(lineID); err != nil {
 		resultErrInfo = errUtil.NewError(err)
@@ -88,7 +88,7 @@ func (b *GetComfirmRegisters) Do(text string) (resultErrInfo errUtil.IError) {
 		return
 	}
 
-	if err := b.LoadComfirmRegisterUsers(); err != nil {
+	if err := b.LoadConfirmRegisterUsers(); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}
@@ -107,7 +107,7 @@ func (b *GetComfirmRegisters) Do(text string) (resultErrInfo errUtil.IError) {
 	return nil
 }
 
-func (b *GetComfirmRegisters) GetConfirmRegisterUsersMessages(altText string) (replyMessges []interface{}, resultErr error) {
+func (b *GetConfirmRegisters) GetConfirmRegisterUsersMessages(altText string) (replyMessges []interface{}, resultErr error) {
 	replyMessges = make([]interface{}, 0)
 	if len(b.confirmRegistersUsers) == 0 {
 		replyMessges = append(replyMessges, linebot.GetTextMessage("沒有資料"))

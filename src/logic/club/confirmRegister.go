@@ -95,7 +95,7 @@ func (b *confirmRegister) LoadUsers(arg dbModel.ReqsClubMember) (confirmRegister
 	return confirmRegisterUsers, nil
 }
 
-func (b *confirmRegister) ComfirmDb() (resultErrInfo errUtil.IError) {
+func (b *confirmRegister) ConfirmDb() (resultErrInfo errUtil.IError) {
 	isChangeRole := b.isMemberAble() && b.User.Role == domain.GUEST_CLUB_ROLE
 
 	db, transaction, err := database.Club.Begin()
@@ -161,8 +161,8 @@ func (b *confirmRegister) Do(text string) (resultErrInfo errUtil.IError) {
 		}
 	}
 
-	if b.context.IsComfirmed() {
-		if errInfo := b.ComfirmDb(); errInfo != nil {
+	if b.context.IsConfirmed() {
+		if errInfo := b.ConfirmDb(); errInfo != nil {
 			resultErrInfo = errInfo
 			return
 		}
@@ -311,7 +311,7 @@ func (b *confirmRegister) getTemplateMessage() ([]interface{}, errUtil.IError) {
 	}
 
 	comfirmSignlJs, errInfo := b.context.
-		GetComfirmMode().
+		GetConfirmMode().
 		GetSignal()
 	if errInfo != nil {
 		return nil, errInfo

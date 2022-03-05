@@ -21,7 +21,7 @@ type ICmdLogic interface {
 
 type ICmdHandlerContext interface {
 	clublinebotDomain.IContext
-	IsComfirmed() bool
+	IsConfirmed() bool
 	CacheParams() (resultErrInfo errUtil.IError)
 	ICmdHandlerSignal
 	SetRequireInputMode(attr, attrText string, isInputImmediately bool)
@@ -30,7 +30,7 @@ type ICmdHandlerContext interface {
 type ICmdHandlerSignal interface {
 	GetKeyValueInputMode(pathValueMap map[string]interface{}) ICmdHandlerSignal
 	GetCancelMode() ICmdHandlerSignal
-	GetComfirmMode() ICmdHandlerSignal
+	GetConfirmMode() ICmdHandlerSignal
 	GetCancelInputMode() ICmdHandlerSignal
 	GetRequireInputMode(attr, attrText string, isInputImmediately bool) ICmdHandlerSignal
 	GetCmdInputMode(cmdP *TextCmd) ICmdHandlerSignal

@@ -96,7 +96,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 		}
 	}
 
-	if b.Context.IsComfirmed() {
+	if b.Context.IsConfirmed() {
 		db, transaction, err := database.Club.Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
@@ -303,7 +303,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if js, errInfo := b.Context.
-		GetComfirmMode().
+		GetConfirmMode().
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return

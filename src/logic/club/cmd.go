@@ -56,8 +56,8 @@ func (b *CmdHandler) CacheParams() (resultErrInfo errUtil.IError) {
 	return nil
 }
 
-func (b *CmdHandler) IsComfirmed() bool {
-	return b.IsComfirm
+func (b *CmdHandler) IsConfirmed() bool {
+	return b.IsConfirm
 }
 
 func (b *CmdHandler) SetSingleParamMode() {

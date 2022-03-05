@@ -76,7 +76,7 @@ func GetKeyValueEditComponent(name, value string, option *domain.KeyValueEditCom
 	)
 }
 
-func GetComfirmComponent(leftAction, rightAction interface{}) *model.FlexMessageBoxComponent {
+func GetConfirmComponent(leftAction, rightAction interface{}) *model.FlexMessageBoxComponent {
 	return linebot.GetFlexMessageBoxComponent(
 		linebotDomain.HORIZONTAL_MESSAGE_LAYOUT,
 		nil,

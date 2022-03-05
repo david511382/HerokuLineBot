@@ -55,7 +55,7 @@ func (b *CmdHandler) GetCancelMode() domain.ICmdHandlerSignal {
 	return nb
 }
 
-func (b *CmdHandler) GetComfirmMode() domain.ICmdHandlerSignal {
+func (b *CmdHandler) GetConfirmMode() domain.ICmdHandlerSignal {
 	nb := b.duplicate()
 	nb.setPathValue("is_comfirm", true)
 	return nb
