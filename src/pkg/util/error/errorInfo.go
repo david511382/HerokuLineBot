@@ -82,11 +82,11 @@ func (ei *ErrorInfo) SetLogger(logger *zerolog.Logger) *zerolog.Logger {
 
 func (ei *ErrorInfo) WriteLog(logger *zerolog.Logger) {
 	logger = ei.SetLogger(logger)
-	e := logger.WithLevel(ei.GetLevel())
-	ei.writeEventLog(e)
+	ei.writeEventLog(*logger)
 }
 
-func (ei *ErrorInfo) writeEventLog(e *zerolog.Event) {
+func (ei *ErrorInfo) writeEventLog(logger zerolog.Logger) {
+	e := logger.WithLevel(ei.GetLevel())
 	ei.Attr(zerolog.MessageFieldName, fmt.Sprintf(`"%s"`, ei.RawError()))
 	ei.Attr("line", ei.logLine)
 	e.Send()
@@ -143,10 +143,7 @@ func (ei *ErrorInfo) Error() string {
 		return ""
 	}
 
-	e := ei.logger.WithLevel(ei.Level)
-	msg := ei.RawError()
-	e.Msg(msg)
-
+	ei.writeEventLog(ei.logger)
 	return ei.popResultMessages()
 }
 
