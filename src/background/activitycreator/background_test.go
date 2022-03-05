@@ -145,7 +145,7 @@ func Test_calActivitys(t *testing.T) {
 				placeDateCourtsMap: map[int][]*badmintonCourtLogic.DateCourt{
 					1: {
 						{
-							Date: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+							Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 							Courts: []*badmintonCourtLogic.Court{
 								{
 									CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{
@@ -179,7 +179,7 @@ func Test_calActivitys(t *testing.T) {
 							},
 						},
 						{
-							Date: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+							Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 							Courts: []*badmintonCourtLogic.Court{
 								{
 									CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{
@@ -210,7 +210,7 @@ func Test_calActivitys(t *testing.T) {
 			},
 			[]*clubLogic.NewActivity{
 				{
-					Date:        *util.NewDateTimeP(global.Location, 2013, 8, 2),
+					Date:        *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					PlaceID:     1,
 					ClubSubsidy: 8,
 					Description: "",
@@ -282,7 +282,7 @@ func TestBackGround_Run(t *testing.T) {
 		{
 			"activity create days",
 			args{
-				runTime: util.NewDateTimeP(global.Location, 2013, 8, 2).Time(),
+				runTime: util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2).Time(),
 			},
 			migrations{
 				activity: []*dbModel.ClubActivity{},
@@ -342,7 +342,7 @@ func TestBackGround_Run(t *testing.T) {
 					{
 						ID:            1,
 						TeamID:        1,
-						Date:          util.NewDateTimeP(global.Location, 2013, 8, 8).Time(),
+						Date:          util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 8).Time(),
 						PlaceID:       1,
 						CourtsAndTime: "",
 						MemberCount:   0,

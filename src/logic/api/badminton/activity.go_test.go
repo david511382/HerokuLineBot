@@ -48,8 +48,8 @@ func TestGetActivitys(t *testing.T) {
 		{
 			"place team weekday",
 			args{
-				fromDate:      util.NewDateTimeP(global.Location, 2013, 8, 2),
-				toDate:        util.NewDateTimeP(global.Location, 2013, 8, 8),
+				fromDate:      util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:        util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
 				placeIDs:      []int{52, 82},
 				teamIDs:       []int{13, 14},
 				everyWeekdays: []time.Weekday{time.Friday, time.Sunday},
@@ -62,32 +62,32 @@ func TestGetActivitys(t *testing.T) {
 						ID:      82,
 						PlaceID: 52,
 						TeamID:  13,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 4),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 4),
 					},
 					{
 						ID:      52,
 						PlaceID: 82,
 						TeamID:  14,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 					// false
 					{
 						ID:      11,
 						TeamID:  13,
 						PlaceID: 1,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 					{
 						ID:      12,
 						TeamID:  1,
 						PlaceID: 52,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 					{
 						ID:      13,
 						TeamID:  13,
 						PlaceID: 14,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 3),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 					},
 				},
 				mockJoinActivityDetail: func(arg dbModel.ReqsClubJoinActivityDetail) (response []*dbModel.RespClubJoinActivityDetail, resultErr error) {
@@ -224,7 +224,7 @@ func TestGetActivitys(t *testing.T) {
 							PlaceName:  "e",
 							TeamID:     14,
 							TeamName:   "b",
-							Date:       util.NewDateTimeP(global.Location, 2013, 8, 2).Time(),
+							Date:       util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2).Time(),
 							Courts: []*resp.GetActivitysCourt{
 								{
 									FromTime: commonLogic.NewHourMinTime(1, 0).ForceTime(),
@@ -250,7 +250,7 @@ func TestGetActivitys(t *testing.T) {
 							PlaceName:  "s",
 							TeamID:     13,
 							TeamName:   "a",
-							Date:       util.NewDateTimeP(global.Location, 2013, 8, 4).Time(),
+							Date:       util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 4).Time(),
 							Courts: []*resp.GetActivitysCourt{
 								{
 									FromTime: commonLogic.NewHourMinTime(1, 0).ForceTime(),

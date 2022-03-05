@@ -56,10 +56,10 @@ func TestActivity_Select(t *testing.T) {
 			wants{
 				data: []*dbModel.ClubActivity{
 					{
-						Date: *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date: *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 					{
-						Date: *util.GetTimePLoc(global.Location, 2013, 8, 3),
+						Date: *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 					},
 				},
 			},
@@ -109,19 +109,19 @@ func TestActivity_MinMaxID(t *testing.T) {
 			migrations{
 				table: []*dbModel.ClubActivity{
 					{
-						Date: *util.GetTimePLoc(global.Location, 2013, 8, 5),
+						Date: *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 5),
 					},
 					{
-						Date: *util.GetTimePLoc(global.Location, 2013, 8, 8),
+						Date: *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
 					},
 					{
-						Date: *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date: *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 				},
 			},
 			wants{
-				maxDate: *util.GetTimePLoc(global.Location, 2013, 8, 8),
-				minDate: *util.GetTimePLoc(global.Location, 2013, 8, 2),
+				maxDate: *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
+				minDate: *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 			},
 		},
 	}

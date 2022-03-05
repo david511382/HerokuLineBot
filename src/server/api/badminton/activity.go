@@ -34,7 +34,7 @@ func GetActivitys(c *gin.Context) {
 		common.FailRequest(c, errInfo)
 		return
 	}
-	locationConverter := util.NewLocationConverter(global.Location, false)
+	locationConverter := util.NewLocationConverter(global.TimeUtilObj.GetLocation(), false)
 	locationConverter.Convert(&reqs)
 
 	result := resp.Base{

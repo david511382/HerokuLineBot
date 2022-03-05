@@ -47,43 +47,43 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 						ID:      52,
 						PlaceID: 2,
 						TeamID:  2,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 1),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 1),
 					},
 					{
 						ID:      82,
 						PlaceID: 1,
 						TeamID:  1,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 					// false
 					{
 						ID:      1,
 						PlaceID: 1,
 						TeamID:  1,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 				},
 				rentalCourt: []*dbModel.ClubRentalCourt{
 					{
 						ID:      52,
 						PlaceID: 2,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 1),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 1),
 					},
 					{
 						ID:      82,
 						PlaceID: 1,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 					// false
 					{
 						ID:      1,
 						PlaceID: 1,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 1),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 1),
 					},
 					{
 						ID:      2,
 						PlaceID: 2,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 3),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 					},
 				},
 				rentalCourtLedgerCourt: []*dbModel.ClubRentalCourtLedgerCourt{

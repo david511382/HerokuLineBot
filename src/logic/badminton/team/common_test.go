@@ -39,7 +39,7 @@ func TestLoad(t *testing.T) {
 					{
 						ID:            1,
 						Name:          "name",
-						CreateDate:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						CreateDate:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 						OwnerMemberID: 2,
 					},
 				},

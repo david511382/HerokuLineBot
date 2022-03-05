@@ -196,30 +196,30 @@ func Test_addRentalCourtGetRentalDates(t *testing.T) {
 		{
 			"hour exclude date",
 			args{
-				fromDate:     *util.NewDateTimeP(global.Location, 2013, 8, 1),
-				toDate:       *util.NewDateTimeP(global.Location, 2013, 8, 3),
+				fromDate:     *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 1),
+				toDate:       *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 				everyWeekday: nil,
 				excludeDates: []*time.Time{
-					util.GetTimePLoc(global.Location, 2013, 8, 1, 23),
-					util.GetTimePLoc(global.Location, 2013, 8, 3),
+					util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 1, 23),
+					util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 				},
 			},
 			[]util.DateTime{
-				*util.NewDateTimeP(global.Location, 2013, 8, 2),
+				*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 			},
 		},
 		{
 			"everyweekdate exclude date",
 			args{
-				fromDate:     *util.NewDateTimeP(global.Location, 2013, 8, 2),
-				toDate:       *util.NewDateTimeP(global.Location, 2013, 8, 9),
+				fromDate:     *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:       *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 9),
 				everyWeekday: util.GetIntP(5),
 				excludeDates: []*time.Time{
-					util.GetTimePLoc(global.Location, 2013, 8, 2),
+					util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 				},
 			},
 			[]util.DateTime{
-				*util.NewDateTimeP(global.Location, 2013, 8, 9),
+				*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 9),
 			},
 		},
 	}

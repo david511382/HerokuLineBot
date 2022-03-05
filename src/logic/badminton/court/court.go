@@ -446,7 +446,7 @@ func AddCourt(
 
 		for requireDateInt := range requireDateIntMap {
 			rentalCourtInsertData := &dbModel.ClubRentalCourt{
-				Date:    requireDateInt.In(global.Location),
+				Date:    requireDateInt.In(global.TimeUtilObj.GetLocation()),
 				PlaceID: placeID,
 			}
 			rentalCourtIDs = append(rentalCourtIDs, &rentalCourtInsertData.ID)

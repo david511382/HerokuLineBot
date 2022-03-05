@@ -42,7 +42,7 @@ token:`{"RoleID":1}`
 ## test
 
 ```
-go test ./src/util/... --count=1
+go test ./src/pkg/util/... --count=1
 
 go test ./bootstrap/... --count=1
 

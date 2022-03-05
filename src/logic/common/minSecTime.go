@@ -46,7 +46,7 @@ func (t HourMinTime) Time() (resultTime time.Time, resultErr error) {
 		resultErr = err
 		return
 	}
-	tp := util.GetTimePLoc(global.Location, 0, 1, 1, rawT.Hour(), rawT.Minute())
+	tp := util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 0, 1, 1, rawT.Hour(), rawT.Minute())
 	resultTime = *tp
 	return
 }
@@ -90,7 +90,7 @@ func (t MinSecTime) Time() (resultTime time.Time, resultErr error) {
 		resultErr = err
 		return
 	}
-	tp := util.GetTimePLoc(global.Location, 0, 1, 1, 0, rawT.Minute(), rawT.Second())
+	tp := util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 0, 1, 1, 0, rawT.Minute(), rawT.Second())
 	resultTime = *tp
 	return
 }

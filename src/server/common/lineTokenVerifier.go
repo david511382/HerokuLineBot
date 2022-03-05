@@ -32,7 +32,7 @@ func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resu
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
-		expTime := time.Unix(int64(claims.Exp), 0).In(global.Location)
+		expTime := time.Unix(int64(claims.Exp), 0).In(global.TimeUtilObj.GetLocation())
 		if expTime.Before(global.TimeUtilObj.Now()) {
 			errInfo := errUtil.New("token expire")
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

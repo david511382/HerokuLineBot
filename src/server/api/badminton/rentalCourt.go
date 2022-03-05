@@ -36,8 +36,8 @@ func GetRentalCourts(c *gin.Context) {
 		common.FailRequest(c, errInfo)
 		return
 	}
-	reqs.ToDate = reqs.ToDate.In(global.Location)
-	reqs.FromDate = reqs.FromDate.In(global.Location)
+	reqs.ToDate = reqs.ToDate.In(global.TimeUtilObj.GetLocation())
+	reqs.FromDate = reqs.FromDate.In(global.TimeUtilObj.GetLocation())
 
 	result := &resp.GetRentalCourts{
 		TotalDayCourts: make([]*resp.GetRentalCourtsDayCourts, 0),
@@ -178,7 +178,7 @@ func GetRentalCourts(c *gin.Context) {
 	for _, dateInt := range dateInts {
 		courts := dateIntCourtsMap[dateInt]
 		resultCourt := &resp.GetRentalCourtsDayCourts{
-			Date:            dateInt.In(global.Location),
+			Date:            dateInt.In(global.TimeUtilObj.GetLocation()),
 			Courts:          make([]*resp.GetRentalCourtsDayCourtsInfo, 0),
 			IsMultiplePlace: len(dateIntPlaceMap[dateInt]) > 1,
 		}
@@ -216,7 +216,7 @@ func getGetRentalCourtsPayInfo(dateIntCourtsMap map[util.DateInt][]*resp.GetRent
 	for _, dateInt := range dateInts {
 		courts := dateIntCourtsMap[dateInt]
 		resultCourt := &resp.GetRentalCourtsPayInfoDay{
-			Date:   dateInt.In(global.Location),
+			Date:   dateInt.In(global.TimeUtilObj.GetLocation()),
 			Courts: make([]*resp.GetRentalCourtsCourtInfo, 0),
 		}
 		cost := util.NewFloat(0)
@@ -252,7 +252,7 @@ func AddRentalCourt(c *gin.Context) {
 		common.FailRequest(c, errInfo)
 		return
 	}
-	locationConverter := util.NewLocationConverter(global.Location, false)
+	locationConverter := util.NewLocationConverter(global.TimeUtilObj.GetLocation(), false)
 	locationConverter.Convert(&reqs)
 
 	result := resp.Base{

@@ -2,33 +2,41 @@ package global
 
 import (
 	"heroku-line-bot/bootstrap"
+	"heroku-line-bot/src/logger"
 	"time"
 )
 
 var (
-	Location    *time.Location
 	TimeUtilObj ITimeUtil = &TimeUtil{}
 )
 
-func init() {
-	cfg, errInfo := bootstrap.Get()
-	if errInfo != nil {
-		panic(errInfo)
-	}
-
-	loc, err := time.LoadLocation(cfg.Var.TimeZone)
-	if err != nil {
-		panic(err)
-	}
-	Location = loc
-}
-
-type TimeUtil struct{}
-
 type ITimeUtil interface {
 	Now() time.Time
+	GetLocation() *time.Location
 }
 
-func (TimeUtil) Now() time.Time {
-	return time.Now().In(Location)
+type TimeUtil struct {
+	location *time.Location
+}
+
+func (t TimeUtil) Now() time.Time {
+	return time.Now().In(t.GetLocation())
+}
+
+func (t *TimeUtil) GetLocation() *time.Location {
+	if t.location == nil {
+		timeZone := bootstrap.DEFAULT_IANA_ZONE
+		if cfg, errInfo := bootstrap.Get(); errInfo != nil {
+			logger.Log("system", errInfo)
+		} else {
+			timeZone = cfg.Var.TimeZone
+		}
+
+		loc, err := time.LoadLocation(timeZone)
+		if err != nil {
+			logger.Log("system", err)
+		}
+		t.location = loc
+	}
+	return t.location
 }

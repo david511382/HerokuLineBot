@@ -23,7 +23,7 @@ func Init() errUtil.IError {
 		return errInfo
 	}
 
-	cr = cron.NewWithLocation(global.Location)
+	cr = cron.NewWithLocation(global.TimeUtilObj.GetLocation())
 	cfg := totalCfg.Backgrounds
 	backgrounds = []*Background{
 		{

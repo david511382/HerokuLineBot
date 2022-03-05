@@ -53,7 +53,7 @@ func NewScheduleWsConn(c *gin.Context) (r *ScheduleWsConn, resultErr error) {
 
 	r = &ScheduleWsConn{
 		conn: conn,
-		cr:   cron.NewWithLocation(global.Location),
+		cr:   cron.NewWithLocation(global.TimeUtilObj.GetLocation()),
 		jobs: make([]*cronJob, 0),
 	}
 	conn.SetCloseListener(r.cr.Stop)

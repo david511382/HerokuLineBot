@@ -148,7 +148,7 @@ func calActivitys(
 		for dateInt, dateCourts := range dateDateCourtsMap {
 			totalCourtCount := 0
 			newActivityHandler := &clubLogic.NewActivity{
-				Date:        dateInt.DateTime(global.Location),
+				Date:        dateInt.DateTime(global.TimeUtilObj.GetLocation()),
 				PlaceID:     place,
 				TeamID:      teamID,
 				Description: "",

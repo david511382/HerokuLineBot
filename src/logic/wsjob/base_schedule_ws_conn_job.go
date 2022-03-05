@@ -130,7 +130,7 @@ func (w *BaseScheduleWsConnJob) parseJson(reqsBs []byte, reqsP interface{}) erro
 		errInfo := errUtil.NewError(err)
 		return errInfo
 	}
-	locationConverter := util.NewLocationConverter(global.Location, false)
+	locationConverter := util.NewLocationConverter(global.TimeUtilObj.GetLocation(), false)
 	locationConverter.Convert(reqsP)
 	return nil
 }

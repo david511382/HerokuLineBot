@@ -100,31 +100,31 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 					{
 						ID:      1,
 						TeamID:  0,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 1),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 1),
 						PlaceID: 0,
 					},
 					{
 						ID:      2,
 						TeamID:  0,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 						PlaceID: 0,
 					},
 					{
 						ID:      3,
 						TeamID:  0,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 3),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 						PlaceID: 0,
 					},
 					{
 						ID:      4,
 						TeamID:  0,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 4),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 4),
 						PlaceID: 0,
 					},
 					{
 						ID:      5,
 						TeamID:  0,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 5),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 5),
 						PlaceID: 0,
 					},
 				},
@@ -133,8 +133,8 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 				args: []*dbModel.ReqsClubActivity{
 					{
 						Dates: []*time.Time{
-							util.GetTimePLoc(global.Location, 2013, 8, 2),
-							util.GetTimePLoc(global.Location, 2013, 8, 4),
+							util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+							util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 4),
 						},
 					},
 				},
@@ -143,8 +143,8 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 		{
 			name: "weekday",
 			args: args{
-				fromDate: util.NewDateTimeP(global.Location, 2013, 8, 2),
-				toDate:   util.NewDateTimeP(global.Location, 2013, 8, 8),
+				fromDate: util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:   util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
 				teamIDs:  nil,
 				placeIDs: nil,
 				everyWeekdays: []time.Weekday{
@@ -159,8 +159,8 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 				args: []*dbModel.ReqsClubActivity{
 					{
 						Dates: []*time.Time{
-							util.GetTimePLoc(global.Location, 2013, 8, 2),
-							util.GetTimePLoc(global.Location, 2013, 8, 4),
+							util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+							util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 4),
 						},
 					},
 				},

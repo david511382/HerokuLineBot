@@ -32,7 +32,7 @@ func (t LocationTime) Value() (driver.Value, error) {
 
 func (t *LocationTime) Scan(v interface{}) error {
 	if tt, ok := v.(time.Time); ok {
-		t.time = util.GetTimeIn(tt, global.Location)
+		t.time = util.GetTimeIn(tt, global.TimeUtilObj.GetLocation())
 	} else {
 		return errUtil.Newf("can not convert %v to time", v)
 	}

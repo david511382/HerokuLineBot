@@ -40,8 +40,8 @@ func TestGetCourts(t *testing.T) {
 		{
 			"team place",
 			args{
-				fromDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
-				toDate:   *util.NewDateTimeP(global.Location, 2013, 8, 2),
+				fromDate: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:   *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 				teamID:   util.GetIntP(1),
 				placeID:  util.GetIntP(1),
 			},
@@ -131,7 +131,7 @@ func TestGetCourts(t *testing.T) {
 						1: {
 							{
 								ID:   1,
-								Date: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+								Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 								Courts: []*Court{
 									{
 										CourtDetailPrice: CourtDetailPrice{
@@ -165,8 +165,8 @@ func TestGetCourts(t *testing.T) {
 		{
 			"refund",
 			args{
-				fromDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
-				toDate:   *util.NewDateTimeP(global.Location, 2013, 8, 2),
+				fromDate: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:   *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 			},
 			migrations{
 				rentalCourts: []*dbModel.ClubRentalCourt{
@@ -330,7 +330,7 @@ func TestGetCourts(t *testing.T) {
 						1: {
 							{
 								ID:   1,
-								Date: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+								Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 								Courts: []*Court{
 									{
 										CourtDetailPrice: CourtDetailPrice{
@@ -352,7 +352,7 @@ func TestGetCourts(t *testing.T) {
 											ID: 11,
 											Income: &Income{
 												ID:      1,
-												PayDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+												PayDate: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 												Money:   -4,
 											},
 										},
@@ -361,7 +361,7 @@ func TestGetCourts(t *testing.T) {
 												ID: 1,
 												Income: &Income{
 													ID:      3,
-													PayDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+													PayDate: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 													Money:   2,
 												},
 												DbCourtDetail: DbCourtDetail{
@@ -434,7 +434,7 @@ func TestGetCourts(t *testing.T) {
 											ID: 13,
 											Income: &Income{
 												ID:      2,
-												PayDate: *util.NewDateTimeP(global.Location, 2013, 8, 2),
+												PayDate: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 												Money:   -4,
 											},
 										},
@@ -550,7 +550,7 @@ func TestAddCourt(t *testing.T) {
 		{
 			"pay",
 			args{
-				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
+				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
 				placeID:      1,
 				teamID:       1,
 				pricePerHour: 10,
@@ -563,8 +563,8 @@ func TestAddCourt(t *testing.T) {
 				},
 				despositMoney:   util.GetIntP(5),
 				balanceMoney:    util.GetIntP(15),
-				despositPayDate: util.NewDateTimeP(global.Location, 2013, 8, 1),
-				balancePayDate:  util.NewDateTimeP(global.Location, 2013, 8, 3),
+				despositPayDate: util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 1),
+				balancePayDate:  util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 			},
 			migrations{
 				rentalCourts:            []*dbModel.ClubRentalCourt{},
@@ -577,7 +577,7 @@ func TestAddCourt(t *testing.T) {
 				rentalCourts: []*dbModel.ClubRentalCourt{
 					{
 						ID:      1,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 						PlaceID: 1,
 					},
 				},
@@ -598,15 +598,15 @@ func TestAddCourt(t *testing.T) {
 						PricePerHour:        10,
 						IncomeID:            util.GetIntP(2),
 						DepositIncomeID:     util.GetIntP(1),
-						PayDate:             util.GetTimePLoc(global.Location, 2013, 8, 3),
-						StartDate:           *util.GetTimePLoc(global.Location, 2013, 8, 2),
-						EndDate:             *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						PayDate:             util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
+						StartDate:           *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+						EndDate:             *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 				},
 				incomes: []*dbModel.ClubIncome{
 					{
 						ID:          1,
-						Date:        *util.GetTimePLoc(global.Location, 2013, 8, 1),
+						Date:        *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 1),
 						TeamID:      1,
 						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 						Description: domain.INCOME_DESCRIPTION_DESPOSIT,
@@ -614,7 +614,7 @@ func TestAddCourt(t *testing.T) {
 					},
 					{
 						ID:          2,
-						Date:        *util.GetTimePLoc(global.Location, 2013, 8, 3),
+						Date:        *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 						TeamID:      1,
 						Type:        int16(incomeLogicDomain.INCOME_TYPE_SEASON_RENT),
 						Description: domain.INCOME_DESCRIPTION_BALANCE,
@@ -635,7 +635,7 @@ func TestAddCourt(t *testing.T) {
 		{
 			"wrong balance error",
 			args{
-				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
+				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
 				placeID:      1,
 				teamID:       1,
 				pricePerHour: 10,
@@ -667,7 +667,7 @@ func TestAddCourt(t *testing.T) {
 		{
 			"wrong desposit balance error",
 			args{
-				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
+				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
 				placeID:      1,
 				teamID:       1,
 				pricePerHour: 10,
@@ -680,8 +680,8 @@ func TestAddCourt(t *testing.T) {
 				},
 				despositMoney:   util.GetIntP(5),
 				balanceMoney:    util.GetIntP(20),
-				despositPayDate: util.NewDateTimeP(global.Location, 2013, 8, 2),
-				balancePayDate:  util.NewDateTimeP(global.Location, 2013, 8, 2),
+				despositPayDate: util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				balancePayDate:  util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 			},
 			migrations{
 				rentalCourts:            []*dbModel.ClubRentalCourt{},
@@ -702,7 +702,7 @@ func TestAddCourt(t *testing.T) {
 		{
 			"exist",
 			args{
-				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.Location, 2013, 8, 2)},
+				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
 				placeID:      1,
 				teamID:       1,
 				pricePerHour: 10,
@@ -718,7 +718,7 @@ func TestAddCourt(t *testing.T) {
 				rentalCourts: []*dbModel.ClubRentalCourt{
 					{
 						ID:      2,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 						PlaceID: 1,
 					},
 				},
@@ -738,7 +738,7 @@ func TestAddCourt(t *testing.T) {
 				rentalCourts: []*dbModel.ClubRentalCourt{
 					{
 						ID:      2,
-						Date:    *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 						PlaceID: 1,
 					},
 				},
@@ -757,8 +757,8 @@ func TestAddCourt(t *testing.T) {
 						PlaceID:             1,
 						TeamID:              1,
 						PricePerHour:        10,
-						StartDate:           *util.GetTimePLoc(global.Location, 2013, 8, 2),
-						EndDate:             *util.GetTimePLoc(global.Location, 2013, 8, 2),
+						StartDate:           *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+						EndDate:             *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 				},
 				incomes: []*dbModel.ClubIncome{},

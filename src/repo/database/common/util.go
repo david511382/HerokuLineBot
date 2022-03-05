@@ -14,6 +14,6 @@ func NewLocalTime(t time.Time) domain.LocationTime {
 }
 
 func ConverTimeZone(dest interface{}) {
-	locationConverter := util.NewLocationConverter(global.Location, true)
+	locationConverter := util.NewLocationConverter(global.TimeUtilObj.GetLocation(), true)
 	locationConverter.Convert(dest)
 }
