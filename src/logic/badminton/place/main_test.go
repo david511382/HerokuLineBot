@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 	}
 
 	if errInfo := repo.Init(); errInfo != nil {
-		panic(errInfo.ErrorWithTrace())
+		panic(errInfo.Error())
 	}
 	defer repo.Dispose()
 

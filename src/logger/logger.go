@@ -53,7 +53,7 @@ func (lh Logger) log(name string, err error) {
 		errInfo = errUtil.NewError(err)
 	}
 
-	if msg := errInfo.ErrorWithTrace(); msg != "" {
+	if msg := errInfo.Error(); msg != "" {
 		l.Msgf(msg)
 	} else {
 		l.Send()

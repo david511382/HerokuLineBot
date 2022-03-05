@@ -4,9 +4,7 @@ import "github.com/rs/zerolog"
 
 type IError interface {
 	error
-	ErrorWithTrace() string
 
-	ToTraceError() error
 	Append(errInfo IError) IError
 	Attr(name string, value interface{})
 	AppendMessage(msg string)

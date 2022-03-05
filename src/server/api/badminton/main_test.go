@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 	location = loc
 
 	if errInfo := repo.Init(); errInfo != nil {
-		panic(errInfo.ErrorWithTrace())
+		panic(errInfo.Error())
 	}
 	defer repo.Dispose()
 

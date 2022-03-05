@@ -297,7 +297,7 @@ func TestGetActivitys(t *testing.T) {
 
 			gotResult, errInfo := GetActivitys(tt.args.fromDate, tt.args.toDate, tt.args.pageIndex, tt.args.pageSize, tt.args.placeIDs, tt.args.teamIDs, tt.args.everyWeekdays)
 			if errInfo != nil {
-				t.Error(errInfo.ErrorWithTrace())
+				t.Error(errInfo.Error())
 				return
 			}
 			sort.Slice(gotResult.Activitys, func(i, j int) bool {

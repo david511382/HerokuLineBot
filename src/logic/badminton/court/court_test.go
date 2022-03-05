@@ -486,7 +486,7 @@ func TestGetCourts(t *testing.T) {
 
 			gotTeamPlaceDateCourtsMap, gotResultErrInfo := GetCourts(tt.args.fromDate, tt.args.toDate, tt.args.teamID, tt.args.placeID)
 			if gotResultErrInfo != nil {
-				t.Errorf("GetCourts() error = %v", gotResultErrInfo.ErrorWithTrace())
+				t.Errorf("GetCourts() error = %v", gotResultErrInfo.Error())
 				return
 			}
 
@@ -797,7 +797,7 @@ func TestAddCourt(t *testing.T) {
 				if gotResultErrInfo == nil {
 					t.Errorf("error = %v", gotResultErrInfo)
 				} else {
-					t.Errorf("error = %v", gotResultErrInfo.ErrorWithTrace())
+					t.Errorf("error = %v", gotResultErrInfo.Error())
 				}
 				return
 			}

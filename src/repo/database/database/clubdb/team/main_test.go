@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 
 	cfg, errInfo := bootstrap.Get()
 	if errInfo != nil {
-		panic(errInfo.ErrorWithTrace())
+		panic(errInfo.Error())
 	}
 	if connection, err := conn.Connect(cfg.ClubDb); err != nil {
 		panic(err)

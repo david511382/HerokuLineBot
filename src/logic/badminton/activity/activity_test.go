@@ -175,7 +175,7 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 
 			gotResultArgs, gotResultErrInfo := GetUnfinishedActiviysSqlReqs(tt.args.fromDate, tt.args.toDate, tt.args.teamIDs, tt.args.placeIDs, tt.args.everyWeekdays)
 			if gotResultErrInfo != nil {
-				t.Errorf("GetUnfinishedActiviysSqlReqs() error = %v", gotResultErrInfo.ErrorWithTrace())
+				t.Errorf("GetUnfinishedActiviysSqlReqs() error = %v", gotResultErrInfo.Error())
 				return
 			}
 

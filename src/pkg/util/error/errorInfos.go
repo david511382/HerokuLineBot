@@ -38,13 +38,6 @@ func (eis *ErrorInfos) Errors() []*ErrorInfo {
 	return result
 }
 
-func (eis *ErrorInfos) ToTraceError() error {
-	if eis == nil {
-		return nil
-	}
-	return New(eis.ErrorWithTrace())
-}
-
 func (eis *ErrorInfos) Attr(name string, value interface{}) {
 	eis.attrsMap[name] = value
 }
@@ -118,10 +111,6 @@ func (eis *ErrorInfos) AppendErrInfos(errInfos *ErrorInfos) *ErrorInfos {
 
 func (eis *ErrorInfos) Error() string {
 	return eis.getErrorMessage(func(ei *ErrorInfo) string { return ei.Error() }).Error()
-}
-
-func (eis *ErrorInfos) ErrorWithTrace() string {
-	return eis.getErrorMessage(func(ei *ErrorInfo) string { return ei.ErrorWithTrace() }).Error()
 }
 
 func (eis *ErrorInfos) getErrorMessage(getErrorF func(ei *ErrorInfo) string) *ErrorInfo {

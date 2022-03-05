@@ -99,13 +99,6 @@ func (ei *ErrorInfo) Write(p []byte) (n int, err error) {
 	return
 }
 
-func (ei *ErrorInfo) ToTraceError() error {
-	if ei == nil {
-		return nil
-	}
-	return New(ei.ErrorWithTrace())
-}
-
 func (ei *ErrorInfo) Append(errInfo IError) IError {
 	if errInfo == nil {
 		return nil
@@ -153,14 +146,6 @@ func (ei *ErrorInfo) Error() string {
 	e := ei.logger.WithLevel(ei.Level)
 	msg := ei.RawError()
 	e.Msg(msg)
-
-	return ei.popResultMessages()
-}
-
-func (ei ErrorInfo) ErrorWithTrace() string {
-	e := ei.logger.WithLevel(ei.Level)
-
-	ei.writeEventLog(e)
 
 	return ei.popResultMessages()
 }

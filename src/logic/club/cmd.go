@@ -170,7 +170,7 @@ func (b *CmdHandler) Do(text string) errUtil.IError {
 	if errInfo := b.ICmdLogic.Do(text); errors.Is(errInfo, domain.USER_NOT_REGISTERED) ||
 		errors.Is(errInfo, domain.NO_AUTH_ERROR) {
 		replyMessges := []interface{}{
-			linebot.GetTextMessage(errInfo.ErrorWithTrace()),
+			linebot.GetTextMessage(errInfo.Error()),
 		}
 		if err := b.IContext.Reply(replyMessges); err != nil {
 			return errUtil.NewError(err)
