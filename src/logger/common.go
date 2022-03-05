@@ -26,7 +26,6 @@ func init() {
 	consoleLogger = newLogger(os.Stdout)
 
 	zerolog.LevelFieldName = "lvl"
-	zerolog.ErrorStackMarshaler = errUtil.ErrorStackMarshaler
 	zerolog.ErrorHandler = handleErr
 }
 

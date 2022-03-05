@@ -3,7 +3,6 @@ package error
 import (
 	"bytes"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -13,14 +12,16 @@ import (
 type ErrorInfo struct {
 	attrsMap       map[string]interface{}
 	rawMessages    []string
-	traceError     error
+	logLine        string
 	Level          zerolog.Level
 	logger         zerolog.Logger
 	resultMessages [][]byte
 }
 
 func New(errMsg string, level ...zerolog.Level) *ErrorInfo {
-	return NewError(fmt.Errorf(errMsg), level...)
+	errInfo := NewError(fmt.Errorf(errMsg), level...)
+	errInfo.logLine = GetCodeLine(2)
+	return errInfo
 }
 
 func NewError(err error, level ...zerolog.Level) *ErrorInfo {
@@ -28,7 +29,7 @@ func NewError(err error, level ...zerolog.Level) *ErrorInfo {
 		rawMessages:    []string{err.Error()},
 		Level:          zerolog.ErrorLevel,
 		attrsMap:       make(map[string]interface{}),
-		traceError:     errors.WithStack(err),
+		logLine:        GetCodeLine(2),
 		resultMessages: make([][]byte, 0),
 	}
 	if len(level) > 0 {
@@ -46,21 +47,28 @@ func NewError(err error, level ...zerolog.Level) *ErrorInfo {
 
 func NewOnLevel(level zerolog.Level, errMsgs ...interface{}) *ErrorInfo {
 	errMsg := msgCreator(errMsgs...)
-	return New(errMsg, level)
+	errInfo := New(errMsg, level)
+	errInfo.logLine = GetCodeLine(2)
+	return errInfo
 }
 
 func Newf(errMsgFormat string, a ...interface{}) *ErrorInfo {
-	return New(fmt.Sprintf(errMsgFormat, a...), zerolog.ErrorLevel)
+	errInfo := New(fmt.Sprintf(errMsgFormat, a...), zerolog.ErrorLevel)
+	errInfo.logLine = GetCodeLine(2)
+	return errInfo
 }
 
 func NewValue(errMsg string, errValue interface{}, level ...zerolog.Level) *ErrorInfo {
-	result := New(errMsg, level...)
-	result.Attr("value", errValue)
-	return result
+	errInfo := New(errMsg, level...)
+	errInfo.Attr("value", errValue)
+	errInfo.logLine = GetCodeLine(2)
+	return errInfo
 }
 
 func NewErrorMsg(datas ...interface{}) *ErrorInfo {
-	return NewOnLevel(zerolog.ErrorLevel, datas...)
+	errInfo := NewOnLevel(zerolog.ErrorLevel, datas...)
+	errInfo.logLine = GetCodeLine(2)
+	return errInfo
 }
 
 func (ei *ErrorInfo) SetLogger(logger *zerolog.Logger) *zerolog.Logger {
@@ -78,22 +86,9 @@ func (ei *ErrorInfo) WriteLog(logger *zerolog.Logger) {
 	ei.writeEventLog(e)
 }
 
-// write error
-func (ei *ErrorInfo) MarshalZerologObject(e *zerolog.Event) {
-	for i, msg := range ei.rawMessages {
-		key := strconv.Itoa(i)
-		e.Str(key, msg)
-	}
-}
-
 func (ei *ErrorInfo) writeEventLog(e *zerolog.Event) {
-	if !ei.IsInfo() &&
-		ei.traceError != nil {
-		e.Err(ei)
-	}
-
-	// ConsoleWriter print raw message
-	ei.Attr(zerolog.MessageFieldName, ei.RawError())
+	ei.Attr(zerolog.MessageFieldName, fmt.Sprintf(`"%s"`, ei.RawError()))
+	ei.Attr("line", ei.logLine)
 	e.Send()
 	delete(ei.attrsMap, zerolog.MessageFieldName)
 }

@@ -3,9 +3,8 @@ package error
 import (
 	"fmt"
 	"io"
+	"runtime"
 	"strings"
-
-	"github.com/rs/zerolog/pkgerrors"
 )
 
 var (
@@ -13,16 +12,6 @@ var (
 		return NewConsoleLogWriter(out)
 	}
 )
-
-func ErrorStackMarshaler(err error) interface{} {
-	e, ok := err.(*ErrorInfo)
-	if ok {
-		return pkgerrors.MarshalStack(e.traceError)
-	} else if err := pkgerrors.MarshalStack(e.traceError); err != nil {
-		return err
-	}
-	return err
-}
 
 func Split(err error) []error {
 	result := make([]error, 0)
@@ -67,4 +56,10 @@ func Equal(a, b IError) bool {
 	}
 
 	return true
+}
+
+// 取得第 skip 層的呼叫行
+func GetCodeLine(skip int) string {
+	_, filename, line, _ := runtime.Caller(skip)
+	return fmt.Sprintf("%s:%d", filename, line)
 }
