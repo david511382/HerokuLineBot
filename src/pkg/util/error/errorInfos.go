@@ -8,34 +8,27 @@ import (
 
 type ErrorInfos struct {
 	attrsMap map[string]interface{}
-	errorErrInfos,
-	warnErrInfos,
-	infoErrInfos []*ErrorInfo
+	errInfos []IError
 }
 
 func newErrInfos() *ErrorInfos {
 	return &ErrorInfos{
 		attrsMap: make(map[string]interface{}),
+		errInfos: make([]IError, 0),
 	}
 }
 
-func (eis *ErrorInfos) Errors() []*ErrorInfo {
-	result := make([]*ErrorInfo, 0)
+func (eis *ErrorInfos) Errors() []IError {
 	if eis == nil {
-		return result
+		return make([]IError, 0)
 	}
 
-	result = append(result, eis.errorErrInfos...)
-	result = append(result, eis.warnErrInfos...)
-	result = append(result, eis.infoErrInfos...)
-
-	for _, e := range result {
+	for _, e := range eis.errInfos {
 		for k, v := range eis.attrsMap {
 			e.Attr(k, v)
 		}
 	}
-
-	return result
+	return eis.errInfos
 }
 
 func (eis *ErrorInfos) Attr(name string, value interface{}) {
@@ -47,122 +40,57 @@ func (eis *ErrorInfos) AppendMessage(msg string) {
 		return
 	}
 
-	for _, v := range eis.errorErrInfos {
-		v.AppendMessage(msg)
-	}
-	for _, v := range eis.warnErrInfos {
-		v.AppendMessage(msg)
-	}
-	for _, v := range eis.infoErrInfos {
-		v.AppendMessage(msg)
+	for _, e := range eis.errInfos {
+		e.AppendMessage(msg)
 	}
 }
 
-func (eis *ErrorInfos) Append(err IError) IError {
-	if err == nil {
+func (eis *ErrorInfos) Append(errInfo IError) IError {
+	if errInfo == nil {
 		return eis
 	}
-
 	if eis == nil {
-		eis = &ErrorInfos{}
+		return errInfo
 	}
 
-	errInfo, ok := err.(*ErrorInfo)
-	if !ok {
-		errInfo = NewError(err, err.GetLevel())
+	if errInfos, ok := errInfo.(*ErrorInfos); ok {
+		return eis.appendErrInfos(errInfos)
 	}
 
-	switch err.GetLevel() {
-	case zerolog.ErrorLevel:
-		if eis.errorErrInfos == nil {
-			eis.errorErrInfos = make([]*ErrorInfo, 0)
-		}
-		eis.errorErrInfos = append(eis.errorErrInfos, errInfo)
-	case zerolog.WarnLevel:
-		if eis.warnErrInfos == nil {
-			eis.warnErrInfos = make([]*ErrorInfo, 0)
-		}
-		eis.warnErrInfos = append(eis.warnErrInfos, errInfo)
-	case zerolog.InfoLevel:
-		if eis.infoErrInfos == nil {
-			eis.infoErrInfos = make([]*ErrorInfo, 0)
-		}
-		eis.infoErrInfos = append(eis.infoErrInfos, errInfo)
-	}
+	eis.errInfos = append(eis.errInfos, errInfo)
 
 	return eis
 }
 
-func (eis *ErrorInfos) AppendErrInfos(errInfos *ErrorInfos) *ErrorInfos {
+func (eis *ErrorInfos) appendErrInfos(errInfos *ErrorInfos) *ErrorInfos {
 	if errInfos == nil {
 		return eis
 	}
-
 	if eis == nil {
-		eis = &ErrorInfos{}
+		return errInfos
 	}
 
-	eis.errorErrInfos = append(eis.errorErrInfos, errInfos.errorErrInfos...)
-	eis.warnErrInfos = append(eis.warnErrInfos, errInfos.warnErrInfos...)
-	eis.infoErrInfos = append(eis.infoErrInfos, errInfos.infoErrInfos...)
+	for _, e := range errInfos.errInfos {
+		eis.Append(e)
+	}
+	for k, v := range errInfos.attrsMap {
+		eis.Attr(k, v)
+	}
 
 	return eis
 }
 
 func (eis *ErrorInfos) Error() string {
-	return eis.getErrorMessage(func(ei *ErrorInfo) string { return ei.Error() }).Error()
-}
-
-func (eis *ErrorInfos) getErrorMessage(getErrorF func(ei *ErrorInfo) string) *ErrorInfo {
 	if eis == nil {
-		return nil
+		return ""
 	}
 
-	errorCount, warnCount, infoCount := len(eis.errorErrInfos),
-		len(eis.warnErrInfos),
-		len(eis.infoErrInfos)
-	isSingle := errorCount+warnCount+infoCount == 1
-
-	resultMsgs := make([]string, 0)
-	if errorCount > 0 {
-		if !isSingle {
-			resultMsgs = append(resultMsgs, "Errors:")
-		}
-		for _, ei := range eis.errorErrInfos {
-			resultMsgs = append(resultMsgs, getErrorF(ei))
-		}
+	sb := strings.Builder{}
+	for _, ei := range eis.Errors() {
+		sb.WriteString(ei.Error())
 	}
 
-	if warnCount > 0 {
-		if !isSingle {
-			resultMsgs = append(resultMsgs, "Warns:")
-		}
-		for _, ei := range eis.warnErrInfos {
-			resultMsgs = append(resultMsgs, getErrorF(ei))
-		}
-	}
-
-	if infoCount > 0 {
-		if !isSingle {
-			resultMsgs = append(resultMsgs, "Infos:")
-		}
-		for _, ei := range eis.infoErrInfos {
-			resultMsgs = append(resultMsgs, getErrorF(ei))
-		}
-	}
-
-	if len(resultMsgs) == 0 {
-		return nil
-	}
-	errMsg := strings.Join(resultMsgs, "\n\n")
-
-	resultErrInfo := New(errMsg, eis.GetLevel())
-
-	for k, v := range eis.attrsMap {
-		resultErrInfo.Attr(k, v)
-	}
-
-	return resultErrInfo
+	return sb.String()
 }
 
 func (eis *ErrorInfos) GetLevel() zerolog.Level {
@@ -170,14 +98,16 @@ func (eis *ErrorInfos) GetLevel() zerolog.Level {
 		return zerolog.InfoLevel
 	}
 
-	if len(eis.errorErrInfos) > 0 {
-		return zerolog.ErrorLevel
-	}
-	if len(eis.warnErrInfos) > 0 {
-		return zerolog.WarnLevel
+	maxLevel := zerolog.InfoLevel
+	for i := len(eis.errInfos) - 1; i >= 0; i-- {
+		e := eis.errInfos[i]
+		level := e.GetLevel()
+		if level > maxLevel {
+			maxLevel = level
+		}
 	}
 
-	return zerolog.InfoLevel
+	return maxLevel
 }
 
 func (eis *ErrorInfos) SetLevel(level zerolog.Level) {
@@ -185,32 +115,10 @@ func (eis *ErrorInfos) SetLevel(level zerolog.Level) {
 		return
 	}
 
-	if eis.GetLevel() != level {
-		switch level {
-		case zerolog.ErrorLevel:
-			if eis.errorErrInfos == nil {
-				eis.errorErrInfos = make([]*ErrorInfo, 0)
-			}
-			eis.errorErrInfos = append(eis.errorErrInfos, eis.warnErrInfos...)
-			eis.errorErrInfos = append(eis.errorErrInfos, eis.infoErrInfos...)
-			eis.warnErrInfos = make([]*ErrorInfo, 0)
-			eis.infoErrInfos = make([]*ErrorInfo, 0)
-		case zerolog.WarnLevel:
-			if eis.warnErrInfos == nil {
-				eis.warnErrInfos = make([]*ErrorInfo, 0)
-			}
-			eis.warnErrInfos = append(eis.warnErrInfos, eis.errorErrInfos...)
-			eis.warnErrInfos = append(eis.warnErrInfos, eis.infoErrInfos...)
-			eis.errorErrInfos = make([]*ErrorInfo, 0)
-			eis.infoErrInfos = make([]*ErrorInfo, 0)
-		case zerolog.InfoLevel:
-			if eis.infoErrInfos == nil {
-				eis.infoErrInfos = make([]*ErrorInfo, 0)
-			}
-			eis.infoErrInfos = append(eis.infoErrInfos, eis.errorErrInfos...)
-			eis.infoErrInfos = append(eis.infoErrInfos, eis.warnErrInfos...)
-			eis.errorErrInfos = make([]*ErrorInfo, 0)
-			eis.warnErrInfos = make([]*ErrorInfo, 0)
+	for _, e := range eis.errInfos {
+		l := e.GetLevel()
+		if l > level {
+			e.SetLevel(level)
 		}
 	}
 }
