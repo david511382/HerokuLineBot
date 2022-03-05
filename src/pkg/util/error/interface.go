@@ -7,8 +7,7 @@ type IError interface {
 	ErrorWithTrace() string
 
 	ToTraceError() error
-	ToErrInfo() *ErrorInfo
-	Append(errInfo IError) *ErrorInfos
+	Append(errInfo IError) IError
 	Attr(name string, value interface{})
 	AppendMessage(msg string)
 

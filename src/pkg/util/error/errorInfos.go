@@ -45,14 +45,6 @@ func (eis *ErrorInfos) ToTraceError() error {
 	return New(eis.ErrorWithTrace())
 }
 
-func (eis *ErrorInfos) ToErrInfo() *ErrorInfo {
-	if eis == nil {
-		return nil
-	}
-
-	return eis.getErrorMessage(func(ei *ErrorInfo) string { return ei.ErrorWithTrace() })
-}
-
 func (eis *ErrorInfos) Attr(name string, value interface{}) {
 	eis.attrsMap[name] = value
 }
@@ -73,8 +65,8 @@ func (eis *ErrorInfos) AppendMessage(msg string) {
 	}
 }
 
-func (eis *ErrorInfos) Append(errInfo IError) *ErrorInfos {
-	if errInfo == nil {
+func (eis *ErrorInfos) Append(err IError) IError {
+	if err == nil {
 		return eis
 	}
 
@@ -82,22 +74,27 @@ func (eis *ErrorInfos) Append(errInfo IError) *ErrorInfos {
 		eis = &ErrorInfos{}
 	}
 
-	switch errInfo.GetLevel() {
+	errInfo, ok := err.(*ErrorInfo)
+	if !ok {
+		errInfo = NewError(err, err.GetLevel())
+	}
+
+	switch err.GetLevel() {
 	case zerolog.ErrorLevel:
 		if eis.errorErrInfos == nil {
 			eis.errorErrInfos = make([]*ErrorInfo, 0)
 		}
-		eis.errorErrInfos = append(eis.errorErrInfos, errInfo.ToErrInfo())
+		eis.errorErrInfos = append(eis.errorErrInfos, errInfo)
 	case zerolog.WarnLevel:
 		if eis.warnErrInfos == nil {
 			eis.warnErrInfos = make([]*ErrorInfo, 0)
 		}
-		eis.warnErrInfos = append(eis.warnErrInfos, errInfo.ToErrInfo())
+		eis.warnErrInfos = append(eis.warnErrInfos, errInfo)
 	case zerolog.InfoLevel:
 		if eis.infoErrInfos == nil {
 			eis.infoErrInfos = make([]*ErrorInfo, 0)
 		}
-		eis.infoErrInfos = append(eis.infoErrInfos, errInfo.ToErrInfo())
+		eis.infoErrInfos = append(eis.infoErrInfos, errInfo)
 	}
 
 	return eis

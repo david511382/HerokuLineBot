@@ -166,7 +166,7 @@ func (trds *TimeRangeDatas) Load(fromTime, beforeTime time.Time) errUtil.IError 
 		false,
 	)
 
-	var resultErrInfo *errUtil.ErrorInfos
+	var resultErrInfo errUtil.IError
 	newDatas := make([]*timeRangeData, 0)
 	from := fromTime
 	if preIndex != -1 {
@@ -181,7 +181,7 @@ func (trds *TimeRangeDatas) Load(fromTime, beforeTime time.Time) errUtil.IError 
 			false,
 		)
 		if errInfo != nil {
-			resultErrInfo = resultErrInfo.Append(errInfo)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {
 				return resultErrInfo
 			}

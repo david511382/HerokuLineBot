@@ -106,16 +106,12 @@ func (ei *ErrorInfo) ToTraceError() error {
 	return New(ei.ErrorWithTrace())
 }
 
-func (ei *ErrorInfo) ToErrInfo() *ErrorInfo {
-	return ei
-}
-
-func (ei *ErrorInfo) Append(errInfo IError) *ErrorInfos {
+func (ei *ErrorInfo) Append(errInfo IError) IError {
 	if errInfo == nil {
 		return nil
 	}
 
-	result := newErrInfos()
+	var result IError = newErrInfos()
 	if ei != nil {
 		result = result.Append(ei)
 	}
