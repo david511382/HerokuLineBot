@@ -18,19 +18,21 @@ import (
 )
 
 type NewLogistic struct {
-	Context     domain.ICmdHandlerContext `json:"-"`
-	Date        time.Time                 `json:"date"`
-	Name        string                    `json:"name"`
-	Description string                    `json:"description"`
-	Amount      int16                     `json:"amount"`
-	TeamID      int                       `json:"team_id"`
+	Context domain.ICmdHandlerContext `json:"-"`
+	domain.TimePostbackParams
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Amount      int16  `json:"amount"`
+	TeamID      int    `json:"team_id"`
 }
 
 func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
 	nowTime := global.TimeUtilObj.Now()
 	*b = NewLogistic{
-		Context:     context,
-		Date:        util.DateOf(nowTime),
+		Context: context,
+		TimePostbackParams: domain.TimePostbackParams{
+			Date: *util.NewDateTimePOf(&nowTime),
+		},
 		Name:        domain.BALL_NAME,
 		Description: "買球 https://shopee.tw/product/4013408/4461135276",
 		Amount:      180,
@@ -40,22 +42,32 @@ func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 	return nil
 }
 
-func (b *NewLogistic) GetSingleParam(attr string) string {
-	switch attr {
-	case "date":
-		return b.Date.Format(util.DATE_FORMAT)
-	case "ICmdLogic.name":
-		return b.Name
-	case "ICmdLogic.description":
-		return b.Description
-	case "ICmdLogic.amount":
-		return strconv.Itoa(int(b.Amount))
-	default:
-		return ""
-	}
+func (b *NewLogistic) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+	return
 }
 
-func (b *NewLogistic) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
+func (b *NewLogistic) GetRequireAttrInfo(rawAttr string) (attrNameText string, valueText string, isNotRequireChecking bool) {
+	switch rawAttr {
+	case "date":
+		valueText = b.Date.Time().Format(util.DATE_FORMAT)
+	case "ICmdLogic.name":
+		attrNameText = "品項"
+		valueText = b.Name
+	case "ICmdLogic.amount":
+		attrNameText = "數量"
+		valueText = strconv.Itoa(int(b.Amount))
+	case "ICmdLogic.description":
+		attrNameText = "備註"
+		valueText = b.Description
+	}
+	return
+}
+
+func (b *NewLogistic) GetInputTemplate(attr string) (messages interface{}) {
+	return
+}
+
+func (b *NewLogistic) LoadRequireInputTextParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	case "date":
 		t, err := time.Parse(util.DATE_TIME_RFC3339_FORMAT, text)
@@ -63,7 +75,7 @@ func (b *NewLogistic) LoadSingleParam(attr, text string) (resultErrInfo errUtil.
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
-		b.Date = t
+		b.Date = *util.NewDateTimePOf(&t)
 	case "ICmdLogic.name":
 		b.Name = text
 	case "ICmdLogic.description":
@@ -78,10 +90,6 @@ func (b *NewLogistic) LoadSingleParam(attr, text string) (resultErrInfo errUtil.
 	default:
 	}
 
-	return nil
-}
-
-func (b *NewLogistic) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
@@ -142,15 +150,15 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 		},
 	)
 
-	if js, errInfo := b.Context.
-		GetDateTimeCmdInputMode(domain.DATE_POSTBACK_DATE_TIME_CMD, "date").
+	if js, errInfo := NewSignal().
+		GetBasePath("ICmdLogic").
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
 	} else {
 		dateStr := fmt.Sprintf("%s(%s)",
-			b.Date.Format(util.MONTH_DATE_SLASH_FORMAT),
-			util.GetWeekDayName(b.Date.Weekday()),
+			b.Date.Time().Format(util.MONTH_DATE_SLASH_FORMAT),
+			util.GetWeekDayName(b.Date.Time().Weekday()),
 		)
 		boxComponent.Contents = append(boxComponent.Contents,
 			linebot.GetFlexMessageBoxComponent(
@@ -187,8 +195,8 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 		)
 	}
 
-	if js, errInfo := b.Context.
-		GetRequireInputMode("ICmdLogic.name", "品項", false).
+	if js, errInfo := NewSignal().
+		GetRequireInputMode("ICmdLogic.name").
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -225,8 +233,8 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 		)
 	}
 
-	if js, errInfo := b.Context.
-		GetRequireInputMode("ICmdLogic.amount", "數量", false).
+	if js, errInfo := NewSignal().
+		GetRequireInputMode("ICmdLogic.amount").
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -264,8 +272,8 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 		)
 	}
 
-	if js, errInfo := b.Context.
-		GetRequireInputMode("ICmdLogic.description", "備註", false).
+	if js, errInfo := NewSignal().
+		GetRequireInputMode("ICmdLogic.description").
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -302,7 +310,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 		)
 	}
 
-	if js, errInfo := b.Context.
+	if js, errInfo := NewSignal().
 		GetConfirmMode().
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
@@ -362,7 +370,7 @@ func (b *NewLogistic) InsertLogistic(db *clubdb.Database) (resultErrInfo errUtil
 	}
 
 	data := &dbModel.ClubLogistic{
-		Date:        b.Date,
+		Date:        b.Date.Time(),
 		Name:        b.Name,
 		Amount:      b.Amount,
 		Description: b.Description,

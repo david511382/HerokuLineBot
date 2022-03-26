@@ -50,16 +50,24 @@ func (b *submitActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo 
 	return nil
 }
 
-func (b *submitActivity) GetSingleParam(attr string) string {
-	switch attr {
-	case "rsl4_consume":
-		return strconv.Itoa(int(b.Rsl4Consume))
-	default:
-		return ""
-	}
+func (b *submitActivity) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+	return
 }
 
-func (b *submitActivity) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
+func (b *submitActivity) GetRequireAttrInfo(rawAttr string) (attrNameText string, valueText string, isNotRequireChecking bool) {
+	switch rawAttr {
+	case "rsl4_consume":
+		attrNameText = "使用羽球數"
+		valueText = strconv.Itoa(int(b.Rsl4Consume))
+	}
+	return
+}
+
+func (b *submitActivity) GetInputTemplate(attr string) (messages interface{}) {
+	return
+}
+
+func (b *submitActivity) LoadRequireInputTextParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	case "rsl4_consume":
 		i, err := strconv.Atoi(text)
@@ -71,10 +79,6 @@ func (b *submitActivity) LoadSingleParam(attr, text string) (resultErrInfo errUt
 	default:
 	}
 
-	return nil
-}
-
-func (b *submitActivity) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
@@ -106,8 +110,10 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 		v := dbDatas[0]
 		memberJoinDate := v.Date
 		b.NewActivity = NewActivity{
-			Context:     context,
-			Date:        util.DateTime(v.Date),
+			Context: context,
+			TimePostbackParams: domain.TimePostbackParams{
+				Date: *util.NewDateTimePOf(&v.Date),
+			},
 			PlaceID:     v.PlaceID,
 			Description: v.Description,
 			PeopleLimit: v.PeopleLimit,
@@ -379,8 +385,8 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		},
 	)
 
-	if js, errInfo := b.context.
-		GetRequireInputMode("rsl4_consume", "使用羽球數", false).
+	if js, errInfo := NewSignal().
+		GetRequireInputMode("rsl4_consume").
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -406,7 +412,7 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		)
 	}
 
-	if js, errInfo := b.context.
+	if js, errInfo := NewSignal().
 		GetConfirmMode().
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
@@ -467,7 +473,7 @@ func (b *submitActivity) getAttendComponent(text string, members []*submitActivi
 			"ICmdLogic.attend_index":           id,
 			"ICmdLogic.is_joined_member_index": b.IsJoinedMember,
 		}
-		if js, errInfo := b.context.
+		if js, errInfo := NewSignal().
 			GetKeyValueInputMode(pathValueMap).
 			GetSignal(); errInfo != nil {
 			return nil, errInfo
@@ -487,7 +493,7 @@ func (b *submitActivity) getAttendComponent(text string, members []*submitActivi
 			"ICmdLogic.is_joined_member_index": b.IsJoinedMember,
 			"ICmdLogic.pay_index":              id,
 		}
-		if js, errInfo := b.context.
+		if js, errInfo := NewSignal().
 			GetKeyValueInputMode(pathValueMap).
 			GetSignal(); errInfo != nil {
 			return nil, errInfo

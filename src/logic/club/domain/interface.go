@@ -3,37 +3,34 @@ package domain
 import (
 	clublinebotDomain "heroku-line-bot/src/logic/clublinebot/domain"
 	errUtil "heroku-line-bot/src/pkg/util/error"
+
+	"github.com/tidwall/gjson"
 )
 
 type ICmdHandler interface {
-	ReadParam(jsonBytes []byte) (resultErrInfo errUtil.IError)
-	SetSingleParamMode()
+	ReadParam(jr gjson.Result) (resultErrInfo errUtil.IError)
 	ICmdLogic
+	CacheParams() (resultErrInfo errUtil.IError)
 }
 
 type ICmdLogic interface {
+	IParamTextValue
 	Do(text string) (resultErrInfo errUtil.IError)
 	Init(ICmdHandlerContext) (resultErrInfo errUtil.IError)
-	GetSingleParam(attr string) string
-	LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError)
-	GetInputTemplate(requireRawParamAttr string) interface{}
+}
+
+type IParamTextValue interface {
+	// 正在確認輸入資料時不會呼叫
+	GetRequireAttrInfo(rawAttr string) (attrNameText string, valueText string, isNotRequireChecking bool)
+	// 正在確認輸入資料時不會呼叫
+	GetInputTemplate(attr string) (messages interface{})
+	// 正在確認輸入資料時不會呼叫
+	GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError)
+	LoadRequireInputTextParam(rawAttr, textValue string) (resultErrInfo errUtil.IError)
 }
 
 type ICmdHandlerContext interface {
 	clublinebotDomain.IContext
 	IsConfirmed() bool
 	CacheParams() (resultErrInfo errUtil.IError)
-	ICmdHandlerSignal
-	SetRequireInputMode(attr, attrText string, isInputImmediately bool)
-}
-
-type ICmdHandlerSignal interface {
-	GetKeyValueInputMode(pathValueMap map[string]interface{}) ICmdHandlerSignal
-	GetCancelMode() ICmdHandlerSignal
-	GetConfirmMode() ICmdHandlerSignal
-	GetCancelInputMode() ICmdHandlerSignal
-	GetRequireInputMode(attr, attrText string, isInputImmediately bool) ICmdHandlerSignal
-	GetCmdInputMode(cmdP *TextCmd) ICmdHandlerSignal
-	GetDateTimeCmdInputMode(timeCmd DateTimeCmd, attr string) ICmdHandlerSignal
-	GetSignal() (string, errUtil.IError)
 }

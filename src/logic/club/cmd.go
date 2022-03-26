@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"heroku-line-bot/src/logger"
 	"heroku-line-bot/src/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/src/logic/clublinebot/domain"
 	"heroku-line-bot/src/pkg/service/linebot"
-	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
-	"heroku-line-bot/src/pkg/service/linebot/domain/model"
 	errUtil "heroku-line-bot/src/pkg/util/error"
+
+	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 )
 
 type CmdHandler struct {
@@ -18,31 +18,40 @@ type CmdHandler struct {
 	*domain.TimePostbackParams
 	clublinebotDomain.IContext `json:"-"`
 	domain.ICmdLogic
+	InputParam
 	pathValueMap map[string]interface{}
 }
 
-func (b *CmdHandler) ReadParam(jsonBytes []byte) errUtil.IError {
-	if err := json.Unmarshal(jsonBytes, b); err != nil {
+func (b *CmdHandler) ReadParam(textJsonResult gjson.Result) errUtil.IError {
+	js, err := json.Marshal(b)
+	if err != nil {
 		return errUtil.NewError(err)
+	}
+
+	jsStr := string(js)
+	for path, jr := range textJsonResult.Map() {
+		s, err := sjson.Set(jsStr, path, jr.Value())
+		if err != nil {
+			return errUtil.NewError(err)
+		}
+		jsStr = s
+	}
+
+	if err := json.Unmarshal([]byte(jsStr), b); err != nil {
+		return errUtil.NewError(err)
+	}
+
+	if errInfo := b.CacheParams(); errInfo != nil {
+		return errInfo
 	}
 	return nil
 }
 
-func (b *CmdHandler) IsInputMode() bool {
-	return b.RequireRawParamAttr != ""
-}
-
-func (b *CmdHandler) SetRequireInputMode(attr, attrText string, isInputImmediately bool) {
-	b.RequireRawParamAttr = attr
-	b.RequireRawParamAttrText = attrText
-	b.IsInputImmediately = isInputImmediately
-}
-
-func (b *CmdHandler) LoadSingleParamValue(valueText string) errUtil.IError {
-	return b.ICmdLogic.LoadSingleParam(b.RequireRawParamAttr, valueText)
-}
-
 func (b *CmdHandler) CacheParams() (resultErrInfo errUtil.IError) {
+	if b.IsNotCache {
+		return
+	}
+
 	if jsBytes, err := json.Marshal(b); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
@@ -60,60 +69,8 @@ func (b *CmdHandler) IsConfirmed() bool {
 	return b.IsConfirm
 }
 
-func (b *CmdHandler) SetSingleParamMode() {
-	b.IsSingleParamMode = true
-}
-
-func (b *CmdHandler) GetInputTemplate(requireRawParamAttr string) interface{} {
-	const altText = "請確認或輸入"
-	valueText := b.ICmdLogic.GetSingleParam(requireRawParamAttr)
-	var text = fmt.Sprintf("%s %s ,確認或請輸入數值", b.RequireRawParamAttrText, valueText)
-
-	cancelRequireInputJs, errInfo := b.GetCancelInputMode().GetSignal()
-	if errInfo != nil {
-		logger.Log("line bot club", errInfo)
-		return nil
-	}
-
-	return linebot.GetFlexMessage(
-		altText,
-		linebot.GetFlexMessageBubbleContent(
-			linebot.GetFlexMessageBoxComponent(
-				linebotDomain.VERTICAL_MESSAGE_LAYOUT,
-				&model.FlexMessageBoxComponentOption{
-					JustifyContent: linebotDomain.SPACE_EVENLY_JUSTIFY_CONTENT,
-				},
-				linebot.GetButtonComponent(
-					linebot.GetPostBackAction(
-						"確認",
-						cancelRequireInputJs,
-					),
-					&domain.NormalButtonOption,
-				),
-			),
-			&model.FlexMessagBubbleComponentOption{
-				Header: linebot.GetFlexMessageBoxComponent(
-					linebotDomain.VERTICAL_MESSAGE_LAYOUT,
-					nil,
-					linebot.GetTextMessage(text),
-				),
-				Styles: &model.FlexMessagBubbleComponentStyle{
-					Header: &model.Background{
-						BackgroundColor: "#8DFF33",
-					},
-					Body: &model.Background{
-						BackgroundColor: "#FFFFFF",
-						SeparatorColor:  "#000000",
-						Separator:       true,
-					},
-				},
-			},
-		),
-	)
-}
-
-func (b *CmdHandler) Do(text string) errUtil.IError {
-	if b.IsCancel {
+func (b *CmdHandler) Do(text string) (resultErrInfo errUtil.IError) {
+	if b.InputParam.IsCancel {
 		if err := b.DeleteParam(); err != nil {
 			return errUtil.NewError(err)
 		}
@@ -128,42 +85,68 @@ func (b *CmdHandler) Do(text string) errUtil.IError {
 		return nil
 	}
 
-	if b.IsInputMode() {
-		if b.IsSingleParamMode {
-			if err := b.LoadSingleParamValue(text); err != nil {
-				msg := fmt.Sprintf("參數格式錯誤:%s", err.Error())
+	{
+		paramHandler, isUpdateRequireAttr, errInfo := b.InputParam.GetHandler()
+		if errInfo != nil {
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			if resultErrInfo.IsError() {
+				return
+			}
+		}
+
+		if paramHandler.IsReading() {
+			// 是否正在讀取輸入資料
+			if text != "" {
+				// 讀取輸入的資料到指定欄位
+				if errInfo := paramHandler.Read(text); errInfo != nil {
+					msg := fmt.Sprintf("參數格式錯誤:%s", errInfo.Error())
+					replyMessges := []interface{}{
+						linebot.GetTextMessage(msg),
+					}
+					if err := b.Reply(replyMessges); err != nil {
+						errInfo := errUtil.NewError(err)
+						resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+						return
+					}
+					return
+				}
+
+				paramHandler, _, errInfo = b.InputParam.GetHandler()
+				if errInfo != nil {
+					resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+					if resultErrInfo.IsError() {
+						return
+					}
+				}
+
+				if errInfo := b.CacheParams(); errInfo != nil {
+					resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+					if errInfo.IsError() {
+						return
+					}
+				}
+			}
+
+			// 判斷是否需要顯示輸入資料的介面
+			if showMessge := paramHandler.GetInputTemplate(); showMessge != nil {
 				replyMessges := []interface{}{
-					linebot.GetTextMessage(msg),
+					showMessge,
 				}
-				if err := b.Reply(replyMessges); err != nil {
-					return errUtil.NewError(err)
+				if err := b.IContext.Reply(replyMessges); err != nil {
+					errInfo := errUtil.NewError(err)
+					resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+					return
 				}
-				return nil
-			}
-		}
 
-		requireRawParamAttr := b.RequireRawParamAttr
-		if b.IsInputImmediately {
-			b.RequireRawParamAttr = ""
-		}
-
-		if errInfo := b.CacheParams(); errInfo != nil {
-			return errInfo
-		}
-
-		if !b.IsInputImmediately {
-			replyMessge := b.ICmdLogic.GetInputTemplate(requireRawParamAttr)
-			if replyMessge == nil {
-				replyMessge = b.GetInputTemplate(requireRawParamAttr)
+				return
 			}
-			replyMessges := []interface{}{
-				replyMessge,
+		} else if 不會讀取輸入資料並儲存資料 := text == ""; isUpdateRequireAttr && 不會讀取輸入資料並儲存資料 {
+			if errInfo := b.CacheParams(); errInfo != nil {
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+				if errInfo.IsError() {
+					return
+				}
 			}
-			if err := b.IContext.Reply(replyMessges); err != nil {
-				return errUtil.NewError(err)
-			}
-
-			return nil
 		}
 	}
 

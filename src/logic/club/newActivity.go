@@ -23,8 +23,8 @@ import (
 )
 
 type NewActivity struct {
-	Context     domain.ICmdHandlerContext    `json:"-"`
-	Date        util.DateTime                `json:"date"`
+	Context domain.ICmdHandlerContext `json:"-"`
+	domain.TimePostbackParams
 	PlaceID     int                          `json:"place_id"`
 	TeamID      int                          `json:"team_id"`
 	Description string                       `json:"description"`
@@ -36,8 +36,10 @@ type NewActivity struct {
 func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
 	nowTime := global.TimeUtilObj.Now()
 	*b = NewActivity{
-		Context:     context,
-		Date:        util.DateTime(util.DateOf(nowTime)),
+		Context: context,
+		TimePostbackParams: domain.TimePostbackParams{
+			Date: *util.NewDateTimePOf(&nowTime),
+		},
 		PlaceID:     1,
 		Description: "7人出團",
 		Courts: []*courtDomain.ActivityCourt{
@@ -62,35 +64,51 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 	return nil
 }
 
-func (b *NewActivity) GetSingleParam(attr string) string {
-	switch attr {
-	case "date":
-		return b.Date.Time().Format(util.DATE_FORMAT)
-	case "ICmdLogic.place_id":
-		if dbDatas, errInfo := badmintonPlaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
-			for _, v := range dbDatas {
-				return v.Name
-			}
-		}
-		return "未設置"
-	case "ICmdLogic.description":
-		return b.Description
-	case "ICmdLogic.people_limit":
-		if b.PeopleLimit == nil {
-			return "未設置"
-		} else {
-			return strconv.Itoa(int(*b.PeopleLimit))
-		}
-	case "ICmdLogic.club_subsidy":
-		return strconv.Itoa(int(b.ClubSubsidy))
-	case "ICmdLogic.courts":
-		return "場數-每場價錢-hh:mm~hh:mm"
-	default:
-		return ""
-	}
+func (b *NewActivity) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+	return
 }
 
-func (b *NewActivity) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
+func (b *NewActivity) GetRequireAttrInfo(rawAttr string) (attrNameText string, valueText string, isNotRequireChecking bool) {
+	switch rawAttr {
+	case "date":
+		valueText = b.Date.Time().Format(util.DATE_FORMAT)
+	case "ICmdLogic.place_id":
+		attrNameText = "地點"
+
+		if dbDatas, errInfo := badmintonPlaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
+			for _, v := range dbDatas {
+				valueText = v.Name
+				return
+			}
+		}
+		valueText = "未設置"
+	case "ICmdLogic.補助額":
+		attrNameText = "數量"
+	case "ICmdLogic.people_limit":
+		attrNameText = "人數上限"
+
+		if b.PeopleLimit == nil {
+			valueText = "未設置"
+		} else {
+			valueText = strconv.Itoa(int(*b.PeopleLimit))
+		}
+	case "ICmdLogic.courts":
+		attrNameText = "場地"
+
+		valueText = "場數-每場價錢-hh:mm~hh:mm"
+	case "ICmdLogic.description":
+		valueText = b.Description
+	case "ICmdLogic.club_subsidy":
+		valueText = strconv.Itoa(int(b.ClubSubsidy))
+	}
+	return
+}
+
+func (b *NewActivity) GetInputTemplate(attr string) (messages interface{}) {
+	return
+}
+
+func (b *NewActivity) LoadRequireInputTextParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	case "date":
 		t, err := time.Parse(util.DATE_TIME_RFC3339_FORMAT, text)
@@ -152,10 +170,6 @@ func (b *NewActivity) LoadSingleParam(attr, text string) (resultErrInfo errUtil.
 	default:
 	}
 
-	return nil
-}
-
-func (b *NewActivity) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
@@ -222,8 +236,8 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	contents := []interface{}{}
 	actions := domain.NewActivityLineTemplate{}
 
-	if js, errInfo := b.Context.
-		GetDateTimeCmdInputMode(domain.DATE_POSTBACK_DATE_TIME_CMD, "date").
+	if js, errInfo := NewSignal().
+		GetBasePath("ICmdLogic").
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -237,8 +251,8 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		)
 	}
 
-	if js, errInfo := b.Context.
-		GetRequireInputMode("ICmdLogic.place_id", "地點", false).
+	if js, errInfo := NewSignal().
+		GetRequireInputMode("ICmdLogic.place_id").
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -249,8 +263,8 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		)
 	}
 
-	if js, errInfo := b.Context.
-		GetRequireInputMode("ICmdLogic.club_subsidy", "補助額", false).
+	if js, errInfo := NewSignal().
+		GetRequireInputMode("ICmdLogic.club_subsidy").
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -261,8 +275,8 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		)
 	}
 
-	if js, errInfo := b.Context.
-		GetRequireInputMode("ICmdLogic.people_limit", "人數上限", false).
+	if js, errInfo := NewSignal().
+		GetRequireInputMode("ICmdLogic.people_limit").
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -273,8 +287,8 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		)
 	}
 
-	if js, errInfo := b.Context.
-		GetRequireInputMode("ICmdLogic.courts", "場地", false).
+	if js, errInfo := NewSignal().
+		GetRequireInputMode("ICmdLogic.courts").
 		GetSignal(); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -288,14 +302,14 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	lineContents := b.getLineComponents(actions)
 	contents = append(contents, lineContents...)
 
-	cancelSignlJs, errInfo := b.Context.
+	cancelSignlJs, errInfo := NewSignal().
 		GetCancelMode().
 		GetSignal()
 	if errInfo != nil {
 		resultErrInfo = errInfo
 		return
 	}
-	comfirmSignlJs, errInfo := b.Context.
+	comfirmSignlJs, errInfo := NewSignal().
 		GetConfirmMode().
 		GetSignal()
 	if errInfo != nil {

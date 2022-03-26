@@ -5,6 +5,7 @@ import (
 	badmintonCourtLogicDomain "heroku-line-bot/src/logic/badminton/court/domain"
 	badmintonteamLogic "heroku-line-bot/src/logic/badminton/team"
 	clubLogic "heroku-line-bot/src/logic/club"
+	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
 	dbModel "heroku-line-bot/src/model/database"
 	rdsModel "heroku-line-bot/src/model/redis"
@@ -210,7 +211,9 @@ func Test_calActivitys(t *testing.T) {
 			},
 			[]*clubLogic.NewActivity{
 				{
-					Date:        *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+					TimePostbackParams: clubLogicDomain.TimePostbackParams{
+						Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+					},
 					PlaceID:     1,
 					ClubSubsidy: 8,
 					Description: "",

@@ -32,27 +32,21 @@ func (b *richMenu) Init(context domain.ICmdHandlerContext) (resultErrInfo errUti
 	return nil
 }
 
-func (b *richMenu) GetSingleParam(attr string) string {
-	switch attr {
-	case "rich_menu_id":
-		return b.RichMenuID
-	default:
-		return ""
-	}
+func (b *richMenu) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+	return
 }
 
-func (b *richMenu) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
-	switch attr {
+func (b *richMenu) GetRequireAttrInfo(rawAttr string) (attrNameText string, valueText string, isNotRequireChecking bool) {
+	switch rawAttr {
 	case "rich_menu_id":
-		b.RichMenuID = text
-	default:
+		attrNameText = "rich menu id"
+		valueText = b.RichMenuID
 	}
-
-	return nil
+	return
 }
 
-func (b *richMenu) GetInputTemplate(requireRawParamAttr string) interface{} {
-	switch requireRawParamAttr {
+func (b *richMenu) GetInputTemplate(attr string) (messages interface{}) {
+	switch attr {
 	case "role":
 		buttons := []interface{}{}
 		roles := []domain.ClubRole{
@@ -65,13 +59,13 @@ func (b *richMenu) GetInputTemplate(requireRawParamAttr string) interface{} {
 				"ICmdLogic.method": domain.NEW_RICH_MENU_METHOD,
 				"ICmdLogic.role":   role,
 			}
-			if js, errInfo := b.context.
-				GetCmdInputMode(nil).
+			if js, errInfo := NewSignal().
+				GetRunOnceMode().
 				GetCancelInputMode().
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
 				logger.Log("line bot club", errInfo)
-				return nil
+				return
 			} else {
 				action := linebot.GetPostBackAction(strconv.Itoa(int(role)), js)
 				button := linebot.GetButtonComponent(
@@ -81,7 +75,7 @@ func (b *richMenu) GetInputTemplate(requireRawParamAttr string) interface{} {
 				buttons = append(buttons, button)
 			}
 		}
-		return linebot.GetFlexMessage(
+		messages = linebot.GetFlexMessage(
 			"RichMenu Methods",
 			linebot.GetFlexMessageBubbleContent(
 				linebot.GetFlexMessageBoxComponent(
@@ -94,9 +88,18 @@ func (b *richMenu) GetInputTemplate(requireRawParamAttr string) interface{} {
 				nil,
 			),
 		)
-	default:
-		return nil
 	}
+	return
+}
+
+func (b *richMenu) LoadRequireInputTextParam(attr, text string) (resultErrInfo errUtil.IError) {
+	switch attr {
+	case "rich_menu_id":
+		b.RichMenuID = text
+	default:
+	}
+
+	return nil
 }
 
 func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
@@ -203,11 +206,11 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 		}
 	default:
 		inputButtons := []interface{}{}
-		methodSignalMap := map[domain.RichMenuMethod]domain.ICmdHandlerSignal{
+		methodSignalMap := map[domain.RichMenuMethod]Signal{
 			domain.LIST_RICH_MENU_METHOD:        nil,
 			domain.DELETE_RICH_MENU_METHOD:      nil,
-			domain.NEW_RICH_MENU_METHOD:         b.context.GetRequireInputMode("role", "", false),
-			domain.SET_DEFAULT_RICH_MENU_METHOD: b.context.GetRequireInputMode("rich_menu_id", "rich menu id", false),
+			domain.NEW_RICH_MENU_METHOD:         NewSignal().GetRequireInputMode("role"),
+			domain.SET_DEFAULT_RICH_MENU_METHOD: NewSignal().GetRequireInputMode("rich_menu_id"),
 			domain.SET_TO_RICH_MENU_METHOD:      nil,
 		}
 		for method, signal := range methodSignalMap {
@@ -219,7 +222,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 				"ICmdLogic.method": method,
 			}
 			if js, errInfo := signal.
-				GetCmdInputMode(nil).
+				GetRunOnceMode().
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
 				resultErrInfo = errInfo

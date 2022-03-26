@@ -12,7 +12,6 @@ import (
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
 	"heroku-line-bot/src/repo/redis"
-	"time"
 
 	"github.com/rs/zerolog"
 )
@@ -20,8 +19,8 @@ import (
 type confirmRegister struct {
 	context  domain.ICmdHandlerContext `json:"-"`
 	MemberID int                       `json:"member_id"`
-	Date     time.Time                 `json:"date"`
-	User     *confirmRegisterUser      `json:"user"`
+	domain.TimePostbackParams
+	User *confirmRegisterUser `json:"user"`
 }
 
 type confirmRegisterUser struct {
@@ -40,32 +39,29 @@ func (b *confirmRegister) Init(context domain.ICmdHandlerContext) (resultErrInfo
 	return nil
 }
 
-func (b *confirmRegister) GetSingleParam(attr string) string {
-	switch attr {
+func (b *confirmRegister) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+	return
+}
+
+func (b *confirmRegister) GetRequireAttrInfo(rawAttr string) (attrNameText string, valueText string, isNotRequireChecking bool) {
+	switch rawAttr {
 	default:
-		return ""
+		return
 	}
 }
 
-func (b *confirmRegister) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
+func (b *confirmRegister) GetInputTemplate(attr string) (messages interface{}) {
 	switch attr {
-	case "date":
-		t, err := time.Parse(util.DATE_TIME_RFC3339_FORMAT, text)
-		if err != nil {
-			resultErrInfo = errUtil.NewError(err)
-			return
-		}
-		b.Date = t
+	}
+	return
+}
+
+func (b *confirmRegister) LoadRequireInputTextParam(attr, text string) (resultErrInfo errUtil.IError) {
+	switch attr {
+	default:
 	}
 
 	return nil
-}
-
-func (b *confirmRegister) GetInputTemplate(requireRawParamAttr string) interface{} {
-	switch requireRawParamAttr {
-	default:
-		return nil
-	}
 }
 
 func (b *confirmRegister) LoadUsers(arg dbModel.ReqsClubMember) (confirmRegisterUsers []*confirmRegisterUser, resultErr error) {
@@ -219,8 +215,8 @@ func (b *confirmRegister) getTemplateMessage() ([]interface{}, errUtil.IError) {
 		SizeP: &size,
 	}
 
-	if js, errInfo := b.context.
-		GetDateTimeCmdInputMode(domain.DATE_POSTBACK_DATE_TIME_CMD, "date").
+	if js, errInfo := NewSignal().
+		GetBasePath("ICmdLogic").
 		GetSignal(); errInfo != nil {
 		return nil, errInfo
 	} else {
@@ -234,7 +230,7 @@ func (b *confirmRegister) getTemplateMessage() ([]interface{}, errUtil.IError) {
 		contents = append(contents,
 			GetKeyValueEditComponent(
 				"日期",
-				fmt.Sprintf("%s(%s)", b.Date.Format(util.DATE_FORMAT), util.GetWeekDayName(b.Date.Weekday())),
+				fmt.Sprintf("%s(%s)", b.TimePostbackParams.Date.Time().Format(util.DATE_FORMAT), util.GetWeekDayName(b.Date.Time().Weekday())),
 				&domain.KeyValueEditComponentOption{
 					Action:     action,
 					ValueSizeP: &size,
@@ -310,7 +306,7 @@ func (b *confirmRegister) getTemplateMessage() ([]interface{}, errUtil.IError) {
 		)
 	}
 
-	comfirmSignlJs, errInfo := b.context.
+	comfirmSignlJs, errInfo := NewSignal().
 		GetConfirmMode().
 		GetSignal()
 	if errInfo != nil {

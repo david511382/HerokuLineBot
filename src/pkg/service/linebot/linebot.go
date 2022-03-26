@@ -12,6 +12,12 @@ type LineBot struct {
 	channelAccessToken string
 }
 
+func New(channelAccessToken string) *LineBot {
+	return &LineBot{
+		channelAccessToken: channelAccessToken,
+	}
+}
+
 func (lb *LineBot) setRequestAuthorization(request *http.Request) {
 	request.Header.Set("Authorization", "Bearer "+lb.channelAccessToken)
 }
@@ -97,7 +103,7 @@ func (lb *LineBot) PushMessage(param *reqs.PushMessage) (*resp.PushMessage, erro
 
 func (lb *LineBot) ListRichMenu() (*resp.ListRichMenu, error) {
 	url := domain.LINE_URL + "/richmenu/list"
-	request, err := lb.getPostRequest(url, nil)
+	request, err := lb.getGetRequest(url, nil)
 	if err != nil {
 		return nil, err
 	}

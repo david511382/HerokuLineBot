@@ -7,7 +7,7 @@ import (
 	badmintonCourtLogicDomain "heroku-line-bot/src/logic/badminton/court/domain"
 	badmintonteamLogic "heroku-line-bot/src/logic/badminton/team"
 	clubLogic "heroku-line-bot/src/logic/club"
-	"heroku-line-bot/src/logic/club/domain"
+	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	clubLineBotLogic "heroku-line-bot/src/logic/clublinebot"
 	commonLogic "heroku-line-bot/src/logic/common"
 	rdsModel "heroku-line-bot/src/model/redis"
@@ -148,7 +148,9 @@ func calActivitys(
 		for dateInt, dateCourts := range dateDateCourtsMap {
 			totalCourtCount := 0
 			newActivityHandler := &clubLogic.NewActivity{
-				Date:        dateInt.DateTime(global.TimeUtilObj.GetLocation()),
+				TimePostbackParams: clubLogicDomain.TimePostbackParams{
+					Date: dateInt.DateTime(global.TimeUtilObj.GetLocation()),
+				},
 				PlaceID:     place,
 				TeamID:      teamID,
 				Description: "",
@@ -163,7 +165,7 @@ func calActivitys(
 				newActivityHandler.ClubSubsidy = *v
 			}
 			if newActivityHandler.PeopleLimit == nil {
-				newActivityHandler.PeopleLimit = util.GetInt16P(int16(totalCourtCount * domain.PEOPLE_PER_HOUR * 2))
+				newActivityHandler.PeopleLimit = util.GetInt16P(int16(totalCourtCount * clubLogicDomain.PEOPLE_PER_HOUR * 2))
 			}
 
 			for _, dateCourt := range dateCourts {

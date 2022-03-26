@@ -33,22 +33,28 @@ func (b *GetConfirmRegisters) Init(context domain.ICmdHandlerContext) (resultErr
 	return nil
 }
 
-func (b *GetConfirmRegisters) GetSingleParam(attr string) string {
-	switch attr {
+func (b *GetConfirmRegisters) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+	return
+}
+
+func (b *GetConfirmRegisters) GetRequireAttrInfo(rawAttr string) (attrNameText string, valueText string, isNotRequireChecking bool) {
+	switch rawAttr {
 	default:
-		return ""
+		return
 	}
 }
 
-func (b *GetConfirmRegisters) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
+func (b *GetConfirmRegisters) GetInputTemplate(attr string) (messages interface{}) {
+	switch attr {
+	}
+	return
+}
+
+func (b *GetConfirmRegisters) LoadRequireInputTextParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	default:
 	}
 
-	return nil
-}
-
-func (b *GetConfirmRegisters) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
@@ -123,7 +129,7 @@ func (b *GetConfirmRegisters) GetConfirmRegisterUsersMessages(altText string) (r
 				registerHandler := &register{
 					context:  b.context,
 					Name:     confirmRegistersUser.Name,
-					MemberID: confirmRegistersUser.MemberID,
+					MemberID: &confirmRegistersUser.MemberID,
 				}
 				contents, err := registerHandler.GetNotifyRegisterContents()
 				if err != nil {

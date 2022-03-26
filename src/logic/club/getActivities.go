@@ -53,22 +53,28 @@ func (b *GetActivities) Init(context domain.ICmdHandlerContext) (resultErrInfo e
 	return nil
 }
 
-func (b *GetActivities) GetSingleParam(attr string) string {
-	switch attr {
+func (b *GetActivities) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+	return
+}
+
+func (b *GetActivities) GetRequireAttrInfo(rawAttr string) (attrNameText string, valueText string, isNotRequireChecking bool) {
+	switch rawAttr {
 	default:
-		return ""
+		return
 	}
 }
 
-func (b *GetActivities) LoadSingleParam(attr, text string) (resultErrInfo errUtil.IError) {
+func (b *GetActivities) GetInputTemplate(attr string) (messages interface{}) {
+	switch attr {
+	}
+	return
+}
+
+func (b *GetActivities) LoadRequireInputTextParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	default:
 	}
 
-	return nil
-}
-
-func (b *GetActivities) GetInputTemplate(requireRawParamAttr string) interface{} {
 	return nil
 }
 
@@ -192,8 +198,10 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 	for _, v := range activitys {
 		activity := &getActivitiesActivity{
 			NewActivity: NewActivity{
-				Context:     context,
-				Date:        util.DateTime(v.Date),
+				Context: context,
+				TimePostbackParams: domain.TimePostbackParams{
+					Date: *util.NewDateTimePOf(&v.Date),
+				},
 				PlaceID:     v.PlaceID,
 				Description: v.Description,
 				PeopleLimit: v.PeopleLimit,
@@ -572,7 +580,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
 			resultErrInfo = errInfo
 			return
 		}
-		return nil
+		return
 	} else if isJoin := b.JoinActivityID > 0; isJoin {
 		activityID := b.JoinActivityID
 		arg := dbModel.ReqsClubActivity{
@@ -718,8 +726,8 @@ func (b *GetActivities) GetActivitieMessage(
 			pathValueMap := map[string]interface{}{
 				"ICmdLogic.list_members_activity_id": activity.ActivityID,
 			}
-			if js, errInfo := b.context.
-				GetCmdInputMode(nil).
+			if js, errInfo := NewSignal().
+				GetRunOnceMode().
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
 				resultErrInfo = errInfo
@@ -751,8 +759,8 @@ func (b *GetActivities) GetActivitieMessage(
 			pathValueMap := map[string]interface{}{
 				"ICmdLogic.leave_activity_id": activity.ActivityID,
 			}
-			if js, errInfo := b.context.
-				GetCmdInputMode(nil).
+			if js, errInfo := NewSignal().
+				GetRunOnceMode().
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
 				resultErrInfo = errInfo
@@ -782,8 +790,8 @@ func (b *GetActivities) GetActivitieMessage(
 			pathValueMap := map[string]interface{}{
 				"ICmdLogic.join_activity_id": activity.ActivityID,
 			}
-			if js, errInfo := b.context.
-				GetCmdInputMode(nil).
+			if js, errInfo := NewSignal().
+				GetRunOnceMode().
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
 				resultErrInfo = errInfo
@@ -816,7 +824,10 @@ func (b *GetActivities) GetActivitieMessage(
 			cmd := domain.SUBMIT_ACTIVITY_TEXT_CMD
 			pathValueMap := make(map[string]interface{})
 			pathValueMap["ICmdLogic.activity_id"] = activity.ActivityID
-			if js, errInfo := getCmd(cmd, pathValueMap); errInfo != nil {
+			if js, errInfo := NewSignal().
+				GetCmdInputMode(&cmd).
+				GetKeyValueInputMode(pathValueMap).
+				GetSignal(); errInfo != nil {
 				resultErrInfo = errInfo
 				return
 			} else {

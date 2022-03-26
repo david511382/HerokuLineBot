@@ -12,6 +12,12 @@ type OAuth struct {
 	channelID uint64
 }
 
+func NewOAuth(channelID uint64) *OAuth {
+	return &OAuth{
+		channelID: channelID,
+	}
+}
+
 func (oa *OAuth) VerifyIDToken(param reqs.OAuthVerifyIDToken) (*resp.OAuthVerifyIDToken, error) {
 	url := domain.LINE_OAUTH_URL + "/verify"
 	param.ClientID = strconv.FormatUint(oa.channelID, 10)

@@ -9,6 +9,7 @@ import (
 	commonRedis "heroku-line-bot/src/repo/redis/common"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	errUtil "heroku-line-bot/src/pkg/util/error"
 
@@ -75,20 +76,42 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 	cmd := domain.TextCmd(text)
 	var cmdHandler domain.ICmdHandler
 	paramJson := ""
-	isSingelParamText := !util.IsJSON(text)
+	textJsonResult := gjson.Parse(text)
+	isInputTextJson := textJsonResult.Type == gjson.JSON
 	if handler, err := getCmdHandler(cmd, lineContext); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
-	} else if handler != nil {
+	} else if isChangeHandler := handler != nil; isChangeHandler {
 		cmdHandler = handler
+		text = ""
 		if err := lineContext.DeleteParam(); commonRedis.IsRedisError(err) {
 			resultErrInfo = errUtil.NewError(err)
 		}
+		if errInfo := cmdHandler.CacheParams(); errInfo != nil {
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			if resultErrInfo.IsError() {
+				return
+			}
+		}
 	} else {
-		cmd = getCmdFromJson(text)
+		cmd = getCmdFromJson(textJsonResult)
 		if cmd == "" {
-			if !isSingelParamText {
-				paramJson = text
+			if isInputTextJson {
+				if pathConverter := getCmdBasePathConverterFromJson(textJsonResult); pathConverter != nil {
+					paramJson = "{}"
+					for path, jr := range textJsonResult.Map() {
+						path := pathConverter(path)
+						s, err := sjson.Set(paramJson, path, jr.Value())
+						if err != nil {
+							errInfo := errUtil.NewError(err)
+							resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+							return
+						}
+						paramJson = s
+					}
+				} else {
+					paramJson = text
+				}
 			}
 		} else {
 			if handler, err := getCmdHandler(cmd, lineContext); err != nil {
@@ -99,32 +122,20 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 			}
 			paramJson = text
 		}
-
-		dateTimeCmd := getDateTimeCmdFromJson(text)
-		switch dateTimeCmd {
-		case domain.TIME_POSTBACK_DATE_TIME_CMD, domain.DATE_TIME_POSTBACK_DATE_TIME_CMD, domain.DATE_POSTBACK_DATE_TIME_CMD:
-			if js, err := sjson.Delete(text, domain.DATE_TIME_CMD_ATTR); err != nil {
-				resultErrInfo = errUtil.NewError(err)
-				return
-			} else {
-				paramJson = js
-			}
-			jr := gjson.Get(text, string(dateTimeCmd))
-			text = jr.String()
-			isSingelParamText = true
-		}
 	}
 
 	if redisParamJson := lineContext.GetParam(); redisParamJson != "" {
-		redisCmd := getCmdFromJson(redisParamJson)
-		if isChangeCmd := cmdHandler != nil && redisCmd != cmd; isChangeCmd {
-			if err := lineContext.DeleteParam(); commonRedis.IsRedisError(err) {
-				resultErrInfo = errUtil.NewError(err)
-			}
-			cmdHandler = nil
+		textJsonResult := gjson.Parse(redisParamJson)
+		redisCmd := getCmdFromJson(textJsonResult)
+		isChangeCmd := cmdHandler != nil && redisCmd != cmd
+		if isChangeCmd {
+			// if err := lineContext.DeleteParam(); commonRedis.IsRedisError(err) {
+			// 	resultErrInfo = errUtil.NewError(err)
+			// }
+			// cmdHandler = nil
 		}
 
-		if cmdHandler == nil || isSingelParamText {
+		if cmdHandler == nil || !isInputTextJson {
 			if handler, err := getCmdHandler(redisCmd, lineContext); err != nil {
 				resultErrInfo = errUtil.NewError(err)
 				return
@@ -133,11 +144,7 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 			}
 		}
 
-		if isSingelParamText {
-			cmdHandler.SetSingleParamMode()
-		}
-
-		if errInfo := cmdHandler.ReadParam([]byte(redisParamJson)); errInfo != nil {
+		if errInfo := cmdHandler.ReadParam(textJsonResult); errInfo != nil {
 			resultErrInfo = errInfo
 			return
 		}
@@ -155,12 +162,16 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 	}
 
 	if paramJson != "" {
-		if errInfo := cmdHandler.ReadParam([]byte(paramJson)); errInfo != nil {
+		jr := gjson.Parse(paramJson)
+		if errInfo := cmdHandler.ReadParam(jr); errInfo != nil {
 			resultErrInfo = errInfo
 			return
 		}
 	}
 
+	if isInputTextJson {
+		text = ""
+	}
 	if errInfo := cmdHandler.Do(text); errInfo != nil {
 		resultErrInfo = errInfo
 		return
@@ -196,8 +207,9 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		CmdBase: &domain.CmdBase{
 			Cmd: cmd,
 		},
-		IContext:  context,
-		ICmdLogic: logicHandler,
+		IContext:   context,
+		ICmdLogic:  logicHandler,
+		InputParam: *NewInputParam(logicHandler),
 	}
 	if errInfo := logicHandler.Init(result); errInfo != nil {
 		return nil, errInfo
@@ -206,26 +218,33 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 	return result, nil
 }
 
-func getCmd(cmd domain.TextCmd, pathValueMap map[string]interface{}) (string, errUtil.IError) {
-	cmdHandler := &CmdHandler{
-		CmdBase: &domain.CmdBase{
-			Cmd: cmd,
-		},
-	}
-	return cmdHandler.
-		GetCmdInputMode(nil).
-		GetKeyValueInputMode(pathValueMap).
-		GetSignal()
-}
-
-func getCmdFromJson(json string) domain.TextCmd {
-	cmdJs := gjson.Get(json, domain.CMD_ATTR)
+func getCmdFromJson(jr gjson.Result) domain.TextCmd {
+	cmdJs := jr.Get(domain.ATTR_CMD)
 	return domain.TextCmd(cmdJs.String())
 }
 
-func getDateTimeCmdFromJson(json string) domain.DateTimeCmd {
-	cmdJs := gjson.Get(json, domain.DATE_TIME_CMD_ATTR)
+func getDateTimeCmdFromJson(jr gjson.Result) domain.DateTimeCmd {
+	cmdJs := jr.Get(domain.ATTR_DATE_TIME_CMD)
 	return domain.DateTimeCmd(cmdJs.String())
+}
+
+func getCmdBasePathConverterFromJson(jr gjson.Result) (cmdBasePathConverter func(attr string) string) {
+	basePath := jr.Get(domain.ATTR_CMD_BASE_PATH).Str
+	if basePath == "" {
+		return nil
+	}
+	return func(attr string) string {
+		if attr == domain.ATTR_CMD_BASE_PATH {
+			return attr
+		}
+		return strings.Join(
+			[]string{
+				basePath,
+				attr,
+			},
+			".",
+		)
+	}
 }
 
 func calculateActivity(ballConsume, courtFee util.Float) (activityFee, ballFee util.Float) {
