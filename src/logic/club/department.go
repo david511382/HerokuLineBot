@@ -15,6 +15,12 @@ func NewDepartment(處 domain.Department, 部, 組 string) Department {
 	return result
 }
 
+func NewEmptyDepartment() Department {
+	result := Department("")
+	result.set("", "", "")
+	return result
+}
+
 func (d Department) Split() (處 domain.Department, 部, 組 string) {
 	ds := strings.Split(string(d), "/")
 	if len(ds) >= 1 {

@@ -53,7 +53,7 @@ func (b *GetActivities) Init(context domain.ICmdHandlerContext) (resultErrInfo e
 	return nil
 }
 
-func (b *GetActivities) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+func (b *GetActivities) GetRequireAttr() (requireAttr string, warnMessage interface{}, resultErrInfo errUtil.IError) {
 	return
 }
 
@@ -142,7 +142,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 	); err != nil {
 		errInfo := errUtil.NewError(err)
 		if resultErrInfo == nil {
-			resultErrInfo = errInfo
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		} else {
 			resultErrInfo = resultErrInfo.Append(errInfo)
 		}
@@ -212,7 +212,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 		}
 		if errInfo := activity.ParseCourts(v.CourtsAndTime); errInfo != nil {
 			if resultErrInfo == nil {
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			} else {
 				resultErrInfo = resultErrInfo.Append(errInfo)
 			}
@@ -256,7 +256,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 		if dbDatas, errInfo := badmintonPlaceLogic.Load(v.PlaceID); errInfo != nil {
 			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			} else {
 				resultErrInfo = resultErrInfo.Append(errInfo)
 			}
@@ -413,7 +413,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 		if dbDatas, errInfo := badmintonPlaceLogic.Load(v.PlaceID); errInfo != nil {
 			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			} else {
 				resultErrInfo = resultErrInfo.Append(errInfo)
 			}
@@ -577,7 +577,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
 				return
 			}
 
-			resultErrInfo = errInfo
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 		return
@@ -599,7 +599,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
 					return
 				}
 
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			}
 		} else {
@@ -630,7 +630,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
 					return
 				}
 
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			}
 		} else {
@@ -730,7 +730,7 @@ func (b *GetActivities) GetActivitieMessage(
 				GetRunOnceMode().
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			} else {
 				action := linebot.GetPostBackAction(
@@ -763,7 +763,7 @@ func (b *GetActivities) GetActivitieMessage(
 				GetRunOnceMode().
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			} else {
 				action := linebot.GetPostBackAction(
@@ -794,7 +794,7 @@ func (b *GetActivities) GetActivitieMessage(
 				GetRunOnceMode().
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			} else {
 				action := linebot.GetPostBackAction(
@@ -828,7 +828,7 @@ func (b *GetActivities) GetActivitieMessage(
 				GetCmdInputMode(&cmd).
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			} else {
 				action := linebot.GetPostBackAction(

@@ -42,7 +42,7 @@ func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 	return nil
 }
 
-func (b *NewLogistic) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+func (b *NewLogistic) GetRequireAttr() (requireAttr string, warnMessage interface{}, resultErrInfo errUtil.IError) {
 	return
 }
 
@@ -138,7 +138,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if errInfo := b.Context.CacheParams(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 
@@ -153,7 +153,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetBasePath("ICmdLogic").
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		dateStr := fmt.Sprintf("%s(%s)",
@@ -198,7 +198,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetRequireInputMode("ICmdLogic.name").
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		boxComponent.Contents = append(boxComponent.Contents,
@@ -236,7 +236,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetRequireInputMode("ICmdLogic.amount").
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		amountStr := fmt.Sprintf("%d個, %d打", b.Amount, b.Amount/12)
@@ -275,7 +275,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetRequireInputMode("ICmdLogic.description").
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		boxComponent.Contents = append(boxComponent.Contents,
@@ -313,7 +313,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetConfirmMode().
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		boxComponent.Contents = append(boxComponent.Contents,

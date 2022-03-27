@@ -64,7 +64,7 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 	return nil
 }
 
-func (b *NewActivity) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+func (b *NewActivity) GetRequireAttr() (requireAttr string, warnMessage interface{}, resultErrInfo errUtil.IError) {
 	return
 }
 
@@ -127,14 +127,14 @@ func (b *NewActivity) LoadRequireInputTextParam(attr, text string) (resultErrInf
 		); err != nil {
 			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			} else {
 				resultErrInfo = resultErrInfo.Append(errInfo)
 			}
 		} else if len(dbDatas) == 0 {
 			errInfo := errUtil.New("未登記的球場")
 			if resultErrInfo == nil {
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			} else {
 				resultErrInfo = resultErrInfo.Append(errInfo)
 			}
@@ -163,7 +163,7 @@ func (b *NewActivity) LoadRequireInputTextParam(attr, text string) (resultErrInf
 	case "ICmdLogic.courts":
 		if isJson := strings.ContainsAny(text, "{"); !isJson {
 			if errInfo := b.ParseCourts(text); errInfo != nil {
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			}
 		}
@@ -239,7 +239,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetBasePath("ICmdLogic").
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		actions.DateAction = linebot.GetTimeAction(
@@ -254,7 +254,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetRequireInputMode("ICmdLogic.place_id").
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		actions.PlaceAction = linebot.GetPostBackAction(
@@ -266,7 +266,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetRequireInputMode("ICmdLogic.club_subsidy").
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		actions.ClubSubsidyAction = linebot.GetPostBackAction(
@@ -278,7 +278,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetRequireInputMode("ICmdLogic.people_limit").
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		actions.PeopleLimitAction = linebot.GetPostBackAction(
@@ -290,7 +290,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetRequireInputMode("ICmdLogic.courts").
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		actions.CourtAction = linebot.GetPostBackAction(
@@ -306,14 +306,14 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		GetCancelMode().
 		GetSignal()
 	if errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 	comfirmSignlJs, errInfo := NewSignal().
 		GetConfirmMode().
 		GetSignal()
 	if errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 	contents = append(contents,
@@ -533,7 +533,7 @@ func (b *NewActivity) ParseCourts(courtsStr string) (resultErrInfo errUtil.IErro
 		times := strings.Split(timeStr, "~")
 		if len(times) != 2 {
 			errInfo := errUtil.New("時間格式錯誤")
-			resultErrInfo = errInfo
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 		fromTimeStr := times[0]

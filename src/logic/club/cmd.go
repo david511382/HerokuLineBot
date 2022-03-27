@@ -86,13 +86,26 @@ func (b *CmdHandler) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	{
-		paramHandler, isUpdateRequireAttr, errInfo := b.InputParam.GetHandler()
+		paramHandler, isUpdateRequireAttr, warnMessage, errInfo := b.InputParam.GetHandler()
 		if errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {
 				return
 			}
 		}
+
+		更新需要欄位 := isUpdateRequireAttr && text == ""
+		參數輸入錯誤 := warnMessage != nil
+		isReadData := false
+		defer func() {
+			if isReadData ||
+				更新需要欄位 ||
+				isUpdateRequireAttr && 參數輸入錯誤 {
+				if errInfo := b.CacheParams(); errInfo != nil {
+					resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+				}
+			}
+		}()
 
 		if paramHandler.IsReading() {
 			// 是否正在讀取輸入資料
@@ -111,7 +124,7 @@ func (b *CmdHandler) Do(text string) (resultErrInfo errUtil.IError) {
 					return
 				}
 
-				paramHandler, _, errInfo = b.InputParam.GetHandler()
+				paramHandler, _, warnMessage, errInfo = b.InputParam.GetHandler()
 				if errInfo != nil {
 					resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 					if resultErrInfo.IsError() {
@@ -119,33 +132,26 @@ func (b *CmdHandler) Do(text string) (resultErrInfo errUtil.IError) {
 					}
 				}
 
-				if errInfo := b.CacheParams(); errInfo != nil {
-					resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-					if errInfo.IsError() {
-						return
-					}
-				}
+				isReadData = true
+			}
+
+			replyMessges := make([]interface{}, 0)
+			if warnMessage != nil {
+				replyMessges = append(replyMessges, warnMessage)
 			}
 
 			// 判斷是否需要顯示輸入資料的介面
 			if showMessge := paramHandler.GetInputTemplate(); showMessge != nil {
-				replyMessges := []interface{}{
-					showMessge,
-				}
+				replyMessges = append(replyMessges, showMessge)
+			}
+
+			if len(replyMessges) > 0 {
 				if err := b.IContext.Reply(replyMessges); err != nil {
 					errInfo := errUtil.NewError(err)
 					resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 					return
 				}
-
 				return
-			}
-		} else if 不會讀取輸入資料並儲存資料 := text == ""; isUpdateRequireAttr && 不會讀取輸入資料並儲存資料 {
-			if errInfo := b.CacheParams(); errInfo != nil {
-				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-				if errInfo.IsError() {
-					return
-				}
 			}
 		}
 	}

@@ -25,7 +25,7 @@ type IParamTextValue interface {
 	// 正在確認輸入資料時不會呼叫
 	GetInputTemplate(attr string) (messages interface{})
 	// 正在確認輸入資料時不會呼叫
-	GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError)
+	GetRequireAttr() (requireAttr string, warnMessage interface{}, resultErrInfo errUtil.IError)
 	LoadRequireInputTextParam(rawAttr, textValue string) (resultErrInfo errUtil.IError)
 }
 

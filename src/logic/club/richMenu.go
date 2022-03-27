@@ -32,7 +32,7 @@ func (b *richMenu) Init(context domain.ICmdHandlerContext) (resultErrInfo errUti
 	return nil
 }
 
-func (b *richMenu) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+func (b *richMenu) GetRequireAttr() (requireAttr string, warnMessage interface{}, resultErrInfo errUtil.IError) {
 	return
 }
 
@@ -225,7 +225,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 				GetRunOnceMode().
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
-				resultErrInfo = errInfo
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			} else {
 				action := linebot.GetPostBackAction(string(method), js)

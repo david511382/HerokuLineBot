@@ -39,7 +39,7 @@ func (b *confirmRegister) Init(context domain.ICmdHandlerContext) (resultErrInfo
 	return nil
 }
 
-func (b *confirmRegister) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+func (b *confirmRegister) GetRequireAttr() (requireAttr string, warnMessage interface{}, resultErrInfo errUtil.IError) {
 	return
 }
 
@@ -149,7 +149,7 @@ func (b *confirmRegister) Do(text string) (resultErrInfo errUtil.IError) {
 			return
 		} else if len(confirmRegisterUsers) == 0 {
 			errInfo := errUtil.New("查無用戶")
-			resultErrInfo = errInfo
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		} else {
 			v := confirmRegisterUsers[0]
@@ -159,7 +159,7 @@ func (b *confirmRegister) Do(text string) (resultErrInfo errUtil.IError) {
 
 	if b.context.IsConfirmed() {
 		if errInfo := b.ConfirmDb(); errInfo != nil {
-			resultErrInfo = errInfo
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 
@@ -180,13 +180,13 @@ func (b *confirmRegister) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if errInfo := b.context.CacheParams(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 
 	replyMessges, errInfo := b.getTemplateMessage()
 	if errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 

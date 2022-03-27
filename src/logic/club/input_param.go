@@ -19,9 +19,9 @@ func NewInputParam(param domain.IParamTextValue) *InputParam {
 	}
 }
 
-func (b *InputParam) GetHandler() (handler ParamHandler, isUpdateRequireAttr bool, resultErrInfo errUtil.IError) {
+func (b *InputParam) GetHandler() (handler ParamHandler, isUpdateRequireAttr bool, warnMessage interface{}, resultErrInfo errUtil.IError) {
 	originRequireAttr := b.RequireRawAttr
-	requireAttr, errInfo := b.getRequireAttr()
+	requireAttr, message, errInfo := b.getRequireAttr()
 	if errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if errInfo.IsError() {
@@ -29,20 +29,22 @@ func (b *InputParam) GetHandler() (handler ParamHandler, isUpdateRequireAttr boo
 		}
 	}
 
+	warnMessage = message
 	isUpdateRequireAttr = originRequireAttr != requireAttr
 	handler = *NewParamHandler(requireAttr, b.param)
 	return
 }
 
-func (b *InputParam) getRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+func (b *InputParam) getRequireAttr() (requireAttr string, warnMessage interface{}, resultErrInfo errUtil.IError) {
 	if b.RequireRawAttr == "" {
-		attr, errInfo := b.param.GetRequireAttr()
+		attr, message, errInfo := b.param.GetRequireAttr()
 		if errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {
 				return
 			}
 		}
+		warnMessage = message
 		requireAttr = attr
 
 		if _, _, isNotRequireChecking := b.param.GetRequireAttrInfo(attr); !isNotRequireChecking {

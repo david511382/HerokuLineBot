@@ -145,7 +145,7 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 		}
 
 		if errInfo := cmdHandler.ReadParam(textJsonResult); errInfo != nil {
-			resultErrInfo = errInfo
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 	}
@@ -164,7 +164,7 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 	if paramJson != "" {
 		jr := gjson.Parse(paramJson)
 		if errInfo := cmdHandler.ReadParam(jr); errInfo != nil {
-			resultErrInfo = errInfo
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 	}
@@ -173,7 +173,7 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 		text = ""
 	}
 	if errInfo := cmdHandler.Do(text); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 
@@ -187,8 +187,8 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		logicHandler = &NewActivity{}
 	case domain.GET_ACTIVITIES_TEXT_CMD:
 		logicHandler = &GetActivities{}
-	case domain.REGISTER_TEXT_CMD:
-		logicHandler = &register{}
+	case domain.REGISTE_COMPANY_TEXT_CMD:
+		logicHandler = &registeCompany{}
 	case domain.CONFIRM_REGISTER_TEXT_CMD:
 		logicHandler = &confirmRegister{}
 	case domain.GET_CONFIRM_REGISTER_TEXT_CMD:

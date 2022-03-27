@@ -5,7 +5,7 @@ type TextCmd string
 const (
 	NEW_ACTIVITY_TEXT_CMD         TextCmd = "新增活動"
 	GET_ACTIVITIES_TEXT_CMD       TextCmd = "查看活動"
-	REGISTER_TEXT_CMD             TextCmd = "註冊"
+	REGISTE_COMPANY_TEXT_CMD      TextCmd = "登記公司"
 	CONFIRM_REGISTER_TEXT_CMD     TextCmd = "確認入社"
 	GET_CONFIRM_REGISTER_TEXT_CMD TextCmd = "入社列表"
 	SUBMIT_ACTIVITY_TEXT_CMD      TextCmd = "提交活動"

@@ -33,7 +33,7 @@ func (b *GetConfirmRegisters) Init(context domain.ICmdHandlerContext) (resultErr
 	return nil
 }
 
-func (b *GetConfirmRegisters) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+func (b *GetConfirmRegisters) GetRequireAttr() (requireAttr string, warnMessage interface{}, resultErrInfo errUtil.IError) {
 	return
 }
 
@@ -126,12 +126,11 @@ func (b *GetConfirmRegisters) GetConfirmRegisterUsersMessages(altText string) (r
 		func(i, last int) bool {
 			carouselContents := []*linebotModel.FlexMessagBubbleComponent{}
 			for _, confirmRegistersUser := range b.confirmRegistersUsers[i:last] {
-				registerHandler := &register{
+				registerHandler := &registeCompany{
 					context:  b.context,
-					Name:     confirmRegistersUser.Name,
 					MemberID: &confirmRegistersUser.MemberID,
 				}
-				contents, err := registerHandler.GetNotifyRegisterContents()
+				contents, err := registerHandler.GetNotifyRegisterContents(confirmRegistersUser.Name)
 				if err != nil {
 					resultErr = err
 					return false

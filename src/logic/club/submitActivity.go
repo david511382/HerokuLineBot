@@ -50,7 +50,7 @@ func (b *submitActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo 
 	return nil
 }
 
-func (b *submitActivity) GetRequireAttr() (requireAttr string, resultErrInfo errUtil.IError) {
+func (b *submitActivity) GetRequireAttr() (requireAttr string, warnMessage interface{}, resultErrInfo errUtil.IError) {
 	return
 }
 
@@ -121,7 +121,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 			TeamID:      v.TeamID,
 		}
 		if errInfo := b.NewActivity.ParseCourts(v.CourtsAndTime); errInfo != nil {
-			resultErrInfo = errInfo
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
 
@@ -242,7 +242,7 @@ func (b *submitActivity) loadCurrentUserID() (resultErrInfo errUtil.IError) {
 
 func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	if errInfo := b.loadCurrentUserID(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 
@@ -253,7 +253,7 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if errInfo := b.init(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 
@@ -330,7 +330,7 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	b.PayIndex = nil
 
 	if errInfo := b.context.CacheParams(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
 
@@ -388,7 +388,7 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetRequireInputMode("rsl4_consume").
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		footerBox.Contents = append(footerBox.Contents,
@@ -415,7 +415,7 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	if js, errInfo := NewSignal().
 		GetConfirmMode().
 		GetSignal(); errInfo != nil {
-		resultErrInfo = errInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else {
 		footerBox.Contents = append(footerBox.Contents,
