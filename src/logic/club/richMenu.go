@@ -1,7 +1,6 @@
 package club
 
 import (
-	"fmt"
 	"heroku-line-bot/src/logger"
 	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
@@ -10,18 +9,20 @@ import (
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
 	"heroku-line-bot/src/pkg/service/linebot/domain/model"
 	linebotReqs "heroku-line-bot/src/pkg/service/linebot/domain/model/reqs"
+	lineResp "heroku-line-bot/src/pkg/service/linebot/domain/model/resp"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
+	"sort"
 	"strconv"
+
+	"github.com/rs/zerolog"
 )
 
 type richMenu struct {
-	context    domain.ICmdHandlerContext `json:"-"`
-	Method     domain.RichMenuMethod     `json:"method"`
-	Role       domain.ClubRole           `json:"role"`
-	RichMenuID string                    `json:"rich_menu_id"`
+	context domain.ICmdHandlerContext `json:"-"`
+	Role    *domain.ClubRole          `json:"role"`
 }
 
 func (b *richMenu) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
@@ -29,7 +30,7 @@ func (b *richMenu) Init(context domain.ICmdHandlerContext) (resultErrInfo errUti
 		context: context,
 	}
 
-	return nil
+	return
 }
 
 func (b *richMenu) GetRequireAttr() (requireAttr string, warnMessage interface{}, resultErrInfo errUtil.IError) {
@@ -38,9 +39,6 @@ func (b *richMenu) GetRequireAttr() (requireAttr string, warnMessage interface{}
 
 func (b *richMenu) GetRequireAttrInfo(rawAttr string) (attrNameText string, valueText string, isNotRequireChecking bool) {
 	switch rawAttr {
-	case "rich_menu_id":
-		attrNameText = "rich menu id"
-		valueText = b.RichMenuID
 	}
 	return
 }
@@ -56,12 +54,13 @@ func (b *richMenu) GetInputTemplate(attr string) (messages interface{}) {
 		}
 		for _, role := range roles {
 			pathValueMap := map[string]interface{}{
-				"ICmdLogic.method": domain.NEW_RICH_MENU_METHOD,
-				"ICmdLogic.role":   role,
+				"ICmdLogic.role": role,
 			}
 			if js, errInfo := NewSignal().
 				GetRunOnceMode().
-				GetCancelInputMode().
+				//	GetCancelInputMode().
+				// if js, errInfo := b.context.
+				// 	GetCmdInputMode(nil).
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
 				logger.Log("line bot club", errInfo)
@@ -94,8 +93,6 @@ func (b *richMenu) GetInputTemplate(attr string) (messages interface{}) {
 
 func (b *richMenu) LoadRequireInputTextParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
-	case "rich_menu_id":
-		b.RichMenuID = text
 	default:
 	}
 
@@ -114,129 +111,32 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	messages := []interface{}{}
-	switch b.Method {
-	case domain.LIST_RICH_MENU_METHOD:
-	case domain.DELETE_RICH_MENU_METHOD:
-	case domain.NEW_RICH_MENU_METHOD:
-		createRichMenuArg := b.createRoleRichMenu(b.Role)
-		createRichMenuResp, err := b.context.GetBot().CreateRichMenu(createRichMenuArg)
-		if err != nil {
-			resultErrInfo = errUtil.NewError(err)
-			return
+	if b.Role == nil {
+		buttons := []interface{}{}
+		roles := []domain.ClubRole{
+			domain.ADMIN_CLUB_ROLE,
+			domain.CADRE_CLUB_ROLE,
+			domain.GUEST_CLUB_ROLE,
 		}
-
-		imgBs := b.getRoleRichMenuImg(b.Role)
-		if _, err := b.context.GetBot().UploadRichMenuImage(createRichMenuResp.RichMenuID, imgBs); err != nil {
-			resultErrInfo = errUtil.NewError(err)
-			return
-		}
-
-		messages = append(messages, linebot.GetTextMessage(
-			"create done",
-		))
-		messages = append(messages, linebot.GetTextMessage(
-			"RichMenuID:",
-		))
-		messages = append(messages, linebot.GetTextMessage(
-			createRichMenuResp.RichMenuID,
-		))
-
-		if b.Role == domain.ADMIN_CLUB_ROLE ||
-			b.Role == domain.CADRE_CLUB_ROLE {
-			arg := dbModel.ReqsClubMember{
-				Role: (*int16)(&b.Role),
-			}
-			if dbDatas, err := database.Club.Member.Select(
-				arg,
-				member.COLUMN_Name,
-				member.COLUMN_LineID,
-			); err != nil {
-				resultErrInfo = errUtil.NewError(err)
-				return
-			} else if len(dbDatas) > 0 {
-				lineIDs := []string{}
-				names := []string{}
-				for _, v := range dbDatas {
-					if v.LineID == nil {
-						continue
-					}
-
-					lineIDs = append(lineIDs, *v.LineID)
-					names = append(names, v.Name)
-				}
-
-				for _, lineID := range lineIDs {
-					if _, err := b.context.GetBot().SetRichMenuTo(createRichMenuResp.RichMenuID, lineID); err != nil {
-						resultErrInfo = errUtil.NewError(err)
-						return
-					}
-				}
-
-				messages = append(messages, linebot.GetTextMessage(
-					fmt.Sprintf("set to %v done", names),
-				))
-			}
-		} else {
-			if _, err := b.context.GetBot().SetDefaultRichMenu(createRichMenuResp.RichMenuID); err != nil {
-				resultErrInfo = errUtil.NewError(err)
-				return
-			}
-			messages = append(messages, linebot.GetTextMessage(
-				"set done",
-			))
-		}
-
-		if err := b.context.DeleteParam(); err != nil {
-			logger.Log("line bot club", errUtil.NewError(err))
-			return
-		}
-
-	case domain.SET_DEFAULT_RICH_MENU_METHOD:
-		if _, err := b.context.GetBot().SetDefaultRichMenu(b.RichMenuID); err != nil {
-			resultErrInfo = errUtil.NewError(err)
-			return
-		}
-		messages = append(messages, linebot.GetTextMessage(
-			"set done",
-		))
-
-		if err := b.context.DeleteParam(); err != nil {
-			logger.Log("line bot club", errUtil.NewError(err))
-			return
-		}
-	default:
-		inputButtons := []interface{}{}
-		methodSignalMap := map[domain.RichMenuMethod]Signal{
-			domain.LIST_RICH_MENU_METHOD:        nil,
-			domain.DELETE_RICH_MENU_METHOD:      nil,
-			domain.NEW_RICH_MENU_METHOD:         NewSignal().GetRequireInputMode("role"),
-			domain.SET_DEFAULT_RICH_MENU_METHOD: NewSignal().GetRequireInputMode("rich_menu_id"),
-			domain.SET_TO_RICH_MENU_METHOD:      nil,
-		}
-		for method, signal := range methodSignalMap {
-			if signal == nil {
-				continue
-			}
-
+		for _, role := range roles {
 			pathValueMap := map[string]interface{}{
-				"ICmdLogic.method": method,
+				"ICmdLogic.role": role,
 			}
-			if js, errInfo := signal.
-				GetRunOnceMode().
+			if js, errInfo := NewSignal().
+				//GetCmdInputMode(nil).
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
-				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-				return
+				logger.Log("line bot club", errInfo)
+				return nil
 			} else {
-				action := linebot.GetPostBackAction(string(method), js)
-				departmentButton := linebot.GetButtonComponent(
+				action := linebot.GetPostBackAction(strconv.Itoa(int(role)), js)
+				button := linebot.GetButtonComponent(
 					action,
 					&domain.NormalButtonOption,
 				)
-				inputButtons = append(inputButtons, departmentButton)
+				buttons = append(buttons, button)
 			}
 		}
-
 		message := linebot.GetFlexMessage(
 			"RichMenu Methods",
 			linebot.GetFlexMessageBubbleContent(
@@ -245,14 +145,185 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 					&model.FlexMessageBoxComponentOption{
 						JustifyContent: linebotDomain.SPACE_EVENLY_JUSTIFY_CONTENT,
 					},
-					inputButtons...,
+					buttons...,
 				),
 				nil,
 			),
 		)
 		messages = append(messages, message)
-	}
+	} else {
+		role := *b.Role
+		richMenuName := b.getRichMenuRoleName(role)
 
+		originRichMenus := make([]*lineResp.ListRichMenuRichMenu, 0)
+		{
+			resp, err := b.context.GetBot().ListRichMenu()
+			if err != nil {
+				errInfo := errUtil.NewError(err)
+				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+				return
+			}
+
+			for _, v := range resp.RichMenus {
+				if v.Name != richMenuName {
+					continue
+				}
+				originRichMenus = append(originRichMenus, v)
+			}
+		}
+
+		createRichMenuArg := b.createRoleRichMenu(role)
+		createRichMenuResp, err := b.context.GetBot().CreateRichMenu(createRichMenuArg)
+		if err != nil {
+			errInfo := errUtil.NewError(err)
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			return
+		}
+
+		imgBs := b.getRoleRichMenuImg(role)
+		if _, err := b.context.GetBot().UploadRichMenuImage(createRichMenuResp.RichMenuID, imgBs); err != nil {
+			resultErrInfo = errUtil.NewError(err)
+			return
+		}
+
+		var updateMemberMessage interface{}
+		{
+			updateMemberNames := make([]string, 0)
+			switch role {
+			case domain.ADMIN_CLUB_ROLE, domain.CADRE_CLUB_ROLE:
+				lineIDs := []string{}
+				if dbDatas, err := database.Club.Member.Select(
+					dbModel.ReqsClubMember{
+						Role: util.GetInt16P(int16(role)),
+					},
+					member.COLUMN_Name,
+					member.COLUMN_LineID,
+				); err != nil {
+					resultErrInfo = errUtil.NewError(err)
+					return
+				} else if len(dbDatas) > 0 {
+					for _, v := range dbDatas {
+						if v.LineID == nil {
+							continue
+						}
+						lineIDs = append(lineIDs, *v.LineID)
+						updateMemberNames = append(updateMemberNames, v.Name)
+					}
+				}
+
+				for _, lineID := range lineIDs {
+					if _, err := b.context.GetBot().SetRichMenuTo(createRichMenuResp.RichMenuID, lineID); err != nil {
+						resultErrInfo = errUtil.NewError(err)
+						return
+					}
+				}
+			default:
+				if _, err := b.context.GetBot().SetDefaultRichMenu(createRichMenuResp.RichMenuID); err != nil {
+					resultErrInfo = errUtil.NewError(err)
+					return
+				}
+
+				updateMemberNames = append(updateMemberNames, "default")
+			}
+
+			if len(updateMemberNames) > 0 {
+				contents := make([]interface{}, 0)
+				contents = append(contents, linebot.GetFlexMessageTextComponent(
+					"Set To", nil,
+				))
+				for _, updateMemberName := range updateMemberNames {
+					contents = append(contents, linebot.GetFlexMessageTextComponent(
+						updateMemberName, nil,
+					))
+				}
+
+				updateMemberMessage = linebot.GetFlexMessage(
+					"更新的 RichMenu",
+					linebot.GetFlexMessageBubbleContent(
+						linebot.GetFlexMessageBoxComponent(
+							linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+							&model.FlexMessageBoxComponentOption{
+								JustifyContent: linebotDomain.SPACE_EVENLY_JUSTIFY_CONTENT,
+							},
+							contents...,
+						),
+						nil,
+					),
+				)
+			}
+		}
+
+		var deletedMessage interface{}
+		{
+			richMenuIDs := make([]string, 0)
+			for _, v := range originRichMenus {
+				richMenuID := v.RichMenuID
+				if richMenuID == createRichMenuResp.RichMenuID {
+					continue
+				}
+				_, err := b.context.GetBot().DeleteRichMenu(richMenuID)
+				if err != nil {
+					errInfo := errUtil.NewError(err, zerolog.WarnLevel)
+					resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+					continue
+				}
+
+				richMenuIDs = append(richMenuIDs, richMenuID)
+			}
+
+			deletedContents := make([]interface{}, 0)
+			sort.Slice(richMenuIDs, func(i, j int) bool {
+				return richMenuIDs[i] < richMenuIDs[j]
+			})
+			for _, richMenuID := range richMenuIDs {
+				deletedContents = append(deletedContents, linebot.GetFlexMessageTextComponent(
+					richMenuID, nil,
+				))
+			}
+
+			if len(deletedContents) > 0 {
+				contents := make([]interface{}, 0)
+				contents = append(contents, linebot.GetFlexMessageTextComponent(
+					"刪除的 RichMenu", nil,
+				))
+				contents = append(contents, deletedContents...)
+
+				deletedMessage = linebot.GetFlexMessage(
+					"刪除的 RichMenu",
+					linebot.GetFlexMessageBubbleContent(
+						linebot.GetFlexMessageBoxComponent(
+							linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+							&model.FlexMessageBoxComponentOption{
+								JustifyContent: linebotDomain.SPACE_EVENLY_JUSTIFY_CONTENT,
+							},
+							contents...,
+						),
+						nil,
+					),
+				)
+			}
+		}
+
+		messages = append(messages, linebot.GetTextMessage(
+			"更新 RichMenu 完成",
+		))
+		if deletedMessage != nil {
+			messages = append(messages, deletedMessage)
+		}
+		messages = append(messages, linebot.GetTextMessage(
+			"建立的 RichMenuID:",
+		))
+		messages = append(messages, linebot.GetTextMessage(
+			createRichMenuResp.RichMenuID,
+		))
+		if updateMemberMessage != nil {
+			messages = append(messages, updateMemberMessage)
+		}
+
+		if err := b.context.DeleteParam(); err != nil {
+			logger.Log("line bot club", errUtil.NewError(err))
+		}
+	}
 	if err := b.context.Reply(messages); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
@@ -298,11 +369,25 @@ func (b *richMenu) createRichMenu(name string, width, height, row, col int, acti
 	return result
 }
 
+func (b *richMenu) getRichMenuRoleName(role domain.ClubRole) string {
+	switch role {
+	case domain.GUEST_CLUB_ROLE:
+		return "guest"
+	case domain.CADRE_CLUB_ROLE:
+		return "cadre"
+	case domain.ADMIN_CLUB_ROLE:
+		return "admin"
+	default:
+		return ""
+	}
+}
+
 func (b *richMenu) createRoleRichMenu(role domain.ClubRole) *linebotReqs.CreateRichMenu {
+	name := b.getRichMenuRoleName(role)
 	switch role {
 	case domain.GUEST_CLUB_ROLE:
 		return b.createRichMenu(
-			"guest",
+			name,
 			2498, 1147,
 			2, 3,
 			linebot.GetMessageAction("社長好強"),
@@ -311,7 +396,7 @@ func (b *richMenu) createRoleRichMenu(role domain.ClubRole) *linebotReqs.CreateR
 		)
 	case domain.CADRE_CLUB_ROLE:
 		return b.createRichMenu(
-			"cadre",
+			name,
 			2498, 1721,
 			3, 3,
 			linebot.GetMessageAction("社長好強"),
@@ -320,7 +405,7 @@ func (b *richMenu) createRoleRichMenu(role domain.ClubRole) *linebotReqs.CreateR
 		)
 	case domain.ADMIN_CLUB_ROLE:
 		return b.createRichMenu(
-			"admin",
+			name,
 			2498, 1721,
 			3, 3,
 			linebot.GetMessageAction(string(domain.RICH_MENU_TEXT_CMD)),
