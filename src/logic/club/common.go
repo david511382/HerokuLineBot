@@ -2,6 +2,7 @@ package club
 
 import (
 	"heroku-line-bot/bootstrap"
+	"heroku-line-bot/src/logger"
 	"heroku-line-bot/src/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/src/logic/clublinebot/domain"
 	"heroku-line-bot/src/pkg/service/linebot"
@@ -199,6 +200,8 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		logicHandler = &richMenu{}
 	case domain.NEW_LOGISTIC_TEXT_CMD:
 		logicHandler = &NewLogistic{}
+	case domain.UPDATE_MEMBER_INFO_TEXT_CMD:
+		logicHandler = NewUpdateMember()
 	default:
 		return nil, nil
 	}
@@ -212,7 +215,11 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 		InputParam: *NewInputParam(logicHandler),
 	}
 	if errInfo := logicHandler.Init(result); errInfo != nil {
-		return nil, errInfo
+		if errInfo.IsError() {
+			return nil, errInfo
+		}
+
+		logger.Log("LINE", errInfo)
 	}
 
 	return result, nil

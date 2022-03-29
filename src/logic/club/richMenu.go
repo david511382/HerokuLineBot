@@ -390,8 +390,8 @@ func (b *richMenu) createRoleRichMenu(role domain.ClubRole) *linebotReqs.CreateR
 			name,
 			2498, 1147,
 			2, 3,
+			linebot.GetMessageAction(string(domain.UPDATE_MEMBER_INFO_TEXT_CMD)),
 			linebot.GetMessageAction("社長好強"),
-			linebot.GetMessageAction("經理好棒"),
 			linebot.GetMessageAction(string(domain.GET_ACTIVITIES_TEXT_CMD)),
 		)
 	case domain.CADRE_CLUB_ROLE:
@@ -399,7 +399,7 @@ func (b *richMenu) createRoleRichMenu(role domain.ClubRole) *linebotReqs.CreateR
 			name,
 			2498, 1721,
 			3, 3,
-			linebot.GetMessageAction("社長好強"),
+			linebot.GetMessageAction(string(domain.UPDATE_MEMBER_INFO_TEXT_CMD)),
 			linebot.GetMessageAction(string(domain.NEW_ACTIVITY_TEXT_CMD)),
 			linebot.GetMessageAction(string(domain.GET_ACTIVITIES_TEXT_CMD)),
 		)
@@ -408,12 +408,13 @@ func (b *richMenu) createRoleRichMenu(role domain.ClubRole) *linebotReqs.CreateR
 			name,
 			2498, 1721,
 			3, 3,
-			linebot.GetMessageAction(string(domain.RICH_MENU_TEXT_CMD)),
+			linebot.GetMessageAction(string(domain.UPDATE_MEMBER_INFO_TEXT_CMD)),
 			linebot.GetMessageAction(string(domain.NEW_ACTIVITY_TEXT_CMD)),
 			linebot.GetMessageAction(string(domain.GET_ACTIVITIES_TEXT_CMD)),
 			linebot.GetMessageAction(string(domain.GET_CONFIRM_REGISTER_TEXT_CMD)),
 			linebot.GetMessageAction(string(domain.NEW_LOGISTIC_TEXT_CMD)),
 			linebot.GetUriAction(liffUrl),
+			linebot.GetMessageAction(string(domain.RICH_MENU_TEXT_CMD)),
 		)
 	default:
 		return nil

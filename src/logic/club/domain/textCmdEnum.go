@@ -11,6 +11,7 @@ const (
 	SUBMIT_ACTIVITY_TEXT_CMD      TextCmd = "提交活動"
 	RICH_MENU_TEXT_CMD            TextCmd = "richmenu"
 	NEW_LOGISTIC_TEXT_CMD         TextCmd = "新增品項紀錄"
+	UPDATE_MEMBER_INFO_TEXT_CMD   TextCmd = "修改個人資訊"
 )
 
 type DateTimeCmd string
