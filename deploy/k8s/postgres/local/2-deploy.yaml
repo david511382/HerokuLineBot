@@ -54,6 +54,10 @@ spec:
                 secretKeyRef:
                   name: postgres
                   key: POSTGRES_PASSWORD
+              # Using a mount point directly as the data directory is not recommended.
+              # Create a subdirectory under the mount point.
+            - name: PGDATA
+              value: /var/lib/postgresql/data
           ports:
             - containerPort: 5432
               name: client
