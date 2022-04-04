@@ -88,8 +88,9 @@ func TestCourt_Parts(t *testing.T) {
 						},
 						Count: 2,
 					},
-					Refund: nil,
-					isPay:  false,
+					RefundID:     nil,
+					RefundIncome: nil,
+					isPay:        false,
 				},
 				{
 					CourtDetail: CourtDetail{
@@ -99,19 +100,9 @@ func TestCourt_Parts(t *testing.T) {
 						},
 						Count: 1,
 					},
-					Refund: &RefundMulCourtIncome{
-						ID: 1,
-						DbCourtDetail: DbCourtDetail{
-							CourtDetail: CourtDetail{
-								TimeRange: util.TimeRange{
-									From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
-									To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
-								},
-								Count: 1,
-							},
-						},
-					},
-					isPay: false,
+					RefundID:     util.GetIntP(1),
+					RefundIncome: nil,
+					isPay:        false,
 				},
 				{
 					CourtDetail: CourtDetail{
@@ -121,19 +112,9 @@ func TestCourt_Parts(t *testing.T) {
 						},
 						Count: 1,
 					},
-					Refund: &RefundMulCourtIncome{
-						ID: 1,
-						DbCourtDetail: DbCourtDetail{
-							CourtDetail: CourtDetail{
-								TimeRange: util.TimeRange{
-									From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
-									To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
-								},
-								Count: 1,
-							},
-						},
-					},
-					isPay: false,
+					RefundID:     util.GetIntP(1),
+					RefundIncome: nil,
+					isPay:        false,
 				},
 				{
 					CourtDetail: CourtDetail{
@@ -143,19 +124,9 @@ func TestCourt_Parts(t *testing.T) {
 						},
 						Count: 1,
 					},
-					Refund: &RefundMulCourtIncome{
-						ID: 1,
-						DbCourtDetail: DbCourtDetail{
-							CourtDetail: CourtDetail{
-								TimeRange: util.TimeRange{
-									From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
-									To:   commonLogic.NewHourMinTime(4, 0).ForceTime(),
-								},
-								Count: 1,
-							},
-						},
-					},
-					isPay: false,
+					RefundID:     util.GetIntP(1),
+					RefundIncome: nil,
+					isPay:        false,
 				},
 				{
 					CourtDetail: CourtDetail{
@@ -165,19 +136,9 @@ func TestCourt_Parts(t *testing.T) {
 						},
 						Count: 2,
 					},
-					Refund: &RefundMulCourtIncome{
-						ID: 1,
-						DbCourtDetail: DbCourtDetail{
-							CourtDetail: CourtDetail{
-								TimeRange: util.TimeRange{
-									From: commonLogic.NewHourMinTime(3, 0).ForceTime(),
-									To:   commonLogic.NewHourMinTime(4, 0).ForceTime(),
-								},
-								Count: 2,
-							},
-						},
-					},
-					isPay: false,
+					RefundID:     util.GetIntP(1),
+					RefundIncome: nil,
+					isPay:        false,
 				},
 			},
 		},

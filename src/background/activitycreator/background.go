@@ -174,7 +174,7 @@ func calActivitys(
 					pricePerHour := courtDetail.PricePerHour
 					units := court.Parts()
 					for _, v := range units {
-						if v.Refund != nil {
+						if v.IsRefund() {
 							continue
 						}
 						newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonCourtLogicDomain.ActivityCourt{

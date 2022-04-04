@@ -103,9 +103,10 @@ func (c *Court) Parts() (resultCourts []*CourtUnit) {
 			}
 
 			refundUnit := &CourtUnit{
-				CourtDetail: refund.CourtDetail,
-				Refund:      refund,
-				isPay:       isPay,
+				CourtDetail:  refund.CourtDetail,
+				RefundID:     util.GetIntP(refund.ID),
+				RefundIncome: refund.Income,
+				isPay:        isPay,
 			}
 			resultCourts = append(resultCourts, refundUnit)
 		}
@@ -137,13 +138,18 @@ func (c *Court) Parts() (resultCourts []*CourtUnit) {
 
 type CourtUnit struct {
 	CourtDetail
-	Refund *RefundMulCourtIncome
-	isPay  bool
+	RefundID     *int
+	RefundIncome *Income
+	isPay        bool
+}
+
+func (c *CourtUnit) IsRefund() bool {
+	return c.RefundID != nil
 }
 
 func (c *CourtUnit) GetStatus() (status domain.RentalCourtsStatus) {
 	isPay := c.isPay
-	isRefund := c.Refund != nil
+	isRefund := c.IsRefund()
 	if isRefund {
 		status = GetStatus(isPay, isRefund)
 	} else {
@@ -154,11 +160,11 @@ func (c *CourtUnit) GetStatus() (status domain.RentalCourtsStatus) {
 }
 
 func (c *CourtUnit) GetRefundDate() (refundDate *util.DateTime) {
-	isRefund := c.Refund != nil
+	isRefund := c.IsRefund()
 	if isRefund {
-		isPay := c.Refund.Income != nil
+		isPay := c.RefundIncome != nil
 		if isPay {
-			refundDate = &c.Refund.Income.PayDate
+			refundDate = &c.RefundIncome.PayDate
 		}
 	}
 

@@ -2,7 +2,6 @@ package util
 
 import (
 	"sort"
-	"time"
 )
 
 func NewPAscTimeRanges(timeRanges []*TimeRange) (result AscTimeRanges) {
@@ -140,40 +139,79 @@ func (trs AscTimeRanges) Sub(t TimeRange) (newTimeRanges AscTimeRanges) {
 
 func (trs AscTimeRanges) CombineByCount() (countAscTimeRangesMap map[int]AscTimeRanges) {
 	countAscTimeRangesMap = make(map[int]AscTimeRanges)
+	if len(trs) == 0 {
+		return
+	}
 
-	var targetFrom *time.Time
-	for i := 0; i < len(trs); {
-		timeRange := trs[i]
-		targetTo := timeRange.To
-		if targetFrom == nil {
-			targetFrom = &timeRange.From
-		}
-		sameFromIndex := i
-		nextRunI := sameFromIndex + 1
-		for ; sameFromIndex+1 < len(trs); sameFromIndex++ {
-			nextIndex := sameFromIndex + 1
-			next := trs[nextIndex]
-			if next.From.Equal(*targetFrom) {
-				if isSameTo := !next.To.After(targetTo); isSameTo {
-					nextRunI = nextIndex + 1
-				}
-				continue
+	currentTimeRange := trs[0]
+	currentTargetTo := currentTimeRange.To
+	currentTargetFrom := &currentTimeRange.From
+
+	// 下個時間區間要加上的資料
+	nextAscTrs := NewAscTimeRanges(make([]TimeRange, 0))
+	nextFromIndex := 1
+	for ; nextFromIndex < len(trs); nextFromIndex++ {
+		nextIndex := nextFromIndex
+		next := trs[nextIndex]
+		if !next.From.After(*currentTargetFrom) {
+			// 相同起始時間
+			if isNotSame := next.To.After(currentTargetTo); isNotSame {
+				// 不同截止時間
+				nextAscTrs = append(nextAscTrs, TimeRange{
+					From: currentTargetTo,
+					To:   next.To,
+				})
 			}
-			break
+			continue
 		}
 
-		count := sameFromIndex - i + 1
+		if next.From.Before(currentTargetTo) {
+			// 下個起始時間會切開目前的時間區間
+			// 使用到最後所使用新截止時間切剩的
+			currentTargetTo = next.From
+
+			othersTimeRanges := make([]TimeRange, 0)
+			// 下一批起始時間的資料先排序
+			nextFromsTimeRanges := make([]TimeRange, 0)
+			for _, v := range trs[0:nextFromIndex] {
+				v.From = next.From
+				nextFromsTimeRanges = append(nextFromsTimeRanges, v)
+			}
+			for _, v := range trs[nextFromIndex:] {
+				if v.From.After(next.From) {
+					// 尚未計算的
+					othersTimeRanges = append(othersTimeRanges, v)
+					continue
+				}
+				nextFromsTimeRanges = append(nextFromsTimeRanges, v)
+			}
+			nextAscTrs = NewAscTimeRanges(nextFromsTimeRanges)
+
+			// 加上尚未計算的
+			nextAscTrs = append(nextAscTrs, othersTimeRanges...)
+		}
+
+		break
+	}
+
+	count := nextFromIndex
+	_, exist := countAscTimeRangesMap[count]
+	if !exist {
+		countAscTimeRangesMap[count] = make(AscTimeRanges, 0)
+	}
+	countAscTimeRangesMap[count] = append(countAscTimeRangesMap[count], TimeRange{
+		From: *currentTargetFrom,
+		To:   currentTargetTo,
+	})
+
+	// 加上下個時間區間要的資料
+	m := nextAscTrs.CombineByCount()
+	for count, v := range m {
 		_, exist := countAscTimeRangesMap[count]
 		if !exist {
 			countAscTimeRangesMap[count] = make(AscTimeRanges, 0)
 		}
-		countAscTimeRangesMap[count] = append(countAscTimeRangesMap[count], TimeRange{
-			From: *targetFrom,
-			To:   timeRange.To,
-		})
-
-		targetFrom = &timeRange.To
-		i = nextRunI
+		countAscTimeRangesMap[count] = append(countAscTimeRangesMap[count], v...)
 	}
 
 	return

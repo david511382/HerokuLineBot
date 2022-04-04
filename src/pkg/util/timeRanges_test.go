@@ -107,3 +107,88 @@ func TestAscTimeRanges_Append(t *testing.T) {
 		})
 	}
 }
+
+func TestAscTimeRanges_CombineByCount(t *testing.T) {
+	type migrations struct {
+		trs AscTimeRanges
+	}
+	type wants struct {
+		countAscTimeRangesMap map[int]AscTimeRanges
+	}
+	tests := []struct {
+		name string
+		migrations
+		wants
+	}{
+		{
+			"總測試",
+			migrations{
+				trs: NewAscTimeRanges(
+					[]TimeRange{
+						{
+							From: *GetTimePLoc(nil, 2013, 8, 2, 0),
+							To:   *GetTimePLoc(nil, 2013, 8, 2, 5),
+						},
+						{
+							From: *GetTimePLoc(nil, 2013, 8, 2, 0),
+							To:   *GetTimePLoc(nil, 2013, 8, 2, 6),
+						},
+						{
+							From: *GetTimePLoc(nil, 2013, 8, 2, 1),
+							To:   *GetTimePLoc(nil, 2013, 8, 2, 4),
+						},
+						{
+							From: *GetTimePLoc(nil, 2013, 8, 2, 2),
+							To:   *GetTimePLoc(nil, 2013, 8, 2, 3),
+						},
+					},
+				),
+			},
+			wants{
+				map[int]AscTimeRanges{
+					1: {
+						{
+							From: *GetTimePLoc(nil, 2013, 8, 2, 5),
+							To:   *GetTimePLoc(nil, 2013, 8, 2, 6),
+						},
+					},
+					2: {
+						{
+							From: *GetTimePLoc(nil, 2013, 8, 2, 0),
+							To:   *GetTimePLoc(nil, 2013, 8, 2, 1),
+						},
+						{
+							From: *GetTimePLoc(nil, 2013, 8, 2, 4),
+							To:   *GetTimePLoc(nil, 2013, 8, 2, 5),
+						},
+					},
+					3: {
+						{
+							From: *GetTimePLoc(nil, 2013, 8, 2, 1),
+							To:   *GetTimePLoc(nil, 2013, 8, 2, 2),
+						},
+						{
+							From: *GetTimePLoc(nil, 2013, 8, 2, 3),
+							To:   *GetTimePLoc(nil, 2013, 8, 2, 4),
+						},
+					},
+					4: {
+						{
+							From: *GetTimePLoc(nil, 2013, 8, 2, 2),
+							To:   *GetTimePLoc(nil, 2013, 8, 2, 3),
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotCountAscTimeRangesMap := tt.migrations.trs.CombineByCount()
+			if ok, msg := Comp(gotCountAscTimeRangesMap, tt.wants.countAscTimeRangesMap); !ok {
+				t.Error(msg)
+				return
+			}
+		})
+	}
+}
