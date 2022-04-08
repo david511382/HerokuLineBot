@@ -654,12 +654,16 @@ func (b *registeCompany) GetNotifyRegisterContents(name string) ([]interface{}, 
 			name,
 			nil,
 		),
-		GetKeyValueEditComponent(
-			"員工編號",
-			*b.CompanyID,
-			nil,
-		),
 	)
+	if b.CompanyID != nil {
+		contents = append(contents,
+			GetKeyValueEditComponent(
+				"員工編號",
+				*b.CompanyID,
+				nil,
+			),
+		)
+	}
 
 	pathValueMap := make(map[string]interface{})
 	pathValueMap["ICmdLogic.member_id"] = b.MemberID
