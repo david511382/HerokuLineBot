@@ -11,7 +11,7 @@ type ErrorInfos struct {
 	errInfos []IError
 }
 
-func newErrInfos() *ErrorInfos {
+func NewErrInfos() *ErrorInfos {
 	return &ErrorInfos{
 		attrsMap: make(map[string]interface{}),
 		errInfos: make([]IError, 0),
@@ -33,6 +33,10 @@ func (eis *ErrorInfos) Errors() []IError {
 
 func (eis *ErrorInfos) Attr(name string, value interface{}) {
 	eis.attrsMap[name] = value
+}
+
+func (eis *ErrorInfos) GetAttrs() map[string]interface{} {
+	return eis.attrsMap
 }
 
 func (eis *ErrorInfos) AppendMessage(msg string) {

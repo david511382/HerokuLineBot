@@ -15,14 +15,14 @@ func NewConsoleLogWriter(out io.Writer) *zerolog.ConsoleWriter {
 			if !ok {
 				s = ""
 			}
-			return fmt.Sprintf("%s=%s", zerolog.LevelFieldName, s)
+			return fmt.Sprintf("%s=%s", LevelFieldName, s)
 		},
 		FormatMessage: func(i interface{}) string {
 			s, ok := i.(string)
 			if !ok {
 				s = ""
 			}
-			return fmt.Sprintf("%s=%s", zerolog.MessageFieldName, s)
+			return fmt.Sprintf("%s=%s", MessageFieldName, s)
 		},
 		FormatTimestamp: func(i interface{}) string { return "" },
 	}

@@ -9,6 +9,7 @@ import (
 
 var (
 	DefaultWriter func(out io.Writer) io.Writer = func(out io.Writer) io.Writer {
+		// 格式 a=1 b=2
 		return NewConsoleLogWriter(out)
 	}
 )

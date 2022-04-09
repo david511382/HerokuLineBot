@@ -73,7 +73,7 @@ func NewErrorMsg(datas ...interface{}) *ErrorInfo {
 
 func (ei *ErrorInfo) SetLogger(logger *zerolog.Logger) *zerolog.Logger {
 	log := logger.Hook(zerolog.HookFunc(func(e *zerolog.Event, level zerolog.Level, message string) {
-		for k, v := range ei.attrsMap {
+		for k, v := range ei.GetAttrs() {
 			e = e.Interface(k, v)
 		}
 	}))
@@ -87,10 +87,7 @@ func (ei *ErrorInfo) WriteLog(logger *zerolog.Logger) {
 
 func (ei *ErrorInfo) writeEventLog(logger zerolog.Logger) {
 	e := logger.WithLevel(ei.GetLevel())
-	ei.Attr(zerolog.MessageFieldName, fmt.Sprintf(`"%s"`, ei.RawError()))
-	ei.Attr("line", ei.logLine)
 	e.Send()
-	delete(ei.attrsMap, zerolog.MessageFieldName)
 }
 
 func (ei *ErrorInfo) Write(p []byte) (n int, err error) {
@@ -101,10 +98,10 @@ func (ei *ErrorInfo) Write(p []byte) (n int, err error) {
 
 func (ei *ErrorInfo) Append(errInfo IError) IError {
 	if errInfo == nil {
-		return nil
+		return ei
 	}
 
-	var result IError = newErrInfos()
+	var result IError = NewErrInfos()
 	if ei != nil {
 		result = result.Append(ei)
 	}
@@ -121,6 +118,20 @@ func (ei *ErrorInfo) Attr(name string, value interface{}) {
 	}
 
 	ei.attrsMap[name] = value
+}
+
+func (ei *ErrorInfo) GetAttrs() map[string]interface{} {
+	if ei == nil {
+		return nil
+	}
+
+	result := make(map[string]interface{})
+	for k, v := range ei.attrsMap {
+		result[k] = v
+	}
+	result[MessageFieldName] = ei.RawError()
+	result[LogLineFieldName] = ei.logLine
+	return result
 }
 
 func (ei *ErrorInfo) AppendMessage(msg string) {

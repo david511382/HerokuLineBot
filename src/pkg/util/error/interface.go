@@ -8,6 +8,7 @@ type IError interface {
 	Append(errInfo IError) IError
 	Attr(name string, value interface{})
 	AppendMessage(msg string)
+	GetAttrs() map[string]interface{}
 
 	ILevelError
 }
