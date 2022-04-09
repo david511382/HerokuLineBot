@@ -34,7 +34,7 @@ func AuthorizeToken(tokenVerifier domain.ITokenVerifier, require bool) gin.Handl
 					} else {
 						errInfo.SetLevel(zerolog.InfoLevel)
 					}
-					logger.LogError(common.GetLogName(c), errInfo)
+					logger.LogError(logger.NAME_API, errInfo)
 				}
 				c.Set(domain.KEY_JWT_CLAIMS, claims)
 				exist = true

@@ -35,7 +35,7 @@ func Logger() gin.HandlerFunc {
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
 		resultErrInfo := errUtil.New(
-			"API Log",
+			"API LOG",
 			zerolog.InfoLevel,
 		)
 		if bs, err := ioutil.ReadAll(c.Request.Body); err == nil {
@@ -75,6 +75,6 @@ func Logger() gin.HandlerFunc {
 			}
 		}
 
-		logger.LogError(common.GetLogName(c), resultErrInfo)
+		logger.LogError(logger.NAME_API, resultErrInfo)
 	}
 }
