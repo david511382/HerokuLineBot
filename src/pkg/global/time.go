@@ -27,14 +27,14 @@ func (t *TimeUtil) GetLocation() *time.Location {
 	if t.location == nil {
 		timeZone := bootstrap.DEFAULT_IANA_ZONE
 		if cfg, errInfo := bootstrap.Get(); errInfo != nil {
-			logger.Log("system", errInfo)
+			logger.LogError(logger.NAME_SYSTEM, errInfo)
 		} else {
 			timeZone = cfg.Var.TimeZone
 		}
 
 		loc, err := time.LoadLocation(timeZone)
 		if err != nil {
-			logger.Log("system", err)
+			logger.LogError(logger.NAME_SYSTEM, err)
 		}
 		t.location = loc
 	}

@@ -75,6 +75,6 @@ func Logger() gin.HandlerFunc {
 			}
 		}
 
-		logger.Log(common.GetLogName(c), resultErrInfo)
+		logger.LogError(common.GetLogName(c), resultErrInfo)
 	}
 }

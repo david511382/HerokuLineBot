@@ -50,8 +50,7 @@ func (w *BaseScheduleWsConnJob) Run(wsSender ws.IWsSender) {
 			return
 		}
 
-		errName := fmt.Sprintf("API %s", w.c.Request.URL.String())
-		logger.Log(errName, errInfo)
+		logger.LogError(logger.NAME_API, errInfo)
 	}
 
 	resultBs, err := json.Marshal(result)
@@ -92,20 +91,18 @@ func (w *BaseScheduleWsConnJob) Listen(wsSender ws.IWsSender, wsMsg *ws.WsConnRe
 }
 
 func (w *BaseScheduleWsConnJob) Error(wsSender ws.IWsSender, errInfo errUtil.IError) {
-	errName := fmt.Sprintf("API %s", w.c.Request.URL.String())
-
 	result := resp.Base{
 		Message: errInfo.Error(),
 	}
 	resultBs, err := json.Marshal(result)
 	if err != nil {
-		logger.Log(errName, errUtil.New(result.Message))
-		logger.Log(errName, errUtil.NewError(err))
+		logger.LogError(logger.NAME_API, errUtil.New(result.Message))
+		logger.LogError(logger.NAME_API, errUtil.NewError(err))
 		return
 	}
 
 	if err := wsSender.Send(websocket.TextMessage, resultBs); err != nil {
-		logger.Log(errName, errUtil.NewError(err))
+		logger.LogError(logger.NAME_API, errUtil.NewError(err))
 		return
 	}
 }

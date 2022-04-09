@@ -5,17 +5,20 @@ import (
 	"heroku-line-bot/src/model"
 	lokiService "heroku-line-bot/src/pkg/service/loki"
 	errUtil "heroku-line-bot/src/pkg/util/error"
+	"io"
 	"strconv"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 type lokiLoggerHandler struct {
-	service *lokiService.Loki
+	service   *lokiService.Loki
+	writeName string
 }
 
-func NewLokiLogger() *lokiLoggerHandler {
-	cfg, errInfo := bootstrap.Get()
-	if errInfo != nil || cfg.Loki.Url == "" {
+func NewLokiLogger(cfg *bootstrap.Config) *lokiLoggerHandler {
+	if cfg.Loki.Url == "" {
 		return nil
 	}
 
@@ -24,6 +27,13 @@ func NewLokiLogger() *lokiLoggerHandler {
 	}
 }
 
+// 使用 IErrorHandler 可以在錯誤時，用下個 logger 打印
+func (lh lokiLoggerHandler) GetWriter(name string, level zerolog.Level) io.Writer {
+	lh.writeName = name
+	return lh
+}
+
+// 需要設置 writeName 才可以用，不會直接暴露使用
 func (lh lokiLoggerHandler) Write(p []byte) (n int, resultErr error) {
 	n = len(p)
 
@@ -32,12 +42,14 @@ func (lh lokiLoggerHandler) Write(p []byte) (n int, resultErr error) {
 
 	type Lable struct {
 		Project string `json:"project"`
+		Name    string `json:"name"`
 	}
 	reqs := model.Reqs_Service_LokiSend{
 		Streams: []*model.Reqs_Service_LokiSendStream{
 			{
 				Stream: Lable{
-					Project: "heroku-line-bot",
+					Project: "khalifa",
+					Name:    lh.writeName,
 				},
 				Values: [][]string{
 					{ti, string(p)},

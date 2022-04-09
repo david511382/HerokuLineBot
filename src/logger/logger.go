@@ -8,35 +8,68 @@ import (
 	"github.com/rs/zerolog"
 )
 
+type ILogger interface {
+	Log(name string, err error)
+}
+
+type IWriterCreator interface {
+	GetWriter(name string, level zerolog.Level) io.Writer
+}
+
 type Logger struct {
-	logger *zerolog.Logger
+	logger        *zerolog.Logger
+	writer        io.Writer
+	writerCreator IWriterCreator
 }
 
-func newLogger(w io.Writer) ILogger {
-	loggerWriter, ok := w.(ILogger)
-	if ok {
-		return loggerWriter
+// 用 zerolog.Event 實作 Log(name string, err error)
+func newLogger(writer io.Writer) *Logger {
+	if writer == nil {
+		writer = os.Stdout
 	}
-
-	if w == nil {
-		w = os.Stdout
-	}
-	logger := getLogger(w)
-	return newLoggerByLogger(logger)
-}
-
-func newLoggerByLogger(logger zerolog.Logger) ILogger {
+	logger := getLogger(writer)
 	return &Logger{
 		logger: &logger,
+		writer: writer,
 	}
 }
 
-func (lh Logger) log(name string, err error) {
-	logger := lh.logger.With().Str("name", name).Logger()
+// 用 zerolog.Event 實作 Log(name string, err error)
+func newLoggerWithWriterCreator(writerCreator IWriterCreator) ILogger {
+	return &Logger{
+		writerCreator: writerCreator,
+	}
+}
+
+func (lh Logger) Write(p []byte) (n int, err error) {
+	if lh.writer == nil {
+		return
+	}
+	return lh.writer.Write(p)
+}
+
+func (lh Logger) Log(name string, err error) {
+	isWriterCreator := lh.writerCreator != nil
+	if isWriterCreator {
+		level := zerolog.ErrorLevel
+		{
+			levelErr, ok := err.(errUtil.ILevelError)
+			if ok {
+				level = levelErr.GetLevel()
+			}
+		}
+		writer := lh.writerCreator.GetWriter(name, level)
+		lh = *newLogger(writer)
+	}
+
+	ctx := lh.logger.With()
+	if !isWriterCreator {
+		ctx = ctx.Str("name", name)
+	}
+	logger := ctx.Logger()
 	loggerP := &logger
 
-	loggerWriter, ok := err.(errUtil.ILoggerWriter)
-	if ok {
+	if loggerWriter, ok := err.(errUtil.ILoggerWriter); ok {
 		loggerWriter.WriteLog(loggerP)
 		return
 	}
@@ -51,6 +84,10 @@ func (lh Logger) log(name string, err error) {
 	errInfo, ok := err.(errUtil.IError)
 	if !ok {
 		errInfo = errUtil.NewError(err)
+		if loggerWriter, ok := errInfo.(errUtil.ILoggerWriter); ok {
+			loggerWriter.WriteLog(loggerP)
+			return
+		}
 	}
 
 	if msg := errInfo.Error(); msg != "" {

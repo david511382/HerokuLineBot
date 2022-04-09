@@ -79,7 +79,7 @@ func (b ParamHandler) GetInputTemplate() (resultMessages interface{}) {
 		GetCancelInputMode().
 		GetSignal()
 	if errInfo != nil {
-		logger.Log("line bot club", errInfo)
+		logger.LogError(logger.NAME_LINE, errInfo)
 		return
 	}
 

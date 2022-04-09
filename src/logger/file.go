@@ -4,40 +4,58 @@ import (
 	"fmt"
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/pkg/util"
-	errUtil "heroku-line-bot/src/pkg/util/error"
+	"io"
 	"os"
+	"sync"
+
+	"github.com/rs/zerolog"
 )
 
 type fileLoggerHandler struct {
-	folder string
+	folder           string
+	writeName        string
+	once             *sync.Once
+	createFolderFail error
 }
 
-func NewFileLogger() *fileLoggerHandler {
-	cfg, errInfo := bootstrap.Get()
-	if errInfo != nil || cfg.Var.LogDir == "" {
+func NewFileLogger(cfg *bootstrap.Config) *fileLoggerHandler {
+	if cfg.Var.LogDir == "" {
 		return nil
 	}
 
 	return &fileLoggerHandler{
 		folder: cfg.Var.LogDir,
+		once:   new(sync.Once),
 	}
 }
 
-func (lh fileLoggerHandler) log(name string, writeErr error) {
-	if err := util.MakeFolderOn(lh.folder); err != nil {
-		handleErr(errUtil.NewError(err))
+func (lh *fileLoggerHandler) GetWriter(name string, level zerolog.Level) io.Writer {
+	lh.once.Do(func() {
+		if err := util.MakeFolderOn(lh.folder); err != nil {
+			lh.createFolderFail = err
+			return
+		}
+	})
+
+	copy := *lh
+	copy.writeName = name
+	return copy
+}
+
+func (lh fileLoggerHandler) Write(p []byte) (n int, resultErr error) {
+	if lh.createFolderFail != nil {
+		resultErr = lh.createFolderFail
 		return
 	}
 
-	filename := fmt.Sprintf("%s/%s.log", lh.folder, name)
+	filename := fmt.Sprintf("%s/%s.log", lh.folder, lh.writeName)
 	f, err := os.OpenFile(filename,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		handleErr(errUtil.NewError(err))
+		resultErr = err
 		return
 	}
 	defer f.Close()
 
-	logger := newLogger(f)
-	logger.log(name, writeErr)
+	return f.Write(p)
 }

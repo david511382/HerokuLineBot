@@ -130,7 +130,7 @@ func (b *registeCompany) GetInputTemplate(attr string) (messages interface{}) {
 			GetCancelMode().
 			GetSignal()
 		if errInfo != nil {
-			logger.Log("line bot club", errInfo)
+			logger.LogError(logger.NAME_LINE, errInfo)
 			return
 		}
 
@@ -146,7 +146,7 @@ func (b *registeCompany) GetInputTemplate(attr string) (messages interface{}) {
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal()
 			if errInfo != nil {
-				logger.Log("line bot club", errInfo)
+				logger.LogError(logger.NAME_LINE, errInfo)
 				return
 			}
 			comfirmButtonComponent := GetConfirmComponent(
@@ -217,7 +217,7 @@ func (b *registeCompany) GetInputTemplate(attr string) (messages interface{}) {
 				GetCancelInputMode().
 				GetSignal()
 			if errInfo != nil {
-				logger.Log("line bot club", errInfo)
+				logger.LogError(logger.NAME_LINE, errInfo)
 				return
 			}
 			comfirmButton := linebot.GetButtonComponent(
@@ -290,7 +290,7 @@ func (b *registeCompany) GetInputTemplate(attr string) (messages interface{}) {
 			GetKeyValueInputMode(pathValueMap).
 			GetSignal()
 		if errInfo != nil {
-			logger.Log("line bot club", errInfo)
+			logger.LogError(logger.NAME_LINE, errInfo)
 			return
 		}
 		comfirmButton := linebot.GetButtonComponent(

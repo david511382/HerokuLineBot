@@ -219,7 +219,7 @@ func getCmdHandler(cmd domain.TextCmd, context clublinebotDomain.IContext) (doma
 			return nil, errInfo
 		}
 
-		logger.Log("LINE", errInfo)
+		logger.LogError(logger.NAME_LINE, errInfo)
 	}
 
 	return result, nil

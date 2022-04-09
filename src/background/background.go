@@ -79,5 +79,5 @@ func (b *Background) logErrInfo(errInfo errUtil.IError) {
 		return
 	}
 
-	logger.Log(b.name, errInfo)
+	logger.LogError(b.name, errInfo)
 }

@@ -30,7 +30,7 @@ func (b *ClubLineBot) handleFollowEvent(event *lineBotModel.FollowEvent) error {
 					return errInfo
 				}
 
-				logger.Log("LINE_BOT", errInfo)
+				logger.LogError(logger.NAME_LINE, errInfo)
 			} else if isExist = dbName != nil; isExist {
 				replyMessges = append(replyMessges,
 					linebot.GetTextMessage(fmt.Sprintf("您已註冊過，暱稱使用以前您使用的暱稱: %s，可在選單中 修改會員資料 修改", *dbName)),
@@ -46,12 +46,12 @@ func (b *ClubLineBot) handleFollowEvent(event *lineBotModel.FollowEvent) error {
 					return errInfo
 				}
 
-				logger.Log("LINE_BOT", errInfo)
+				logger.LogError(logger.NAME_LINE, errInfo)
 			}
 
 			if !isExist {
 				if errInfo := registerMember.NotifyAdmin(); errInfo != nil {
-					logger.Log("LINE_BOT", errInfo)
+					logger.LogError(logger.NAME_LINE, errInfo)
 				}
 			}
 

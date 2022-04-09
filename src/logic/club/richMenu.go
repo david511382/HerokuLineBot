@@ -58,12 +58,9 @@ func (b *richMenu) GetInputTemplate(attr string) (messages interface{}) {
 			}
 			if js, errInfo := NewSignal().
 				GetRunOnceMode().
-				//	GetCancelInputMode().
-				// if js, errInfo := b.context.
-				// 	GetCmdInputMode(nil).
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
-				logger.Log("line bot club", errInfo)
+				logger.LogError(logger.NAME_LINE, errInfo)
 				return
 			} else {
 				action := linebot.GetPostBackAction(strconv.Itoa(int(role)), js)
@@ -123,10 +120,9 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 				"ICmdLogic.role": role,
 			}
 			if js, errInfo := NewSignal().
-				//GetCmdInputMode(nil).
 				GetKeyValueInputMode(pathValueMap).
 				GetSignal(); errInfo != nil {
-				logger.Log("line bot club", errInfo)
+				logger.LogError(logger.NAME_LINE, errInfo)
 				return nil
 			} else {
 				action := linebot.GetPostBackAction(strconv.Itoa(int(role)), js)
@@ -321,7 +317,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 		}
 
 		if err := b.context.DeleteParam(); err != nil {
-			logger.Log("line bot club", errUtil.NewError(err))
+			logger.LogError(logger.NAME_LINE, errUtil.NewError(err))
 		}
 	}
 	if err := b.context.Reply(messages); err != nil {

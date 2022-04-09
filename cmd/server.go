@@ -26,7 +26,7 @@ func run(cmd *cobra.Command, args []string) {
 	var resultErrInfo errUtil.IError
 	defer func() {
 		if resultErrInfo != nil {
-			logger.LogRightNow("system", resultErrInfo)
+			logger.LogError(logger.NAME_SYSTEM, resultErrInfo)
 			panic(resultErrInfo.Error())
 		}
 	}()
