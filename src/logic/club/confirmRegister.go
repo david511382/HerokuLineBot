@@ -66,7 +66,7 @@ func (b *confirmRegister) LoadRequireInputTextParam(attr, text string) (resultEr
 
 func (b *confirmRegister) LoadUsers(arg dbModel.ReqsClubMember) (confirmRegisterUsers []*confirmRegisterUser, resultErr error) {
 	confirmRegisterUsers = make([]*confirmRegisterUser, 0)
-	if dbDatas, err := database.Club.Member.Select(
+	if dbDatas, err := database.Club().Member.Select(
 		arg,
 		member.COLUMN_Name,
 		member.COLUMN_Role,
@@ -94,7 +94,7 @@ func (b *confirmRegister) LoadUsers(arg dbModel.ReqsClubMember) (confirmRegister
 func (b *confirmRegister) ConfirmDb() (resultErrInfo errUtil.IError) {
 	isChangeRole := b.isMemberAble() && b.User.Role == domain.GUEST_CLUB_ROLE
 
-	db, transaction, err := database.Club.Begin()
+	db, transaction, err := database.Club().Begin()
 	if err != nil {
 		errInfo := errUtil.NewError(err)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

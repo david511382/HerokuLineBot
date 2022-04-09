@@ -12,7 +12,7 @@ func Registe(
 	data *dbModel.ClubMember,
 ) (resultErrInfo errUtil.IError) {
 	if db == nil {
-		db = database.Club
+		db = database.Club()
 	}
 
 	if err := db.Member.Insert(data); err != nil {

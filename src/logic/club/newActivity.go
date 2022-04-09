@@ -118,7 +118,7 @@ func (b *NewActivity) LoadRequireInputTextParam(attr, text string) (resultErrInf
 		}
 		b.Date = util.DateTime(t)
 	case "ICmdLogic.place_id":
-		if dbDatas, err := database.Club.Place.Select(
+		if dbDatas, err := database.Club().Place.Select(
 			dbModel.ReqsClubPlace{
 				Name: &text,
 			},
@@ -186,7 +186,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if b.Context.IsConfirmed() {
-		db, transaction, err := database.Club.Begin()
+		db, transaction, err := database.Club().Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -353,7 +353,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 func (b *NewActivity) InsertActivity(db *clubdb.Database) (resultErrInfo errUtil.IError) {
 	courtsStr := b.getCourtsStr()
 	if db == nil {
-		dbConn, transaction, err := database.Club.Begin()
+		dbConn, transaction, err := database.Club().Begin()
 		if err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return

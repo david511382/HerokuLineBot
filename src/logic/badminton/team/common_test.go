@@ -131,10 +131,10 @@ func TestLoad(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club.Team.MigrationData(tt.migrations.team...); err != nil {
+			if err := database.Club().Team.MigrationData(tt.migrations.team...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club.Member.MigrationData(tt.migrations.member...); err != nil {
+			if err := database.Club().Member.MigrationData(tt.migrations.member...); err != nil {
 				t.Fatal(err.Error())
 			}
 			if err := redis.Badminton.BadmintonTeam.Migration(tt.migrations.redisTeamIDPlaceMap); err != nil {

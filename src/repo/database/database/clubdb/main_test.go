@@ -5,6 +5,8 @@ import (
 	"heroku-line-bot/src/repo/database/conn"
 	"os"
 	"testing"
+
+	"gorm.io/gorm"
 )
 
 var (
@@ -23,10 +25,19 @@ func TestMain(m *testing.M) {
 	if errInfo != nil {
 		panic(errInfo.Error())
 	}
-	if connection, err := conn.Connect(cfg.ClubDb); err != nil {
+	var err error
+	db, err = NewDatabase(func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
+		connection, err := conn.Connect(cfg.ClubDb)
+		if err != nil {
+			resultErr = err
+			return
+		}
+		master = connection
+		slave = connection
+		return
+	})
+	if err != nil {
 		panic(err)
-	} else {
-		db = NewDatabase(connection, connection)
 	}
 
 	exitVal := m.Run()

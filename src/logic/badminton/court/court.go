@@ -43,7 +43,7 @@ func GetCourts(
 	courtIDTeamDetailIDCourtsMap := make(map[int]map[int]map[int][]*Court)
 	courtIDs := make([]int, 0)
 	courtIDMap := make(map[int]*dbModel.ClubRentalCourt)
-	if dbDatas, err := database.Club.RentalCourt.Select(dbModel.ReqsClubRentalCourt{
+	if dbDatas, err := database.Club().RentalCourt.Select(dbModel.ReqsClubRentalCourt{
 		Date: dbModel.Date{
 			FromDate: fromDate.TimeP(),
 			ToDate:   toDate.TimeP(),
@@ -68,7 +68,7 @@ func GetCourts(
 	ledgerIDs := make([]int, 0)
 	ledgerCourtMap := make(map[int][]int)
 	courtLedgerMap := make(map[int][]int)
-	if dbDatas, err := database.Club.RentalCourtLedgerCourt.Select(dbModel.ReqsClubRentalCourtLedgerCourt{
+	if dbDatas, err := database.Club().RentalCourtLedgerCourt.Select(dbModel.ReqsClubRentalCourtLedgerCourt{
 		TeamID:         teamID,
 		RentalCourtIDs: courtIDs,
 	}); err != nil {
@@ -95,7 +95,7 @@ func GetCourts(
 	detailIDMap := make(map[int]*CourtDetail)
 	incomeIDMap := make(map[int]*dbModel.ClubIncome)
 	balanceLedgerIDMap := make(map[int]*dbModel.ClubRentalCourtLedger)
-	if dbDatas, err := database.Club.RentalCourtLedger.Select(dbModel.ReqsClubRentalCourtLedger{
+	if dbDatas, err := database.Club().RentalCourtLedger.Select(dbModel.ReqsClubRentalCourtLedger{
 		IDs: ledgerIDs,
 	}); err != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
@@ -120,7 +120,7 @@ func GetCourts(
 	}
 
 	ledgerCourtRefundMap := make(map[int]map[int][]*dbModel.ClubRentalCourtRefundLedger)
-	if dbDatas, err := database.Club.RentalCourtRefundLedger.Select(dbModel.ReqsClubRentalCourtRefundLedger{
+	if dbDatas, err := database.Club().RentalCourtRefundLedger.Select(dbModel.ReqsClubRentalCourtRefundLedger{
 		LedgerIDs: ledgerIDs,
 	}); err != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
@@ -152,7 +152,7 @@ func GetCourts(
 	for detailID := range detailIDMap {
 		detailIDs = append(detailIDs, detailID)
 	}
-	if dbDatas, err := database.Club.RentalCourtDetail.Select(dbModel.ReqsClubRentalCourtDetail{
+	if dbDatas, err := database.Club().RentalCourtDetail.Select(dbModel.ReqsClubRentalCourtDetail{
 		IDs: detailIDs,
 	}); err != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
@@ -186,7 +186,7 @@ func GetCourts(
 		incomeIDs = append(incomeIDs, incomeID)
 	}
 	if len(incomeIDs) > 0 {
-		if dbDatas, err := database.Club.Income.Select(dbModel.ReqsClubIncome{
+		if dbDatas, err := database.Club().Income.Select(dbModel.ReqsClubIncome{
 			IDs: incomeIDs,
 		}); err != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
@@ -428,7 +428,7 @@ func AddCourt(
 				endDate = t
 			}
 		}
-		dbDatas, err := database.Club.RentalCourt.Select(dbModel.ReqsClubRentalCourt{
+		dbDatas, err := database.Club().RentalCourt.Select(dbModel.ReqsClubRentalCourt{
 			Dates:   dates,
 			PlaceID: &placeID,
 		},
@@ -459,7 +459,7 @@ func AddCourt(
 	var rentalCourtDetailID *int
 	{
 		from, to := courtDetail.GetTime()
-		dbDatas, err := database.Club.RentalCourtDetail.Select(dbModel.ReqsClubRentalCourtDetail{
+		dbDatas, err := database.Club().RentalCourtDetail.Select(dbModel.ReqsClubRentalCourtDetail{
 			StartTime: util.GetStringP(string(from)),
 			EndTime:   util.GetStringP(string(to)),
 			Count:     &courtDetail.Count,
@@ -559,7 +559,7 @@ func AddCourt(
 	}
 
 	{
-		db, transaction, err := database.Club.Begin()
+		db, transaction, err := database.Club().Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

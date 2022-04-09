@@ -15,9 +15,9 @@ var (
 )
 
 func Init() errUtil.IError {
-	cfg, errInfo := bootstrap.Get()
-	if errInfo != nil {
-		return errInfo
+	cfg, err := bootstrap.Get()
+	if err != nil {
+		return errUtil.NewError(err)
 	}
 
 	serverRouter = router.SystemRouter(cfg)

@@ -5,15 +5,15 @@ import (
 )
 
 func (t RentalCourtRefundLedger) Insert(datas ...*dbModel.ClubRentalCourtRefundLedger) error {
-	return t.BaseTable.Insert(datas)
+	return t.IBaseTable.Insert(datas)
 }
 
 func (t RentalCourtRefundLedger) MigrationData(datas ...*dbModel.ClubRentalCourtRefundLedger) error {
-	return t.BaseTable.MigrationData(len(datas), datas)
+	return t.IBaseTable.MigrationData(len(datas), datas)
 }
 
 func (t RentalCourtRefundLedger) Delete(arg dbModel.ReqsClubRentalCourtRefundLedger) error {
-	return t.BaseTable.Delete(arg)
+	return t.IBaseTable.Delete(arg)
 }
 
 func (t RentalCourtRefundLedger) Select(arg dbModel.ReqsClubRentalCourtRefundLedger, columns ...Column) ([]*dbModel.ClubRentalCourtRefundLedger, error) {

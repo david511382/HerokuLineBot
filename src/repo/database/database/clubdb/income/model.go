@@ -20,12 +20,12 @@ const (
 )
 
 type Income struct {
-	*common.BaseTable
+	common.IBaseTable
 }
 
-func New(connectionCreator common.IConnectionCreator) *Income {
+func New(baseTableCreator func(table common.ITable) common.IBaseTable) *Income {
 	result := &Income{}
-	result.BaseTable = common.NewBaseTable(result, connectionCreator)
+	result.IBaseTable = baseTableCreator(result)
 	return result
 }
 

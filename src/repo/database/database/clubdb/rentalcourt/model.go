@@ -16,12 +16,12 @@ const (
 )
 
 type RentalCourt struct {
-	*common.BaseTable
+	common.IBaseTable
 }
 
-func New(connectionCreator common.IConnectionCreator) *RentalCourt {
+func New(baseTableCreator func(table common.ITable) common.IBaseTable) *RentalCourt {
 	result := &RentalCourt{}
-	result.BaseTable = common.NewBaseTable(result, connectionCreator)
+	result.IBaseTable = baseTableCreator(result)
 	return result
 }
 

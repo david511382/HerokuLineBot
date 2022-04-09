@@ -9,15 +9,15 @@ import (
 )
 
 func (t Activity) Insert(datas ...*dbModel.ClubActivity) error {
-	return t.BaseTable.Insert(datas)
+	return t.IBaseTable.Insert(datas)
 }
 
 func (t Activity) MigrationData(datas ...*dbModel.ClubActivity) error {
-	return t.BaseTable.MigrationData(len(datas), datas)
+	return t.IBaseTable.MigrationData(len(datas), datas)
 }
 
 func (t Activity) Delete(arg dbModel.ReqsClubActivity) error {
-	return t.BaseTable.Delete(arg)
+	return t.IBaseTable.Delete(arg)
 }
 
 func (t Activity) Update(trans *gorm.DB, arg dbModel.ReqsClubActivityUpdate) error {
@@ -38,7 +38,7 @@ func (t Activity) Update(trans *gorm.DB, arg dbModel.ReqsClubActivityUpdate) err
 		fields[string(COLUMN_GuestFee)] = *p
 	}
 
-	return t.BaseTable.Update(arg.ReqsClubActivity, fields)
+	return t.IBaseTable.Update(arg.ReqsClubActivity, fields)
 }
 
 func (t Activity) Select(arg dbModel.ReqsClubActivity, columns ...Column) ([]*dbModel.ClubActivity, error) {

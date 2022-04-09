@@ -188,7 +188,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 			switch role {
 			case domain.ADMIN_CLUB_ROLE, domain.CADRE_CLUB_ROLE:
 				lineIDs := []string{}
-				if dbDatas, err := database.Club.Member.Select(
+				if dbDatas, err := database.Club().Member.Select(
 					dbModel.ReqsClubMember{
 						Role: util.GetInt16P(int16(role)),
 					},

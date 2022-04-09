@@ -8,40 +8,77 @@ import (
 	"heroku-line-bot/src/repo/database/database/clubdb"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 var (
-	Club *clubdb.Database
+	club *clubdb.Database
 )
 
-func Init(cfg *bootstrap.Config) errUtil.IError {
-	maxIdleConns := cfg.DbConfig.MaxIdleConns
-	maxOpenConns := cfg.DbConfig.MaxOpenConns
-	maxLifeHour := cfg.DbConfig.MaxLifeHour
+func Club() *clubdb.Database {
+	if club == nil {
+		db, err := clubdb.NewDatabase(
+			func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
+				return connect(func(cfg *bootstrap.Config) bootstrap.Db {
+					return cfg.ClubDb
+				})
+			},
+		)
+		if err != nil {
+			return db
+		}
+
+		club = db
+	}
+	return club
+}
+
+func connect(configSelector func(cfg *bootstrap.Config) bootstrap.Db) (master, slave *gorm.DB, resultErr error) {
+	cfg, err := bootstrap.Get()
+	if err != nil {
+		resultErr = err
+		return
+	}
+
+	dbCfg := configSelector(cfg)
+	master, resultErr = conn.Connect(dbCfg)
+	if resultErr != nil {
+		return
+	}
+	setConnect(cfg.DbConfig, master)
+
+	slave, resultErr = conn.Connect(dbCfg)
+	if resultErr != nil {
+		return
+	}
+	setConnect(cfg.DbConfig, slave)
+	return
+}
+
+func setConnect(connCfg bootstrap.DbConfig, db *gorm.DB) error {
+	maxIdleConns := connCfg.MaxIdleConns
+	maxOpenConns := connCfg.MaxOpenConns
+	maxLifeHour := connCfg.MaxLifeHour
 	maxLifetime := time.Hour * time.Duration(maxLifeHour)
 
-	// ClubDb
-	{
-		master, err := conn.Connect(cfg.ClubDb)
-		if err != nil {
-			return errUtil.NewError(err)
-		}
-		slave, err := conn.Connect(cfg.ClubDb)
-		if err != nil {
-			return errUtil.NewError(err)
-		}
-
-		Club = clubdb.NewDatabase(master, slave)
-		if errInfo := Club.SetConnection(maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
-			return errInfo
-		}
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
 	}
+
+	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
+	sqlDB.SetMaxIdleConns(maxIdleConns)
+	// SetMaxOpenConns sets the maximum number of open connections to the database.
+	sqlDB.SetMaxOpenConns(maxOpenConns)
+	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+	sqlDB.SetConnMaxLifetime(maxLifetime)
 
 	return nil
 }
 
 func Dispose() {
-	Club.Dispose()
+	club.Dispose()
 }
 
 func IsUniqErr(err error) bool {

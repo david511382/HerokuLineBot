@@ -465,22 +465,22 @@ func TestGetCourts(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club.RentalCourt.MigrationData(tt.migrations.rentalCourts...); err != nil {
+			if err := database.Club().RentalCourt.MigrationData(tt.migrations.rentalCourts...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club.RentalCourtLedgerCourt.MigrationData(tt.migrations.rentalCourtLedgerCourts...); err != nil {
+			if err := database.Club().RentalCourtLedgerCourt.MigrationData(tt.migrations.rentalCourtLedgerCourts...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club.RentalCourtLedger.MigrationData(tt.migrations.rentalCourtLedgers...); err != nil {
+			if err := database.Club().RentalCourtLedger.MigrationData(tt.migrations.rentalCourtLedgers...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club.RentalCourtRefundLedger.MigrationData(tt.migrations.rentalCourtRefundLedgers...); err != nil {
+			if err := database.Club().RentalCourtRefundLedger.MigrationData(tt.migrations.rentalCourtRefundLedgers...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club.Income.MigrationData(tt.migrations.incomes...); err != nil {
+			if err := database.Club().Income.MigrationData(tt.migrations.incomes...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club.RentalCourtDetail.MigrationData(tt.migrations.rentalCourtDetail...); err != nil {
+			if err := database.Club().RentalCourtDetail.MigrationData(tt.migrations.rentalCourtDetail...); err != nil {
 				t.Fatal(err.Error())
 			}
 
@@ -776,19 +776,19 @@ func TestAddCourt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club.RentalCourt.MigrationData(tt.migrations.rentalCourts...); err != nil {
+			if err := database.Club().RentalCourt.MigrationData(tt.migrations.rentalCourts...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club.RentalCourtLedgerCourt.MigrationData(tt.migrations.rentalCourtLedgerCourts...); err != nil {
+			if err := database.Club().RentalCourtLedgerCourt.MigrationData(tt.migrations.rentalCourtLedgerCourts...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club.RentalCourtLedger.MigrationData(tt.migrations.rentalCourtLedgers...); err != nil {
+			if err := database.Club().RentalCourtLedger.MigrationData(tt.migrations.rentalCourtLedgers...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club.Income.MigrationData(tt.migrations.incomes...); err != nil {
+			if err := database.Club().Income.MigrationData(tt.migrations.incomes...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club.RentalCourtDetail.MigrationData(tt.migrations.rentalCourtDetail...); err != nil {
+			if err := database.Club().RentalCourtDetail.MigrationData(tt.migrations.rentalCourtDetail...); err != nil {
 				t.Fatal(err.Error())
 			}
 
@@ -797,7 +797,7 @@ func TestAddCourt(t *testing.T) {
 				t.Fatal(msg)
 			}
 
-			if dbDatas, err := database.Club.RentalCourt.Select(dbModel.ReqsClubRentalCourt{}); err != nil {
+			if dbDatas, err := database.Club().RentalCourt.Select(dbModel.ReqsClubRentalCourt{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -807,7 +807,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club.RentalCourtLedgerCourt.Select(dbModel.ReqsClubRentalCourtLedgerCourt{}); err != nil {
+			if dbDatas, err := database.Club().RentalCourtLedgerCourt.Select(dbModel.ReqsClubRentalCourtLedgerCourt{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -817,7 +817,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club.RentalCourtLedger.Select(dbModel.ReqsClubRentalCourtLedger{}); err != nil {
+			if dbDatas, err := database.Club().RentalCourtLedger.Select(dbModel.ReqsClubRentalCourtLedger{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -827,7 +827,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club.Income.Select(dbModel.ReqsClubIncome{}); err != nil {
+			if dbDatas, err := database.Club().Income.Select(dbModel.ReqsClubIncome{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -837,7 +837,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club.RentalCourtDetail.Select(dbModel.ReqsClubRentalCourtDetail{}); err != nil {
+			if dbDatas, err := database.Club().RentalCourtDetail.Select(dbModel.ReqsClubRentalCourtDetail{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {

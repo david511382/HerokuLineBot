@@ -64,7 +64,7 @@ func (b *GetConfirmRegisters) LoadConfirmRegisterUsers() (resultErrInfo errUtil.
 		LineIDIsNull:    util.GetBoolP(false),
 		JoinDateIsNull:  util.GetBoolP(true),
 	}
-	if dbDatas, err := database.Club.Member.Select(
+	if dbDatas, err := database.Club().Member.Select(
 		arg,
 		member.COLUMN_ID,
 		member.COLUMN_Name,

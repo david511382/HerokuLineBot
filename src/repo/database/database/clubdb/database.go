@@ -15,12 +15,10 @@ import (
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtledgercourt"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtrefundledger"
 	"heroku-line-bot/src/repo/database/database/clubdb/team"
-
-	"gorm.io/gorm"
 )
 
 type Database struct {
-	common.BaseDatabase
+	common.IBaseDatabase
 	Member                  *member.Member
 	Income                  *income.Income
 	Activity                *activity.Activity
@@ -36,37 +34,50 @@ type Database struct {
 	Team                    *team.Team
 }
 
-func NewDatabase(writeDb, readDb *gorm.DB) *Database {
+func NewDatabase(connect common.Connect) (*Database, error) {
+	writeDb, readDb, err := connect()
+
 	result := &Database{
-		BaseDatabase: *common.NewBaseDatabase(readDb, writeDb),
+		IBaseDatabase: common.NewBaseDatabase(readDb, writeDb),
 	}
-	result.Member = member.New(result)
-	result.Income = income.New(result)
-	result.Activity = activity.New(result)
-	result.ActivityFinished = activityfinished.New(result)
-	result.MemberActivity = memberactivity.New(result)
-	result.RentalCourt = rentalcourt.New(result)
-	result.RentalCourtLedgerCourt = rentalcourtledgercourt.New(result)
-	result.RentalCourtDetail = rentalcourtdetail.New(result)
-	result.RentalCourtLedger = rentalcourtledger.New(result)
-	result.RentalCourtRefundLedger = rentalcourtrefundledger.New(result)
-	result.Logistic = logistic.New(result)
-	result.Place = place.New(result)
-	result.Team = team.New(result)
-	return result
+
+	baseTableCreator := func(table common.ITable) common.IBaseTable {
+		if err != nil {
+			return common.NewErrorBaseTable(err)
+		}
+		return common.NewBaseTable(table, result)
+	}
+
+	result.Member = member.New(baseTableCreator)
+	result.Income = income.New(baseTableCreator)
+	result.Activity = activity.New(baseTableCreator)
+	result.ActivityFinished = activityfinished.New(baseTableCreator)
+	result.MemberActivity = memberactivity.New(baseTableCreator)
+	result.RentalCourt = rentalcourt.New(baseTableCreator)
+	result.RentalCourtLedgerCourt = rentalcourtledgercourt.New(baseTableCreator)
+	result.RentalCourtDetail = rentalcourtdetail.New(baseTableCreator)
+	result.RentalCourtLedger = rentalcourtledger.New(baseTableCreator)
+	result.RentalCourtRefundLedger = rentalcourtrefundledger.New(baseTableCreator)
+	result.Logistic = logistic.New(baseTableCreator)
+	result.Place = place.New(baseTableCreator)
+	result.Team = team.New(baseTableCreator)
+	return result, err
 }
 
 func (d *Database) Begin() (
 	db *Database,
 	trans common.ITransaction,
-	err error,
+	resultErr error,
 ) {
-	dp := d.GetMaster().Begin()
-	if dp.Error != nil {
-		err = dp.Error
+	trans, resultErr = d.IBaseDatabase.BeginTransaction(
+		func(connect common.Connect) (common.IBaseDatabase, error) {
+			var err error
+			db, err = NewDatabase(connect)
+			return db, err
+		},
+	)
+	if resultErr != nil {
 		return
 	}
-	db = NewDatabase(dp, d.GetSlave())
-	trans = common.NewTransaction(dp)
 	return
 }

@@ -23,12 +23,12 @@ const (
 )
 
 type Team struct {
-	*common.BaseTable
+	common.IBaseTable
 }
 
-func New(connectionCreator common.IConnectionCreator) *Team {
+func New(baseTableCreator func(table common.ITable) common.IBaseTable) *Team {
 	result := &Team{}
-	result.BaseTable = common.NewBaseTable(result, connectionCreator)
+	result.IBaseTable = baseTableCreator(result)
 	return result
 }
 

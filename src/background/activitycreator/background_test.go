@@ -363,7 +363,7 @@ func TestBackGround_Run(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club.Activity.MigrationData(tt.migrations.activity...); err != nil {
+			if err := database.Club().Activity.MigrationData(tt.migrations.activity...); err != nil {
 				t.Fatal(err.Error())
 			}
 			badmintonCourtLogic.MockGetCourts = tt.migrations.mockGetCourts
@@ -380,7 +380,7 @@ func TestBackGround_Run(t *testing.T) {
 				return
 			}
 
-			if gotDbDatas, err := database.Club.Activity.Select(dbModel.ReqsClubActivity{}); err != nil {
+			if gotDbDatas, err := database.Club().Activity.Select(dbModel.ReqsClubActivity{}); err != nil {
 				t.Error(errInfo.Error())
 				return
 			} else {

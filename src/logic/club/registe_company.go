@@ -44,7 +44,7 @@ func (b *registeCompany) GetRequireAttr() (requireAttr string, warnMessage inter
 	}
 
 	if b.IsRequireDbCheckCompanyID {
-		if count, err := database.Club.Member.Count(
+		if count, err := database.Club().Member.Count(
 			dbModel.ReqsClubMember{
 				CompanyID: b.CompanyID,
 			},
@@ -362,7 +362,7 @@ func (b *registeCompany) LoadRequireInputTextParam(attr, text string) (resultErr
 func (b *registeCompany) loadMemberInfo() (resultErrInfo errUtil.IError) {
 	if b.MemberID == nil {
 		lineID := b.context.GetUserID()
-		if dbDatas, err := database.Club.Member.Select(
+		if dbDatas, err := database.Club().Member.Select(
 			dbModel.ReqsClubMember{
 				LineID: &lineID,
 			},
@@ -417,7 +417,7 @@ func (b *registeCompany) Do(text string) (resultErrInfo errUtil.IError) {
 	b.loadMemberInfo()
 
 	if b.context.IsConfirmed() {
-		db, transaction, err := database.Club.Begin()
+		db, transaction, err := database.Club().Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

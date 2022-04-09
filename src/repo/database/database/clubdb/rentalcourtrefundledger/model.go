@@ -18,12 +18,12 @@ const (
 )
 
 type RentalCourtRefundLedger struct {
-	*common.BaseTable
+	common.IBaseTable
 }
 
-func New(connectionCreator common.IConnectionCreator) *RentalCourtRefundLedger {
+func New(baseTableCreator func(table common.ITable) common.IBaseTable) *RentalCourtRefundLedger {
 	result := &RentalCourtRefundLedger{}
-	result.BaseTable = common.NewBaseTable(result, connectionCreator)
+	result.IBaseTable = baseTableCreator(result)
 	return result
 }
 

@@ -2,10 +2,23 @@ package common
 
 import (
 	errUtil "heroku-line-bot/src/pkg/util/error"
-	"time"
 
 	"gorm.io/gorm"
 )
+
+type Connect func() (master, slave *gorm.DB, resultErr error)
+
+type IBaseDatabase interface {
+	GetSlave() *gorm.DB
+	GetMaster() *gorm.DB
+	Dispose() errUtil.IError
+	BeginTransaction(
+		creator func(connect Connect) (IBaseDatabase, error),
+	) (
+		trans ITransaction,
+		resultErr error,
+	)
+}
 
 type BaseDatabase struct {
 	read  *gorm.DB
@@ -28,38 +41,11 @@ func (d *BaseDatabase) GetMaster() *gorm.DB {
 	return d.write
 }
 
-func (d *BaseDatabase) SetConnection(maxIdleConns, maxOpenConns int, maxLifetime time.Duration) errUtil.IError {
-	if d.read != nil {
-		if errInfo := d.setConnection(d.read, maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
-			return errInfo
-		}
-	}
-	if d.write != nil {
-		if errInfo := d.setConnection(d.write, maxIdleConns, maxOpenConns, maxLifetime); errInfo != nil {
-			return errInfo
-		}
-	}
-
-	return nil
-}
-
-func (d *BaseDatabase) setConnection(db *gorm.DB, maxIdleConns, maxOpenConns int, maxLifetime time.Duration) errUtil.IError {
-	sqlDB, err := db.DB()
-	if err != nil {
-		return errUtil.NewError(err)
-	}
-
-	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-	sqlDB.SetMaxIdleConns(maxIdleConns)
-	// SetMaxOpenConns sets the maximum number of open connections to the database.
-	sqlDB.SetMaxOpenConns(maxOpenConns)
-	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-	sqlDB.SetConnMaxLifetime(maxLifetime)
-
-	return nil
-}
-
 func (d *BaseDatabase) Dispose() errUtil.IError {
+	if d == nil {
+		return nil
+	}
+
 	if d.read != nil {
 		sqlDB, err := d.read.DB()
 		if err != nil {
@@ -83,4 +69,31 @@ func (d *BaseDatabase) Dispose() errUtil.IError {
 	}
 
 	return nil
+}
+
+func (d *BaseDatabase) BeginTransaction(
+	creator func(connect Connect) (IBaseDatabase, error),
+) (
+	trans ITransaction,
+	resultErr error,
+) {
+	connect := func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
+		dp := d.GetMaster().Begin()
+		if dp.Error != nil {
+			resultErr = dp.Error
+			return
+		}
+
+		master = dp
+		slave = dp
+		return
+	}
+	db, err := creator(connect)
+	if err != nil {
+		resultErr = err
+		return
+	}
+
+	trans = NewTransaction(db.GetMaster())
+	return
 }

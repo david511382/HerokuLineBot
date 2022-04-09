@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"fmt"
 	"heroku-line-bot/src/pkg/util"
-	errUtil "heroku-line-bot/src/pkg/util/error"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
@@ -20,53 +19,53 @@ var (
 	cfg *Config
 )
 
-func Get() (*Config, errUtil.IError) {
+func Get() (*Config, error) {
 	if cfg == nil {
-		errInfo := loadConfig()
-		if errInfo != nil {
-			return nil, errInfo
+		err := loadConfig()
+		if err != nil {
+			return nil, err
 		}
 	}
 	return cfg, nil
 }
 
-func loadConfig() errUtil.IError {
+func loadConfig() error {
 	configName := GetEnvConfig()
 	if configName == "" {
 		configName = "master"
 	}
 
-	var errInfo errUtil.IError
-	cfg, errInfo = loadYmlConfig(configName)
-	if errInfo != nil {
-		return errInfo
+	var err error
+	cfg, err = loadYmlConfig(configName)
+	if err != nil {
+		return err
 	}
 
 	loadDefault()
 
-	if errInfo := loadEnv(); errInfo != nil {
-		return errInfo
+	if err := loadEnv(); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func loadYmlConfig(fileName string) (*Config, errUtil.IError) {
+func loadYmlConfig(fileName string) (*Config, error) {
 	root, err := GetRootDirPath()
 	if err != nil {
-		return nil, errUtil.NewError(err)
+		return nil, err
 	}
 	configDir := filepath.Join("config")
 	path := fmt.Sprintf("%s/%s/%s.yml", root, configDir, fileName)
 
 	cfgBytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, errUtil.NewError(err)
+		return nil, err
 	}
 
 	cfg = &Config{}
 	if err := yaml.Unmarshal(cfgBytes, cfg); err != nil {
-		return nil, errUtil.NewError(err)
+		return nil, err
 	}
 
 	return cfg, nil
@@ -82,7 +81,7 @@ func loadDefault() {
 	}
 }
 
-func loadEnv() errUtil.IError {
+func loadEnv() error {
 	if cfg == nil {
 		cfg = &Config{}
 	}
@@ -90,7 +89,7 @@ func loadEnv() errUtil.IError {
 	if envStr := GetEnvPort(); envStr != "" {
 		port, err := strconv.Atoi(envStr)
 		if err != nil {
-			return errUtil.NewError(err)
+			return err
 		}
 		cfg.Server.Port = port
 	}
@@ -115,13 +114,13 @@ func loadEnv() errUtil.IError {
 
 	if envStr := GetEnvDatabaseUrl(); envStr != "" {
 		if err := cfg.ClubDb.ScanUrl(envStr); err != nil {
-			return errUtil.NewError(err)
+			return err
 		}
 	}
 
 	if envStr := GetEnvRedisUrl(); envStr != "" {
 		if err := cfg.ClubRedis.ScanUrl(envStr); err != nil {
-			return errUtil.NewError(err)
+			return err
 		}
 	}
 

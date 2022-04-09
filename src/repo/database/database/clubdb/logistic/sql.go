@@ -5,15 +5,15 @@ import (
 )
 
 func (t Logistic) Insert(datas ...*dbModel.ClubLogistic) error {
-	return t.BaseTable.Insert(datas)
+	return t.IBaseTable.Insert(datas)
 }
 
 func (t Logistic) MigrationData(datas ...*dbModel.ClubLogistic) error {
-	return t.BaseTable.MigrationData(len(datas), datas)
+	return t.IBaseTable.MigrationData(len(datas), datas)
 }
 
 func (t Logistic) Delete(arg dbModel.ReqsClubLogistic) error {
-	return t.BaseTable.Delete(arg)
+	return t.IBaseTable.Delete(arg)
 }
 
 func (t Logistic) Select(arg dbModel.ReqsClubLogistic, columns ...Column) ([]*dbModel.ClubLogistic, error) {

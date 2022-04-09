@@ -19,6 +19,18 @@ type IConnectionCreator interface {
 	GetMaster() *gorm.DB
 }
 
+type IBaseTable interface {
+	SelectColumns(arg interface{}, response interface{}, columns ...string) error
+	Count(arg interface{}) (int64, error)
+	Insert(datas interface{}) error
+	MigrationTable() error
+	MigrationData(length int, datas interface{}) error
+	Delete(arg interface{}) error
+	Update(arg interface{}, fields map[string]interface{}) error
+	IsExist() bool
+	CreateTable() error
+}
+
 type BaseTable struct {
 	IConnectionCreator
 	table                ITable

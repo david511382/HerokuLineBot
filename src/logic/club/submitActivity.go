@@ -91,7 +91,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 	arg := dbModel.ReqsClubActivity{
 		ID: util.GetIntP(b.ActivityID),
 	}
-	if dbDatas, err := database.Club.Activity.Select(
+	if dbDatas, err := database.Club().Activity.Select(
 		arg,
 		activity.COLUMN_ID,
 		activity.COLUMN_Date,
@@ -128,7 +128,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 		memberActivityArg := dbModel.ReqsClubMemberActivity{
 			ActivityID: util.GetIntP(b.ActivityID),
 		}
-		if dbDatas, err := database.Club.MemberActivity.Select(
+		if dbDatas, err := database.Club().MemberActivity.Select(
 			memberActivityArg,
 			memberactivity.COLUMN_ID,
 			memberactivity.COLUMN_MemberID,
@@ -148,7 +148,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 				IDs: memberIDs,
 			}
 			clubMemberIDMap := make(map[int]isClubMemberName)
-			if dbDatas, err := database.Club.Member.Select(
+			if dbDatas, err := database.Club().Member.Select(
 				arg,
 				member.COLUMN_ID,
 				member.COLUMN_Name,
@@ -851,7 +851,7 @@ func (b *submitActivity) getFeeContents() []interface{} {
 func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 	var currentActivity *dbModel.ClubActivity
 	{
-		dbDatas, err := database.Club.Activity.Select(dbModel.ReqsClubActivity{
+		dbDatas, err := database.Club().Activity.Select(dbModel.ReqsClubActivity{
 			ID: &b.ActivityID,
 		})
 		if err != nil {
@@ -909,7 +909,7 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 
 	income := finishedActivity.MemberFee*finishedActivity.MemberCount + finishedActivity.GuestFee*finishedActivity.GuestCount
 
-	db, transaction, err := database.Club.Begin()
+	db, transaction, err := database.Club().Begin()
 	if err != nil {
 		errInfo := errUtil.NewError(err)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

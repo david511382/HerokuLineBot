@@ -46,7 +46,7 @@ func GetUnfinishedActiviysSqlReqs(
 				noDateArg := *arg
 				noDateArg.FromDate = nil
 				noDateArg.ToDate = nil
-				maxDate, minTime, err := database.Club.Activity.MinMaxDate(noDateArg)
+				maxDate, minTime, err := database.Club().Activity.MinMaxDate(noDateArg)
 				if err != nil {
 					errInfo := errUtil.NewError(err)
 					resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

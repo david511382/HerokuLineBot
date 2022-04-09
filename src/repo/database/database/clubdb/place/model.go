@@ -15,12 +15,12 @@ const (
 )
 
 type Place struct {
-	*common.BaseTable
+	common.IBaseTable
 }
 
-func New(connectionCreator common.IConnectionCreator) *Place {
+func New(baseTableCreator func(table common.ITable) common.IBaseTable) *Place {
 	result := &Place{}
-	result.BaseTable = common.NewBaseTable(result, connectionCreator)
+	result.IBaseTable = baseTableCreator(result)
 	return result
 }
 

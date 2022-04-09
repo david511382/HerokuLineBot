@@ -19,12 +19,12 @@ const (
 )
 
 type Logistic struct {
-	*common.BaseTable
+	common.IBaseTable
 }
 
-func New(connectionCreator common.IConnectionCreator) *Logistic {
+func New(baseTableCreator func(table common.ITable) common.IBaseTable) *Logistic {
 	result := &Logistic{}
-	result.BaseTable = common.NewBaseTable(result, connectionCreator)
+	result.IBaseTable = baseTableCreator(result)
 	return result
 }
 

@@ -28,7 +28,9 @@ func TestMain(m *testing.M) {
 	if connection, err := conn.Connect(cfg.ClubDb); err != nil {
 		panic(err)
 	} else {
-		db = New(common.NewBaseDatabase(connection, connection))
+		db = New(func(table common.ITable) common.IBaseTable {
+			return common.NewBaseTable(table, common.NewBaseDatabase(connection, connection))
+		})
 	}
 
 	if err := db.MigrationData(&dbModel.ClubRentalCourtDetail{

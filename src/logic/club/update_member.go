@@ -97,7 +97,7 @@ func (b *UpdateMember) Do(text string) (resultErrInfo errUtil.IError) {
 
 	name := *b.Name
 	if b.context.IsConfirmed() {
-		db, transaction, err := database.Club.Begin()
+		db, transaction, err := database.Club().Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -219,7 +219,7 @@ func (b *UpdateMember) Do(text string) (resultErrInfo errUtil.IError) {
 
 func (b *UpdateMember) LoadName() (resultErrInfo errUtil.IError) {
 	lineID := b.context.GetUserID()
-	dbDatas, err := database.Club.Member.Select(
+	dbDatas, err := database.Club().Member.Select(
 		dbModel.ReqsClubMember{
 			LineID: &lineID,
 		},

@@ -68,7 +68,7 @@ func GetActivitys(
 		dbActivityDatas := make([]*dbModel.ClubActivity, 0)
 		for _, arg := range args {
 			{
-				dbDatas, err := database.Club.Activity.Select(
+				dbDatas, err := database.Club().Activity.Select(
 					*arg,
 					activity.COLUMN_ID,
 					activity.COLUMN_Date,
@@ -134,7 +134,7 @@ func GetActivitys(
 	}
 
 	{
-		dbDatas, err := database.Club.JoinActivityDetail(dbModel.ReqsClubJoinActivityDetail{
+		dbDatas, err := database.Club().JoinActivityDetail(dbModel.ReqsClubJoinActivityDetail{
 			ReqsClubActivity: &dbModel.ReqsClubActivity{
 				IDs: activityIDs,
 			},
@@ -218,7 +218,7 @@ func GetActivitys(
 		}
 
 		if len(activityIDs) > 0 {
-			dbDatas, err := database.Club.MemberActivity.Select(
+			dbDatas, err := database.Club().MemberActivity.Select(
 				dbModel.ReqsClubMemberActivity{
 					ActivityIDs: activityIDs,
 				},
@@ -245,7 +245,7 @@ func GetActivitys(
 			}
 
 			if len(memberIDs) > 0 {
-				dbDatas, err := database.Club.Member.Select(
+				dbDatas, err := database.Club().Member.Select(
 					dbModel.ReqsClubMember{
 						IDs: memberIDs,
 					},

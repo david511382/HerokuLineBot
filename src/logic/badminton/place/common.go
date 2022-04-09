@@ -42,7 +42,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace, re
 
 	if len(ids) == 0 || len(reLoadIDs) > 0 {
 		idPlaceMap := make(map[int]*rdsModel.ClubBadmintonPlace)
-		if dbDatas, err := database.Club.Place.Select(dbModel.ReqsClubPlace{
+		if dbDatas, err := database.Club().Place.Select(dbModel.ReqsClubPlace{
 			IDs: reLoadIDs,
 		},
 			place.COLUMN_ID,

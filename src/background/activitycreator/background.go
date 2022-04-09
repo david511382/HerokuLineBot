@@ -59,7 +59,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 
 	newActivityTeamSettingMap := make(map[int]*rdsModel.ClubBadmintonTeam)
 	{
-		db, transaction, err := database.Club.Begin()
+		db, transaction, err := database.Club().Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

@@ -115,7 +115,7 @@ func TestLoad(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club.Place.MigrationData(tt.migrations.place...); err != nil {
+			if err := database.Club().Place.MigrationData(tt.migrations.place...); err != nil {
 				t.Fatal(err.Error())
 			}
 			if err := redis.Badminton.BadmintonPlace.Migration(tt.migrations.redisPlaceIDMap); err != nil {

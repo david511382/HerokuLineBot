@@ -105,7 +105,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if b.Context.IsConfirmed() {
-		db, transaction, err := database.Club.Begin()
+		db, transaction, err := database.Club().Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -356,7 +356,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 
 func (b *NewLogistic) InsertLogistic(db *clubdb.Database) (resultErrInfo errUtil.IError) {
 	if db == nil {
-		dbConn, transaction, err := database.Club.Begin()
+		dbConn, transaction, err := database.Club().Begin()
 		if err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return

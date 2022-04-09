@@ -5,15 +5,15 @@ import (
 )
 
 func (t ActivityFinished) Insert(datas ...*dbModel.ClubActivityFinished) error {
-	return t.BaseTable.Insert(datas)
+	return t.IBaseTable.Insert(datas)
 }
 
 func (t ActivityFinished) MigrationData(datas ...*dbModel.ClubActivityFinished) error {
-	return t.BaseTable.MigrationData(len(datas), datas)
+	return t.IBaseTable.MigrationData(len(datas), datas)
 }
 
 func (t ActivityFinished) Delete(arg dbModel.ReqsClubActivityFinished) error {
-	return t.BaseTable.Delete(arg)
+	return t.IBaseTable.Delete(arg)
 }
 
 func (t ActivityFinished) Select(arg dbModel.ReqsClubActivityFinished, columns ...Column) ([]*dbModel.ClubActivityFinished, error) {

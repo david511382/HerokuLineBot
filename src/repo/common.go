@@ -8,13 +8,9 @@ import (
 )
 
 func Init() errUtil.IError {
-	cfg, errInfo := bootstrap.Get()
-	if errInfo != nil {
-		return errInfo
-	}
-
-	if errInfo := database.Init(cfg); errInfo != nil {
-		return errInfo
+	cfg, err := bootstrap.Get()
+	if err != nil {
+		return errUtil.NewError(err)
 	}
 
 	if errInfo := redis.Init(cfg); errInfo != nil {

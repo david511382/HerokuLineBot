@@ -169,7 +169,7 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club.Activity.MigrationData(tt.migrations.activity...); err != nil {
+			if err := database.Club().Activity.MigrationData(tt.migrations.activity...); err != nil {
 				t.Fatal(err.Error())
 			}
 

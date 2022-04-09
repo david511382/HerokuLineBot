@@ -41,7 +41,7 @@ func (b *RegisteMember) LoadMemberID() (
 		return
 	}
 
-	if dbDatas, err := database.Club.Member.Select(
+	if dbDatas, err := database.Club().Member.Select(
 		dbModel.ReqsClubMember{
 			LineID: b.lineID,
 		},

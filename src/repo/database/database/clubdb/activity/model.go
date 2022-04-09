@@ -27,12 +27,12 @@ const (
 )
 
 type Activity struct {
-	*common.BaseTable
+	common.IBaseTable
 }
 
-func New(connectionCreator common.IConnectionCreator) *Activity {
+func New(baseTableCreator func(table common.ITable) common.IBaseTable) *Activity {
 	result := &Activity{}
-	result.BaseTable = common.NewBaseTable(result, connectionCreator)
+	result.IBaseTable = baseTableCreator(result)
 	return result
 }
 

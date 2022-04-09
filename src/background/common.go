@@ -18,9 +18,9 @@ var (
 )
 
 func Init() errUtil.IError {
-	totalCfg, errInfo := bootstrap.Get()
-	if errInfo != nil {
-		return errInfo
+	totalCfg, err := bootstrap.Get()
+	if err != nil {
+		return errUtil.NewError(err)
 	}
 
 	cr = cron.NewWithLocation(global.TimeUtilObj.GetLocation())

@@ -50,7 +50,7 @@ func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resu
 		idTeamMap := make(map[int]*rdsModel.ClubBadmintonTeam)
 		ownerMemberIDTeamIDsMap := make(map[int][]int)
 		{
-			dbDatas, err := database.Club.Team.Select(dbModel.ReqsClubTeam{
+			dbDatas, err := database.Club().Team.Select(dbModel.ReqsClubTeam{
 				IDs: reLoadIDs,
 			},
 				team.COLUMN_ID,
@@ -97,7 +97,7 @@ func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resu
 			for ownerMemberID := range ownerMemberIDTeamIDsMap {
 				ownerMemberIDs = append(ownerMemberIDs, ownerMemberID)
 			}
-			dbDatas, err := database.Club.Member.Select(dbModel.ReqsClubMember{
+			dbDatas, err := database.Club().Member.Select(dbModel.ReqsClubMember{
 				IDs: ownerMemberIDs,
 			},
 				member.COLUMN_ID,

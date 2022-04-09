@@ -83,7 +83,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 
 	activitys := make([]*dbModel.ClubActivity, 0)
 	{
-		dbDatas, err := database.Club.Activity.Select(
+		dbDatas, err := database.Club().Activity.Select(
 			dbModel.ReqsClubActivity{
 				TeamID: &b.TeamID,
 			},
@@ -134,7 +134,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 	memberActivityArg := dbModel.ReqsClubMemberActivity{
 		ActivityIDs: activityIDs,
 	}
-	if dbDatas, err := database.Club.MemberActivity.Select(
+	if dbDatas, err := database.Club().MemberActivity.Select(
 		memberActivityArg,
 		memberactivity.COLUMN_ID,
 		memberactivity.COLUMN_MemberID,
@@ -160,7 +160,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 		memberArg := dbModel.ReqsClubMember{
 			IDs: memberIDs,
 		}
-		if dbDatas, err := database.Club.Member.Select(
+		if dbDatas, err := database.Club().Member.Select(
 			memberArg,
 			member.COLUMN_ID,
 			member.COLUMN_Name,
@@ -231,7 +231,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 	arg := dbModel.ReqsClubActivity{
 		ID: &b.ListMembersActivityID,
 	}
-	if dbDatas, err := database.Club.Activity.Select(
+	if dbDatas, err := database.Club().Activity.Select(
 		arg,
 		activity.COLUMN_Date,
 		activity.COLUMN_PlaceID,
@@ -271,7 +271,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 	memberActivityArg := dbModel.ReqsClubMemberActivity{
 		ActivityID: &b.ListMembersActivityID,
 	}
-	if dbDatas, err := database.Club.MemberActivity.Select(
+	if dbDatas, err := database.Club().MemberActivity.Select(
 		memberActivityArg,
 		memberactivity.COLUMN_ID,
 		memberactivity.COLUMN_MemberID,
@@ -287,7 +287,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 		memberArg := dbModel.ReqsClubMember{
 			IDs: memberIDs,
 		}
-		if dbDatas, err := database.Club.Member.Select(
+		if dbDatas, err := database.Club().Member.Select(
 			memberArg,
 			member.COLUMN_ID,
 			member.COLUMN_Name,
@@ -378,7 +378,7 @@ func (b *GetActivities) joinActivity() (resultErrInfo errUtil.IError) {
 		MemberID:   uID,
 		IsAttend:   false,
 	}
-	if err := database.Club.MemberActivity.Insert(insertData); err != nil && !database.IsUniqErr(err) {
+	if err := database.Club().MemberActivity.Insert(insertData); err != nil && !database.IsUniqErr(err) {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}
@@ -395,7 +395,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 	activityArg := dbModel.ReqsClubActivity{
 		ID: util.GetIntP(b.LeaveActivityID),
 	}
-	if dbDatas, err := database.Club.Activity.Select(
+	if dbDatas, err := database.Club().Activity.Select(
 		activityArg,
 		activity.COLUMN_Date,
 		activity.COLUMN_PlaceID,
@@ -429,7 +429,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 	arg := dbModel.ReqsClubMemberActivity{
 		ActivityID: util.GetIntP(b.LeaveActivityID),
 	}
-	if dbDatas, err := database.Club.MemberActivity.Select(
+	if dbDatas, err := database.Club().MemberActivity.Select(
 		arg,
 		memberactivity.COLUMN_ID,
 		memberactivity.COLUMN_MemberID,
@@ -462,7 +462,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 	arg = dbModel.ReqsClubMemberActivity{
 		ID: &deleteMemberActivityID,
 	}
-	if err := database.Club.MemberActivity.Delete(arg); err != nil {
+	if err := database.Club().MemberActivity.Delete(arg); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}
@@ -471,7 +471,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 		memberArg := dbModel.ReqsClubMember{
 			ID: notifyWaitingMemberID,
 		}
-		if dbDatas, err := database.Club.Member.Select(
+		if dbDatas, err := database.Club().Member.Select(
 			memberArg,
 			member.COLUMN_LineID,
 		); err != nil {
@@ -586,7 +586,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
 		arg := dbModel.ReqsClubActivity{
 			ID: &activityID,
 		}
-		if count, err := database.Club.Activity.Count(arg); err != nil {
+		if count, err := database.Club().Activity.Count(arg); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		} else if isActivityOpen := count > 0; isActivityOpen {
@@ -617,7 +617,7 @@ func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
 		arg := dbModel.ReqsClubActivity{
 			ID: &activityID,
 		}
-		if count, err := database.Club.Activity.Count(arg); err != nil {
+		if count, err := database.Club().Activity.Count(arg); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		} else if isActivityOpen := count > 0; isActivityOpen {
