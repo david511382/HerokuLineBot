@@ -1,5 +1,5 @@
 # Build Stage
-FROM golang:1.16 AS builder
+FROM golang:1.18 AS builder
 
 # 複製原始碼
 COPY ./bootstrap /app/bootstrap
@@ -15,7 +15,7 @@ WORKDIR /app
 RUN go build -o heroku-line-bot
 
 # Final Stage
-FROM golang:1.16
+FROM golang:1.18
 COPY --from=builder /app/heroku-line-bot /app/heroku-line-bot
 COPY --from=builder /app/docs /app/docs
 
