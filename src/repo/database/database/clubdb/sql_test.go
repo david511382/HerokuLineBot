@@ -1,28 +1,34 @@
 package clubdb
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
+	"heroku-line-bot/src/repo/database/database/clubdb/activity"
+	"heroku-line-bot/src/repo/database/database/clubdb/member"
+	"heroku-line-bot/src/repo/database/database/clubdb/memberactivity"
+	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourt"
+	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtdetail"
+	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtledger"
+	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtledgercourt"
 	"sort"
 	"testing"
 )
 
 func TestDatabase_JoinActivityDetail(t *testing.T) {
 	type args struct {
-		arg dbModel.ReqsClubJoinActivityDetail
+		arg ReqsClubJoinActivityDetail
 	}
 	type migrations struct {
-		activity               []*dbModel.ClubActivity
-		rentalCourt            []*dbModel.ClubRentalCourt
-		rentalCourtLedgerCourt []*dbModel.ClubRentalCourtLedgerCourt
-		rentalCourtLedger      []*dbModel.ClubRentalCourtLedger
-		rentalCourtDetail      []*dbModel.ClubRentalCourtDetail
-		memberActivity         []*dbModel.ClubMemberActivity
-		member                 []*dbModel.ClubMember
+		activity               []*activity.Model
+		rentalCourt            []*rentalcourt.Model
+		rentalCourtLedgerCourt []*rentalcourtledgercourt.Model
+		rentalCourtLedger      []*rentalcourtledger.Model
+		rentalCourtDetail      []*rentalcourtdetail.Model
+		memberActivity         []*memberactivity.Model
+		member                 []*member.Model
 	}
 	type wants struct {
-		response []*dbModel.RespClubJoinActivityDetail
+		response []*RespClubJoinActivityDetail
 	}
 	tests := []struct {
 		name       string
@@ -33,8 +39,8 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 		{
 			"condition",
 			args{
-				arg: dbModel.ReqsClubJoinActivityDetail{
-					ReqsClubActivity: &dbModel.ReqsClubActivity{
+				arg: ReqsClubJoinActivityDetail{
+					Activity: &activity.Reqs{
 						IDs: []int{
 							52, 82,
 						},
@@ -42,7 +48,7 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 				},
 			},
 			migrations{
-				activity: []*dbModel.ClubActivity{
+				activity: []*activity.Model{
 					{
 						ID:      52,
 						PlaceID: 2,
@@ -63,7 +69,7 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 				},
-				rentalCourt: []*dbModel.ClubRentalCourt{
+				rentalCourt: []*rentalcourt.Model{
 					{
 						ID:      52,
 						PlaceID: 2,
@@ -86,7 +92,7 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 					},
 				},
-				rentalCourtLedgerCourt: []*dbModel.ClubRentalCourtLedgerCourt{
+				rentalCourtLedgerCourt: []*rentalcourtledgercourt.Model{
 					{
 						ID:                  52,
 						TeamID:              2,
@@ -123,7 +129,7 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 						RentalCourtLedgerID: 82,
 					},
 				},
-				rentalCourtLedger: []*dbModel.ClubRentalCourtLedger{
+				rentalCourtLedger: []*rentalcourtledger.Model{
 					{
 						ID:                  82,
 						RentalCourtDetailID: 82,
@@ -138,7 +144,7 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 						RentalCourtDetailID: 1,
 					},
 				},
-				rentalCourtDetail: []*dbModel.ClubRentalCourtDetail{
+				rentalCourtDetail: []*rentalcourtdetail.Model{
 					{
 						ID:        82,
 						StartTime: "s",
@@ -161,7 +167,7 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 				},
 			},
 			wants{
-				response: []*dbModel.RespClubJoinActivityDetail{
+				response: []*RespClubJoinActivityDetail{
 					{
 						ActivityID:                 52,
 						RentalCourtDetailStartTime: "a",

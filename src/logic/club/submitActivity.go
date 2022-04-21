@@ -6,7 +6,6 @@ import (
 	accountLineuserLogicDomain "heroku-line-bot/src/logic/account/lineuser/domain"
 	"heroku-line-bot/src/logic/club/domain"
 	incomeLogicDomain "heroku-line-bot/src/logic/income/domain"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/errorcode"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
@@ -15,6 +14,9 @@ import (
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/activity"
+	"heroku-line-bot/src/repo/database/database/clubdb/activityfinished"
+	"heroku-line-bot/src/repo/database/database/clubdb/income"
+	"heroku-line-bot/src/repo/database/database/clubdb/logistic"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
 	"heroku-line-bot/src/repo/database/database/clubdb/memberactivity"
 	"sort"
@@ -88,7 +90,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 	}
 
 	context := b.context
-	arg := dbModel.ReqsClubActivity{
+	arg := activity.Reqs{
 		ID: util.GetIntP(b.ActivityID),
 	}
 	if dbDatas, err := database.Club().Activity.Select(
@@ -125,7 +127,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 			return
 		}
 
-		memberActivityArg := dbModel.ReqsClubMemberActivity{
+		memberActivityArg := memberactivity.Reqs{
 			ActivityID: util.GetIntP(b.ActivityID),
 		}
 		if dbDatas, err := database.Club().MemberActivity.Select(
@@ -144,7 +146,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 			for _, v := range dbDatas {
 				memberIDs = append(memberIDs, v.MemberID)
 			}
-			arg := dbModel.ReqsClubMember{
+			arg := member.Reqs{
 				IDs: memberIDs,
 			}
 			clubMemberIDMap := make(map[int]isClubMemberName)
@@ -849,9 +851,9 @@ func (b *submitActivity) getFeeContents() []interface{} {
 }
 
 func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
-	var currentActivity *dbModel.ClubActivity
+	var currentActivity *activity.Model
 	{
-		dbDatas, err := database.Club().Activity.Select(dbModel.ReqsClubActivity{
+		dbDatas, err := database.Club().Activity.Select(activity.Reqs{
 			ID: &b.ActivityID,
 		})
 		if err != nil {
@@ -867,7 +869,7 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 	}
 
 	memberActivityIDs := make([]int, 0)
-	finishedActivity := &dbModel.ClubActivityFinished{
+	finishedActivity := &activityfinished.Model{
 		ID:            currentActivity.ID,
 		TeamID:        currentActivity.TeamID,
 		Date:          currentActivity.Date,
@@ -907,7 +909,7 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 		finishedActivity.GuestFee = int16(guestFee)
 	}
 
-	income := finishedActivity.MemberFee*finishedActivity.MemberCount + finishedActivity.GuestFee*finishedActivity.GuestCount
+	incomeMoney := finishedActivity.MemberFee*finishedActivity.MemberCount + finishedActivity.GuestFee*finishedActivity.GuestCount
 
 	db, transaction, err := database.Club().Begin()
 	if err != nil {
@@ -922,11 +924,11 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 	}()
 
 	{
-		data := &dbModel.ClubIncome{
+		data := &income.Model{
 			Date:        b.Date.Time(),
 			Type:        int16(incomeLogicDomain.INCOME_TYPE_ACTIVITY),
 			ReferenceID: util.GetIntP(finishedActivity.ID),
-			Income:      income,
+			Income:      incomeMoney,
 			Description: "活動收入",
 			TeamID:      b.TeamID,
 		}
@@ -939,7 +941,7 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 
 	isConsumeBall := b.Rsl4Consume > 0
 	if isConsumeBall {
-		logisticData := &dbModel.ClubLogistic{
+		logisticData := &logistic.Model{
 			Date:        b.Date.Time(),
 			Name:        domain.BALL_NAME,
 			Amount:      -b.Rsl4Consume,
@@ -953,7 +955,7 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 		finishedActivity.LogisticID = util.GetIntP(logisticData.ID)
 	}
 
-	if err := db.Activity.Delete(dbModel.ReqsClubActivity{
+	if err := db.Activity.Delete(activity.Reqs{
 		ID: &currentActivity.ID,
 	}); err != nil {
 		resultErrInfo = errUtil.NewError(err)
@@ -965,13 +967,12 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 	}
 
 	if len(memberActivityIDs) > 0 {
-		arg := dbModel.ReqsClubMemberActivity{
-			IDs: memberActivityIDs,
-		}
-		fields := map[string]interface{}{
-			"is_attend": true,
-		}
-		if err := db.MemberActivity.Update(arg, fields); err != nil && !database.IsUniqErr(err) {
+		if err := db.MemberActivity.Update(memberactivity.UpdateReqs{
+			Reqs: memberactivity.Reqs{
+				IDs: memberActivityIDs,
+			},
+			IsAttend: util.GetBoolP(true),
+		}); err != nil && !database.IsUniqErr(err) {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}

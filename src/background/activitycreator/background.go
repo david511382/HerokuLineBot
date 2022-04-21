@@ -72,7 +72,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 				newActivityTeamSettingMap[teamID] = teamSettingMap[teamID]
 			}
 
-			if errInfo := newActivityHandler.InsertActivity(db); errInfo != nil {
+			if errInfo := newActivityHandler.InsertActivity(&db); errInfo != nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				if resultErrInfo.IsError() {
 					return

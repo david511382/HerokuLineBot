@@ -1,100 +1,128 @@
 package rentalcourtledger
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database/common"
+	"time"
 
 	"gorm.io/gorm"
 )
 
-type Column string
-
 const (
-	COLUMN_ID                  Column = "id"
-	COLUMN_TeamID              Column = "team_id"
-	COLUMN_RentalCourtDetailID Column = "rental_court_detail_id"
-	COLUMN_IncomeID            Column = "income_id"
-	COLUMN_DepositIncomeID     Column = "deposit_income_id"
-	COLUMN_PlaceID             Column = "place_id"
-	COLUMN_PricePerHour        Column = "price_per_hour"
-	COLUMN_PayDate             Column = "pay_date"
-	COLUMN_StartDate           Column = "start_date"
-	COLUMN_EndDate             Column = "end_date"
+	COLUMN_ID                  common.ColumnName = "id"
+	COLUMN_TeamID              common.ColumnName = "team_id"
+	COLUMN_RentalCourtDetailID common.ColumnName = "rental_court_detail_id"
+	COLUMN_IncomeID            common.ColumnName = "income_id"
+	COLUMN_DepositIncomeID     common.ColumnName = "deposit_income_id"
+	COLUMN_PlaceID             common.ColumnName = "place_id"
+	COLUMN_PricePerHour        common.ColumnName = "price_per_hour"
+	COLUMN_PayDate             common.ColumnName = "pay_date"
+	COLUMN_StartDate           common.ColumnName = "start_date"
+	COLUMN_EndDate             common.ColumnName = "end_date"
 )
 
-type RentalCourtLedger struct {
-	common.IBaseTable
+type Table struct {
+	common.BaseTable[
+		Model,
+		Reqs,
+		UpdateReqs,
+	]
 }
 
-func New(baseTableCreator func(table common.ITable) common.IBaseTable) *RentalCourtLedger {
-	result := &RentalCourtLedger{}
-	result.IBaseTable = baseTableCreator(result)
+func New(connectionCreator common.IConnectionCreator) *Table {
+	result := &Table{}
+	result.BaseTable = *common.NewBaseTable[Model, Reqs, UpdateReqs](connectionCreator)
 	return result
 }
 
-func (t RentalCourtLedger) GetTable() interface{} {
-	return t.newModel()
+type Model struct {
+	ID                  int        `gorm:"column:id;type:serial;primary_key;not null"`
+	TeamID              int        `gorm:"column:team_id;type:int;not null;index:rental_court_ledger_idx_teamid"`
+	RentalCourtDetailID int        `gorm:"column:rental_court_detail_id;type:int;not null;unique_index:uniq_place_rentalcourtdetailid,priority:2"`
+	IncomeID            *int       `gorm:"column:income_id;type:int;unique_index:uniq_place_entalcourtdetailid,priority:2"`
+	DepositIncomeID     *int       `gorm:"column:deposit_income_id;type:int"`
+	PlaceID             int        `gorm:"column:place_id;type:int;not null"`
+	PricePerHour        float64    `gorm:"column:price_per_hour;type:decimal(4,1);not null"`
+	PayDate             *time.Time `gorm:"column:pay_date;type:date"`
+	StartDate           time.Time  `gorm:"column:start_date;type:date;not null"`
+	EndDate             time.Time  `gorm:"column:end_date;type:date;not null"`
 }
 
-func (t RentalCourtLedger) newModel() dbModel.ClubRentalCourtLedger {
-	return dbModel.ClubRentalCourtLedger{}
+func (Model) TableName() string {
+	return "rental_court_ledger"
 }
 
-func (t RentalCourtLedger) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
-	arg := argI.(dbModel.ReqsClubRentalCourtLedger)
-	return t.whereArg(dp, arg)
+type Reqs struct {
+	ID      *int
+	IDs     []int
+	PlaceID *int
+
+	StartDate       *time.Time
+	FromStartDate   *time.Time
+	AfterStartDate  *time.Time
+	ToStartDate     *time.Time
+	BeforeStartDate *time.Time
+
+	EndDate       *time.Time
+	FromEndDate   *time.Time
+	AfterEndDate  *time.Time
+	ToEndDate     *time.Time
+	BeforeEndDate *time.Time
 }
 
-func (t RentalCourtLedger) whereArg(dp *gorm.DB, arg dbModel.ReqsClubRentalCourtLedger) *gorm.DB {
-	m := t.newModel()
-	dp = dp.Model(m)
+func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {
+	tableName := new(Model).TableName()
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" = ?", p)
 	}
-	if p := arg.IDs; p != nil {
-		dp = dp.Where(string(COLUMN_ID+" IN (?)"), p)
+	if p := arg.IDs; len(p) > 0 {
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	if p := arg.PlaceID; p != nil {
-		dp = dp.Where(string(COLUMN_PlaceID+" = ?"), p)
+		dp = dp.Where(COLUMN_PlaceID.TableName(tableName).FullName()+" = ?", p)
 	}
 
 	if p := arg.StartDate; p != nil {
-		dp = dp.Where(string(COLUMN_StartDate+" = ?"), p)
+		dp = dp.Where(COLUMN_StartDate.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.FromStartDate; p != nil {
-		dp = dp.Where(string(COLUMN_StartDate+" >= ?"), p)
+		dp = dp.Where(COLUMN_StartDate.TableName(tableName).FullName()+" >= ?", p)
 	}
 	if p := arg.ToStartDate; p != nil {
-		dp = dp.Where(string(COLUMN_StartDate+" <= ?"), p)
+		dp = dp.Where(COLUMN_StartDate.TableName(tableName).FullName()+" <= ?", p)
 	}
 	if p := arg.BeforeStartDate; p != nil {
-		dp = dp.Where(string(COLUMN_StartDate+" < ?"), p)
+		dp = dp.Where(COLUMN_StartDate.TableName(tableName).FullName()+" < ?", p)
 	}
 	if p := arg.AfterStartDate; p != nil {
-		dp = dp.Where(string(COLUMN_StartDate+" > ?"), p)
+		dp = dp.Where(COLUMN_StartDate.TableName(tableName).FullName()+" > ?", p)
 	}
 
 	if p := arg.EndDate; p != nil {
-		dp = dp.Where(string(COLUMN_EndDate+" = ?"), p)
+		dp = dp.Where(COLUMN_EndDate.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.FromEndDate; p != nil {
-		dp = dp.Where(string(COLUMN_EndDate+" >= ?"), p)
+		dp = dp.Where(COLUMN_EndDate.TableName(tableName).FullName()+" >= ?", p)
 	}
 	if p := arg.ToEndDate; p != nil {
-		dp = dp.Where(string(COLUMN_EndDate+" <= ?"), p)
+		dp = dp.Where(COLUMN_EndDate.TableName(tableName).FullName()+" <= ?", p)
 	}
 	if p := arg.BeforeEndDate; p != nil {
-		dp = dp.Where(string(COLUMN_EndDate+" < ?"), p)
+		dp = dp.Where(COLUMN_EndDate.TableName(tableName).FullName()+" < ?", p)
 	}
 	if p := arg.AfterEndDate; p != nil {
-		dp = dp.Where(string(COLUMN_EndDate+" > ?"), p)
+		dp = dp.Where(COLUMN_EndDate.TableName(tableName).FullName()+" > ?", p)
 	}
 
 	return dp
 }
 
-func (t RentalCourtLedger) IsRequireTimeConvert() bool {
-	return true
+type UpdateReqs struct {
+	Reqs
+}
+
+func (arg UpdateReqs) GetUpdateFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	return fields
 }

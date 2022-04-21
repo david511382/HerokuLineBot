@@ -1,73 +1,90 @@
 package memberactivity
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database/common"
 
 	"gorm.io/gorm"
 )
 
-type Column string
-
 const (
-	COLUMN_ID         Column = "id"
-	COLUMN_MemberID   Column = "member_id"
-	COLUMN_ActivityID Column = "activity_id"
-	COLUMN_IsAttend   Column = "is_attend"
+	COLUMN_ID         common.ColumnName = "id"
+	COLUMN_MemberID   common.ColumnName = "member_id"
+	COLUMN_ActivityID common.ColumnName = "activity_id"
+	COLUMN_IsAttend   common.ColumnName = "is_attend"
 )
 
-type MemberActivity struct {
-	common.IBaseTable
+type Table struct {
+	common.BaseTable[
+		Model,
+		Reqs,
+		UpdateReqs,
+	]
 }
 
-func New(baseTableCreator func(table common.ITable) common.IBaseTable) *MemberActivity {
-	result := &MemberActivity{}
-	result.IBaseTable = baseTableCreator(result)
+func New(connectionCreator common.IConnectionCreator) *Table {
+	result := &Table{}
+	result.BaseTable = *common.NewBaseTable[Model, Reqs, UpdateReqs](connectionCreator)
 	return result
 }
 
-func (t MemberActivity) GetTable() interface{} {
-	return t.newModel()
+type Model struct {
+	ID         int  `gorm:"column:id;type:serial;primary_key;not null"`
+	MemberID   int  `gorm:"column:member_id;type:int;not null;unique_index:uniq_member_activity"`
+	ActivityID int  `gorm:"column:activity_id;type:int;not null;unique_index:uniq_member_activity"`
+	IsAttend   bool `gorm:"column:is_attend;type:boolean;not null"`
 }
 
-func (t MemberActivity) newModel() dbModel.ClubMemberActivity {
-	return dbModel.ClubMemberActivity{}
+func (Model) TableName() string {
+	return "member_activity"
 }
 
-func (t MemberActivity) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
-	arg := argI.(dbModel.ReqsClubMemberActivity)
-	return t.whereArg(dp, arg)
+type Reqs struct {
+	ID          *int
+	IDs         []int
+	MemberID    *int
+	ActivityID  *int
+	ActivityIDs []int
+	IsAttend    *bool
 }
 
-func (t MemberActivity) whereArg(dp *gorm.DB, arg dbModel.ReqsClubMemberActivity) *gorm.DB {
-	m := t.newModel()
-	dp = dp.Model(m)
+func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {
+	tableName := new(Model).TableName()
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.IDs; len(p) > 0 {
-		dp = dp.Where(string(COLUMN_ID+" IN (?)"), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	if p := arg.ActivityID; p != nil {
-		dp = dp.Where(string(COLUMN_ActivityID+" = ?"), p)
+		dp = dp.Where(COLUMN_ActivityID.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.ActivityIDs; len(p) > 0 {
-		dp = dp.Where(string(COLUMN_ActivityID+" IN (?)"), p)
+		dp = dp.Where(COLUMN_ActivityID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	if p := arg.MemberID; p != nil {
-		dp = dp.Where(string(COLUMN_MemberID+" = ?"), p)
+		dp = dp.Where(COLUMN_MemberID.TableName(tableName).FullName()+" = ?", p)
 	}
 
 	if p := arg.IsAttend; p != nil {
-		dp = dp.Where(string(COLUMN_IsAttend+" = ?"), p)
+		dp = dp.Where(COLUMN_IsAttend.TableName(tableName).FullName()+" = ?", p)
 	}
 
 	return dp
 }
 
-func (t MemberActivity) IsRequireTimeConvert() bool {
-	return false
+type UpdateReqs struct {
+	Reqs
+
+	IsAttend *bool
+}
+
+func (arg UpdateReqs) GetUpdateFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	if p := arg.IsAttend; p != nil {
+		fields[COLUMN_IsAttend.Name()] = *p
+	}
+	return fields
 }

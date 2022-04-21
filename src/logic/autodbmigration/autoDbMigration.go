@@ -3,27 +3,35 @@ package autodbmigration
 import (
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
-	"heroku-line-bot/src/repo/database/common"
 )
 
+type IMigrationable interface {
+	IsExist() (bool, error)
+	CreateTable() error
+}
+
 func MigrationNotExist() errUtil.IError {
-	tables := []common.IBaseTable{
-		database.Club().Activity.IBaseTable,
-		database.Club().ActivityFinished.IBaseTable,
-		database.Club().Income.IBaseTable,
-		database.Club().Logistic.IBaseTable,
-		database.Club().Member.IBaseTable,
-		database.Club().MemberActivity.IBaseTable,
-		database.Club().Place.IBaseTable,
-		database.Club().RentalCourt.IBaseTable,
-		database.Club().RentalCourtDetail.IBaseTable,
-		database.Club().RentalCourtLedger.IBaseTable,
-		database.Club().RentalCourtLedgerCourt.IBaseTable,
-		database.Club().RentalCourtRefundLedger.IBaseTable,
-		database.Club().Team.IBaseTable,
+	tables := []IMigrationable{
+		database.Club().Activity,
+		database.Club().ActivityFinished.BaseTable,
+		database.Club().Income.BaseTable,
+		database.Club().Logistic.BaseTable,
+		database.Club().Member.BaseTable,
+		database.Club().MemberActivity.BaseTable,
+		database.Club().Place.BaseTable,
+		database.Club().RentalCourt.BaseTable,
+		database.Club().RentalCourtDetail.BaseTable,
+		database.Club().RentalCourtLedger.BaseTable,
+		database.Club().RentalCourtLedgerCourt.BaseTable,
+		database.Club().RentalCourtRefundLedger.BaseTable,
+		database.Club().Team.BaseTable,
 	}
 	for _, table := range tables {
-		if !table.IsExist() {
+		isExist, err := table.IsExist()
+		if err != nil {
+			return errUtil.NewError(err)
+		}
+		if !isExist {
 			if err := table.CreateTable(); err != nil {
 				return errUtil.NewError(err)
 			}

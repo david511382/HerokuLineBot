@@ -1,10 +1,10 @@
 package place
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	rdsModel "heroku-line-bot/src/model/redis"
 	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb/place"
 	"heroku-line-bot/src/repo/redis"
 	"testing"
 )
@@ -14,7 +14,7 @@ func TestLoad(t *testing.T) {
 		ids []int
 	}
 	type migrations struct {
-		place           []*dbModel.ClubPlace
+		place           []*place.Model
 		redisPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace
 	}
 	type wants struct {
@@ -33,7 +33,7 @@ func TestLoad(t *testing.T) {
 				ids: []int{1},
 			},
 			migrations{
-				place: []*dbModel.ClubPlace{
+				place: []*place.Model{
 					{
 						ID:   1,
 						Name: "name",
@@ -60,7 +60,7 @@ func TestLoad(t *testing.T) {
 				ids: []int{1},
 			},
 			migrations{
-				place: []*dbModel.ClubPlace{
+				place: []*place.Model{
 					{
 						ID:   1,
 						Name: "wrong",
@@ -91,7 +91,7 @@ func TestLoad(t *testing.T) {
 				ids: []int{},
 			},
 			migrations{
-				place: []*dbModel.ClubPlace{
+				place: []*place.Model{
 					{
 						ID:   1,
 						Name: "name",

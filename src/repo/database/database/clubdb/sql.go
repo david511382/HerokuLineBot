@@ -1,33 +1,45 @@
 package clubdb
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/activity"
 )
 
-var MockJoinActivityDetail func(arg dbModel.ReqsClubJoinActivityDetail) (
-	response []*dbModel.RespClubJoinActivityDetail,
+type ReqsClubJoinActivityDetail struct {
+	Activity *activity.Reqs
+}
+
+type RespClubJoinActivityDetail struct {
+	ActivityID                 int
+	RentalCourtDetailStartTime string
+	RentalCourtDetailEndTime   string
+	RentalCourtDetailCount     int
+}
+
+var MockJoinActivityDetail func(arg ReqsClubJoinActivityDetail) (
+	response []*RespClubJoinActivityDetail,
 	resultErr error,
 )
 
-func (d *Database) JoinActivityDetail(arg dbModel.ReqsClubJoinActivityDetail) (
-	response []*dbModel.RespClubJoinActivityDetail,
+func (d *Database) JoinActivityDetail(arg ReqsClubJoinActivityDetail) (
+	response []*RespClubJoinActivityDetail,
 	resultErr error,
 ) {
 	if MockJoinActivityDetail != nil {
 		return MockJoinActivityDetail(arg)
 	}
 
-	response = make([]*dbModel.RespClubJoinActivityDetail, 0)
+	response = make([]*RespClubJoinActivityDetail, 0)
 
-	dp := d.GetSlave()
+	dp, err := d.GetSlave()
+	if err != nil {
+		resultErr = err
+		return
+	}
 
-	activityModel := activity.Activity{}
-	m := activityModel.GetTable()
-	dp = dp.Model(m)
+	dp = dp.Model(new(activity.Model))
 
-	if arg.ReqsClubActivity != nil {
-		dp = activityModel.WhereArg(dp, *arg.ReqsClubActivity)
+	if arg.Activity != nil {
+		dp = arg.Activity.WhereArg(dp)
 	}
 
 	dp = dp.Select(

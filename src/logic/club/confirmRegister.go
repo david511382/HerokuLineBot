@@ -4,7 +4,6 @@ import (
 	"fmt"
 	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
 	"heroku-line-bot/src/pkg/util"
@@ -64,7 +63,7 @@ func (b *confirmRegister) LoadRequireInputTextParam(attr, text string) (resultEr
 	return nil
 }
 
-func (b *confirmRegister) LoadUsers(arg dbModel.ReqsClubMember) (confirmRegisterUsers []*confirmRegisterUser, resultErr error) {
+func (b *confirmRegister) LoadUsers(arg member.Reqs) (confirmRegisterUsers []*confirmRegisterUser, resultErr error) {
 	confirmRegisterUsers = make([]*confirmRegisterUser, 0)
 	if dbDatas, err := database.Club().Member.Select(
 		arg,
@@ -106,16 +105,17 @@ func (b *confirmRegister) ConfirmDb() (resultErrInfo errUtil.IError) {
 		}
 	}()
 
-	arg := dbModel.ReqsClubMember{
-		ID: &b.MemberID,
-	}
-	fields := map[string]interface{}{
-		"join_date": b.Date,
+	dateP := b.Date.TimeP()
+	arg := member.UpdateReqs{
+		Reqs: member.Reqs{
+			ID: &b.MemberID,
+		},
+		JoinDate: &dateP,
 	}
 	if isChangeRole {
-		fields["role"] = int16(domain.MEMBER_CLUB_ROLE)
+		arg.Role = util.GetInt16P(int16(domain.MEMBER_CLUB_ROLE))
 	}
-	if err := db.Member.Update(arg, fields); err != nil {
+	if err := db.Member.Update(arg); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}
@@ -141,7 +141,7 @@ func (b *confirmRegister) Do(text string) (resultErrInfo errUtil.IError) {
 	}
 
 	if b.User == nil {
-		arg := dbModel.ReqsClubMember{
+		arg := member.Reqs{
 			ID: &b.MemberID,
 		}
 		if confirmRegisterUsers, err := b.LoadUsers(arg); err != nil {

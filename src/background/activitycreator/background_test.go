@@ -7,12 +7,12 @@ import (
 	clubLogic "heroku-line-bot/src/logic/club"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
-	dbModel "heroku-line-bot/src/model/database"
 	rdsModel "heroku-line-bot/src/model/redis"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb/activity"
 	"sort"
 	"testing"
 	"time"
@@ -259,7 +259,7 @@ func TestBackGround_Run(t *testing.T) {
 		runTime time.Time
 	}
 	type migrations struct {
-		activity      []*dbModel.ClubActivity
+		activity      []*activity.Model
 		mockGetCourts func(
 			fromDate, toDate util.DateTime,
 			teamID,
@@ -274,7 +274,7 @@ func TestBackGround_Run(t *testing.T) {
 		)
 	}
 	type wants struct {
-		activity []*dbModel.ClubActivity
+		activity []*activity.Model
 	}
 	tests := []struct {
 		name       string
@@ -288,7 +288,7 @@ func TestBackGround_Run(t *testing.T) {
 				runTime: util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2).Time(),
 			},
 			migrations{
-				activity: []*dbModel.ClubActivity{},
+				activity: []*activity.Model{},
 				mockGetCourts: func(
 					fromDate, toDate util.DateTime,
 					teamID,
@@ -341,7 +341,7 @@ func TestBackGround_Run(t *testing.T) {
 				},
 			},
 			wants{
-				activity: []*dbModel.ClubActivity{
+				activity: []*activity.Model{
 					{
 						ID:            1,
 						TeamID:        1,
@@ -380,7 +380,7 @@ func TestBackGround_Run(t *testing.T) {
 				return
 			}
 
-			if gotDbDatas, err := database.Club().Activity.Select(dbModel.ReqsClubActivity{}); err != nil {
+			if gotDbDatas, err := database.Club().Activity.Select(activity.Reqs{}); err != nil {
 				t.Error(errInfo.Error())
 				return
 			} else {

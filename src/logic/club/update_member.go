@@ -2,13 +2,12 @@ package club
 
 import (
 	"heroku-line-bot/src/logic/club/domain"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
-	memberDb "heroku-line-bot/src/repo/database/database/clubdb/member"
+	"heroku-line-bot/src/repo/database/database/clubdb/member"
 )
 
 type UpdateMember struct {
@@ -110,13 +109,12 @@ func (b *UpdateMember) Do(text string) (resultErrInfo errUtil.IError) {
 		}()
 
 		lineID := b.context.GetUserID()
-		arg := dbModel.ReqsClubMember{
-			LineID: &lineID,
-		}
-		fields := map[string]interface{}{
-			"name": b.Name,
-		}
-		if err := db.Member.Update(arg, fields); err != nil {
+		if err := db.Member.Update(member.UpdateReqs{
+			Reqs: member.Reqs{
+				LineID: &lineID,
+			},
+			Name: b.Name,
+		}); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
@@ -220,10 +218,10 @@ func (b *UpdateMember) Do(text string) (resultErrInfo errUtil.IError) {
 func (b *UpdateMember) LoadName() (resultErrInfo errUtil.IError) {
 	lineID := b.context.GetUserID()
 	dbDatas, err := database.Club().Member.Select(
-		dbModel.ReqsClubMember{
+		member.Reqs{
 			LineID: &lineID,
 		},
-		memberDb.COLUMN_Name,
+		member.COLUMN_Name,
 	)
 	if err != nil {
 		errInfo := errUtil.NewError(err)

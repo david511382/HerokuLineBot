@@ -2,15 +2,16 @@ package rentalcourtdetail
 
 import (
 	"heroku-line-bot/bootstrap"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database/common"
 	"heroku-line-bot/src/repo/database/conn"
 	"os"
 	"testing"
+
+	"gorm.io/gorm"
 )
 
 var (
-	db *RentalCourtDetail
+	db *Table
 )
 
 func TestMain(m *testing.M) {
@@ -28,16 +29,16 @@ func TestMain(m *testing.M) {
 	if connection, err := conn.Connect(cfg.ClubDb); err != nil {
 		panic(err)
 	} else {
-		db = New(func(table common.ITable) common.IBaseTable {
-			return common.NewBaseTable(table, common.NewBaseDatabase(connection, connection))
-		})
+		db = New(common.NewMasterSlaveManager(
+			func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
+				master = connection
+				slave = connection
+				return
+			},
+		))
 	}
 
-	if err := db.MigrationData(&dbModel.ClubRentalCourtDetail{
-		StartTime: "08:02",
-		EndTime:   "08:00",
-		Count:     2,
-	}); err != nil {
+	if err := db.MigrationTable(); err != nil {
 		panic(err)
 	}
 

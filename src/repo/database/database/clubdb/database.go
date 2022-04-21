@@ -18,66 +18,41 @@ import (
 )
 
 type Database struct {
-	common.IBaseDatabase
-	Member                  *member.Member
-	Income                  *income.Income
-	Activity                *activity.Activity
-	ActivityFinished        *activityfinished.ActivityFinished
-	MemberActivity          *memberactivity.MemberActivity
-	RentalCourt             *rentalcourt.RentalCourt
-	RentalCourtLedgerCourt  *rentalcourtledgercourt.RentalCourtLedgerCourt
-	RentalCourtDetail       *rentalcourtdetail.RentalCourtDetail
-	RentalCourtLedger       *rentalcourtledger.RentalCourtLedger
-	RentalCourtRefundLedger *rentalcourtrefundledger.RentalCourtRefundLedger
-	Logistic                *logistic.Logistic
-	Place                   *place.Place
-	Team                    *team.Team
+	*common.BaseDatabase[Database]
+	Member                  *member.Table
+	Income                  *income.Table
+	Activity                *activity.Table
+	ActivityFinished        *activityfinished.Table
+	MemberActivity          *memberactivity.Table
+	RentalCourt             *rentalcourt.Table
+	RentalCourtLedgerCourt  *rentalcourtledgercourt.Table
+	RentalCourtDetail       *rentalcourtdetail.Table
+	RentalCourtLedger       *rentalcourtledger.Table
+	RentalCourtRefundLedger *rentalcourtrefundledger.Table
+	Logistic                *logistic.Table
+	Place                   *place.Table
+	Team                    *team.Table
 }
 
-func NewDatabase(connect common.Connect) (*Database, error) {
-	writeDb, readDb, err := connect()
-
+func NewDatabase(connect common.Connect) *Database {
 	result := &Database{
-		IBaseDatabase: common.NewBaseDatabase(readDb, writeDb),
+		BaseDatabase: common.NewBaseDatabase[Database](connect, func(connect common.Connect) Database {
+			return *NewDatabase(connect)
+		}),
 	}
 
-	baseTableCreator := func(table common.ITable) common.IBaseTable {
-		if err != nil {
-			return common.NewErrorBaseTable(err)
-		}
-		return common.NewBaseTable(table, result)
-	}
-
-	result.Member = member.New(baseTableCreator)
-	result.Income = income.New(baseTableCreator)
-	result.Activity = activity.New(baseTableCreator)
-	result.ActivityFinished = activityfinished.New(baseTableCreator)
-	result.MemberActivity = memberactivity.New(baseTableCreator)
-	result.RentalCourt = rentalcourt.New(baseTableCreator)
-	result.RentalCourtLedgerCourt = rentalcourtledgercourt.New(baseTableCreator)
-	result.RentalCourtDetail = rentalcourtdetail.New(baseTableCreator)
-	result.RentalCourtLedger = rentalcourtledger.New(baseTableCreator)
-	result.RentalCourtRefundLedger = rentalcourtrefundledger.New(baseTableCreator)
-	result.Logistic = logistic.New(baseTableCreator)
-	result.Place = place.New(baseTableCreator)
-	result.Team = team.New(baseTableCreator)
-	return result, err
-}
-
-func (d *Database) Begin() (
-	db *Database,
-	trans common.ITransaction,
-	resultErr error,
-) {
-	trans, resultErr = d.IBaseDatabase.BeginTransaction(
-		func(connect common.Connect) (common.IBaseDatabase, error) {
-			var err error
-			db, err = NewDatabase(connect)
-			return db, err
-		},
-	)
-	if resultErr != nil {
-		return
-	}
-	return
+	result.Member = member.New(result)
+	result.Income = income.New(result)
+	result.Activity = activity.New(result)
+	result.ActivityFinished = activityfinished.New(result)
+	result.MemberActivity = memberactivity.New(result)
+	result.RentalCourt = rentalcourt.New(result)
+	result.RentalCourtLedgerCourt = rentalcourtledgercourt.New(result)
+	result.RentalCourtDetail = rentalcourtdetail.New(result)
+	result.RentalCourtLedger = rentalcourtledger.New(result)
+	result.RentalCourtRefundLedger = rentalcourtrefundledger.New(result)
+	result.Logistic = logistic.New(result)
+	result.Place = place.New(result)
+	result.Team = team.New(result)
+	return result
 }

@@ -1,15 +1,15 @@
 package account
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
+	"heroku-line-bot/src/repo/database/database/clubdb/member"
 )
 
 func Registe(
 	db *clubdb.Database,
-	data *dbModel.ClubMember,
+	data *member.Model,
 ) (resultErrInfo errUtil.IError) {
 	if db == nil {
 		db = database.Club()

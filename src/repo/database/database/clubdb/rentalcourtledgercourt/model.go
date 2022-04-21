@@ -1,79 +1,96 @@
 package rentalcourtledgercourt
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database/common"
 
 	"gorm.io/gorm"
 )
 
-type Column string
-
 const (
-	COLUMN_ID                  Column = "id"
-	COLUMN_TeamID              Column = "team_id"
-	COLUMN_RentalCourtID       Column = "rental_court_id"
-	COLUMN_RentalCourtLedgerID Column = "rental_court_ledger_id"
+	COLUMN_ID                  common.ColumnName = "id"
+	COLUMN_TeamID              common.ColumnName = "team_id"
+	COLUMN_RentalCourtID       common.ColumnName = "rental_court_id"
+	COLUMN_RentalCourtLedgerID common.ColumnName = "rental_court_ledger_id"
 )
 
-type RentalCourtLedgerCourt struct {
-	common.IBaseTable
+type Table struct {
+	common.BaseTable[
+		Model,
+		Reqs,
+		UpdateReqs,
+	]
 }
 
-func New(baseTableCreator func(table common.ITable) common.IBaseTable) *RentalCourtLedgerCourt {
-	result := &RentalCourtLedgerCourt{}
-	result.IBaseTable = baseTableCreator(result)
+func New(connectionCreator common.IConnectionCreator) *Table {
+	result := &Table{}
+	result.BaseTable = *common.NewBaseTable[Model, Reqs, UpdateReqs](connectionCreator)
 	return result
 }
 
-func (t RentalCourtLedgerCourt) GetTable() interface{} {
-	return t.newModel()
+type Model struct {
+	ID                  int `gorm:"column:id;type:serial;primary_key;not null"`
+	TeamID              int `gorm:"column:team_id;type:int;not null;index:rental_court_ledger_court_idx_teamid"`
+	RentalCourtID       int `gorm:"column:rental_court_id;type:int;not null;unique_index:uniq_place_cancelrentalcourtdetailid,priority:2"`
+	RentalCourtLedgerID int `gorm:"column:rental_court_ledger_id;type:int;not null;unique_index:uniq_place_cancelrentalcourtdetailid,priority:2"`
 }
 
-func (t RentalCourtLedgerCourt) newModel() dbModel.ClubRentalCourtLedgerCourt {
-	return dbModel.ClubRentalCourtLedgerCourt{}
+func (Model) TableName() string {
+	return "rental_court_ledger_court"
 }
 
-func (t RentalCourtLedgerCourt) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
-	arg := argI.(dbModel.ReqsClubRentalCourtLedgerCourt)
-	return t.whereArg(dp, arg)
+type Reqs struct {
+	ID  *int
+	IDs []int
+
+	TeamID  *int
+	TeamIDs []int
+
+	RentalCourtLedgerID  *int
+	RentalCourtLedgerIDs []int
+
+	RentalCourtID  *int
+	RentalCourtIDs []int
 }
 
-func (t RentalCourtLedgerCourt) whereArg(dp *gorm.DB, arg dbModel.ReqsClubRentalCourtLedgerCourt) *gorm.DB {
-	m := t.newModel()
-	dp = dp.Model(m)
+func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {
+	tableName := new(Model).TableName()
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.IDs; len(p) > 0 {
-		dp = dp.Where(string(COLUMN_ID+" IN (?)"), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	if p := arg.TeamID; p != nil {
-		dp = dp.Where(string(COLUMN_TeamID+" = ?"), p)
+		dp = dp.Where(COLUMN_TeamID.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.TeamIDs; len(p) > 0 {
-		dp = dp.Where(string(COLUMN_TeamID+" IN (?)"), p)
+		dp = dp.Where(COLUMN_TeamID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	if p := arg.RentalCourtID; p != nil {
-		dp = dp.Where(string(COLUMN_RentalCourtID+" = ?"), p)
+		dp = dp.Where(COLUMN_RentalCourtID.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.RentalCourtIDs; len(p) > 0 {
-		dp = dp.Where(string(COLUMN_RentalCourtID+" IN (?)"), p)
+		dp = dp.Where(COLUMN_RentalCourtID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	if p := arg.RentalCourtLedgerID; p != nil {
-		dp = dp.Where(string(COLUMN_RentalCourtLedgerID+" = ?"), p)
+		dp = dp.Where(COLUMN_RentalCourtLedgerID.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.RentalCourtLedgerIDs; len(p) > 0 {
-		dp = dp.Where(string(COLUMN_RentalCourtLedgerID+" IN (?)"), p)
+		dp = dp.Where(COLUMN_RentalCourtLedgerID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	return dp
 }
 
-func (t RentalCourtLedgerCourt) IsRequireTimeConvert() bool {
-	return false
+type UpdateReqs struct {
+	Reqs
+}
+
+func (arg UpdateReqs) GetUpdateFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	return fields
 }

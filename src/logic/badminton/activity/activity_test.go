@@ -1,10 +1,10 @@
 package activity
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb/activity"
 	"sort"
 	"testing"
 	"time"
@@ -19,10 +19,10 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 		everyWeekdays []time.Weekday
 	}
 	type migrations struct {
-		activity []*dbModel.ClubActivity
+		activity []*activity.Model
 	}
 	type wants struct {
-		args []*dbModel.ReqsClubActivity
+		args []*activity.Reqs
 	}
 	tests := []struct {
 		name       string
@@ -40,7 +40,7 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 				everyWeekdays: nil,
 			},
 			migrations: migrations{
-				activity: []*dbModel.ClubActivity{
+				activity: []*activity.Model{
 					{
 						TeamID: 52,
 					},
@@ -54,7 +54,7 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 				},
 			},
 			wants: wants{
-				args: []*dbModel.ReqsClubActivity{
+				args: []*activity.Reqs{
 					{
 						TeamID: util.GetIntP(52),
 					},
@@ -77,10 +77,10 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 				},
 			},
 			migrations: migrations{
-				activity: []*dbModel.ClubActivity{},
+				activity: []*activity.Model{},
 			},
 			wants: wants{
-				args: []*dbModel.ReqsClubActivity{},
+				args: []*activity.Reqs{},
 			},
 		},
 		{
@@ -96,7 +96,7 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 				},
 			},
 			migrations: migrations{
-				activity: []*dbModel.ClubActivity{
+				activity: []*activity.Model{
 					{
 						ID:      1,
 						TeamID:  0,
@@ -130,7 +130,7 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 				},
 			},
 			wants: wants{
-				args: []*dbModel.ReqsClubActivity{
+				args: []*activity.Reqs{
 					{
 						Dates: []*time.Time{
 							util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
@@ -153,10 +153,10 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 				},
 			},
 			migrations: migrations{
-				activity: []*dbModel.ClubActivity{},
+				activity: []*activity.Model{},
 			},
 			wants: wants{
-				args: []*dbModel.ReqsClubActivity{
+				args: []*activity.Reqs{
 					{
 						Dates: []*time.Time{
 							util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),

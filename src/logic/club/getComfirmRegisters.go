@@ -4,7 +4,6 @@ import (
 	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
 	linebotModel "heroku-line-bot/src/pkg/service/linebot/domain/model"
@@ -59,7 +58,7 @@ func (b *GetConfirmRegisters) LoadRequireInputTextParam(attr, text string) (resu
 }
 
 func (b *GetConfirmRegisters) LoadConfirmRegisterUsers() (resultErrInfo errUtil.IError) {
-	arg := dbModel.ReqsClubMember{
+	arg := member.Reqs{
 		CompanyIDIsNull: util.GetBoolP(false),
 		LineIDIsNull:    util.GetBoolP(false),
 		JoinDateIsNull:  util.GetBoolP(true),

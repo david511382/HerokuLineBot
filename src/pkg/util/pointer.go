@@ -20,6 +20,10 @@ func GetIntP(i int) *int {
 	return &i
 }
 
+func GetIntPP(i *int) **int {
+	return &i
+}
+
 func GetInt16P(i int16) *int16 {
 	return &i
 }

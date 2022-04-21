@@ -4,7 +4,6 @@ import (
 	"fmt"
 	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
@@ -13,6 +12,7 @@ import (
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
+	"heroku-line-bot/src/repo/database/database/clubdb/logistic"
 	"strconv"
 	"time"
 )
@@ -117,7 +117,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 			}
 		}()
 
-		if resultErrInfo = b.InsertLogistic(db); resultErrInfo != nil {
+		if resultErrInfo = b.InsertLogistic(&db); resultErrInfo != nil {
 			return
 		}
 
@@ -366,10 +366,10 @@ func (b *NewLogistic) InsertLogistic(db *clubdb.Database) (resultErrInfo errUtil
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			}
 		}()
-		db = dbConn
+		db = &dbConn
 	}
 
-	data := &dbModel.ClubLogistic{
+	data := &logistic.Model{
 		Date:        b.Date.Time(),
 		Name:        b.Name,
 		Amount:      b.Amount,

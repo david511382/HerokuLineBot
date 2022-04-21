@@ -5,7 +5,6 @@ import (
 	"heroku-line-bot/src/logic/account"
 	"heroku-line-bot/src/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/src/logic/clublinebot/domain"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/service/linebot"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
@@ -42,7 +41,7 @@ func (b *RegisteMember) LoadMemberID() (
 	}
 
 	if dbDatas, err := database.Club().Member.Select(
-		dbModel.ReqsClubMember{
+		member.Reqs{
 			LineID: b.lineID,
 		},
 		member.COLUMN_ID,
@@ -83,7 +82,7 @@ func (b *RegisteMember) Registe(db *clubdb.Database) (resultErrInfo errUtil.IErr
 		return
 	}
 
-	data := &dbModel.ClubMember{
+	data := &member.Model{
 		Department: string(NewEmptyDepartment()),
 		Name:       b.name,
 		Role:       int16(domain.GUEST_CLUB_ROLE),

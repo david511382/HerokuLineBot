@@ -3,7 +3,6 @@ package lineuser
 import (
 	"heroku-line-bot/src/logic/account/lineuser/domain"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
-	dbModel "heroku-line-bot/src/model/database"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
@@ -60,7 +59,7 @@ func Get(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 
 func GetDb(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 	if dbDatas, err := database.Club().Member.Select(
-		dbModel.ReqsClubMember{
+		member.Reqs{
 			LineID: &lineID,
 		},
 		member.COLUMN_ID,

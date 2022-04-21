@@ -25,8 +25,7 @@ func TestMain(m *testing.M) {
 	if errInfo != nil {
 		panic(errInfo.Error())
 	}
-	var err error
-	db, err = NewDatabase(func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
+	db = NewDatabase(func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
 		connection, err := conn.Connect(cfg.ClubDb)
 		if err != nil {
 			resultErr = err
@@ -36,9 +35,6 @@ func TestMain(m *testing.M) {
 		slave = connection
 		return
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	exitVal := m.Run()
 

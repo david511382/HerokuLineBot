@@ -7,7 +7,6 @@ import (
 	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
 	"heroku-line-bot/src/logic/club/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
@@ -16,6 +15,7 @@ import (
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
+	"heroku-line-bot/src/repo/database/database/clubdb/activity"
 	"heroku-line-bot/src/repo/database/database/clubdb/place"
 	"strconv"
 	"strings"
@@ -119,7 +119,7 @@ func (b *NewActivity) LoadRequireInputTextParam(attr, text string) (resultErrInf
 		b.Date = util.DateTime(t)
 	case "ICmdLogic.place_id":
 		if dbDatas, err := database.Club().Place.Select(
-			dbModel.ReqsClubPlace{
+			place.Reqs{
 				Name: &text,
 			},
 			place.COLUMN_ID,
@@ -201,7 +201,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 			}
 		}()
 
-		if errInfo := b.InsertActivity(db); errInfo != nil {
+		if errInfo := b.InsertActivity(&db); errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {
 				return
@@ -363,10 +363,10 @@ func (b *NewActivity) InsertActivity(db *clubdb.Database) (resultErrInfo errUtil
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			}
 		}()
-		db = dbConn
+		db = &dbConn
 	}
 
-	data := &dbModel.ClubActivity{
+	data := &activity.Model{
 		Date:          b.Date.Time(),
 		PlaceID:       b.PlaceID,
 		CourtsAndTime: courtsStr,

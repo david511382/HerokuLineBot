@@ -15,6 +15,5 @@ func main() {
 	cmd.Execute()
 }
 
-// TODO: 清除richmenu
 // TODO: 取消場次
 // TODO: 修改場次

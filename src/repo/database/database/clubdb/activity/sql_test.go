@@ -4,20 +4,23 @@ import (
 	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
+	"heroku-line-bot/src/repo/database/common"
 	"testing"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 func TestActivity_Select(t *testing.T) {
 	type args struct {
-		arg     dbModel.ReqsClubActivity
-		columns []Column
+		arg     Reqs
+		columns []common.IColumn
 	}
 	type migrations struct {
-		table []*dbModel.ClubActivity
+		table []*Model
 	}
 	type wants struct {
-		data []*dbModel.ClubActivity
+		data []*Model
 	}
 	tests := []struct {
 		name       string
@@ -26,35 +29,40 @@ func TestActivity_Select(t *testing.T) {
 		wants      wants
 	}{
 		{
-			"array condition",
+			"order",
 			args{
-				arg: dbModel.ReqsClubActivity{
+				arg: Reqs{
 					Date: dbModel.Date{
 						FromDate: util.GetUTCTimeP(2013, 8, 2),
 					},
 				},
-				columns: []Column{
+				columns: []common.IColumn{
 					COLUMN_Date,
+					COLUMN_PlaceID.Order(common.DESC),
+					COLUMN_ID.Order(common.DESC),
+					COLUMN_Date.Order(common.DESC),
 				},
 			},
 			migrations{
-				table: []*dbModel.ClubActivity{
+				table: []*Model{
 					{
-						ID:   5,
-						Date: util.GetUTCTime(2013, 8, 2),
+						ID:      5,
+						Date:    util.GetUTCTime(2013, 8, 2),
+						PlaceID: 1,
 					},
 					{
 						ID:   8,
 						Date: util.GetUTCTime(2013, 8, 1),
 					},
 					{
-						ID:   2,
-						Date: util.GetUTCTime(2013, 8, 3),
+						ID:      2,
+						Date:    util.GetUTCTime(2013, 8, 3),
+						PlaceID: 1,
 					},
 				},
 			},
 			wants{
-				data: []*dbModel.ClubActivity{
+				data: []*Model{
 					{
 						Date: *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
@@ -86,10 +94,10 @@ func TestActivity_Select(t *testing.T) {
 
 func TestActivity_MinMaxID(t *testing.T) {
 	type args struct {
-		arg dbModel.ReqsClubActivity
+		arg Reqs
 	}
 	type migrations struct {
-		table []*dbModel.ClubActivity
+		table []*Model
 	}
 	type wants struct {
 		maxDate time.Time
@@ -104,10 +112,10 @@ func TestActivity_MinMaxID(t *testing.T) {
 		{
 			"min max date",
 			args{
-				arg: dbModel.ReqsClubActivity{},
+				arg: Reqs{},
 			},
 			migrations{
-				table: []*dbModel.ClubActivity{
+				table: []*Model{
 					{
 						Date: *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 5),
 					},
@@ -141,6 +149,121 @@ func TestActivity_MinMaxID(t *testing.T) {
 				return
 			}
 			if ok, msg := util.Comp(gotMinDate, tt.wants.minDate); !ok {
+				t.Error(msg)
+				return
+			}
+		})
+	}
+}
+
+func TestActivity_Update(t *testing.T) {
+	type args struct {
+		trans *gorm.DB
+		arg   UpdateReqs
+	}
+	type migrations struct {
+		table []*Model
+	}
+	type wants struct {
+		datas []*Model
+	}
+	tests := []struct {
+		name       string
+		args       args
+		migrations migrations
+		wants      wants
+	}{
+		{
+			"where",
+			args{
+				trans: nil,
+				arg: UpdateReqs{
+					Reqs: Reqs{
+						ID: util.GetIntP(8),
+					},
+					MemberCount: util.GetInt16P(3),
+					LogisticID:  util.GetIntPP(util.GetIntP(3)),
+				},
+			},
+			migrations{
+				table: []*Model{
+					{
+						ID:          5,
+						MemberCount: 2,
+						LogisticID:  nil,
+						Date:        util.GetUTCTime(2013, 8, 2),
+					},
+					{
+						ID:          8,
+						MemberCount: 1,
+						LogisticID:  util.GetIntP(2),
+						Date:        util.GetUTCTime(2013, 8, 2),
+					},
+				},
+			},
+			wants{
+				datas: []*Model{
+					{
+						ID:          5,
+						MemberCount: 2,
+						LogisticID:  nil,
+						Date:        *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+					},
+					{
+						ID:          8,
+						MemberCount: 3,
+						LogisticID:  util.GetIntP(3),
+						Date:        *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+					},
+				},
+			},
+		},
+		{
+			"to nil",
+			args{
+				trans: nil,
+				arg: UpdateReqs{
+					Reqs: Reqs{
+						ID: util.GetIntP(8),
+					},
+					LogisticID: util.GetIntPP(nil),
+				},
+			},
+			migrations{
+				table: []*Model{
+					{
+						ID:         8,
+						LogisticID: util.GetIntP(2),
+						Date:       util.GetUTCTime(2013, 8, 2),
+					},
+				},
+			},
+			wants{
+				datas: []*Model{
+					{
+						ID:         8,
+						LogisticID: nil,
+						Date:       *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := db.MigrationData(tt.migrations.table...); err != nil {
+				t.Fatal(err.Error())
+			}
+
+			if err := db.Update(tt.args.arg); err != nil {
+				t.Errorf("Activity.Update() error = %v", err)
+			}
+
+			got, err := db.Select(Reqs{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if ok, msg := util.Comp(got, tt.wants.datas); !ok {
 				t.Error(msg)
 				return
 			}

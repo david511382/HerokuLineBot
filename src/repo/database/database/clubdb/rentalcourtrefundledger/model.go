@@ -1,66 +1,78 @@
 package rentalcourtrefundledger
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database/common"
 
 	"gorm.io/gorm"
 )
 
-type Column string
-
 const (
-	COLUMN_ID                  Column = "id"
-	COLUMN_RentalCourtLedgerID Column = "rental_court_ledger_id"
-	COLUMN_RentalCourtDetailID Column = "rental_court_detail_id"
-	COLUMN_RentalCourtID       Column = "rental_court_id"
-	COLUMN_IncomeID            Column = "income_id"
+	COLUMN_ID                  common.ColumnName = "id"
+	COLUMN_RentalCourtLedgerID common.ColumnName = "rental_court_ledger_id"
+	COLUMN_RentalCourtDetailID common.ColumnName = "rental_court_detail_id"
+	COLUMN_RentalCourtID       common.ColumnName = "rental_court_id"
+	COLUMN_IncomeID            common.ColumnName = "income_id"
 )
 
-type RentalCourtRefundLedger struct {
-	common.IBaseTable
+type Table struct {
+	common.BaseTable[
+		Model,
+		Reqs,
+		UpdateReqs,
+	]
 }
 
-func New(baseTableCreator func(table common.ITable) common.IBaseTable) *RentalCourtRefundLedger {
-	result := &RentalCourtRefundLedger{}
-	result.IBaseTable = baseTableCreator(result)
+func New(connectionCreator common.IConnectionCreator) *Table {
+	result := &Table{}
+	result.BaseTable = *common.NewBaseTable[Model, Reqs, UpdateReqs](connectionCreator)
 	return result
 }
 
-func (t RentalCourtRefundLedger) GetTable() interface{} {
-	return t.newModel()
+type Model struct {
+	ID                  int  `gorm:"column:id;type:serial;primary_key;not null"`
+	RentalCourtLedgerID int  `gorm:"column:rental_court_ledger_id;type:int;not null;index:idx_rentalcourtledgerid"`
+	RentalCourtDetailID int  `gorm:"column:rental_court_detail_id;type:int;not null"`
+	RentalCourtID       int  `gorm:"column:rental_court_id;type:int;not null"`
+	IncomeID            *int `gorm:"column:income_id;type:int"`
 }
 
-func (t RentalCourtRefundLedger) newModel() dbModel.ClubRentalCourtRefundLedger {
-	return dbModel.ClubRentalCourtRefundLedger{}
+func (Model) TableName() string {
+	return "rental_court_refund_ledger"
 }
 
-func (t RentalCourtRefundLedger) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
-	arg := argI.(dbModel.ReqsClubRentalCourtRefundLedger)
-	return t.whereArg(dp, arg)
+type Reqs struct {
+	ID  *int
+	IDs []int
+
+	RentlCourtLedgerID  *int
+	RentlCourtLedgerIDs []int
 }
 
-func (t RentalCourtRefundLedger) whereArg(dp *gorm.DB, arg dbModel.ReqsClubRentalCourtRefundLedger) *gorm.DB {
-	m := t.newModel()
-	dp = dp.Model(m)
+func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {
+	tableName := new(Model).TableName()
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.IDs; len(p) > 0 {
-		dp = dp.Where(string(COLUMN_ID+" IN (?)"), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
-	if p := arg.LedgerID; p != nil {
-		dp = dp.Where(string(COLUMN_RentalCourtLedgerID+" = ?"), p)
+	if p := arg.RentlCourtLedgerID; p != nil {
+		dp = dp.Where(COLUMN_RentalCourtLedgerID.TableName(tableName).FullName()+" = ?", p)
 	}
-	if p := arg.LedgerIDs; len(p) > 0 {
-		dp = dp.Where(string(COLUMN_RentalCourtLedgerID+" IN (?)"), p)
+	if p := arg.RentlCourtLedgerIDs; len(p) > 0 {
+		dp = dp.Where(COLUMN_RentalCourtLedgerID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	return dp
 }
 
-func (t RentalCourtRefundLedger) IsRequireTimeConvert() bool {
-	return false
+type UpdateReqs struct {
+	Reqs
+}
+
+func (arg UpdateReqs) GetUpdateFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	return fields
 }

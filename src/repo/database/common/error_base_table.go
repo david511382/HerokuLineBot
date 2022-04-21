@@ -12,7 +12,7 @@ func NewErrorBaseTable(err error) *ErrorBaseTable {
 }
 
 // response: pointer of slice / struct
-func (t ErrorBaseTable) SelectColumns(arg interface{}, response interface{}, columns ...string) error {
+func (t ErrorBaseTable) SelectTo(arg interface{}, response interface{}, columns ...Column) error {
 	return t.err
 }
 

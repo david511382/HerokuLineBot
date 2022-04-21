@@ -5,10 +5,10 @@ import (
 	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
 	badmintonTeamLogic "heroku-line-bot/src/logic/badminton/team"
 	commonLogic "heroku-line-bot/src/logic/common"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/activity"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
 	"heroku-line-bot/src/repo/database/database/clubdb/memberactivity"
@@ -65,7 +65,7 @@ func GetActivitys(
 			}
 		}
 
-		dbActivityDatas := make([]*dbModel.ClubActivity, 0)
+		dbActivityDatas := make([]*activity.Model, 0)
 		for _, arg := range args {
 			{
 				dbDatas, err := database.Club().Activity.Select(
@@ -134,8 +134,8 @@ func GetActivitys(
 	}
 
 	{
-		dbDatas, err := database.Club().JoinActivityDetail(dbModel.ReqsClubJoinActivityDetail{
-			ReqsClubActivity: &dbModel.ReqsClubActivity{
+		dbDatas, err := database.Club().JoinActivityDetail(clubdb.ReqsClubJoinActivityDetail{
+			Activity: &activity.Reqs{
 				IDs: activityIDs,
 			},
 		})
@@ -219,7 +219,7 @@ func GetActivitys(
 
 		if len(activityIDs) > 0 {
 			dbDatas, err := database.Club().MemberActivity.Select(
-				dbModel.ReqsClubMemberActivity{
+				memberactivity.Reqs{
 					ActivityIDs: activityIDs,
 				},
 				memberactivity.COLUMN_MemberID,
@@ -246,7 +246,7 @@ func GetActivitys(
 
 			if len(memberIDs) > 0 {
 				dbDatas, err := database.Club().Member.Select(
-					dbModel.ReqsClubMember{
+					member.Reqs{
 						IDs: memberIDs,
 					},
 					member.COLUMN_ID,

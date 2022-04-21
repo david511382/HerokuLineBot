@@ -1,11 +1,12 @@
 package team
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	rdsModel "heroku-line-bot/src/model/redis"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb/member"
+	"heroku-line-bot/src/repo/database/database/clubdb/team"
 	"heroku-line-bot/src/repo/redis"
 	"testing"
 )
@@ -15,8 +16,8 @@ func TestLoad(t *testing.T) {
 		ids []int
 	}
 	type migrations struct {
-		team                []*dbModel.ClubTeam
-		member              []*dbModel.ClubMember
+		team                []*team.Model
+		member              []*member.Model
 		redisTeamIDPlaceMap map[int]*rdsModel.ClubBadmintonTeam
 	}
 	type wants struct {
@@ -35,7 +36,7 @@ func TestLoad(t *testing.T) {
 				ids: []int{1},
 			},
 			migrations{
-				team: []*dbModel.ClubTeam{
+				team: []*team.Model{
 					{
 						ID:            1,
 						Name:          "name",
@@ -43,7 +44,7 @@ func TestLoad(t *testing.T) {
 						OwnerMemberID: 2,
 					},
 				},
-				member: []*dbModel.ClubMember{
+				member: []*member.Model{
 					{
 						ID:     2,
 						LineID: util.GetStringP("s"),
@@ -74,13 +75,13 @@ func TestLoad(t *testing.T) {
 				ids: []int{1},
 			},
 			migrations{
-				team: []*dbModel.ClubTeam{
+				team: []*team.Model{
 					{
 						ID:   1,
 						Name: "wrong",
 					},
 				},
-				member: []*dbModel.ClubMember{},
+				member: []*member.Model{},
 				redisTeamIDPlaceMap: map[int]*rdsModel.ClubBadmintonTeam{
 					1: {
 						Name: "name",
@@ -106,13 +107,13 @@ func TestLoad(t *testing.T) {
 				ids: []int{},
 			},
 			migrations{
-				team: []*dbModel.ClubTeam{
+				team: []*team.Model{
 					{
 						ID:   1,
 						Name: "name",
 					},
 				},
-				member:              []*dbModel.ClubMember{},
+				member:              []*member.Model{},
 				redisTeamIDPlaceMap: map[int]*rdsModel.ClubBadmintonTeam{},
 			},
 			wants{

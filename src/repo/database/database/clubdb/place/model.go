@@ -1,60 +1,67 @@
 package place
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database/common"
 
 	"gorm.io/gorm"
 )
 
-type Column string
-
 const (
-	COLUMN_ID   Column = "id"
-	COLUMN_Name Column = "name"
+	COLUMN_ID   common.ColumnName = "id"
+	COLUMN_Name common.ColumnName = "name"
 )
 
-type Place struct {
-	common.IBaseTable
+type Table struct {
+	common.BaseTable[
+		Model,
+		Reqs,
+		UpdateReqs,
+	]
 }
 
-func New(baseTableCreator func(table common.ITable) common.IBaseTable) *Place {
-	result := &Place{}
-	result.IBaseTable = baseTableCreator(result)
+func New(connectionCreator common.IConnectionCreator) *Table {
+	result := &Table{}
+	result.BaseTable = *common.NewBaseTable[Model, Reqs, UpdateReqs](connectionCreator)
 	return result
 }
 
-func (t Place) GetTable() interface{} {
-	return t.newModel()
+type Model struct {
+	ID   int    `gorm:"column:id;type:serial;primary_key;not null"`
+	Name string `gorm:"column:name;type:varchar(50);not null;index"`
 }
 
-func (t Place) newModel() dbModel.ClubPlace {
-	return dbModel.ClubPlace{}
+func (Model) TableName() string {
+	return "place"
 }
 
-func (t Place) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
-	arg := argI.(dbModel.ReqsClubPlace)
-	return t.whereArg(dp, arg)
+type Reqs struct {
+	ID   *int
+	IDs  []int
+	Name *string
 }
 
-func (t Place) whereArg(dp *gorm.DB, arg dbModel.ReqsClubPlace) *gorm.DB {
-	m := t.newModel()
-	dp = dp.Model(m)
+func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {
+	tableName := new(Model).TableName()
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.IDs; len(p) > 0 {
-		dp = dp.Where(string(COLUMN_ID+" IN (?)"), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	if p := arg.Name; p != nil {
-		dp = dp.Where(string(COLUMN_Name+" = ?"), p)
+		dp = dp.Where(COLUMN_Name.TableName(tableName).FullName()+" = ?", p)
 	}
 
 	return dp
 }
 
-func (t Place) IsRequireTimeConvert() bool {
-	return false
+type UpdateReqs struct {
+	Reqs
+}
+
+func (arg UpdateReqs) GetUpdateFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	return fields
 }

@@ -5,13 +5,15 @@ import (
 	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
 	badmintonTeamLogic "heroku-line-bot/src/logic/badminton/team"
 	commonLogic "heroku-line-bot/src/logic/common"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/model/redis"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
+	"heroku-line-bot/src/repo/database/database/clubdb/activity"
+	"heroku-line-bot/src/repo/database/database/clubdb/member"
+	"heroku-line-bot/src/repo/database/database/clubdb/memberactivity"
 	"heroku-line-bot/src/server/domain/resp"
 	"sort"
 	"testing"
@@ -29,10 +31,10 @@ func TestGetActivitys(t *testing.T) {
 		everyWeekdays []time.Weekday
 	}
 	type migrations struct {
-		activity               []*dbModel.ClubActivity
-		memberActivity         []*dbModel.ClubMemberActivity
-		member                 []*dbModel.ClubMember
-		mockJoinActivityDetail func(arg dbModel.ReqsClubJoinActivityDetail) (response []*dbModel.RespClubJoinActivityDetail, resultErr error)
+		activity               []*activity.Model
+		memberActivity         []*memberactivity.Model
+		member                 []*member.Model
+		mockJoinActivityDetail func(arg clubdb.ReqsClubJoinActivityDetail) (response []*clubdb.RespClubJoinActivityDetail, resultErr error)
 		mockTeamLoad           func(ids ...int) (resultTeamIDMap map[int]*redis.ClubBadmintonTeam, resultErrInfo errUtil.IError)
 		mockPlaceLoad          func(ids ...int) (resultPlaceIDMap map[int]*redis.ClubBadmintonPlace, resultErrInfo errUtil.IError)
 	}
@@ -57,7 +59,7 @@ func TestGetActivitys(t *testing.T) {
 				pageSize:      100,
 			},
 			migrations{
-				activity: []*dbModel.ClubActivity{
+				activity: []*activity.Model{
 					{
 						ID:      82,
 						PlaceID: 52,
@@ -90,11 +92,11 @@ func TestGetActivitys(t *testing.T) {
 						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 					},
 				},
-				mockJoinActivityDetail: func(arg dbModel.ReqsClubJoinActivityDetail) (response []*dbModel.RespClubJoinActivityDetail, resultErr error) {
+				mockJoinActivityDetail: func(arg clubdb.ReqsClubJoinActivityDetail) (response []*clubdb.RespClubJoinActivityDetail, resultErr error) {
 					wantIDs := []int{
 						52, 82,
 					}
-					ids := arg.ReqsClubActivity.IDs
+					ids := arg.Activity.IDs
 					sort.Slice(ids, func(i, j int) bool {
 						return ids[i] < ids[j]
 					})
@@ -103,7 +105,7 @@ func TestGetActivitys(t *testing.T) {
 						return
 					}
 
-					response = []*dbModel.RespClubJoinActivityDetail{
+					response = []*clubdb.RespClubJoinActivityDetail{
 						{
 							ActivityID:                 52,
 							RentalCourtDetailStartTime: commonLogic.NewHourMinTime(1, 0).ToString(),
@@ -165,7 +167,7 @@ func TestGetActivitys(t *testing.T) {
 					}
 					return
 				},
-				memberActivity: []*dbModel.ClubMemberActivity{
+				memberActivity: []*memberactivity.Model{
 					{
 						ActivityID: 52,
 						MemberID:   13,
@@ -188,7 +190,7 @@ func TestGetActivitys(t *testing.T) {
 						MemberID:   1,
 					},
 				},
-				member: []*dbModel.ClubMember{
+				member: []*member.Model{
 					{
 						ID:   13,
 						Name: "a",

@@ -18,20 +18,19 @@ var (
 
 func Club() *clubdb.Database {
 	if club == nil {
-		db, err := clubdb.NewDatabase(
-			func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
-				return connect(func(cfg *bootstrap.Config) bootstrap.Db {
-					return cfg.ClubDb
-				})
-			},
+		club = clubdb.NewDatabase(
+			getConnect(func(cfg *bootstrap.Config) bootstrap.Db {
+				return cfg.ClubDb
+			}),
 		)
-		if err != nil {
-			return db
-		}
-
-		club = db
 	}
 	return club
+}
+
+func getConnect(configSelector func(cfg *bootstrap.Config) bootstrap.Db) common.Connect {
+	return func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
+		return connect(configSelector)
+	}
 }
 
 func connect(configSelector func(cfg *bootstrap.Config) bootstrap.Db) (master, slave *gorm.DB, resultErr error) {

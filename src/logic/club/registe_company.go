@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"heroku-line-bot/src/logger"
 	"heroku-line-bot/src/logic/club/domain"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
@@ -12,7 +11,7 @@ import (
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
-	memberDb "heroku-line-bot/src/repo/database/database/clubdb/member"
+	"heroku-line-bot/src/repo/database/database/clubdb/member"
 
 	"github.com/rs/zerolog"
 )
@@ -45,7 +44,7 @@ func (b *registeCompany) GetRequireAttr() (requireAttr string, warnMessage inter
 
 	if b.IsRequireDbCheckCompanyID {
 		if count, err := database.Club().Member.Count(
-			dbModel.ReqsClubMember{
+			member.Reqs{
 				CompanyID: b.CompanyID,
 			},
 		); err != nil {
@@ -363,12 +362,12 @@ func (b *registeCompany) loadMemberInfo() (resultErrInfo errUtil.IError) {
 	if b.MemberID == nil {
 		lineID := b.context.GetUserID()
 		if dbDatas, err := database.Club().Member.Select(
-			dbModel.ReqsClubMember{
+			member.Reqs{
 				LineID: &lineID,
 			},
-			memberDb.COLUMN_ID,
-			memberDb.COLUMN_Department,
-			memberDb.COLUMN_CompanyID,
+			member.COLUMN_ID,
+			member.COLUMN_Department,
+			member.COLUMN_CompanyID,
 		); err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -429,24 +428,23 @@ func (b *registeCompany) Do(text string) (resultErrInfo errUtil.IError) {
 			}
 		}()
 
-		arg := dbModel.ReqsClubMember{
-			ID: b.MemberID,
-		}
-		fields := map[string]interface{}{
-			"department": string(b.getDepartment()),
-			"company_id": b.CompanyID,
-		}
-		if err := db.Member.Update(arg, fields); err != nil {
+		if err := db.Member.Update(member.UpdateReqs{
+			Reqs: member.Reqs{
+				ID: b.MemberID,
+			},
+			Department: util.GetStringP(string(b.getDepartment())),
+			CompanyID:  &b.CompanyID,
+		}); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
 
 		{
 			if dbDatas, err := db.Member.Select(
-				dbModel.ReqsClubMember{
+				member.Reqs{
 					ID: b.MemberID,
 				},
-				memberDb.COLUMN_Name,
+				member.COLUMN_Name,
 			); err != nil {
 				errInfo := errUtil.NewError(err, zerolog.WarnLevel)
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

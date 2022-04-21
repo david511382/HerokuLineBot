@@ -6,79 +6,43 @@ import (
 	"gorm.io/gorm"
 )
 
+type SchemaCreator[Schema IBaseDatabase] func(connect Connect) Schema
 type Connect func() (master, slave *gorm.DB, resultErr error)
 
 type IBaseDatabase interface {
-	GetSlave() *gorm.DB
-	GetMaster() *gorm.DB
+	IConnectionCreator
 	Dispose() errUtil.IError
-	BeginTransaction(
-		creator func(connect Connect) (IBaseDatabase, error),
-	) (
-		trans ITransaction,
-		resultErr error,
-	)
 }
 
-type BaseDatabase struct {
-	read  *gorm.DB
-	write *gorm.DB
+type BaseDatabase[Schema IBaseDatabase] struct {
+	*MasterSlaveManager
+	schemaCreator SchemaCreator[Schema]
 }
 
-func NewBaseDatabase(read, write *gorm.DB) *BaseDatabase {
-	result := &BaseDatabase{
-		read:  read,
-		write: write,
+func NewBaseDatabase[Schema IBaseDatabase](
+	connectionCreator Connect,
+	schemaCreator func(connect Connect) Schema,
+) *BaseDatabase[Schema] {
+	result := &BaseDatabase[Schema]{
+		MasterSlaveManager: NewMasterSlaveManager(connectionCreator),
+		schemaCreator:      schemaCreator,
 	}
 	return result
 }
 
-func (d *BaseDatabase) GetSlave() *gorm.DB {
-	return d.read
-}
-
-func (d *BaseDatabase) GetMaster() *gorm.DB {
-	return d.write
-}
-
-func (d *BaseDatabase) Dispose() errUtil.IError {
-	if d == nil {
-		return nil
-	}
-
-	if d.read != nil {
-		sqlDB, err := d.read.DB()
-		if err != nil {
-			return errUtil.NewError(err)
-		}
-
-		if err := sqlDB.Close(); err != nil {
-			return errUtil.NewError(err)
-		}
-	}
-
-	if d.write != nil {
-		sqlDB, err := d.write.DB()
-		if err != nil {
-			return errUtil.NewError(err)
-		}
-
-		if err := sqlDB.Close(); err != nil {
-			return errUtil.NewError(err)
-		}
-	}
-
-	return nil
-}
-
-func (d *BaseDatabase) BeginTransaction(
-	creator func(connect Connect) (IBaseDatabase, error),
-) (
+func (d *BaseDatabase[Schema]) Begin() (
+	db Schema,
 	trans ITransaction,
 	resultErr error,
 ) {
 	connect := func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
-		dp := d.GetMaster().Begin()
+		dp, err := d.GetMaster()
+		if err != nil {
+			resultErr = err
+			return
+		}
+
+		dp = dp.Begin()
 		if dp.Error != nil {
 			resultErr = dp.Error
 			return
@@ -88,12 +52,14 @@ func (d *BaseDatabase) BeginTransaction(
 		slave = dp
 		return
 	}
-	db, err := creator(connect)
+	db = d.schemaCreator(connect)
+
+	conn, err := db.GetMaster()
 	if err != nil {
 		resultErr = err
 		return
 	}
 
-	trans = NewTransaction(db.GetMaster())
+	trans = NewTransaction(conn)
 	return
 }

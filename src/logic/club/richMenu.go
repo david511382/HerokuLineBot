@@ -4,7 +4,6 @@ import (
 	"heroku-line-bot/src/logger"
 	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
 	"heroku-line-bot/src/pkg/service/linebot/domain/model"
@@ -189,7 +188,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 			case domain.ADMIN_CLUB_ROLE, domain.CADRE_CLUB_ROLE:
 				lineIDs := []string{}
 				if dbDatas, err := database.Club().Member.Select(
-					dbModel.ReqsClubMember{
+					member.Reqs{
 						Role: util.GetInt16P(int16(role)),
 					},
 					member.COLUMN_Name,

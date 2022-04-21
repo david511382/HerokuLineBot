@@ -1,103 +1,147 @@
 package activity
 
 import (
-	"fmt"
 	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database/common"
+	"time"
 
 	"gorm.io/gorm"
 )
 
-type Column string
-
 const (
-	COLUMN_ID            Column = "id"
-	COLUMN_TeamID        Column = "team_id"
-	COLUMN_Date          Column = "date"
-	COLUMN_PlaceID       Column = "place_id"
-	COLUMN_CourtsAndTime Column = "courts_and_time"
-	COLUMN_MemberCount   Column = "member_count"
-	COLUMN_GuestCount    Column = "guest_count"
-	COLUMN_MemberFee     Column = "member_fee"
-	COLUMN_GuestFee      Column = "guest_fee"
-	COLUMN_ClubSubsidy   Column = "club_subsidy"
-	COLUMN_LogisticID    Column = "logistic_id"
-	COLUMN_Description   Column = "description"
-	COLUMN_PeopleLimit   Column = "people_limit"
+	COLUMN_ID            common.ColumnName = "id"
+	COLUMN_TeamID        common.ColumnName = "team_id"
+	COLUMN_Date          common.ColumnName = "date"
+	COLUMN_PlaceID       common.ColumnName = "place_id"
+	COLUMN_CourtsAndTime common.ColumnName = "courts_and_time"
+	COLUMN_MemberCount   common.ColumnName = "member_count"
+	COLUMN_GuestCount    common.ColumnName = "guest_count"
+	COLUMN_MemberFee     common.ColumnName = "member_fee"
+	COLUMN_GuestFee      common.ColumnName = "guest_fee"
+	COLUMN_ClubSubsidy   common.ColumnName = "club_subsidy"
+	COLUMN_LogisticID    common.ColumnName = "logistic_id"
+	COLUMN_Description   common.ColumnName = "description"
+	COLUMN_PeopleLimit   common.ColumnName = "people_limit"
 )
 
-type Activity struct {
-	common.IBaseTable
+type Table struct {
+	common.BaseTable[
+		Model,
+		Reqs,
+		UpdateReqs,
+	]
 }
 
-func New(baseTableCreator func(table common.ITable) common.IBaseTable) *Activity {
-	result := &Activity{}
-	result.IBaseTable = baseTableCreator(result)
+func New(connectionCreator common.IConnectionCreator) *Table {
+	result := &Table{}
+	result.BaseTable = *common.NewBaseTable[Model, Reqs, UpdateReqs](connectionCreator)
 	return result
 }
 
-func (t Activity) GetTable() interface{} {
-	return t.newModel()
+type Model struct {
+	ID            int       `gorm:"column:id;type:serial;primary_key;not null"`
+	TeamID        int       `gorm:"column:team_id;type:int;not null"`
+	Date          time.Time `gorm:"column:date;type:date;not null;index"`
+	PlaceID       int       `gorm:"column:place_id;type:int;not null"`
+	CourtsAndTime string    `gorm:"column:courts_and_time;type:varchar(200);not null"`
+	MemberCount   int16     `gorm:"column:member_count;type:smallint;not null"`
+	GuestCount    int16     `gorm:"column:guest_count;type:smallint;not null"`
+	MemberFee     int16     `gorm:"column:member_fee;type:smallint;not null"`
+	GuestFee      int16     `gorm:"column:guest_fee;type:smallint;not null"`
+	ClubSubsidy   int16     `gorm:"column:club_subsidy;type:smallint;not null"`
+	LogisticID    *int      `gorm:"column:logistic_id;type:int;"`
+	Description   string    `gorm:"column:description;type:varchar(50);not null"`
+	PeopleLimit   *int16    `gorm:"column:people_limit;type:smallint"`
 }
 
-func (t Activity) newModel() dbModel.ClubActivity {
-	return dbModel.ClubActivity{}
+func (Model) TableName() string {
+	return "activity"
 }
 
-func (t Activity) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
-	arg := argI.(dbModel.ReqsClubActivity)
-	return t.whereArg(dp, arg)
+type Reqs struct {
+	dbModel.Date
+	Dates               []*time.Time
+	PlaceID             *int
+	PlaceIDs            []int
+	ClubSubsidyNotEqual *int16
+	ID                  *int
+	IDs                 []int
+	TeamID              *int
 }
 
-func (t Activity) whereArg(dp *gorm.DB, arg dbModel.ReqsClubActivity) *gorm.DB {
-	m := t.newModel()
-	dp = dp.Model(m)
-	tableName := m.TableName()
+func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {
+	tableName := new(Model).TableName()
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where(fmt.Sprintf("%s.%s = ?", tableName, COLUMN_ID), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.IDs; len(p) > 0 {
-		dp = dp.Where(fmt.Sprintf("%s.%s IN (?)", tableName, COLUMN_ID), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	if p := arg.TeamID; p != nil {
-		dp = dp.Where(fmt.Sprintf("%s.%s = ?", tableName, COLUMN_TeamID), p)
+		dp = dp.Where(COLUMN_TeamID.TableName(tableName).FullName()+" = ?", p)
 	}
 
 	if p := arg.PlaceID; p != nil {
-		dp = dp.Where(fmt.Sprintf("%s.%s = ?", tableName, COLUMN_PlaceID), p)
+		dp = dp.Where(COLUMN_PlaceID.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.PlaceIDs; len(p) > 0 {
-		dp = dp.Where(fmt.Sprintf("%s.%s IN (?)", tableName, COLUMN_PlaceID), p)
+		dp = dp.Where(COLUMN_PlaceID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	if p := arg.ClubSubsidyNotEqual; p != nil {
-		dp = dp.Where(fmt.Sprintf("%s.%s != ?", tableName, COLUMN_ClubSubsidy), p)
+		dp = dp.Where(COLUMN_ClubSubsidy.TableName(tableName).FullName()+" != ?", p)
 	}
 
-	if p := arg.Date.Date; p != nil && !p.IsZero() {
-		dp = dp.Where(fmt.Sprintf("%s.%s = ?", tableName, COLUMN_Date), p)
+	if p := arg.Date.Date; p != nil {
+		dp = dp.Where(COLUMN_Date.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.Dates; len(p) > 0 {
-		dp = dp.Where(fmt.Sprintf("%s.%s IN (?)", tableName, COLUMN_Date), p)
+		dp = dp.Where(COLUMN_Date.TableName(tableName).FullName()+" IN (?)", p)
 	}
-	if p := arg.FromDate; p != nil && !p.IsZero() {
-		dp = dp.Where(fmt.Sprintf("%s.%s >= ?", tableName, COLUMN_Date), p)
+	if p := arg.FromDate; p != nil {
+		dp = dp.Where(COLUMN_Date.TableName(tableName).FullName()+" >= ?", p)
 	}
-	if p := arg.ToDate; p != nil && !p.IsZero() {
-		dp = dp.Where(fmt.Sprintf("%s.%s <= ?", tableName, COLUMN_Date), p)
+	if p := arg.ToDate; p != nil {
+		dp = dp.Where(COLUMN_Date.TableName(tableName).FullName()+" <= ?", p)
 	}
-	if p := arg.BeforeDate; p != nil && !p.IsZero() {
-		dp = dp.Where(fmt.Sprintf("%s.%s < ?", tableName, COLUMN_Date), p)
+	if p := arg.BeforeDate; p != nil {
+		dp = dp.Where(COLUMN_Date.TableName(tableName).FullName()+" < ?", p)
 	}
-	if p := arg.AfterDate; p != nil && !p.IsZero() {
-		dp = dp.Where(fmt.Sprintf("%s.%s > ?", tableName, COLUMN_Date), p)
+	if p := arg.AfterDate; p != nil {
+		dp = dp.Where(COLUMN_Date.TableName(tableName).FullName()+" > ?", p)
 	}
 
 	return dp
 }
 
-func (t Activity) IsRequireTimeConvert() bool {
-	return true
+type UpdateReqs struct {
+	Reqs
+
+	LogisticID **int
+	MemberCount,
+	GuestCount,
+	MemberFee,
+	GuestFee *int16
+}
+
+func (arg UpdateReqs) GetUpdateFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	if p := arg.LogisticID; p != nil {
+		fields[COLUMN_LogisticID.Name()] = *p
+	}
+	if p := arg.MemberCount; p != nil {
+		fields[COLUMN_MemberCount.Name()] = *p
+	}
+	if p := arg.GuestCount; p != nil {
+		fields[COLUMN_GuestCount.Name()] = *p
+	}
+	if p := arg.MemberFee; p != nil {
+		fields[COLUMN_MemberFee.Name()] = *p
+	}
+	if p := arg.GuestFee; p != nil {
+		fields[COLUMN_GuestFee.Name()] = *p
+	}
+	return fields
 }

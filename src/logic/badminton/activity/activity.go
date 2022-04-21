@@ -1,10 +1,10 @@
 package activity
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb/activity"
 	"time"
 )
 
@@ -14,13 +14,13 @@ func GetUnfinishedActiviysSqlReqs(
 	placeIDs []int,
 	everyWeekdays []time.Weekday,
 ) (
-	resultArgs []*dbModel.ReqsClubActivity,
+	resultArgs []*activity.Reqs,
 	resultErrInfo errUtil.IError,
 ) {
-	resultArgs = make([]*dbModel.ReqsClubActivity, 0)
+	resultArgs = make([]*activity.Reqs, 0)
 
-	args := make([]*dbModel.ReqsClubActivity, 0)
-	arg := &dbModel.ReqsClubActivity{
+	args := make([]*activity.Reqs, 0)
+	arg := &activity.Reqs{
 		PlaceIDs: placeIDs,
 	}
 	if fromDate != nil {

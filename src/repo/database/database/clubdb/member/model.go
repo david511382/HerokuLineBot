@@ -1,123 +1,171 @@
 package member
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/repo/database/common"
+	"time"
 
 	"gorm.io/gorm"
 )
 
-type Column string
-
 const (
-	COLUMN_ID         Column = "id"
-	COLUMN_JoinDate   Column = "join_date"
-	COLUMN_LeaveDate  Column = "deleted_at"
-	COLUMN_Department Column = "department"
-	COLUMN_Name       Column = "name"
-	COLUMN_CompanyID  Column = "company_id"
-	COLUMN_Role       Column = "role"
-	COLUMN_LineID     Column = "line_id"
+	COLUMN_ID         common.ColumnName = "id"
+	COLUMN_JoinDate   common.ColumnName = "join_date"
+	COLUMN_DeletedAt  common.ColumnName = "deleted_at"
+	COLUMN_Department common.ColumnName = "department"
+	COLUMN_Name       common.ColumnName = "name"
+	COLUMN_CompanyID  common.ColumnName = "company_id"
+	COLUMN_Role       common.ColumnName = "role"
+	COLUMN_LineID     common.ColumnName = "line_id"
 )
 
-type Member struct {
-	common.IBaseTable
+type Table struct {
+	common.BaseTable[
+		Model,
+		Reqs,
+		UpdateReqs,
+	]
 }
 
-func New(baseTableCreator func(table common.ITable) common.IBaseTable) *Member {
-	result := &Member{}
-	result.IBaseTable = baseTableCreator(result)
+func New(connectionCreator common.IConnectionCreator) *Table {
+	result := &Table{}
+	result.BaseTable = *common.NewBaseTable[Model, Reqs, UpdateReqs](connectionCreator)
 	return result
 }
 
-func (t Member) GetTable() interface{} {
-	return t.newModel()
+type Model struct {
+	ID         int        `gorm:"column:id;type:serial;primary_key;not null"`
+	JoinDate   *time.Time `gorm:"column:join_date;type:date"`
+	DeletedAt  *time.Time `gorm:"column:deleted_at;index"`
+	Department string     `gorm:"column:department;type:varchar(50);not null"`
+	Name       string     `gorm:"column:name;type:varchar(50);not null;"`
+	CompanyID  *string    `gorm:"column:company_id;type:varchar(10);unique_index:uniq_company_id"`
+	Role       int16      `gorm:"column:role;type:smallint;not null;"`
+	LineID     *string    `gorm:"column:line_id;type:varchar(50);unique_index:uniq_line_id"`
 }
 
-func (t Member) newModel() dbModel.ClubMember {
-	return dbModel.ClubMember{}
+func (Model) TableName() string {
+	return "member"
 }
 
-func (t Member) WhereArg(dp *gorm.DB, argI interface{}) *gorm.DB {
-	arg := argI.(dbModel.ReqsClubMember)
-	return t.whereArg(dp, arg)
+type Reqs struct {
+	ID              *int
+	IDs             []int
+	LineID          *string
+	LineIDIsNull    *bool
+	Name            *string
+	Role            *int16
+	IsDelete        *bool
+	CompanyID       *string
+	CompanyIDIsNull *bool
+
+	JoinDate       *time.Time
+	JoinDateIsNull *bool
+	FromJoinDate   *time.Time
+	AfterJoinDate  *time.Time
+	ToJoinDate     *time.Time
+	BeforeJoinDate *time.Time
 }
 
-func (t Member) whereArg(dp *gorm.DB, arg dbModel.ReqsClubMember) *gorm.DB {
-	m := t.newModel()
-	dp = dp.Model(m)
+func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {
+	tableName := new(Model).TableName()
 
-	if arg.IsDelete == nil || *arg.IsDelete {
+	if p := arg.IsDelete; p == nil || *p {
 		dp = dp.Unscoped()
 
-		if arg.IsDelete != nil {
-			dp = dp.Where(string(COLUMN_LeaveDate+" IS NOT ?"), nil)
+		if p != nil {
+			dp = dp.Where(COLUMN_DeletedAt.TableName(tableName).FullName() + " IS NOT NULL")
 		}
 	}
 
 	if p := arg.ID; p != nil {
-		dp = dp.Where(string(COLUMN_ID+" = ?"), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" = ?", p)
 	}
 	if p := arg.IDs; len(p) > 0 {
-		dp = dp.Where(string(COLUMN_ID+" IN (?)"), p)
+		dp = dp.Where(COLUMN_ID.TableName(tableName).FullName()+" IN (?)", p)
 	}
 
 	if p := arg.Name; p != nil {
-		dp = dp.Where(string(COLUMN_Name+" = ?"), p)
+		dp = dp.Where(COLUMN_Name.TableName(tableName).FullName()+" = ?", p)
 	}
 
 	if p := arg.Role; p != nil {
-		dp = dp.Where(string(COLUMN_Role+" = ?"), p)
+		dp = dp.Where(COLUMN_Role.TableName(tableName).FullName()+" = ?", p)
 	}
 
 	if p := arg.LineIDIsNull; p != nil {
 		if *p {
-			dp = dp.Where(string(COLUMN_LineID + " IS NULL"))
+			dp = dp.Where(COLUMN_LineID.TableName(tableName).FullName() + " IS NULL")
 		} else {
-			dp = dp.Where(string(COLUMN_LineID + " IS NOT NULL"))
+			dp = dp.Where(COLUMN_LineID.TableName(tableName).FullName() + " IS NOT NULL")
 		}
 	}
 	if p := arg.LineID; p != nil {
-		dp = dp.Where(string(COLUMN_LineID+" = ?"), p)
+		dp = dp.Where(COLUMN_LineID.TableName(tableName).FullName()+" = ?", p)
 	}
 
 	if p := arg.CompanyIDIsNull; p != nil {
 		if *p {
-			dp = dp.Where(string(COLUMN_CompanyID + " IS NULL"))
+			dp = dp.Where(COLUMN_CompanyID.TableName(tableName).FullName() + " IS NULL")
 		} else {
-			dp = dp.Where(string(COLUMN_CompanyID + " IS NOT NULL"))
+			dp = dp.Where(COLUMN_CompanyID.TableName(tableName).FullName() + " IS NOT NULL")
 		}
 	}
 	if p := arg.CompanyID; p != nil {
-		dp = dp.Where(string(COLUMN_CompanyID+" = ?"), p)
+		dp = dp.Where(COLUMN_CompanyID.TableName(tableName).FullName()+" = ?", p)
 	}
 
 	if p := arg.JoinDateIsNull; p != nil {
 		if *p {
-			dp = dp.Where(string(COLUMN_JoinDate + " IS NULL"))
+			dp = dp.Where(COLUMN_JoinDate.TableName(tableName).FullName() + " IS NULL")
 		} else {
-			dp = dp.Where(string(COLUMN_JoinDate + " IS NOT NULL"))
+			dp = dp.Where(COLUMN_JoinDate.TableName(tableName).FullName() + " IS NOT NULL")
 		}
 	}
-	if p := arg.JoinDate; p != nil && !p.IsZero() {
-		dp = dp.Where(string(COLUMN_JoinDate+" = ?"), p)
+	if p := arg.JoinDate; p != nil {
+		dp = dp.Where(COLUMN_JoinDate.TableName(tableName).FullName()+" = ?", p)
 	}
-	if p := arg.FromJoinDate; p != nil && !p.IsZero() {
-		dp = dp.Where(string(COLUMN_JoinDate+" >= ?"), p)
+	if p := arg.FromJoinDate; p != nil {
+		dp = dp.Where(COLUMN_JoinDate.TableName(tableName).FullName()+" >= ?", p)
 	}
-	if p := arg.ToJoinDate; p != nil && !p.IsZero() {
-		dp = dp.Where(string(COLUMN_JoinDate+" <= ?"), p)
+	if p := arg.ToJoinDate; p != nil {
+		dp = dp.Where(COLUMN_JoinDate.TableName(tableName).FullName()+" <= ?", p)
 	}
-	if p := arg.BeforeJoinDate; p != nil && !p.IsZero() {
-		dp = dp.Where(string(COLUMN_JoinDate+" < ?"), p)
+	if p := arg.BeforeJoinDate; p != nil {
+		dp = dp.Where(COLUMN_JoinDate.TableName(tableName).FullName()+" < ?", p)
 	}
-	if p := arg.AfterJoinDate; p != nil && !p.IsZero() {
-		dp = dp.Where(string(COLUMN_JoinDate+" > ?"), p)
+	if p := arg.AfterJoinDate; p != nil {
+		dp = dp.Where(COLUMN_JoinDate.TableName(tableName).FullName()+" > ?", p)
 	}
 
 	return dp
 }
 
-func (t Member) IsRequireTimeConvert() bool {
-	return true
+type UpdateReqs struct {
+	Reqs
+
+	JoinDate   **time.Time
+	Role       *int16
+	CompanyID  **string
+	Department *string
+	Name       *string
+}
+
+func (arg UpdateReqs) GetUpdateFields() map[string]interface{} {
+	fields := make(map[string]interface{})
+	if p := arg.JoinDate; p != nil {
+		fields[COLUMN_JoinDate.Name()] = *p
+	}
+	if p := arg.Role; p != nil {
+		fields[COLUMN_Role.Name()] = *p
+	}
+	if p := arg.CompanyID; p != nil {
+		fields[COLUMN_CompanyID.Name()] = *p
+	}
+	if p := arg.Department; p != nil {
+		fields[COLUMN_Department.Name()] = *p
+	}
+	if p := arg.Name; p != nil {
+		fields[COLUMN_Name.Name()] = *p
+	}
+	return fields
 }

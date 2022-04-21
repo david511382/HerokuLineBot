@@ -1,7 +1,6 @@
 package team
 
 import (
-	dbModel "heroku-line-bot/src/model/database"
 	rdsModel "heroku-line-bot/src/model/redis"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
@@ -50,13 +49,13 @@ func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resu
 		idTeamMap := make(map[int]*rdsModel.ClubBadmintonTeam)
 		ownerMemberIDTeamIDsMap := make(map[int][]int)
 		{
-			dbDatas, err := database.Club().Team.Select(dbModel.ReqsClubTeam{
+			dbDatas, err := database.Club().Team.Select(team.Reqs{
 				IDs: reLoadIDs,
 			},
 				team.COLUMN_ID,
 				team.COLUMN_Name,
 				team.COLUMN_OwnerMemberID,
-				team.COLUMN_NotifyLineRommID,
+				team.COLUMN_NotifyLineRoomID,
 				team.COLUMN_ActivityDescription,
 				team.COLUMN_ActivityPeopleLimit,
 				team.COLUMN_ActivitySubsidy,
@@ -97,7 +96,7 @@ func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resu
 			for ownerMemberID := range ownerMemberIDTeamIDsMap {
 				ownerMemberIDs = append(ownerMemberIDs, ownerMemberID)
 			}
-			dbDatas, err := database.Club().Member.Select(dbModel.ReqsClubMember{
+			dbDatas, err := database.Club().Member.Select(member.Reqs{
 				IDs: ownerMemberIDs,
 			},
 				member.COLUMN_ID,
