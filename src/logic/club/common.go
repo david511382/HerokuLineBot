@@ -254,13 +254,13 @@ func getCmdBasePathConverterFromJson(jr gjson.Result) (cmdBasePathConverter func
 	}
 }
 
-func calculateActivity(ballConsume, courtFee util.Float) (activityFee, ballFee util.Float) {
-	ballFee = ballConsume.MulFloat(float64(domain.PRICE_PER_BALL))
+func calculateActivity(ballConsume, pricePerBall, courtFee util.Float) (activityFee, ballFee util.Float) {
+	ballFee = ballConsume.Mul(pricePerBall)
 	return ballFee.Plus(courtFee), ballFee
 }
 
-func calculateActivityPay(people int, ballConsume, courtFee, clubSubsidy util.Float) (activityFee util.Float, clubMemberFee, guestFee int) {
-	activityFee, _ = calculateActivity(ballConsume, courtFee)
+func calculateActivityPay(people int, ballConsume, pricePerBall, courtFee, clubSubsidy util.Float) (activityFee util.Float, clubMemberFee, guestFee int) {
+	activityFee, _ = calculateActivity(ballConsume, pricePerBall, courtFee)
 	clubMemberFee, guestFee = calculatePay(people, activityFee, clubSubsidy)
 	return
 }

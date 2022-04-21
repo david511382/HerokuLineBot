@@ -1081,7 +1081,13 @@ func (b *GetActivities) GetActivitieEstimateContents(activity *getActivitiesActi
 
 	if activity.PeopleLimit != nil {
 		people := int(*activity.PeopleLimit)
-		_, clubMemberPay, guestPay := calculateActivityPay(people, totalBallConsume, courtFee, util.NewFloat(float64(activity.ClubSubsidy)))
+		_, clubMemberPay, guestPay := calculateActivityPay(
+			people,
+			totalBallConsume,
+			util.NewFloat(domain.PRICE_PER_BALL),
+			courtFee,
+			util.NewFloat(float64(activity.ClubSubsidy)),
+		)
 		estimateBox.Contents = append(
 			estimateBox.Contents,
 			linebot.GetFlexMessageBoxComponent(

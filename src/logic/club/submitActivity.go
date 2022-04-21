@@ -686,6 +686,7 @@ func (b *submitActivity) getFeeContents() []interface{} {
 	courtFee := b.getCourtFee()
 	activityFee, ballFee := calculateActivity(
 		util.NewFloat(float64(b.Rsl4Consume)),
+		util.NewFloat(domain.PRICE_PER_BALL),
 		courtFee,
 	)
 	clubMemberPeople := b.getJoinedMembersCount()
@@ -899,6 +900,7 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 		_, memberFee, guestFee := calculateActivityPay(
 			peopleCount,
 			util.NewFloat(float64(b.Rsl4Consume)),
+			util.NewFloat(domain.PRICE_PER_BALL),
 			courtFee,
 			util.NewFloat(float64(b.ClubSubsidy)),
 		)
