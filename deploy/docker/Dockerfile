@@ -9,7 +9,13 @@ COPY ./docs /app/docs
 COPY ./main.go /app/main.go
 COPY ./go.mod /app/go.mod
 COPY ./go.sum /app/go.sum
+# 複製編譯指令
+COPY ./sh /app/sh
+
 WORKDIR /app
+
+# 打包 swag
+RUN ./sh/build_swag.sh
 
 # 進行編譯
 RUN go build -o heroku-line-bot
@@ -17,7 +23,6 @@ RUN go build -o heroku-line-bot
 # Final Stage
 FROM golang:1.18
 COPY --from=builder /app/heroku-line-bot /app/heroku-line-bot
-COPY --from=builder /app/docs /app/docs
 
 COPY ./config /app/config
 COPY ./resource /app/resource
