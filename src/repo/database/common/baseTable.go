@@ -106,6 +106,8 @@ func (t BaseTable[Model, Reqs, UpdateReqs]) Count(arg Reqs) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
+	dp = dp.Model(new(Model))
 	dp = arg.WhereArg(dp)
 
 	var result int64
