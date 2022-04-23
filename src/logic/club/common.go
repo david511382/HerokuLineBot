@@ -3,9 +3,12 @@ package club
 import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/logger"
+	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
+	accountLineuserLogicDomain "heroku-line-bot/src/logic/account/lineuser/domain"
 	"heroku-line-bot/src/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/src/logic/clublinebot/domain"
 	"heroku-line-bot/src/pkg/service/linebot"
+	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
 	"heroku-line-bot/src/pkg/util"
 	commonRedis "heroku-line-bot/src/repo/redis/common"
 	"io/ioutil"
@@ -285,4 +288,69 @@ func getJoinCount(totalCount int, limit *int16) (joinedCount, waitingCount int) 
 		}
 	}
 	return
+}
+
+func autoRegiste(context domain.ICmdHandlerContext) (resultUser accountLineuserLogicDomain.Model, isNewRegiste bool, resultErrInfo errUtil.IError) {
+	lineID := context.GetUserID()
+	user, errInfo := accountLineuserLogic.Load(lineID)
+	if errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
+			return
+		}
+	}
+
+	if user == nil {
+		// no user
+
+		// registe user
+		name := context.GetUserName()
+		registerMember := NewRegisterMember(name, &lineID)
+		if errInfo := registerMember.Registe(nil); errInfo != nil {
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			if resultErrInfo.IsError() {
+				return
+			}
+		}
+
+		user, errInfo = accountLineuserLogic.Load(lineID)
+		if errInfo != nil {
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			if resultErrInfo.IsError() {
+				return
+			}
+		}
+
+		if errInfo := registerMember.NotifyAdmin(); errInfo != nil {
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			if resultErrInfo.IsError() {
+				return
+			}
+		}
+
+		isNewRegiste = true
+	}
+
+	resultUser = *user
+	return
+}
+
+func autoRegisteMessage() []interface{} {
+	return []interface{}{
+		linebot.GetFlexMessage(
+			"歡迎!",
+			linebot.GetFlexMessageBubbleContent(
+				linebot.GetFlexMessageBoxComponent(
+					linebotDomain.VERTICAL_MESSAGE_LAYOUT,
+					nil,
+					linebot.GetFlexMessageTextComponent("已註冊帳號，請再操作一次!", nil),
+					linebot.GetFlexMessageTextComponent("若是公司成員，麻煩登記資料", nil),
+					linebot.GetClassButtonComponent(
+						linebot.GetMessageAction(string(domain.REGISTE_COMPANY_TEXT_CMD)),
+					),
+				),
+				nil,
+			),
+		),
+	}
 }

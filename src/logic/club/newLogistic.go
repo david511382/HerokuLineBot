@@ -2,7 +2,6 @@ package club
 
 import (
 	"fmt"
-	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/service/linebot"
@@ -18,7 +17,7 @@ import (
 )
 
 type NewLogistic struct {
-	Context domain.ICmdHandlerContext `json:"-"`
+	context domain.ICmdHandlerContext `json:"-"`
 	domain.TimePostbackParams
 	Name        string `json:"name"`
 	Description string `json:"description"`
@@ -29,7 +28,7 @@ type NewLogistic struct {
 func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
 	nowTime := global.TimeUtilObj.Now()
 	*b = NewLogistic{
-		Context: context,
+		context: context,
 		TimePostbackParams: domain.TimePostbackParams{
 			Date: *util.NewDateTimePOf(&nowTime),
 		},
@@ -94,17 +93,23 @@ func (b *NewLogistic) LoadRequireInputTextParam(attr, text string) (resultErrInf
 }
 
 func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
-	if u, err := accountLineuserLogic.Get(b.Context.GetUserID()); err != nil {
-		resultErrInfo = errUtil.NewError(err)
-		return
-	} else {
-		if u.Role != domain.ADMIN_CLUB_ROLE {
-			resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
+	if user, isAutoRegiste, errInfo := autoRegiste(b.context); errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
 			return
 		}
+	} else if isAutoRegiste {
+		replyMessges := autoRegisteMessage()
+		if err := b.context.Reply(replyMessges); err != nil {
+			resultErrInfo = errUtil.NewError(err)
+			return
+		}
+	} else if user.Role != domain.ADMIN_CLUB_ROLE {
+		resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
+		return
 	}
 
-	if b.Context.IsConfirmed() {
+	if b.context.IsConfirmed() {
 		db, transaction, err := database.Club().Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
@@ -121,7 +126,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 			return
 		}
 
-		if err := b.Context.DeleteParam(); err != nil {
+		if err := b.context.DeleteParam(); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
@@ -129,7 +134,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 		replyMessges := []interface{}{
 			linebot.GetTextMessage("完成"),
 		}
-		if err := b.Context.Reply(replyMessges); err != nil {
+		if err := b.context.Reply(replyMessges); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
@@ -137,7 +142,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 		return
 	}
 
-	if errInfo := b.Context.CacheParams(); errInfo != nil {
+	if errInfo := b.context.CacheParams(); errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	}
@@ -346,7 +351,7 @@ func (b *NewLogistic) Do(text string) (resultErrInfo errUtil.IError) {
 			),
 		),
 	}
-	if err := b.Context.Reply(replyMessges); err != nil {
+	if err := b.context.Reply(replyMessges); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}

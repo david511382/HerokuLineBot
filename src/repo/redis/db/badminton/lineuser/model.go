@@ -1,4 +1,4 @@
-package domain
+package lineuser
 
 type LineUser struct {
 	ID   int    `json:"id,omitempty"`

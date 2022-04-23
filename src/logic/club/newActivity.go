@@ -2,7 +2,6 @@ package club
 
 import (
 	"fmt"
-	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	courtDomain "heroku-line-bot/src/logic/badminton/court/domain"
 	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
 	"heroku-line-bot/src/logic/club/domain"
@@ -23,7 +22,7 @@ import (
 )
 
 type NewActivity struct {
-	Context domain.ICmdHandlerContext `json:"-"`
+	context domain.ICmdHandlerContext `json:"-"`
 	domain.TimePostbackParams
 	PlaceID     int                          `json:"place_id"`
 	TeamID      int                          `json:"team_id"`
@@ -36,7 +35,7 @@ type NewActivity struct {
 func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
 	nowTime := global.TimeUtilObj.Now()
 	*b = NewActivity{
-		Context: context,
+		context: context,
 		TimePostbackParams: domain.TimePostbackParams{
 			Date: *util.NewDateTimePOf(&nowTime),
 		},
@@ -174,18 +173,24 @@ func (b *NewActivity) LoadRequireInputTextParam(attr, text string) (resultErrInf
 }
 
 func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
-	if u, err := accountLineuserLogic.Get(b.Context.GetUserID()); err != nil {
-		resultErrInfo = errUtil.NewError(err)
-		return
-	} else {
-		if u.Role != domain.ADMIN_CLUB_ROLE &&
-			u.Role != domain.CADRE_CLUB_ROLE {
-			resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
+	if user, isAutoRegiste, errInfo := autoRegiste(b.context); errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
 			return
 		}
+	} else if isAutoRegiste {
+		replyMessges := autoRegisteMessage()
+		if err := b.context.Reply(replyMessges); err != nil {
+			resultErrInfo = errUtil.NewError(err)
+			return
+		}
+	} else if user.Role != domain.ADMIN_CLUB_ROLE &&
+		user.Role != domain.CADRE_CLUB_ROLE {
+		resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
+		return
 	}
 
-	if b.Context.IsConfirmed() {
+	if b.context.IsConfirmed() {
 		db, transaction, err := database.Club().Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
@@ -208,7 +213,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 			}
 		}
 
-		if err := b.Context.DeleteParam(); err != nil {
+		if err := b.context.DeleteParam(); err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
@@ -217,7 +222,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		replyMessges := []interface{}{
 			linebot.GetTextMessage("完成"),
 		}
-		if err := b.Context.Reply(replyMessges); err != nil {
+		if err := b.context.Reply(replyMessges); err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
@@ -226,7 +231,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 		return
 	}
 
-	if errInfo := b.Context.CacheParams(); errInfo != nil {
+	if errInfo := b.context.CacheParams(); errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
 			return
@@ -342,7 +347,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 			),
 		),
 	}
-	if err := b.Context.Reply(replyMessges); err != nil {
+	if err := b.context.Reply(replyMessges); err != nil {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	}

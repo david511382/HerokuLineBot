@@ -45,7 +45,7 @@ func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resu
 			ExpTime:  expTime,
 		}
 
-		data, errInfo := accountLineuserLogic.Get(claims.Sub)
+		data, errInfo := accountLineuserLogic.Load(claims.Sub)
 		if errInfo != nil {
 			errInfo := errUtil.NewError(err, zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

@@ -373,16 +373,7 @@ func (b *registeCompany) loadMemberInfo() (resultErrInfo errUtil.IError) {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		} else if len(dbDatas) == 0 {
-			name := b.context.GetUserName()
-			registerMember := NewRegisterMember(name, &lineID)
-			if errInfo := registerMember.Registe(nil); errInfo != nil {
-				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-				if resultErrInfo.IsError() {
-					return
-				}
-			}
-
-			mID, _, errInfo := registerMember.LoadMemberID()
+			user, _, errInfo := autoRegiste(b.context)
 			if errInfo != nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				if resultErrInfo.IsError() {
@@ -390,7 +381,7 @@ func (b *registeCompany) loadMemberInfo() (resultErrInfo errUtil.IError) {
 				}
 			}
 
-			b.MemberID = mID
+			b.MemberID = &user.ID
 			if errInfo := b.context.CacheParams(); errInfo != nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				if resultErrInfo.IsError() {

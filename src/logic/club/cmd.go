@@ -156,8 +156,7 @@ func (b *CmdHandler) Do(text string) (resultErrInfo errUtil.IError) {
 		}
 	}
 
-	if errInfo := b.ICmdLogic.Do(text); errors.Is(errInfo, domain.USER_NOT_REGISTERED) ||
-		errors.Is(errInfo, domain.NO_AUTH_ERROR) {
+	if errInfo := b.ICmdLogic.Do(text); errors.Is(errInfo, domain.NO_AUTH_ERROR) {
 		replyMessges := []interface{}{
 			linebot.GetTextMessage(errInfo.Error()),
 		}

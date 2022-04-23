@@ -2,7 +2,6 @@ package club
 
 import (
 	"fmt"
-	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	accountLineuserLogicDomain "heroku-line-bot/src/logic/account/lineuser/domain"
 	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
 	"heroku-line-bot/src/logic/club/domain"
@@ -197,7 +196,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 	for _, v := range activitys {
 		activity := &getActivitiesActivity{
 			NewActivity: NewActivity{
-				Context: context,
+				context: context,
 				TimePostbackParams: domain.TimePostbackParams{
 					Date: *util.NewDateTimePOf(&v.Date),
 				},
@@ -522,20 +521,17 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 	return nil
 }
 
-func (b *GetActivities) loadCurrentUserID() (replyMsg *string, resultErrInfo errUtil.IError) {
-	lineID := b.context.GetUserID()
-	userData, err := accountLineuserLogic.Get(lineID)
-	if err != nil {
-		errInfo := errUtil.NewError(err)
+func (b *GetActivities) loadCurrentUserID() (resultIsAutoRegiste bool, resultErrInfo errUtil.IError) {
+	user, isAutoRegiste, errInfo := autoRegiste(b.context)
+	if errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-		return
-	} else if userData == nil {
-		replyMsg = util.GetStringP(domain.USER_NOT_REGISTERED.Error())
-		return
+		if resultErrInfo.IsError() {
+			return
+		}
 	}
+	resultIsAutoRegiste = isAutoRegiste
 	// TODO get member teamIDs
-	b.currentUser = *userData
-
+	b.currentUser = user
 	return
 }
 
@@ -550,13 +546,11 @@ func (b *GetActivities) isJoined(activity *getActivitiesActivity) bool {
 }
 
 func (b *GetActivities) Do(text string) (resultErrInfo errUtil.IError) {
-	if replyMsg, errInfo := b.loadCurrentUserID(); errInfo != nil {
+	if isAutoRegiste, errInfo := b.loadCurrentUserID(); errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
-	} else if replyMsg != nil {
-		replyMessges := []interface{}{
-			linebot.GetTextMessage(*replyMsg),
-		}
+	} else if isAutoRegiste {
+		replyMessges := autoRegisteMessage()
 		if replyErr := b.context.Reply(replyMessges); replyErr != nil {
 			errInfo := errUtil.Newf("replyErr:%s", replyErr.Error())
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

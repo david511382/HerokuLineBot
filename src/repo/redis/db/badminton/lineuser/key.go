@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/redis/common"
-	"heroku-line-bot/src/repo/redis/domain"
 
 	"github.com/go-redis/redis"
 	"github.com/rs/zerolog"
@@ -26,8 +25,23 @@ func New(write, read redis.Cmdable, baseKey string) Key {
 	}
 }
 
-func (k Key) Load(lineIDs ...string) (lineIDUserMap map[string]*domain.LineUser, resultErrInfo errUtil.IError) {
-	lineIDUserMap = make(map[string]*domain.LineUser)
+func (k Key) Migration(lineIDUserMap map[string]*LineUser) (resultErrInfo errUtil.IError) {
+	if _, err := k.Base.Del(); err != nil {
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	}
+	if errInfo := k.Set(lineIDUserMap); errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
+			return
+		}
+	}
+	return
+}
+
+func (k Key) Load(lineIDs ...string) (lineIDUserMap map[string]*LineUser, resultErrInfo errUtil.IError) {
+	lineIDUserMap = make(map[string]*LineUser)
 
 	if len(lineIDs) == 0 {
 		return
@@ -50,7 +64,7 @@ func (k Key) Load(lineIDs ...string) (lineIDUserMap map[string]*domain.LineUser,
 			continue
 		}
 
-		result := &domain.LineUser{}
+		result := &LineUser{}
 		if err := json.Unmarshal([]byte(v), result); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 			return
@@ -63,7 +77,7 @@ func (k Key) Load(lineIDs ...string) (lineIDUserMap map[string]*domain.LineUser,
 	return
 }
 
-func (k Key) Set(lineIDUserMap map[string]*domain.LineUser) (resultErrInfo errUtil.IError) {
+func (k Key) Set(lineIDUserMap map[string]*LineUser) (resultErrInfo errUtil.IError) {
 	m := make(map[string]interface{})
 	for lineID, user := range lineIDUserMap {
 		if js, err := json.Marshal(user); err != nil {

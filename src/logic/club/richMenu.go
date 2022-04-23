@@ -2,7 +2,6 @@ package club
 
 import (
 	"heroku-line-bot/src/logger"
-	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
@@ -96,14 +95,20 @@ func (b *richMenu) LoadRequireInputTextParam(attr, text string) (resultErrInfo e
 }
 
 func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
-	if u, err := accountLineuserLogic.Get(b.context.GetUserID()); err != nil {
-		resultErrInfo = errUtil.NewError(err)
-		return
-	} else {
-		if u.Role != domain.ADMIN_CLUB_ROLE {
-			resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
+	if user, isAutoRegiste, errInfo := autoRegiste(b.context); errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
 			return
 		}
+	} else if isAutoRegiste {
+		replyMessges := autoRegisteMessage()
+		if err := b.context.Reply(replyMessges); err != nil {
+			resultErrInfo = errUtil.NewError(err)
+			return
+		}
+	} else if user.Role != domain.ADMIN_CLUB_ROLE {
+		resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
+		return
 	}
 
 	messages := []interface{}{}

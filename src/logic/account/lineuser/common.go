@@ -7,12 +7,12 @@ import (
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
 	"heroku-line-bot/src/repo/redis"
-	redisDomain "heroku-line-bot/src/repo/redis/domain"
+	"heroku-line-bot/src/repo/redis/db/badminton/lineuser"
 
 	"github.com/rs/zerolog"
 )
 
-func Get(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
+func Load(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 	{
 		lineIDUserMap, errInfo := redis.Badminton.LineUser.Load(lineID)
 		if errInfo != nil {
@@ -38,11 +38,14 @@ func Get(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 			if resultErrInfo.IsError() {
 				return
 			}
+		} else if dbData == nil {
+			return
 		}
+
 		result = dbData
 	}
 
-	errInfo := redis.Badminton.LineUser.Set(map[string]*redisDomain.LineUser{
+	errInfo := redis.Badminton.LineUser.Set(map[string]*lineuser.LineUser{
 		lineID: {
 			ID:   result.ID,
 			Name: result.Name,

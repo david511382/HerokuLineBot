@@ -2,7 +2,6 @@ package club
 
 import (
 	"fmt"
-	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	"heroku-line-bot/src/logic/club/domain"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
@@ -131,10 +130,17 @@ func (b *confirmRegister) ConfirmDb() (resultErrInfo errUtil.IError) {
 }
 
 func (b *confirmRegister) Do(text string) (resultErrInfo errUtil.IError) {
-	lineID := b.context.GetUserID()
-	if user, err := accountLineuserLogic.Get(lineID); err != nil {
-		resultErrInfo = errUtil.NewError(err)
-		return
+	if user, isAutoRegiste, errInfo := autoRegiste(b.context); errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
+			return
+		}
+	} else if isAutoRegiste {
+		replyMessges := autoRegisteMessage()
+		if err := b.context.Reply(replyMessges); err != nil {
+			resultErrInfo = errUtil.NewError(err)
+			return
+		}
 	} else if user.Role != domain.ADMIN_CLUB_ROLE {
 		resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
 		return

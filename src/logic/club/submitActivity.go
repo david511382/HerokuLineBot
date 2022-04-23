@@ -2,7 +2,6 @@ package club
 
 import (
 	"fmt"
-	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
 	accountLineuserLogicDomain "heroku-line-bot/src/logic/account/lineuser/domain"
 	"heroku-line-bot/src/logic/club/domain"
 	incomeLogicDomain "heroku-line-bot/src/logic/income/domain"
@@ -112,7 +111,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 		v := dbDatas[0]
 		memberJoinDate := v.Date
 		b.NewActivity = NewActivity{
-			Context: context,
+			context: context,
 			TimePostbackParams: domain.TimePostbackParams{
 				Date: *util.NewDateTimePOf(&v.Date),
 			},
@@ -222,30 +221,37 @@ func (b *submitActivity) getJoinedGuestsCount() int {
 	return people
 }
 
-func (b *submitActivity) loadCurrentUserID() (resultErrInfo errUtil.IError) {
+func (b *submitActivity) loadCurrentUserID() (resultIsAutoRegiste bool, resultErrInfo errUtil.IError) {
 	if b.CurrentUser != nil {
-		return nil
-	}
-
-	lineID := b.context.GetUserID()
-	userData, err := accountLineuserLogic.Get(lineID)
-	if err != nil {
-		resultErrInfo = errUtil.NewError(err)
-		return
-	} else if userData == nil {
-		resultErrInfo = errUtil.NewError(domain.USER_NOT_REGISTERED)
 		return
 	}
 
-	b.CurrentUser = userData
+	user, isAutoRegiste, errInfo := autoRegiste(b.context)
+	if errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
+			return
+		}
+	} else if user.Role != domain.ADMIN_CLUB_ROLE {
+		resultErrInfo = errUtil.NewError(domain.NO_AUTH_ERROR)
+		return
+	}
 
-	return nil
+	resultIsAutoRegiste = isAutoRegiste
+	b.CurrentUser = &user
+	return
 }
 
 func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
-	if errInfo := b.loadCurrentUserID(); errInfo != nil {
+	if isAutoRegiste, errInfo := b.loadCurrentUserID(); errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
+	} else if isAutoRegiste {
+		replyMessges := autoRegisteMessage()
+		if err := b.context.Reply(replyMessges); err != nil {
+			resultErrInfo = errUtil.NewError(err)
+			return
+		}
 	}
 
 	if b.CurrentUser.Role != domain.CADRE_CLUB_ROLE &&
