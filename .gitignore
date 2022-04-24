@@ -6,9 +6,3 @@ heroku-line-bot.exe
 heroku-line-bot
 
 *.log
-config/*
-!config/docker.yml
-!config/master.yml
-
-*.stage.yaml
-*.prod.yaml

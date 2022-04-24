@@ -1,3 +1,5 @@
+#!/bin/sh
+
 COMMAND=swag
 
 if ! command -v $COMMAND &> /dev/null
