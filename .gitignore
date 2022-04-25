@@ -6,3 +6,5 @@ heroku-line-bot.exe
 heroku-line-bot
 
 *.log
+
+config/local.yml
