@@ -42,17 +42,7 @@ token:`{"RoleID":1}`
 ## test
 
 ```
-go test ./src/pkg/util/... --count=1
-
-go test ./bootstrap/... --count=1
-
-go test ./src/repo/database/... --count=1
-
-go test ./src/logic/... --count=1
-
-go test ./src/background/... --count=1
-
-go test ./src/server/... --count=1
+make test
 ```
 
 ## db migration

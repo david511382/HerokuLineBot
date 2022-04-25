@@ -45,3 +45,15 @@ kdown: # 關閉
 	for %%s in ($(K8S_SERVICE_LIST)) do ( \
 		kubectl delete -f deploy/k8s/%%s/$(ENV) \
 	) \
+
+##########################################
+## test
+##########################################
+
+test: # 測試
+	go test ./src/pkg/util/... --count=1
+	go test ./bootstrap/... --count=1
+	go test ./src/repo/database/... --count=1
+	go test ./src/logic/... --count=1
+	go test ./src/background/... --count=1
+	go test ./src/server/... --count=1
