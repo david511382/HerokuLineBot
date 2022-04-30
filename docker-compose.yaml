@@ -1,12 +1,12 @@
 version: "3.3"
 services:
-  db:
+  postgres:
     image: postgres:13.2
 
   adminer:
     image: adminer:latest
     depends_on:
-      - db
+      - postgres
 
   redis:
     image: redis:6.2
@@ -29,5 +29,5 @@ services:
       context: .
       dockerfile: deploy/docker/Dockerfile
     depends_on:
-      - db
+      - postgres
       - redis

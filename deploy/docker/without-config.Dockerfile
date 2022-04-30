@@ -15,7 +15,7 @@ COPY ./sh /app/sh
 WORKDIR /app
 
 # 打包 swag
-RUN ./sh/build_swag.sh
+RUN bash ./sh/build_swag.sh
 
 # 進行編譯
 RUN go build -o heroku-line-bot

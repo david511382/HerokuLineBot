@@ -47,7 +47,7 @@ db:
 club_db:
   protocol: "postgre"
   server:
-    host: "db"
+    host: "postgres"
     port: 5432
   database: "club"
   user: "root"
