@@ -165,7 +165,7 @@ func calActivitys(
 				newActivityHandler.ClubSubsidy = *v
 			}
 			if newActivityHandler.PeopleLimit == nil {
-				newActivityHandler.PeopleLimit = util.GetInt16P(int16(totalCourtCount * clubLogicDomain.PEOPLE_PER_HOUR * 2))
+				newActivityHandler.PeopleLimit = util.PointerOf[int16](int16(totalCourtCount * clubLogicDomain.PEOPLE_PER_HOUR * 2))
 			}
 
 			for _, dateCourt := range dateCourts {

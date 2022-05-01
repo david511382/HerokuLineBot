@@ -52,8 +52,8 @@ func (b *RegisteMember) LoadMemberID() (
 		return
 	} else if len(dbDatas) > 0 {
 		dbData := dbDatas[0]
-		memberID = util.GetIntP(dbData.ID)
-		memberName = util.GetStringP(dbData.Name)
+		memberID = util.PointerOf(dbData.ID)
+		memberName = util.PointerOf(dbData.Name)
 
 		b.memberID = memberID
 	}

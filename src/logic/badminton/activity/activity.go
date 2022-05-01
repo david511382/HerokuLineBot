@@ -34,7 +34,7 @@ func GetUnfinishedActiviysSqlReqs(
 	}
 	for _, teamID := range teamIDs {
 		copyArg := *arg
-		copyArg.TeamID = util.GetIntP(teamID)
+		copyArg.TeamID = util.PointerOf(teamID)
 		args = append(args, &copyArg)
 	}
 

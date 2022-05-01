@@ -299,7 +299,7 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 		}
 
 		keyValueEditComponentOption := &domain.KeyValueEditComponentOption{
-			Indent: util.GetIntP(1),
+			Indent: util.PointerOf(1),
 		}
 		sort.Slice(dbDatas, func(i, j int) bool {
 			return dbDatas[i].ID < dbDatas[j].ID
@@ -391,7 +391,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 	activityPlace := ""
 	var activityDate *time.Time
 	activityArg := activity.Reqs{
-		ID: util.GetIntP(b.LeaveActivityID),
+		ID: util.PointerOf(b.LeaveActivityID),
 	}
 	if dbDatas, err := database.Club().Activity.Select(
 		activityArg,
@@ -425,7 +425,7 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 	var notifyWaitingMemberID *int
 	deleteMemberActivityID := 0
 	arg := memberactivity.Reqs{
-		ActivityID: util.GetIntP(b.LeaveActivityID),
+		ActivityID: util.PointerOf(b.LeaveActivityID),
 	}
 	if dbDatas, err := database.Club().MemberActivity.Select(
 		arg,

@@ -179,10 +179,10 @@ func TestActivity_Update(t *testing.T) {
 				trans: nil,
 				arg: UpdateReqs{
 					Reqs: Reqs{
-						ID: util.GetIntP(8),
+						ID: util.PointerOf(8),
 					},
-					MemberCount: util.GetInt16P(3),
-					LogisticID:  util.GetIntPP(util.GetIntP(3)),
+					MemberCount: util.PointerOf[int16](3),
+					LogisticID:  util.PointerOf(util.PointerOf(3)),
 				},
 			},
 			migrations{
@@ -196,7 +196,7 @@ func TestActivity_Update(t *testing.T) {
 					{
 						ID:          8,
 						MemberCount: 1,
-						LogisticID:  util.GetIntP(2),
+						LogisticID:  util.PointerOf(2),
 						Date:        util.GetUTCTime(2013, 8, 2),
 					},
 				},
@@ -212,7 +212,7 @@ func TestActivity_Update(t *testing.T) {
 					{
 						ID:          8,
 						MemberCount: 3,
-						LogisticID:  util.GetIntP(3),
+						LogisticID:  util.PointerOf(3),
 						Date:        *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 				},
@@ -224,16 +224,16 @@ func TestActivity_Update(t *testing.T) {
 				trans: nil,
 				arg: UpdateReqs{
 					Reqs: Reqs{
-						ID: util.GetIntP(8),
+						ID: util.PointerOf(8),
 					},
-					LogisticID: util.GetIntPP(nil),
+					LogisticID: util.PointerOf[*int](nil),
 				},
 			},
 			migrations{
 				table: []*Model{
 					{
 						ID:         8,
-						LogisticID: util.GetIntP(2),
+						LogisticID: util.PointerOf(2),
 						Date:       util.GetUTCTime(2013, 8, 2),
 					},
 				},

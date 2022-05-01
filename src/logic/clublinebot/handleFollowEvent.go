@@ -19,7 +19,7 @@ func (b *ClubLineBot) handleFollowEvent(event *lineBotModel.FollowEvent) error {
 			userLineID := event.Source.UserID
 			c := NewContext(userLineID, replyToken, b)
 			name := c.GetUserName()
-			registerMember := club.NewRegisterMember(name, util.GetStringP(userLineID))
+			registerMember := club.NewRegisterMember(name, util.PointerOf(userLineID))
 			registerMember.Init(&c)
 
 			replyMessges := make([]interface{}, 0)

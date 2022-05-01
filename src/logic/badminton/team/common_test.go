@@ -47,7 +47,7 @@ func TestLoad(t *testing.T) {
 				member: []*member.Model{
 					{
 						ID:     2,
-						LineID: util.GetStringP("s"),
+						LineID: util.PointerOf("s"),
 					},
 				},
 				redisTeamIDPlaceMap: map[int]*rdsModel.ClubBadmintonTeam{},
@@ -57,14 +57,14 @@ func TestLoad(t *testing.T) {
 					1: {
 						Name:          "name",
 						OwnerMemberID: 2,
-						OwnerLineID:   util.GetStringP("s"),
+						OwnerLineID:   util.PointerOf("s"),
 					},
 				},
 				redisTeamIDPlaceMap: map[int]*rdsModel.ClubBadmintonTeam{
 					1: {
 						Name:          "name",
 						OwnerMemberID: 2,
-						OwnerLineID:   util.GetStringP("s"),
+						OwnerLineID:   util.PointerOf("s"),
 					},
 				},
 			},

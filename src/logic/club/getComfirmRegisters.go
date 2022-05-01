@@ -58,9 +58,9 @@ func (b *GetConfirmRegisters) LoadRequireInputTextParam(attr, text string) (resu
 
 func (b *GetConfirmRegisters) LoadConfirmRegisterUsers() (resultErrInfo errUtil.IError) {
 	arg := member.Reqs{
-		CompanyIDIsNull: util.GetBoolP(false),
-		LineIDIsNull:    util.GetBoolP(false),
-		JoinDateIsNull:  util.GetBoolP(true),
+		CompanyIDIsNull: util.PointerOf(false),
+		LineIDIsNull:    util.PointerOf(false),
+		JoinDateIsNull:  util.PointerOf(true),
 	}
 	if dbDatas, err := database.Club().Member.Select(
 		arg,

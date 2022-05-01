@@ -464,8 +464,8 @@ func AddCourt(
 	{
 		from, to := courtDetail.GetTime()
 		dbDatas, err := database.Club().RentalCourtDetail.Select(rentalcourtdetail.Reqs{
-			StartTime: util.GetStringP(string(from)),
-			EndTime:   util.GetStringP(string(to)),
+			StartTime: util.PointerOf(string(from)),
+			EndTime:   util.PointerOf(string(to)),
 			Count:     &courtDetail.Count,
 		},
 			rentalcourtdetail.COLUMN_ID,

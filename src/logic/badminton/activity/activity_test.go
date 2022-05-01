@@ -56,10 +56,10 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 			wants: wants{
 				args: []*activity.Reqs{
 					{
-						TeamID: util.GetIntP(52),
+						TeamID: util.PointerOf(52),
 					},
 					{
-						TeamID: util.GetIntP(82),
+						TeamID: util.PointerOf(82),
 					},
 				},
 			},

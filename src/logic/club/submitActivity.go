@@ -90,7 +90,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 
 	context := b.context
 	arg := activity.Reqs{
-		ID: util.GetIntP(b.ActivityID),
+		ID: util.PointerOf(b.ActivityID),
 	}
 	if dbDatas, err := database.Club().Activity.Select(
 		arg,
@@ -127,7 +127,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 		}
 
 		memberActivityArg := memberactivity.Reqs{
-			ActivityID: util.GetIntP(b.ActivityID),
+			ActivityID: util.PointerOf(b.ActivityID),
 		}
 		if dbDatas, err := database.Club().MemberActivity.Select(
 			memberActivityArg,
@@ -935,7 +935,7 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 		data := &income.Model{
 			Date:        b.Date.Time(),
 			Type:        int16(incomeLogicDomain.INCOME_TYPE_ACTIVITY),
-			ReferenceID: util.GetIntP(finishedActivity.ID),
+			ReferenceID: util.PointerOf(finishedActivity.ID),
 			Income:      incomeMoney,
 			Description: "活動收入",
 			TeamID:      b.TeamID,
@@ -960,7 +960,7 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
-		finishedActivity.LogisticID = util.GetIntP(logisticData.ID)
+		finishedActivity.LogisticID = util.PointerOf(logisticData.ID)
 	}
 
 	if err := db.Activity.Delete(activity.Reqs{
@@ -979,7 +979,7 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 			Reqs: memberactivity.Reqs{
 				IDs: memberActivityIDs,
 			},
-			IsAttend: util.GetBoolP(true),
+			IsAttend: util.PointerOf(true),
 		}); err != nil && !database.IsUniqErr(err) {
 			resultErrInfo = errUtil.NewError(err)
 			return

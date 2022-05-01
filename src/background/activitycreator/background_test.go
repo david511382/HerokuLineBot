@@ -205,8 +205,8 @@ func Test_calActivitys(t *testing.T) {
 				},
 				rdsSetting: &rdsModel.ClubBadmintonTeam{
 					Description: nil,
-					ClubSubsidy: util.GetInt16P(8),
-					PeopleLimit: util.GetInt16P(2),
+					ClubSubsidy: util.PointerOf[int16](8),
+					PeopleLimit: util.PointerOf[int16](2),
 				},
 			},
 			[]*clubLogic.NewActivity{
@@ -217,7 +217,7 @@ func Test_calActivitys(t *testing.T) {
 					PlaceID:     1,
 					ClubSubsidy: 8,
 					Description: "",
-					PeopleLimit: util.GetInt16P(2),
+					PeopleLimit: util.PointerOf[int16](2),
 					Courts: []*badmintonCourtLogicDomain.ActivityCourt{
 						{
 							FromTime:     commonLogic.NewHourMinTime(1, 0).ForceTime(),
@@ -332,9 +332,9 @@ func TestBackGround_Run(t *testing.T) {
 						1: {
 							Name:               "",
 							OwnerMemberID:      1,
-							ClubSubsidy:        util.GetInt16P(0),
-							PeopleLimit:        util.GetInt16P(14),
-							ActivityCreateDays: util.GetInt16P(6),
+							ClubSubsidy:        util.PointerOf[int16](0),
+							PeopleLimit:        util.PointerOf[int16](14),
+							ActivityCreateDays: util.PointerOf[int16](6),
 						},
 					}
 					return
@@ -355,7 +355,7 @@ func TestBackGround_Run(t *testing.T) {
 						ClubSubsidy:   0,
 						LogisticID:    nil,
 						Description:   "",
-						PeopleLimit:   util.GetInt16P(14),
+						PeopleLimit:   util.PointerOf[int16](14),
 					},
 				},
 			},

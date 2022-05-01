@@ -58,7 +58,7 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 		TeamID: clubTeamID,
 	}
 	totalHours := b.getCourtHours()
-	b.PeopleLimit = util.GetInt16P(int16(totalHours.MulFloat(float64(domain.PEOPLE_PER_HOUR)).ToInt()))
+	b.PeopleLimit = util.PointerOf[int16](int16(totalHours.MulFloat(float64(domain.PEOPLE_PER_HOUR)).ToInt()))
 
 	return nil
 }
@@ -151,7 +151,7 @@ func (b *NewActivity) LoadRequireInputTextParam(attr, text string) (resultErrInf
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
-		b.PeopleLimit = util.GetInt16P(int16(i))
+		b.PeopleLimit = util.PointerOf[int16](int16(i))
 	case "ICmdLogic.club_subsidy":
 		i, err := strconv.Atoi(text)
 		if err != nil {

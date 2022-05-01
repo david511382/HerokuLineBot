@@ -104,7 +104,7 @@ func (c *Court) Parts() (resultCourts []*CourtUnit) {
 
 			refundUnit := &CourtUnit{
 				CourtDetail:  refund.CourtDetail,
-				RefundID:     util.GetIntP(refund.ID),
+				RefundID:     util.PointerOf(refund.ID),
 				RefundIncome: refund.Income,
 				isPay:        isPay,
 			}

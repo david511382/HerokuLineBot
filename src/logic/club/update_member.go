@@ -62,7 +62,7 @@ func (b *UpdateMember) GetInputTemplate(attr string) (messages interface{}) {
 func (b *UpdateMember) LoadRequireInputTextParam(attr, text string) (resultErrInfo errUtil.IError) {
 	switch attr {
 	case "name":
-		b.Name = util.GetStringP(text)
+		b.Name = util.PointerOf(text)
 	default:
 	}
 	return nil

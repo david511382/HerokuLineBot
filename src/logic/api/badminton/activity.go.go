@@ -118,7 +118,7 @@ func GetActivitys(
 					activityMap[activityID].Description = &v.Description
 				}
 				if v.PeopleLimit != nil {
-					activityMap[activityID].PeopleLimit = util.GetIntP(int(*v.PeopleLimit))
+					activityMap[activityID].PeopleLimit = util.PointerOf(int(*v.PeopleLimit))
 				}
 
 				activityIDs = append(activityIDs, activityID)

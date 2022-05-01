@@ -52,7 +52,7 @@ func TestGetRentalCourts(t *testing.T) {
 				},
 			},
 			wants{
-				code: util.GetIntP(http.StatusForbidden),
+				code: util.PointerOf(http.StatusForbidden),
 				resp: nil,
 			},
 		},
@@ -136,7 +136,7 @@ func TestAddRentalCourts(t *testing.T) {
 				},
 			},
 			wants{
-				code: util.GetIntP(http.StatusForbidden),
+				code: util.PointerOf(http.StatusForbidden),
 				resp: nil,
 			},
 		},
@@ -213,7 +213,7 @@ func Test_addRentalCourtGetRentalDates(t *testing.T) {
 			args{
 				fromDate:     *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 				toDate:       *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 9),
-				everyWeekday: util.GetIntP(5),
+				everyWeekday: util.PointerOf(5),
 				excludeDates: []*time.Time{
 					util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 				},

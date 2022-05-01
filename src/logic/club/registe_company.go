@@ -423,7 +423,7 @@ func (b *registeCompany) Do(text string) (resultErrInfo errUtil.IError) {
 			Reqs: member.Reqs{
 				ID: b.MemberID,
 			},
-			Department: util.GetStringP(string(b.getDepartment())),
+			Department: util.PointerOf(string(b.getDepartment())),
 			CompanyID:  &b.CompanyID,
 		}); err != nil {
 			resultErrInfo = errUtil.NewError(err)

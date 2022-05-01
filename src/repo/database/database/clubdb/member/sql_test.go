@@ -28,7 +28,7 @@ func TestMember_Select(t *testing.T) {
 			"join date is null",
 			args{
 				arg: Reqs{
-					JoinDateIsNull: util.GetBoolP(true),
+					JoinDateIsNull: util.PointerOf(true),
 				},
 				columns: []common.IColumn{
 					COLUMN_ID,
@@ -57,7 +57,7 @@ func TestMember_Select(t *testing.T) {
 			"is delete",
 			args{
 				arg: Reqs{
-					IsDelete: util.GetBoolP(true),
+					IsDelete: util.PointerOf(true),
 				},
 				columns: []common.IColumn{
 					COLUMN_ID,
