@@ -4,12 +4,11 @@ metadata:
   name: phpmyadmin
   namespace: default
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - protocol: TCP
       port: 8080
       targetPort: client
-      nodePort: 31882
   selector:
     app: phpmyadmin
 
@@ -37,8 +36,8 @@ spec:
           imagePullPolicy: IfNotPresent
           resources:
             requests:
-              memory: "512M"
-              cpu: "0.5"
+              memory: "10m"
+              cpu: "64M"
             limits:
               memory: "1024M"
               cpu: "1"
