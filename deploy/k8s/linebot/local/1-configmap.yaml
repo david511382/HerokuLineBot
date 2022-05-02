@@ -50,14 +50,14 @@ data:
       max_life_hour: 1
 
     club_db:
-      protocol: "postgre"
+      protocol: "mysql"
       server:
-        host: "postgres"
-        port: 5432
+        host: "mysql"
+        port: 3306
       database: "club"
       user: "root"
       password: "root"
-      param: "sslmode=prefer"
+      param: "charset=utf8&parseTime=True&loc=Asia%2FTaipei&readTimeout=5s"
 
     redis:
       max_life_hour: 1

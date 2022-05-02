@@ -11,7 +11,7 @@ services:
       - mysql:/var/lib/mysql
       - ./deploy/docker/mysql:/docker-entrypoint-initdb.d
 
-  adminer:
+  phpmyadmin:
     restart: always
     depends_on:
       - mysql

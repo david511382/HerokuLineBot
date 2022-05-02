@@ -57,7 +57,7 @@ spec:
       # 賦予權限增修檔案，某些時候需要
       # run as root
       securityContext:
-        privileged: true
+        runAsUser: 0
       volumes:
         - name: config
           configMap:

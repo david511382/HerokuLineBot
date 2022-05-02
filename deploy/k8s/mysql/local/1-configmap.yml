@@ -1,10 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: migration-conf
+  name: mysql-migration
   namespace: default
-  labels:
-    tier: db
 data:
   migration.sql: |
-    D
+    CREATE DATABASE IF NOT EXISTS club;

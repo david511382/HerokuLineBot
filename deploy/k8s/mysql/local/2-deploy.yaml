@@ -52,11 +52,16 @@ spec:
               name: client
               protocol: TCP
           volumeMounts:
-            - mountPath: /var/lib/mysql
-              name: mysql-storage
+            - name: storage
+              mountPath: /var/lib/mysql
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:
-        - name: mysql-storage
+        - name: storage
           persistentVolumeClaim:
             claimName: mysql
+        - name: initdb
+          configMap:
+            name: mysql-migration
