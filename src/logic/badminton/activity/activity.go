@@ -11,7 +11,7 @@ import (
 func GetUnfinishedActiviysSqlReqs(
 	fromDate, toDate *util.DateTime,
 	teamIDs,
-	placeIDs []int,
+	placeIDs []uint,
 	everyWeekdays []time.Weekday,
 ) (
 	resultArgs []*activity.Reqs,

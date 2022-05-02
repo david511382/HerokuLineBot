@@ -27,7 +27,7 @@ type submitActivity struct {
 	NewActivity
 	JoinedMembers  []*submitActivityJoinedMembers    `json:"joined_members"`
 	JoinedGuests   []*submitActivityJoinedMembers    `json:"joined_guests"`
-	ActivityID     int                               `json:"activity_id"`
+	ActivityID     uint                              `json:"activity_id"`
 	CurrentUser    *accountLineuserLogicDomain.Model `json:"current_user"`
 	HasLoad        bool                              `json:"has_load"`
 	Rsl4Consume    int16                             `json:"rsl4_consume"`
@@ -40,7 +40,7 @@ type submitActivityJoinedMembers struct {
 	getActivitiesActivityJoinedMembers
 	IsAttend         bool `json:"is_attend"`
 	IsPaid           bool `json:"is_paid"`
-	MemberActivityID int  `json:"id"`
+	MemberActivityID uint `json:"id"`
 }
 
 func (b *submitActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
@@ -141,14 +141,14 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 				isClubMember bool
 				name         string
 			}
-			memberIDs := []int{}
+			memberIDs := []uint{}
 			for _, v := range dbDatas {
 				memberIDs = append(memberIDs, v.MemberID)
 			}
 			arg := member.Reqs{
 				IDs: memberIDs,
 			}
-			clubMemberIDMap := make(map[int]isClubMemberName)
+			clubMemberIDMap := make(map[uint]isClubMemberName)
 			if dbDatas, err := database.Club().Member.Select(
 				arg,
 				member.COLUMN_ID,
@@ -875,7 +875,7 @@ func (b *submitActivity) Submit() (resultErrInfo errUtil.IError) {
 		currentActivity = dbDatas[0]
 	}
 
-	memberActivityIDs := make([]int, 0)
+	memberActivityIDs := make([]uint, 0)
 	finishedActivity := &activityfinished.Model{
 		ID:            currentActivity.ID,
 		TeamID:        currentActivity.TeamID,

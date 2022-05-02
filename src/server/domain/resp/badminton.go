@@ -8,10 +8,10 @@ type GetActivitys struct {
 }
 
 type GetActivitysActivity struct {
-	ActivityID int                  `json:"activity_id"`
-	PlaceID    int                  `json:"place_id"`
+	ActivityID uint                 `json:"activity_id"`
+	PlaceID    uint                 `json:"place_id"`
 	PlaceName  string               `json:"place_name"`
-	TeamID     int                  `json:"team_id"`
+	TeamID     uint                 `json:"team_id"`
 	TeamName   string               `json:"team_name"`
 	Date       time.Time            `json:"date"`
 	Courts     []*GetActivitysCourt `json:"courts"`
@@ -30,6 +30,6 @@ type GetActivitysCourt struct {
 }
 
 type GetActivitysMember struct {
-	ID   int    `json:"id"`
+	ID   uint   `json:"id"`
 	Name string `json:"name"`
 }

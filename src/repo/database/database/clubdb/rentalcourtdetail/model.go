@@ -28,10 +28,10 @@ func New(connectionCreator common.IConnectionCreator) *Table {
 }
 
 type Model struct {
-	ID        int    `gorm:"column:id;type:serial;primary_key;not null"`
-	StartTime string `gorm:"column:start_time;type:varchar(5);not null"`
-	EndTime   string `gorm:"column:end_time;type:varchar(5);not null"`
-	Count     int16  `gorm:"column:count;type:int;not null"`
+	ID        uint   `gorm:"column:id;type:int unsigned auto_increment;primary_key;not null;comment:欄位"`
+	StartTime string `gorm:"column:start_time;type:varchar(5);not null;comment:欄位"`
+	EndTime   string `gorm:"column:end_time;type:varchar(5);not null;comment:欄位"`
+	Count     uint8  `gorm:"column:count;type:tinyint unsigned;not null;comment:欄位"`
 }
 
 func (Model) TableName() string {
@@ -39,13 +39,13 @@ func (Model) TableName() string {
 }
 
 type Reqs struct {
-	ID  *int
-	IDs []int
+	ID  *uint
+	IDs []uint
 
 	StartTime *string
 	EndTime   *string
 
-	Count *int16
+	Count *uint8
 }
 
 func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {

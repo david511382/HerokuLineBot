@@ -29,9 +29,9 @@ func New(connectionCreator common.IConnectionCreator) *Table {
 }
 
 type Model struct {
-	ID      int       `gorm:"column:id;type:serial;primary_key;not null"`
+	ID      uint      `gorm:"column:id;type:int unsigned auto_increment;primary_key;not null;comment:欄位"`
 	Date    time.Time `gorm:"column:date;type:date;not null;index:idx_date"`
-	PlaceID int       `gorm:"column:place_id;type:int;not null"`
+	PlaceID uint      `gorm:"column:place_id;type:int unsigned;not null;comment:欄位"`
 }
 
 func (Model) TableName() string {
@@ -39,10 +39,10 @@ func (Model) TableName() string {
 }
 
 type Reqs struct {
-	ID  *int
-	IDs []int
+	ID  *uint
+	IDs []uint
 
-	PlaceID *int
+	PlaceID *uint
 
 	Dates []*time.Time
 	dbModel.Date

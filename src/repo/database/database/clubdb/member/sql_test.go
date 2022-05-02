@@ -8,6 +8,8 @@ import (
 )
 
 func TestMember_Select(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		arg     Reqs
 		columns []common.IColumn
@@ -85,6 +87,8 @@ func TestMember_Select(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			db := setupTestDb(t)
+
 			if err := db.MigrationData(tt.migrations.table...); err != nil {
 				t.Fatal(err.Error())
 			}

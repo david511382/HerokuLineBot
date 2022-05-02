@@ -33,14 +33,14 @@ func New(connectionCreator common.IConnectionCreator) *Table {
 }
 
 type Model struct {
-	ID         int        `gorm:"column:id;type:serial;primary_key;not null"`
+	ID         uint       `gorm:"column:id;type:int unsigned auto_increment;primary_key;not null;comment:欄位"`
 	JoinDate   *time.Time `gorm:"column:join_date;type:date"`
 	DeletedAt  *time.Time `gorm:"column:deleted_at;index"`
-	Department string     `gorm:"column:department;type:varchar(50);not null"`
-	Name       string     `gorm:"column:name;type:varchar(50);not null;"`
+	Department string     `gorm:"column:department;type:varchar(64);not null;comment:欄位"`
+	Name       string     `gorm:"column:name;type:varchar(64);not null;"`
 	CompanyID  *string    `gorm:"column:company_id;type:varchar(10);unique_index:uniq_company_id"`
-	Role       int16      `gorm:"column:role;type:smallint;not null;"`
-	LineID     *string    `gorm:"column:line_id;type:varchar(50);unique_index:uniq_line_id"`
+	Role       uint8      `gorm:"column:role;type:tinyint unsigned;not null;"`
+	LineID     *string    `gorm:"column:line_id;type:varchar(64);unique_index:uniq_line_id"`
 }
 
 func (Model) TableName() string {
@@ -48,12 +48,13 @@ func (Model) TableName() string {
 }
 
 type Reqs struct {
-	ID              *int
-	IDs             []int
+	ID  *uint
+	IDs []uint
+
 	LineID          *string
 	LineIDIsNull    *bool
 	Name            *string
-	Role            *int16
+	Role            *uint8
 	IsDelete        *bool
 	CompanyID       *string
 	CompanyIDIsNull *bool

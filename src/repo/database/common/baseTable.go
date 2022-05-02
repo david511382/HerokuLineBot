@@ -45,8 +45,9 @@ func NewBaseTable[
 	connection IConnectionCreator,
 ) *BaseTable[Table, Reqs, UpdateReqs] {
 	result := &BaseTable[Table, Reqs, UpdateReqs]{
-		connection:           connection,
-		isRequireTimeConvert: isContainTimeField(new(Table)),
+		connection: connection,
+		// gorm mysql 可以指定時區轉換
+		isRequireTimeConvert: false,
 	}
 	return result
 }
@@ -129,39 +130,12 @@ func (t BaseTable[Model, Reqs, UpdateReqs]) Insert(datas ...*Model) error {
 	return nil
 }
 
-// for MigrationTable postgre
-type b struct {
-	Lock bool
-}
-
 func (t BaseTable[Model, Reqs, UpdateReqs]) MigrationTable() error {
 	dp, err := t.connection.GetMaster()
 	if err != nil {
 		return err
 	}
 	table := new(Model)
-
-	// for postgre
-	{
-		tryLock := true
-		for tryLock {
-			db := dp.Raw("SELECT pg_try_advisory_lock(?) AS lock", 1)
-			if dp.Error != nil {
-				return dp.Error
-			}
-			rs := make([]*b, 0)
-			if err := db.Scan(&rs).Error; err != nil {
-				return err
-			}
-			tryLock = false
-			for _, r := range rs {
-				if !r.Lock {
-					tryLock = true
-					break
-				}
-			}
-		}
-	}
 
 	isExist, err := t.IsExist()
 	if err != nil {

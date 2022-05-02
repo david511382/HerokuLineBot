@@ -26,8 +26,8 @@ func TestGetActivitys(t *testing.T) {
 		toDate        *util.DateTime
 		pageIndex     uint
 		pageSize      uint
-		placeIDs      []int
-		teamIDs       []int
+		placeIDs      []uint
+		teamIDs       []uint
 		everyWeekdays []time.Weekday
 	}
 	type migrations struct {
@@ -35,8 +35,8 @@ func TestGetActivitys(t *testing.T) {
 		memberActivity         []*memberactivity.Model
 		member                 []*member.Model
 		mockJoinActivityDetail func(arg clubdb.ReqsClubJoinActivityDetail) (response []*clubdb.RespClubJoinActivityDetail, resultErr error)
-		mockTeamLoad           func(ids ...int) (resultTeamIDMap map[int]*redis.ClubBadmintonTeam, resultErrInfo errUtil.IError)
-		mockPlaceLoad          func(ids ...int) (resultPlaceIDMap map[int]*redis.ClubBadmintonPlace, resultErrInfo errUtil.IError)
+		mockTeamLoad           func(ids ...uint) (resultTeamIDMap map[uint]*redis.ClubBadmintonTeam, resultErrInfo errUtil.IError)
+		mockPlaceLoad          func(ids ...uint) (resultPlaceIDMap map[uint]*redis.ClubBadmintonPlace, resultErrInfo errUtil.IError)
 	}
 	type wants struct {
 		result resp.GetActivitys
@@ -52,8 +52,8 @@ func TestGetActivitys(t *testing.T) {
 			args{
 				fromDate:      util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 				toDate:        util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
-				placeIDs:      []int{52, 82},
-				teamIDs:       []int{13, 14},
+				placeIDs:      []uint{52, 82},
+				teamIDs:       []uint{13, 14},
 				everyWeekdays: []time.Weekday{time.Friday, time.Sunday},
 				pageIndex:     1,
 				pageSize:      100,
@@ -93,7 +93,7 @@ func TestGetActivitys(t *testing.T) {
 					},
 				},
 				mockJoinActivityDetail: func(arg clubdb.ReqsClubJoinActivityDetail) (response []*clubdb.RespClubJoinActivityDetail, resultErr error) {
-					wantIDs := []int{
+					wantIDs := []uint{
 						52, 82,
 					}
 					ids := arg.Activity.IDs
@@ -121,8 +121,8 @@ func TestGetActivitys(t *testing.T) {
 					}
 					return
 				},
-				mockPlaceLoad: func(ids ...int) (resultPlaceIDMap map[int]*redis.ClubBadmintonPlace, resultErrInfo errUtil.IError) {
-					wantIDs := []int{
+				mockPlaceLoad: func(ids ...uint) (resultPlaceIDMap map[uint]*redis.ClubBadmintonPlace, resultErrInfo errUtil.IError) {
+					wantIDs := []uint{
 						52, 82,
 					}
 					sort.Slice(ids, func(i, j int) bool {
@@ -134,7 +134,7 @@ func TestGetActivitys(t *testing.T) {
 						return
 					}
 
-					resultPlaceIDMap = map[int]*redis.ClubBadmintonPlace{
+					resultPlaceIDMap = map[uint]*redis.ClubBadmintonPlace{
 						52: {
 							Name: "s",
 						},
@@ -144,8 +144,8 @@ func TestGetActivitys(t *testing.T) {
 					}
 					return
 				},
-				mockTeamLoad: func(ids ...int) (resultTeamIDMap map[int]*redis.ClubBadmintonTeam, resultErrInfo errUtil.IError) {
-					wantIDs := []int{
+				mockTeamLoad: func(ids ...uint) (resultTeamIDMap map[uint]*redis.ClubBadmintonTeam, resultErrInfo errUtil.IError) {
+					wantIDs := []uint{
 						13, 14,
 					}
 					sort.Slice(ids, func(i, j int) bool {
@@ -157,7 +157,7 @@ func TestGetActivitys(t *testing.T) {
 						return
 					}
 
-					resultTeamIDMap = map[int]*redis.ClubBadmintonTeam{
+					resultTeamIDMap = map[uint]*redis.ClubBadmintonTeam{
 						13: {
 							Name: "a",
 						},

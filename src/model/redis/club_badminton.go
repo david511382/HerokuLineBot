@@ -6,7 +6,7 @@ type ClubBadmintonPlace struct {
 
 type ClubBadmintonTeam struct {
 	Name             string  `json:"name"`
-	OwnerMemberID    int     `json:"owner_member_id"`
+	OwnerMemberID    uint    `json:"owner_member_id"`
 	OwnerLineID      *string `json:"owner_line_id"`
 	NotifyLineRommID *string `json:"notify_line_room_id"`
 

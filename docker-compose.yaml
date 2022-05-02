@@ -1,12 +1,10 @@
 version: "3.3"
 services:
-  postgres:
-    image: postgres:13.2
+  mysql:
+    image: mysql:8.0.21
 
   adminer:
-    image: adminer:latest
-    depends_on:
-      - postgres
+    image: phpmyadmin:5
 
   redis:
     image: redis:6.2
@@ -29,5 +27,5 @@ services:
       context: .
       dockerfile: deploy/docker/Dockerfile
     depends_on:
-      - postgres
+      - mysql
       - redis

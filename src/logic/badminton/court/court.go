@@ -24,29 +24,29 @@ import (
 var MockGetCourts func(
 	fromDate, toDate util.DateTime,
 	teamID,
-	placeID *int,
+	placeID *uint,
 ) (
-	teamPlaceDateCourtsMap map[int]map[int][]*DateCourt,
+	teamPlaceDateCourtsMap map[uint]map[uint][]*DateCourt,
 	resultErrInfo errUtil.IError,
 )
 
 func GetCourts(
 	fromDate, toDate util.DateTime,
 	teamID,
-	placeID *int,
+	placeID *uint,
 ) (
-	teamPlaceDateCourtsMap map[int]map[int][]*DateCourt,
+	teamPlaceDateCourtsMap map[uint]map[uint][]*DateCourt,
 	resultErrInfo errUtil.IError,
 ) {
 	if MockGetCourts != nil {
 		return MockGetCourts(fromDate, toDate, teamID, placeID)
 	}
 
-	teamPlaceDateCourtsMap = make(map[int]map[int][]*DateCourt)
+	teamPlaceDateCourtsMap = make(map[uint]map[uint][]*DateCourt)
 
-	courtIDTeamDetailIDCourtsMap := make(map[int]map[int]map[int][]*Court)
-	courtIDs := make([]int, 0)
-	courtIDMap := make(map[int]*rentalcourt.Model)
+	courtIDTeamDetailIDCourtsMap := make(map[uint]map[uint]map[uint][]*Court)
+	courtIDs := make([]uint, 0)
+	courtIDMap := make(map[uint]*rentalcourt.Model)
 	if dbDatas, err := database.Club().RentalCourt.Select(rentalcourt.Reqs{
 		Date: dbModel.Date{
 			FromDate: fromDate.TimeP(),
@@ -61,7 +61,7 @@ func GetCourts(
 			courtIDMap[v.ID] = v
 			courtIDs = append(courtIDs, v.ID)
 
-			courtIDTeamDetailIDCourtsMap[v.ID] = make(map[int]map[int][]*Court)
+			courtIDTeamDetailIDCourtsMap[v.ID] = make(map[uint]map[uint][]*Court)
 		}
 	}
 
@@ -69,9 +69,9 @@ func GetCourts(
 		return
 	}
 
-	ledgerIDs := make([]int, 0)
-	ledgerCourtMap := make(map[int][]int)
-	courtLedgerMap := make(map[int][]int)
+	ledgerIDs := make([]uint, 0)
+	ledgerCourtMap := make(map[uint][]uint)
+	courtLedgerMap := make(map[uint][]uint)
 	if dbDatas, err := database.Club().RentalCourtLedgerCourt.Select(rentalcourtledgercourt.Reqs{
 		TeamID:         teamID,
 		RentalCourtIDs: courtIDs,
@@ -81,12 +81,12 @@ func GetCourts(
 	} else {
 		for _, v := range dbDatas {
 			if ledgerCourtMap[v.RentalCourtLedgerID] == nil {
-				ledgerCourtMap[v.RentalCourtLedgerID] = make([]int, 0)
+				ledgerCourtMap[v.RentalCourtLedgerID] = make([]uint, 0)
 			}
 			ledgerCourtMap[v.RentalCourtLedgerID] = append(ledgerCourtMap[v.RentalCourtLedgerID], v.RentalCourtID)
 
 			if courtLedgerMap[v.RentalCourtID] == nil {
-				courtLedgerMap[v.RentalCourtID] = make([]int, 0)
+				courtLedgerMap[v.RentalCourtID] = make([]uint, 0)
 			}
 			courtLedgerMap[v.RentalCourtID] = append(courtLedgerMap[v.RentalCourtID], v.RentalCourtLedgerID)
 		}
@@ -96,9 +96,9 @@ func GetCourts(
 		}
 	}
 
-	detailIDMap := make(map[int]*CourtDetail)
-	incomeIDMap := make(map[int]*income.Model)
-	balanceLedgerIDMap := make(map[int]*rentalcourtledger.Model)
+	detailIDMap := make(map[uint]*CourtDetail)
+	incomeIDMap := make(map[uint]*income.Model)
+	balanceLedgerIDMap := make(map[uint]*rentalcourtledger.Model)
 	if dbDatas, err := database.Club().RentalCourtLedger.Select(rentalcourtledger.Reqs{
 		IDs: ledgerIDs,
 	}); err != nil {
@@ -123,7 +123,7 @@ func GetCourts(
 		}
 	}
 
-	ledgerCourtRefundMap := make(map[int]map[int][]*rentalcourtrefundledger.Model)
+	ledgerCourtRefundMap := make(map[uint]map[uint][]*rentalcourtrefundledger.Model)
 	if dbDatas, err := database.Club().RentalCourtRefundLedger.Select(rentalcourtrefundledger.Reqs{
 		RentlCourtLedgerIDs: ledgerIDs,
 	}); err != nil {
@@ -141,7 +141,7 @@ func GetCourts(
 			}
 
 			if ledgerCourtRefundMap[ledgerID] == nil {
-				ledgerCourtRefundMap[ledgerID] = make(map[int][]*rentalcourtrefundledger.Model)
+				ledgerCourtRefundMap[ledgerID] = make(map[uint][]*rentalcourtrefundledger.Model)
 			}
 			if ledgerCourtRefundMap[ledgerID][courtID] == nil {
 				ledgerCourtRefundMap[ledgerID][courtID] = make([]*rentalcourtrefundledger.Model, 0)
@@ -152,7 +152,7 @@ func GetCourts(
 		}
 	}
 
-	detailIDs := make([]int, 0)
+	detailIDs := make([]uint, 0)
 	for detailID := range detailIDMap {
 		detailIDs = append(detailIDs, detailID)
 	}
@@ -185,7 +185,7 @@ func GetCourts(
 		}
 	}
 
-	incomeIDs := make([]int, 0)
+	incomeIDs := make([]uint, 0)
 	for incomeID := range incomeIDMap {
 		incomeIDs = append(incomeIDs, incomeID)
 	}
@@ -283,7 +283,7 @@ func GetCourts(
 			}
 
 			if courtIDTeamDetailIDCourtsMap[courtID][teamID] == nil {
-				courtIDTeamDetailIDCourtsMap[courtID][teamID] = make(map[int][]*Court)
+				courtIDTeamDetailIDCourtsMap[courtID][teamID] = make(map[uint][]*Court)
 			}
 			if courtIDTeamDetailIDCourtsMap[courtID][teamID][detailID] == nil {
 				courtIDTeamDetailIDCourtsMap[courtID][teamID][detailID] = make([]*Court, 0)
@@ -303,7 +303,7 @@ func GetCourts(
 				Courts: make([]*Court, 0),
 			}
 			if teamPlaceDateCourtsMap[teamID] == nil {
-				teamPlaceDateCourtsMap[teamID] = make(map[int][]*DateCourt)
+				teamPlaceDateCourtsMap[teamID] = make(map[uint][]*DateCourt)
 			}
 			if teamPlaceDateCourtsMap[teamID][placeID] == nil {
 				teamPlaceDateCourtsMap[teamID][placeID] = make([]*DateCourt, 0)
@@ -321,7 +321,7 @@ func GetCourts(
 
 func VerifyAddCourt(
 	placeID,
-	teamID,
+	teamID uint,
 	pricePerHour int,
 	courtDetail CourtDetail,
 	despositMoney,
@@ -387,7 +387,7 @@ func VerifyAddCourt(
 
 func AddCourt(
 	placeID,
-	teamID,
+	teamID uint,
 	pricePerHour int,
 	courtDetail CourtDetail,
 	despositMoney,
@@ -414,7 +414,7 @@ func AddCourt(
 	}
 
 	rentalCourtInsertDatas := make([]*rentalcourt.Model, 0)
-	rentalCourtIDs := make([]*int, 0)
+	rentalCourtIDs := make([]*uint, 0)
 	var startDate, endDate time.Time
 	{
 		dates := make([]*time.Time, 0)
@@ -460,7 +460,7 @@ func AddCourt(
 	}
 
 	rentalCourtDetailInsertDatas := make([]*rentalcourtdetail.Model, 0)
-	var rentalCourtDetailID *int
+	var rentalCourtDetailID *uint
 	{
 		from, to := courtDetail.GetTime()
 		dbDatas, err := database.Club().RentalCourtDetail.Select(rentalcourtdetail.Reqs{
@@ -489,7 +489,7 @@ func AddCourt(
 	}
 
 	incomeInsertDatas := make([]*income.Model, 0)
-	var despositIncomeID, balanceIncomeID *int
+	var despositIncomeID, balanceIncomeID *uint
 	{
 		if money, payDate := despositMoney, despositPayDate; money != nil &&
 			payDate != nil {
@@ -519,9 +519,9 @@ func AddCourt(
 	}
 
 	var getRentalCourtLedgerInsertDataAfterDetailIncomeFunc func(
-		rentalCourtDetailID int,
-		balanceIncomeID, despositIncomeID *int,
-	) ([]*rentalcourtledger.Model, *int)
+		rentalCourtDetailID uint,
+		balanceIncomeID, despositIncomeID *uint,
+	) ([]*rentalcourtledger.Model, *uint)
 	{
 		rentalCourtLedgerInsertDatas := make([]*rentalcourtledger.Model, 0)
 		rentalCourtLedgerInsertData := &rentalcourtledger.Model{
@@ -536,9 +536,9 @@ func AddCourt(
 		}
 		rentalCourtLedgerInsertDatas = append(rentalCourtLedgerInsertDatas, rentalCourtLedgerInsertData)
 		getRentalCourtLedgerInsertDataAfterDetailIncomeFunc = func(
-			rentalCourtDetailID int,
-			balanceIncomeID, despositIncomeID *int,
-		) ([]*rentalcourtledger.Model, *int) {
+			rentalCourtDetailID uint,
+			balanceIncomeID, despositIncomeID *uint,
+		) ([]*rentalcourtledger.Model, *uint) {
 			rentalCourtLedgerInsertData.RentalCourtDetailID = rentalCourtDetailID
 			rentalCourtLedgerInsertData.IncomeID = balanceIncomeID
 			rentalCourtLedgerInsertData.DepositIncomeID = despositIncomeID
@@ -546,10 +546,10 @@ func AddCourt(
 		}
 	}
 
-	var getrentalCourtLedgerCourtInsertDataAfterRentalCourtLedger func(rentalCourtLedgerIDP *int, rentalCourtIDs []*int) []*rentalcourtledgercourt.Model
+	var getrentalCourtLedgerCourtInsertDataAfterRentalCourtLedger func(rentalCourtLedgerIDP *uint, rentalCourtIDs []*uint) []*rentalcourtledgercourt.Model
 	{
 		rentalCourtLedgerCourtInsertDatas := make([]*rentalcourtledgercourt.Model, 0)
-		getrentalCourtLedgerCourtInsertDataAfterRentalCourtLedger = func(rentalCourtLedgerIDP *int, rentalCourtIDs []*int) []*rentalcourtledgercourt.Model {
+		getrentalCourtLedgerCourtInsertDataAfterRentalCourtLedger = func(rentalCourtLedgerIDP *uint, rentalCourtIDs []*uint) []*rentalcourtledgercourt.Model {
 			for _, rentalCourtID := range rentalCourtIDs {
 				rentalCourtLedgerCourtInsertData := &rentalcourtledgercourt.Model{
 					RentalCourtID:       *rentalCourtID,

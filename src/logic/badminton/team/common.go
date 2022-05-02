@@ -16,13 +16,13 @@ const (
 	DEFAULT_CREATE_DAYS int16 = 6
 )
 
-var MockLoad func(ids ...int) (
-	resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam,
+var MockLoad func(ids ...uint) (
+	resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam,
 	resultErrInfo errUtil.IError,
 )
 
 // empty for all
-func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resultErrInfo errUtil.IError) {
+func Load(ids ...uint) (resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam, resultErrInfo errUtil.IError) {
 	if MockLoad != nil {
 		return MockLoad(ids...)
 	}
@@ -34,10 +34,10 @@ func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resu
 	}
 	resultTeamIDMap = teamIDMap
 	if resultTeamIDMap == nil {
-		resultTeamIDMap = make(map[int]*rdsModel.ClubBadmintonTeam)
+		resultTeamIDMap = make(map[uint]*rdsModel.ClubBadmintonTeam)
 	}
 
-	reLoadIDs := make([]int, 0)
+	reLoadIDs := make([]uint, 0)
 	for _, id := range ids {
 		_, exist := resultTeamIDMap[id]
 		if !exist {
@@ -46,8 +46,8 @@ func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resu
 	}
 
 	if len(ids) == 0 || len(reLoadIDs) > 0 {
-		idTeamMap := make(map[int]*rdsModel.ClubBadmintonTeam)
-		ownerMemberIDTeamIDsMap := make(map[int][]int)
+		idTeamMap := make(map[uint]*rdsModel.ClubBadmintonTeam)
+		ownerMemberIDTeamIDsMap := make(map[uint][]uint)
 		{
 			dbDatas, err := database.Club().Team.Select(team.Reqs{
 				IDs: reLoadIDs,
@@ -85,14 +85,14 @@ func Load(ids ...int) (resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam, resu
 				idTeamMap[teamID] = result
 
 				if ownerMemberIDTeamIDsMap[ownerMemberID] == nil {
-					ownerMemberIDTeamIDsMap[ownerMemberID] = make([]int, 0)
+					ownerMemberIDTeamIDsMap[ownerMemberID] = make([]uint, 0)
 				}
 				ownerMemberIDTeamIDsMap[ownerMemberID] = append(ownerMemberIDTeamIDsMap[ownerMemberID], teamID)
 			}
 		}
 
 		if len(ownerMemberIDTeamIDsMap) > 0 {
-			ownerMemberIDs := make([]int, 0)
+			ownerMemberIDs := make([]uint, 0)
 			for ownerMemberID := range ownerMemberIDTeamIDsMap {
 				ownerMemberIDs = append(ownerMemberIDs, ownerMemberID)
 			}

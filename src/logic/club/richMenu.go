@@ -194,7 +194,7 @@ func (b *richMenu) Do(text string) (resultErrInfo errUtil.IError) {
 				lineIDs := []string{}
 				if dbDatas, err := database.Club().Member.Select(
 					member.Reqs{
-						Role: util.PointerOf[int16](int16(role)),
+						Role: util.PointerOf[uint8](uint8(role)),
 					},
 					member.COLUMN_Name,
 					member.COLUMN_LineID,

@@ -52,7 +52,7 @@ type MessageBot struct {
 
 type Badminton struct {
 	LiffUrl    string `yaml:"liff_url"`
-	ClubTeamID int    `yaml:"club_team_id"`
+	ClubTeamID uint   `yaml:"club_team_id"`
 }
 
 type GoogleScript struct {

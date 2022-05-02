@@ -22,7 +22,7 @@ func TestGetActivitys(t *testing.T) {
 			pageIndex,
 			pageSize uint,
 			placeIDs,
-			teamIDs []int,
+			teamIDs []uint,
 			everyWeekdays []time.Weekday,
 		) (
 			result resp.GetActivitys,
@@ -54,13 +54,13 @@ func TestGetActivitys(t *testing.T) {
 						PageSize:  1,
 						PageIndex: 2,
 					},
-					PlaceIDs:      []int{1, 2, 2},
-					TeamIDs:       []int{3, 3, 4},
+					PlaceIDs:      []uint{1, 2, 2},
+					TeamIDs:       []uint{3, 3, 4},
 					EveryWeekdays: []int{5, 6, 6},
 				},
 			},
 			migrations{
-				mockGetActivitys: func(fromDate, toDate *util.DateTime, pageIndex, pageSize uint, placeIDs, teamIDs []int, everyWeekdays []time.Weekday) (result resp.GetActivitys, resultErrInfo errUtil.IError) {
+				mockGetActivitys: func(fromDate, toDate *util.DateTime, pageIndex, pageSize uint, placeIDs, teamIDs []uint, everyWeekdays []time.Weekday) (result resp.GetActivitys, resultErrInfo errUtil.IError) {
 					if ok, msg := util.Comp(fromDate, util.NewDateTimeP(location, 2013, 8, 2)); !ok {
 						resultErrInfo = errUtil.Append(resultErrInfo, errUtil.New(msg))
 						return
@@ -77,11 +77,11 @@ func TestGetActivitys(t *testing.T) {
 						resultErrInfo = errUtil.Append(resultErrInfo, errUtil.New(msg))
 						return
 					}
-					if ok, msg := util.Comp(placeIDs, []int{1, 2, 2}); !ok {
+					if ok, msg := util.Comp(placeIDs, []uint{1, 2, 2}); !ok {
 						resultErrInfo = errUtil.Append(resultErrInfo, errUtil.New(msg))
 						return
 					}
-					if ok, msg := util.Comp(teamIDs, []int{3, 3, 4}); !ok {
+					if ok, msg := util.Comp(teamIDs, []uint{3, 3, 4}); !ok {
 						resultErrInfo = errUtil.Append(resultErrInfo, errUtil.New(msg))
 						return
 					}

@@ -29,6 +29,11 @@ func Get() (*Config, error) {
 	return cfg, nil
 }
 
+// for test
+func Set(c *Config) {
+	cfg = c
+}
+
 func loadConfig() error {
 	configName := GetEnvConfig()
 	if configName == "" {

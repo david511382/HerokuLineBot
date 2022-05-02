@@ -17,7 +17,7 @@ type RegisteMember struct {
 	context  clublinebotDomain.ILineBotContext
 	name     string
 	lineID   *string
-	memberID *int
+	memberID *uint
 }
 
 func NewRegisterMember(name string, lineID *string) *RegisteMember {
@@ -32,7 +32,7 @@ func (b *RegisteMember) Init(context clublinebotDomain.ILineBotContext) {
 }
 
 func (b *RegisteMember) LoadMemberID() (
-	memberID *int,
+	memberID *uint,
 	memberName *string,
 	resultErrInfo errUtil.IError,
 ) {
@@ -85,7 +85,7 @@ func (b *RegisteMember) Registe(db *clubdb.Database) (resultErrInfo errUtil.IErr
 	data := &member.Model{
 		Department: string(NewEmptyDepartment()),
 		Name:       b.name,
-		Role:       int16(domain.GUEST_CLUB_ROLE),
+		Role:       uint8(domain.GUEST_CLUB_ROLE),
 	}
 	if b.lineID != nil {
 		data.LineID = b.lineID

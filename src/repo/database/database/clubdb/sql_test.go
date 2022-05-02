@@ -15,6 +15,8 @@ import (
 )
 
 func TestDatabase_JoinActivityDetail(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		arg ReqsClubJoinActivityDetail
 	}
@@ -41,7 +43,7 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 			args{
 				arg: ReqsClubJoinActivityDetail{
 					Activity: &activity.Reqs{
-						IDs: []int{
+						IDs: []uint{
 							52, 82,
 						},
 					},
@@ -133,15 +135,21 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 					{
 						ID:                  82,
 						RentalCourtDetailID: 82,
+						StartDate:           util.GetUTCTime(2013),
+						EndDate:             util.GetUTCTime(2013),
 					},
 					{
 						ID:                  52,
 						RentalCourtDetailID: 52,
+						StartDate:           util.GetUTCTime(2013),
+						EndDate:             util.GetUTCTime(2013),
 					},
 					// false
 					{
 						ID:                  1,
 						RentalCourtDetailID: 1,
+						StartDate:           util.GetUTCTime(2013),
+						EndDate:             util.GetUTCTime(2013),
 					},
 				},
 				rentalCourtDetail: []*rentalcourtdetail.Model{
@@ -186,6 +194,8 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			db := setupTestDb(t)
+
 			if err := db.Activity.MigrationData(tt.migrations.activity...); err != nil {
 				t.Fatal(err.Error())
 			}

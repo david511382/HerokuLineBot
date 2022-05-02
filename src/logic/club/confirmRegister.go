@@ -16,7 +16,7 @@ import (
 
 type confirmRegister struct {
 	context  domain.ICmdHandlerContext `json:"-"`
-	MemberID int                       `json:"member_id"`
+	MemberID uint                      `json:"member_id"`
 	domain.TimePostbackParams
 	User *confirmRegisterUser `json:"user"`
 }

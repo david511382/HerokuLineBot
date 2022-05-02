@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 	testServer = util.NewTestServer(r)
 	testServer.SetRequest(func(req *http.Request) error {
 		claims := domain.JwtClaims{
-			RoleID: int16(clubLogicDomain.ADMIN_CLUB_ROLE),
+			RoleID: uint8(clubLogicDomain.ADMIN_CLUB_ROLE),
 		}
 		bs, err := json.Marshal(claims)
 		if err != nil {
@@ -86,9 +86,9 @@ func setupRouter() *gin.Engine {
 	apiBadminton.GET("/activitys", GetActivitys)
 	// api/badminton auth
 	apiBadminton.Use(middleware.AuthorizeToken(jsonTokenVerifier, true))
-	apiBadminton.Use(middleware.VerifyAuthorize(map[int16]bool{
-		int16(clubLogicDomain.ADMIN_CLUB_ROLE): true,
-		int16(clubLogicDomain.CADRE_CLUB_ROLE): true,
+	apiBadminton.Use(middleware.VerifyAuthorize(map[clubLogicDomain.ClubRole]bool{
+		clubLogicDomain.ADMIN_CLUB_ROLE: true,
+		clubLogicDomain.CADRE_CLUB_ROLE: true,
 	}))
 	apiBadminton.GET("/rental-courts", GetRentalCourts)
 	apiBadminton.POST("/rental-courts", AddRentalCourt)

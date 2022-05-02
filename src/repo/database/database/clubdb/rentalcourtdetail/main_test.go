@@ -2,16 +2,13 @@ package rentalcourtdetail
 
 import (
 	"heroku-line-bot/bootstrap"
+	"heroku-line-bot/src/pkg/test"
 	"heroku-line-bot/src/repo/database/common"
 	"heroku-line-bot/src/repo/database/conn"
 	"os"
 	"testing"
 
 	"gorm.io/gorm"
-)
-
-var (
-	db *Table
 )
 
 func TestMain(m *testing.M) {
@@ -29,20 +26,36 @@ func TestMain(m *testing.M) {
 	if connection, err := conn.Connect(cfg.ClubDb); err != nil {
 		panic(err)
 	} else {
-		db = New(common.NewMasterSlaveManager(
+		db := New(common.NewMasterSlaveManager(
 			func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
 				master = connection
 				slave = connection
 				return
 			},
 		))
-	}
-
-	if err := db.MigrationTable(); err != nil {
-		panic(err)
+		if err := db.MigrationTable(); err != nil {
+			panic(err)
+		}
 	}
 
 	exitVal := m.Run()
 
 	os.Exit(exitVal)
+}
+
+func setupTestDb(t *testing.T) *Table {
+	cfg := test.SetupTestCfg(t)
+
+	connection, err := conn.Connect(cfg.ClubDb)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	return New(common.NewMasterSlaveManager(
+		func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
+			master = connection
+			slave = connection
+			return
+		},
+	))
 }

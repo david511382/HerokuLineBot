@@ -2,15 +2,12 @@ package clubdb
 
 import (
 	"heroku-line-bot/bootstrap"
+	"heroku-line-bot/src/pkg/test"
 	"heroku-line-bot/src/repo/database/conn"
 	"os"
 	"testing"
 
 	"gorm.io/gorm"
-)
-
-var (
-	db *Database
 )
 
 func TestMain(m *testing.M) {
@@ -21,11 +18,15 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	cfg, errInfo := bootstrap.Get()
-	if errInfo != nil {
-		panic(errInfo.Error())
-	}
-	db = NewDatabase(func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
+	exitVal := m.Run()
+
+	os.Exit(exitVal)
+}
+
+func setupTestDb(t *testing.T) *Database {
+	cfg := test.SetupTestCfg(t)
+
+	return NewDatabase(func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
 		connection, err := conn.Connect(cfg.ClubDb)
 		if err != nil {
 			resultErr = err
@@ -35,8 +36,4 @@ func TestMain(m *testing.M) {
 		slave = connection
 		return
 	})
-
-	exitVal := m.Run()
-
-	os.Exit(exitVal)
 }

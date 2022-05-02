@@ -23,7 +23,7 @@ type registeCompany struct {
 	Department3               *string                   `json:"department_3"`
 	CompanyID                 *string                   `json:"company_id"`
 	IsRequireDbCheckCompanyID bool                      `json:"is_require_db_check_company_id"`
-	MemberID                  *int                      `json:"member_id"`
+	MemberID                  *uint                     `json:"member_id"`
 }
 
 func (b *registeCompany) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {

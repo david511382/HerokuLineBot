@@ -14,8 +14,8 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 	type args struct {
 		fromDate      *util.DateTime
 		toDate        *util.DateTime
-		teamIDs       []int
-		placeIDs      []int
+		teamIDs       []uint
+		placeIDs      []uint
 		everyWeekdays []time.Weekday
 	}
 	type migrations struct {
@@ -35,7 +35,7 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 			args: args{
 				fromDate:      nil,
 				toDate:        nil,
-				teamIDs:       []int{52, 82},
+				teamIDs:       []uint{52, 82},
 				placeIDs:      nil,
 				everyWeekdays: nil,
 			},
@@ -43,23 +43,26 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 				activity: []*activity.Model{
 					{
 						TeamID: 52,
+						Date:   util.GetUTCTime(2013),
 					},
 					{
 						TeamID: 82,
+						Date:   util.GetUTCTime(2013),
 					},
 					// false
 					{
 						TeamID: 1,
+						Date:   util.GetUTCTime(2013),
 					},
 				},
 			},
 			wants: wants{
 				args: []*activity.Reqs{
 					{
-						TeamID: util.PointerOf(52),
+						TeamID: util.PointerOf[uint](52),
 					},
 					{
-						TeamID: util.PointerOf(82),
+						TeamID: util.PointerOf[uint](82),
 					},
 				},
 			},

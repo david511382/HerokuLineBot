@@ -33,13 +33,13 @@ func New(connectionCreator common.IConnectionCreator) *Table {
 }
 
 type Model struct {
-	ID          int       `gorm:"column:id;type:serial;primary_key;not null"`
-	TeamID      int       `gorm:"column:team_id;type:int;not null"`
+	ID          uint      `gorm:"column:id;type:int unsigned auto_increment;primary_key;not null;comment:欄位"`
+	TeamID      uint      `gorm:"column:team_id;type:int unsigned;not null;comment:欄位"`
 	Date        time.Time `gorm:"column:date;type:date;not null;index"`
-	Type        int16     `gorm:"column:type;type:smallint;not null"`
-	Description string    `gorm:"column:description;type:varchar(50);not null"`
-	ReferenceID *int      `gorm:"column:reference_id;type:int;index"`
-	Income      int16     `gorm:"column:income;type:smallint;not null"`
+	Type        int16     `gorm:"column:type;type:smallint;not null;comment:欄位"`
+	Description string    `gorm:"column:description;type:varchar(64);not null;comment:欄位"`
+	ReferenceID *uint     `gorm:"column:reference_id;type:int unsigned;index"`
+	Income      int16     `gorm:"column:income;type:smallint;not null;comment:欄位"`
 }
 
 func (Model) TableName() string {
@@ -48,7 +48,7 @@ func (Model) TableName() string {
 
 type Reqs struct {
 	ID  *int
-	IDs []int
+	IDs []uint
 
 	dbModel.Date
 	Type *int16

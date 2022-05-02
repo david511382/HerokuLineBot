@@ -39,18 +39,18 @@ func New(connectionCreator common.IConnectionCreator) *Table {
 }
 
 type Model struct {
-	ID            int       `gorm:"column:id;type:serial;primary_key;not null"`
-	TeamID        int       `gorm:"column:team_id;type:int;not null"`
+	ID            uint      `gorm:"column:id;type:int unsigned auto_increment;primary_key;not null;comment:欄位"`
+	TeamID        uint      `gorm:"column:team_id;type:int unsigned;not null;comment:欄位"`
 	Date          time.Time `gorm:"column:date;type:date;not null;index"`
-	PlaceID       int       `gorm:"column:place_id;type:int;not null"`
-	CourtsAndTime string    `gorm:"column:courts_and_time;type:varchar(200);not null"`
-	MemberCount   int16     `gorm:"column:member_count;type:smallint;not null"`
-	GuestCount    int16     `gorm:"column:guest_count;type:smallint;not null"`
-	MemberFee     int16     `gorm:"column:member_fee;type:smallint;not null"`
-	GuestFee      int16     `gorm:"column:guest_fee;type:smallint;not null"`
-	ClubSubsidy   int16     `gorm:"column:club_subsidy;type:smallint;not null"`
-	LogisticID    *int      `gorm:"column:logistic_id;type:int;"`
-	Description   string    `gorm:"column:description;type:varchar(50);not null"`
+	PlaceID       uint      `gorm:"column:place_id;type:int unsigned;not null;comment:欄位"`
+	CourtsAndTime string    `gorm:"column:courts_and_time;type:varchar(256);not null;comment:欄位"`
+	MemberCount   int16     `gorm:"column:member_count;type:smallint;not null;comment:欄位"`
+	GuestCount    int16     `gorm:"column:guest_count;type:smallint;not null;comment:欄位"`
+	MemberFee     int16     `gorm:"column:member_fee;type:smallint;not null;comment:欄位"`
+	GuestFee      int16     `gorm:"column:guest_fee;type:smallint;not null;comment:欄位"`
+	ClubSubsidy   int16     `gorm:"column:club_subsidy;type:smallint;not null;comment:欄位"`
+	LogisticID    *uint     `gorm:"column:logistic_id;type:int unsigned;"`
+	Description   string    `gorm:"column:description;type:varchar(64);not null;comment:欄位"`
 	PeopleLimit   *int16    `gorm:"column:people_limit;type:smallint"`
 }
 
@@ -61,12 +61,12 @@ func (Model) TableName() string {
 type Reqs struct {
 	dbModel.Date
 	Dates               []*time.Time
-	PlaceID             *int
-	PlaceIDs            []int
+	PlaceID             *uint
+	PlaceIDs            []uint
 	ClubSubsidyNotEqual *int16
-	ID                  *int
-	IDs                 []int
-	TeamID              *int
+	ID                  *uint
+	IDs                 []uint
+	TeamID              *uint
 }
 
 func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {
@@ -119,7 +119,7 @@ func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {
 type UpdateReqs struct {
 	Reqs
 
-	LogisticID **int
+	LogisticID **uint
 	MemberCount,
 	GuestCount,
 	MemberFee,

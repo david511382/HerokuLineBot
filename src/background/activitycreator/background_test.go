@@ -131,8 +131,8 @@ func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
 
 func Test_calActivitys(t *testing.T) {
 	type args struct {
-		teamID             int
-		placeDateCourtsMap map[int][]*badmintonCourtLogic.DateCourt
+		teamID             uint
+		placeDateCourtsMap map[uint][]*badmintonCourtLogic.DateCourt
 		rdsSetting         *rdsModel.ClubBadmintonTeam
 	}
 	tests := []struct {
@@ -143,7 +143,7 @@ func Test_calActivitys(t *testing.T) {
 		{
 			"refund",
 			args{
-				placeDateCourtsMap: map[int][]*badmintonCourtLogic.DateCourt{
+				placeDateCourtsMap: map[uint][]*badmintonCourtLogic.DateCourt{
 					1: {
 						{
 							Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
@@ -162,7 +162,7 @@ func Test_calActivitys(t *testing.T) {
 										PricePerHour: 10,
 									},
 									Balance:        badmintonCourtLogic.LedgerIncome{},
-									BalanceCourIDs: []int{},
+									BalanceCourIDs: []uint{},
 									Refunds: []*badmintonCourtLogic.RefundMulCourtIncome{
 										{
 											DbCourtDetail: badmintonCourtLogic.DbCourtDetail{
@@ -196,7 +196,7 @@ func Test_calActivitys(t *testing.T) {
 										PricePerHour: 10,
 									},
 									Balance:        badmintonCourtLogic.LedgerIncome{},
-									BalanceCourIDs: []int{},
+									BalanceCourIDs: []uint{},
 									Refunds:        []*badmintonCourtLogic.RefundMulCourtIncome{},
 								},
 							},
@@ -263,13 +263,13 @@ func TestBackGround_Run(t *testing.T) {
 		mockGetCourts func(
 			fromDate, toDate util.DateTime,
 			teamID,
-			placeID *int,
+			placeID *uint,
 		) (
-			teamPlaceDateCourtsMap map[int]map[int][]*badmintonCourtLogic.DateCourt,
+			teamPlaceDateCourtsMap map[uint]map[uint][]*badmintonCourtLogic.DateCourt,
 			resultErrInfo errUtil.IError,
 		)
-		mockTeamLoad func(ids ...int) (
-			resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam,
+		mockTeamLoad func(ids ...uint) (
+			resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam,
 			resultErrInfo errUtil.IError,
 		)
 	}
@@ -292,12 +292,12 @@ func TestBackGround_Run(t *testing.T) {
 				mockGetCourts: func(
 					fromDate, toDate util.DateTime,
 					teamID,
-					placeID *int,
+					placeID *uint,
 				) (
-					teamPlaceDateCourtsMap map[int]map[int][]*badmintonCourtLogic.DateCourt,
+					teamPlaceDateCourtsMap map[uint]map[uint][]*badmintonCourtLogic.DateCourt,
 					resultErrInfo errUtil.IError,
 				) {
-					teamPlaceDateCourtsMap = map[int]map[int][]*badmintonCourtLogic.DateCourt{
+					teamPlaceDateCourtsMap = map[uint]map[uint][]*badmintonCourtLogic.DateCourt{
 						1: {
 							1: {},
 						},
@@ -313,7 +313,7 @@ func TestBackGround_Run(t *testing.T) {
 										CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{},
 										Desposit:         nil,
 										Balance:          badmintonCourtLogic.LedgerIncome{},
-										BalanceCourIDs:   []int{},
+										BalanceCourIDs:   []uint{},
 										Refunds:          []*badmintonCourtLogic.RefundMulCourtIncome{},
 									},
 								},
@@ -324,11 +324,11 @@ func TestBackGround_Run(t *testing.T) {
 
 					return
 				},
-				mockTeamLoad: func(ids ...int) (
-					resultTeamIDMap map[int]*rdsModel.ClubBadmintonTeam,
+				mockTeamLoad: func(ids ...uint) (
+					resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam,
 					resultErrInfo errUtil.IError,
 				) {
-					resultTeamIDMap = map[int]*rdsModel.ClubBadmintonTeam{
+					resultTeamIDMap = map[uint]*rdsModel.ClubBadmintonTeam{
 						1: {
 							Name:               "",
 							OwnerMemberID:      1,

@@ -22,8 +22,8 @@ func TestGetCourts(t *testing.T) {
 	type args struct {
 		fromDate util.DateTime
 		toDate   util.DateTime
-		teamID   *int
-		placeID  *int
+		teamID   *uint
+		placeID  *uint
 	}
 	type migrations struct {
 		rentalCourts             []*rentalcourt.Model
@@ -34,7 +34,7 @@ func TestGetCourts(t *testing.T) {
 		rentalCourtDetail        []*rentalcourtdetail.Model
 	}
 	type wants struct {
-		teamPlaceDateCourtsMap map[int]map[int][]*DateCourt
+		teamPlaceDateCourtsMap map[uint]map[uint][]*DateCourt
 	}
 	tests := []struct {
 		name       string
@@ -47,8 +47,8 @@ func TestGetCourts(t *testing.T) {
 			args{
 				fromDate: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 				toDate:   *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-				teamID:   util.PointerOf(1),
-				placeID:  util.PointerOf(1),
+				teamID:   util.PointerOf[uint](1),
+				placeID:  util.PointerOf[uint](1),
 			},
 			migrations{
 				rentalCourts: []*rentalcourt.Model{
@@ -131,7 +131,7 @@ func TestGetCourts(t *testing.T) {
 				incomes: []*income.Model{},
 			},
 			wants{
-				teamPlaceDateCourtsMap: map[int]map[int][]*DateCourt{
+				teamPlaceDateCourtsMap: map[uint]map[uint][]*DateCourt{
 					1: {
 						1: {
 							{
@@ -153,7 +153,7 @@ func TestGetCourts(t *testing.T) {
 											PricePerHour: 2,
 										},
 										Desposit:       nil,
-										BalanceCourIDs: []int{1},
+										BalanceCourIDs: []uint{1},
 										Balance: LedgerIncome{
 											ID:     1,
 											Income: nil,
@@ -186,7 +186,7 @@ func TestGetCourts(t *testing.T) {
 					{
 						ID:                  11,
 						RentalCourtDetailID: 1,
-						IncomeID:            util.PointerOf(1),
+						IncomeID:            util.PointerOf[uint](1),
 						TeamID:              1,
 						DepositIncomeID:     nil,
 						PlaceID:             1,
@@ -211,7 +211,7 @@ func TestGetCourts(t *testing.T) {
 					{
 						ID:                  13,
 						RentalCourtDetailID: 2,
-						IncomeID:            util.PointerOf(2),
+						IncomeID:            util.PointerOf[uint](2),
 						DepositIncomeID:     nil,
 						TeamID:              1,
 						PlaceID:             1,
@@ -228,7 +228,7 @@ func TestGetCourts(t *testing.T) {
 						RentalCourtLedgerID: 11,
 						RentalCourtDetailID: 3,
 						RentalCourtID:       1,
-						IncomeID:            util.PointerOf(3),
+						IncomeID:            util.PointerOf[uint](3),
 					},
 					{
 						ID:                  2,
@@ -330,7 +330,7 @@ func TestGetCourts(t *testing.T) {
 				},
 			},
 			wants{
-				teamPlaceDateCourtsMap: map[int]map[int][]*DateCourt{
+				teamPlaceDateCourtsMap: map[uint]map[uint][]*DateCourt{
 					1: {
 						1: {
 							{
@@ -352,7 +352,7 @@ func TestGetCourts(t *testing.T) {
 											PricePerHour: 2,
 										},
 										Desposit:       nil,
-										BalanceCourIDs: []int{1},
+										BalanceCourIDs: []uint{1},
 										Balance: LedgerIncome{
 											ID: 11,
 											Income: &Income{
@@ -411,7 +411,7 @@ func TestGetCourts(t *testing.T) {
 											PricePerHour: 2,
 										},
 										Desposit:       nil,
-										BalanceCourIDs: []int{1},
+										BalanceCourIDs: []uint{1},
 										Balance: LedgerIncome{
 											ID:     12,
 											Income: nil,
@@ -434,7 +434,7 @@ func TestGetCourts(t *testing.T) {
 											PricePerHour: 2,
 										},
 										Desposit:       nil,
-										BalanceCourIDs: []int{1},
+										BalanceCourIDs: []uint{1},
 										Balance: LedgerIncome{
 											ID: 13,
 											Income: &Income{
@@ -521,8 +521,8 @@ func TestGetCourts(t *testing.T) {
 
 func TestAddCourt(t *testing.T) {
 	type args struct {
-		placeID         int
-		teamID          int
+		placeID         uint
+		teamID          uint
 		pricePerHour    int
 		courtDetail     CourtDetail
 		despositMoney   *int
@@ -601,8 +601,8 @@ func TestAddCourt(t *testing.T) {
 						TeamID:              1,
 						PlaceID:             1,
 						PricePerHour:        10,
-						IncomeID:            util.PointerOf(2),
-						DepositIncomeID:     util.PointerOf(1),
+						IncomeID:            util.PointerOf[uint](2),
+						DepositIncomeID:     util.PointerOf[uint](1),
 						PayDate:             util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 						StartDate:           *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 						EndDate:             *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),

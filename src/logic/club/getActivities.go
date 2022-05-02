@@ -23,21 +23,21 @@ import (
 type GetActivities struct {
 	context               domain.ICmdHandlerContext `json:"-"`
 	activities            []*getActivitiesActivity
-	JoinActivityID        int                              `json:"join_activity_id"`
-	TeamID                int                              `json:"team_id"`
-	LeaveActivityID       int                              `json:"leave_activity_id"`
+	JoinActivityID        uint                             `json:"join_activity_id"`
+	TeamID                uint                             `json:"team_id"`
+	LeaveActivityID       uint                             `json:"leave_activity_id"`
 	currentUser           accountLineuserLogicDomain.Model `json:"-"`
-	ListMembersActivityID int                              `json:"list_members_activity_id"`
+	ListMembersActivityID uint                             `json:"list_members_activity_id"`
 }
 
 type getActivitiesActivity struct {
 	NewActivity
 	JoinedMembers []*getActivitiesActivityJoinedMembers `json:"joined_members"`
-	ActivityID    int                                   `json:"activity_id"`
+	ActivityID    uint                                  `json:"activity_id"`
 }
 
 type getActivitiesActivityJoinedMembers struct {
-	ID   int    `json:"id"`
+	ID   uint   `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -106,14 +106,14 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 		return
 	}
 
-	activityIDs := []int{}
-	idPlaceMap := make(map[int]string)
+	activityIDs := []uint{}
+	idPlaceMap := make(map[uint]string)
 	for _, v := range activitys {
 		activityIDs = append(activityIDs, v.ID)
 		idPlaceMap[v.PlaceID] = ""
 	}
 
-	placeIDs := make([]int, 0)
+	placeIDs := make([]uint, 0)
 	for id := range idPlaceMap {
 		placeIDs = append(placeIDs, id)
 	}
@@ -128,7 +128,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 		}
 	}
 
-	activityIDMap := make(map[int][]*getActivitiesActivityJoinedMembers)
+	activityIDMap := make(map[uint][]*getActivitiesActivityJoinedMembers)
 	memberActivityArg := memberactivity.Reqs{
 		ActivityIDs: activityIDs,
 	}
@@ -146,7 +146,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 		}
 		return
 	} else if len(dbDatas) > 0 {
-		memberIDs := make([]int, 0)
+		memberIDs := make([]uint, 0)
 		for _, v := range dbDatas {
 			memberIDs = append(memberIDs, v.MemberID)
 		}
@@ -154,7 +154,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 			lineID *string
 			name   string
 		}
-		memberIDNameMap := make(map[int]lineName)
+		memberIDNameMap := make(map[uint]lineName)
 		memberArg := member.Reqs{
 			IDs: memberIDs,
 		}
@@ -277,11 +277,11 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 		resultErrInfo = errUtil.NewError(err)
 		return
 	} else {
-		memberIDs := make([]int, 0)
+		memberIDs := make([]uint, 0)
 		for _, v := range dbDatas {
 			memberIDs = append(memberIDs, v.MemberID)
 		}
-		memberIDNameMap := make(map[int]string)
+		memberIDNameMap := make(map[uint]string)
 		memberArg := member.Reqs{
 			IDs: memberIDs,
 		}
@@ -422,8 +422,8 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 		}
 	}
 
-	var notifyWaitingMemberID *int
-	deleteMemberActivityID := 0
+	var notifyWaitingMemberID *uint
+	var deleteMemberActivityID uint = 0
 	arg := memberactivity.Reqs{
 		ActivityID: util.PointerOf(b.LeaveActivityID),
 	}

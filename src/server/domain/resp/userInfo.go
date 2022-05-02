@@ -1,7 +1,7 @@
 package resp
 
 type UserInfo struct {
-	RoleID   int16  `json:"role_id"`
-	ID       int    `json:"id"`
+	RoleID   uint8  `json:"role_id"`
+	ID       uint   `json:"id"`
 	Username string `json:"username"`
 }

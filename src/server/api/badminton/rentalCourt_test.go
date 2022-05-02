@@ -40,7 +40,7 @@ func TestGetRentalCourts(t *testing.T) {
 			migrations{
 				requestSetter: func(req *http.Request) error {
 					claims := domain.JwtClaims{
-						RoleID: int16(clubLogicDomain.MEMBER_CLUB_ROLE),
+						RoleID: uint8(clubLogicDomain.MEMBER_CLUB_ROLE),
 					}
 					bs, err := json.Marshal(claims)
 					if err != nil {
@@ -124,7 +124,7 @@ func TestAddRentalCourts(t *testing.T) {
 			migrations{
 				requestSetter: func(req *http.Request) error {
 					claims := domain.JwtClaims{
-						RoleID: int16(clubLogicDomain.MEMBER_CLUB_ROLE),
+						RoleID: uint8(clubLogicDomain.MEMBER_CLUB_ROLE),
 					}
 					bs, err := json.Marshal(claims)
 					if err != nil {

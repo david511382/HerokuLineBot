@@ -29,11 +29,11 @@ func New(connectionCreator common.IConnectionCreator) *Table {
 }
 
 type Model struct {
-	ID                  int  `gorm:"column:id;type:serial;primary_key;not null"`
-	RentalCourtLedgerID int  `gorm:"column:rental_court_ledger_id;type:int;not null;index:idx_rentalcourtledgerid"`
-	RentalCourtDetailID int  `gorm:"column:rental_court_detail_id;type:int;not null"`
-	RentalCourtID       int  `gorm:"column:rental_court_id;type:int;not null"`
-	IncomeID            *int `gorm:"column:income_id;type:int"`
+	ID                  uint  `gorm:"column:id;type:int unsigned auto_increment;primary_key;not null;comment:欄位"`
+	RentalCourtLedgerID uint  `gorm:"column:rental_court_ledger_id;type:int unsigned;not null;index:idx_rentalcourtledgerid"`
+	RentalCourtDetailID uint  `gorm:"column:rental_court_detail_id;type:int unsigned;not null;comment:欄位"`
+	RentalCourtID       uint  `gorm:"column:rental_court_id;type:int unsigned;not null;comment:欄位"`
+	IncomeID            *uint `gorm:"column:income_id;type:int unsigned"`
 }
 
 func (Model) TableName() string {
@@ -42,10 +42,10 @@ func (Model) TableName() string {
 
 type Reqs struct {
 	ID  *int
-	IDs []int
+	IDs []uint
 
 	RentlCourtLedgerID  *int
-	RentlCourtLedgerIDs []int
+	RentlCourtLedgerIDs []uint
 }
 
 func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {

@@ -9,7 +9,7 @@ import (
 type ActivityCourt struct {
 	FromTime     time.Time `json:"from_time"`
 	ToTime       time.Time `json:"to_time"`
-	Count        int16     `json:"count"`
+	Count        uint8     `json:"count"`
 	PricePerHour float64   `json:"price_per_hour"`
 }
 

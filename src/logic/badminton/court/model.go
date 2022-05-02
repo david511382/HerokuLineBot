@@ -8,7 +8,7 @@ import (
 
 type CourtDetail struct {
 	util.TimeRange
-	Count int16
+	Count uint8
 }
 
 func (d *CourtDetail) GetTimeRanges() (resultTimeRanges util.AscTimeRanges) {
@@ -43,7 +43,7 @@ func (d *CourtDetail) GetTime() (from, to commonLogic.HourMinTime) {
 }
 
 type DbCourtDetail struct {
-	ID int
+	ID uint
 	CourtDetail
 }
 
@@ -57,7 +57,7 @@ func (b *CourtDetailPrice) Cost() util.Float {
 }
 
 type DateCourt struct {
-	ID     int
+	ID     uint
 	Date   util.DateTime
 	Courts []*Court
 }
@@ -66,7 +66,7 @@ type Court struct {
 	CourtDetailPrice
 	Desposit       *Income
 	Balance        LedgerIncome
-	BalanceCourIDs []int
+	BalanceCourIDs []uint
 	Refunds        []*RefundMulCourtIncome
 }
 
@@ -113,12 +113,12 @@ func (c *Court) Parts() (resultCourts []*CourtUnit) {
 
 		countAscTimeRangesMap := rentalTimeRanges.CombineByCount()
 		for count, ascTimeRanges := range countAscTimeRangesMap {
-			count16 := int16(count)
+			count8 := uint8(count)
 			for _, timeRange := range ascTimeRanges {
 				unit := &CourtUnit{
 					CourtDetail: CourtDetail{
 						TimeRange: timeRange,
-						Count:     count16,
+						Count:     count8,
 					},
 					isPay: isPay,
 				}
@@ -138,7 +138,7 @@ func (c *Court) Parts() (resultCourts []*CourtUnit) {
 
 type CourtUnit struct {
 	CourtDetail
-	RefundID     *int
+	RefundID     *uint
 	RefundIncome *Income
 	isPay        bool
 }
@@ -172,7 +172,7 @@ func (c *CourtUnit) GetRefundDate() (refundDate *util.DateTime) {
 }
 
 type RefundMulCourtIncome struct {
-	ID int
+	ID uint
 	*Income
 	DbCourtDetail
 }
@@ -189,12 +189,12 @@ func (c *RefundMulCourtIncome) Cost() (result util.Float) {
 }
 
 type LedgerIncome struct {
-	ID int
+	ID uint
 	*Income
 }
 
 type Income struct {
-	ID      int
+	ID      uint
 	PayDate util.DateTime
 	Money   int
 }

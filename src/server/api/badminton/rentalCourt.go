@@ -70,7 +70,7 @@ func GetRentalCourts(c *gin.Context) {
 		return
 	}
 
-	placeIDs := make([]int, 0)
+	placeIDs := make([]uint, 0)
 	for placeID := range teamPlaceDateCourtsMap[reqs.TeamID] {
 		placeIDs = append(placeIDs, placeID)
 	}
@@ -273,7 +273,7 @@ func AddRentalCourt(c *gin.Context) {
 			From: reqs.CourtFromTime,
 			To:   reqs.CourtToTime,
 		},
-		Count: int16(reqs.CourtCount),
+		Count: uint8(reqs.CourtCount),
 	}
 	depsitDate := util.NewDateTimePOf(reqs.DespositDate)
 	balanceDate := util.NewDateTimePOf(reqs.BalanceDate)

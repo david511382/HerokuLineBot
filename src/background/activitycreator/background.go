@@ -57,7 +57,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 		return
 	}
 
-	newActivityTeamSettingMap := make(map[int]*rdsModel.ClubBadmintonTeam)
+	newActivityTeamSettingMap := make(map[uint]*rdsModel.ClubBadmintonTeam)
 	{
 		db, transaction, err := database.Club().Begin()
 		if err != nil {
@@ -96,7 +96,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	return
 }
 
-func calDateActivity(teamSettingMap map[int]*rdsModel.ClubBadmintonTeam, currentDate util.DateTime) (
+func calDateActivity(teamSettingMap map[uint]*rdsModel.ClubBadmintonTeam, currentDate util.DateTime) (
 	resultActivityHandlers []*clubLogic.NewActivity,
 	resultErrInfo errUtil.IError,
 ) {
@@ -127,8 +127,8 @@ func calDateActivity(teamSettingMap map[int]*rdsModel.ClubBadmintonTeam, current
 }
 
 func calActivitys(
-	teamID int,
-	placeDateCourtsMap map[int][]*badmintonCourtLogic.DateCourt,
+	teamID uint,
+	placeDateCourtsMap map[uint][]*badmintonCourtLogic.DateCourt,
 	rdsSetting *rdsModel.ClubBadmintonTeam,
 ) (
 	newActivityHandlers []*clubLogic.NewActivity,
@@ -165,7 +165,7 @@ func calActivitys(
 				newActivityHandler.ClubSubsidy = *v
 			}
 			if newActivityHandler.PeopleLimit == nil {
-				newActivityHandler.PeopleLimit = util.PointerOf[int16](int16(totalCourtCount * clubLogicDomain.PEOPLE_PER_HOUR * 2))
+				newActivityHandler.PeopleLimit = util.PointerOf(int16(totalCourtCount * clubLogicDomain.PEOPLE_PER_HOUR * 2))
 			}
 
 			for _, dateCourt := range dateCourts {
@@ -197,7 +197,7 @@ func calActivitys(
 	return
 }
 
-func notifyGroup(teamSettingMap map[int]*rdsModel.ClubBadmintonTeam) (resultErrInfo errUtil.IError) {
+func notifyGroup(teamSettingMap map[uint]*rdsModel.ClubBadmintonTeam) (resultErrInfo errUtil.IError) {
 	for teamID, v := range teamSettingMap {
 		if v.NotifyLineRommID == nil {
 			continue
@@ -244,7 +244,7 @@ func combineCourts(courts []*badmintonCourtLogicDomain.ActivityCourt) []*badmint
 			newCourts = append(newCourts, &badmintonCourtLogicDomain.ActivityCourt{
 				FromTime:     v.From,
 				ToTime:       v.To,
-				Count:        int16(v.Count),
+				Count:        uint8(v.Count),
 				PricePerHour: price,
 			})
 		}

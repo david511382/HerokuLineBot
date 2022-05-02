@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"heroku-line-bot/src/logger"
+	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/server/common"
 	"heroku-line-bot/src/server/domain"
@@ -50,11 +51,11 @@ func AuthorizeToken(tokenVerifier domain.ITokenVerifier, require bool) gin.Handl
 	}
 }
 
-func VerifyAuthorize(roleIDAllowMap map[int16]bool) gin.HandlerFunc {
+func VerifyAuthorize(roleIDAllowMap map[clubLogicDomain.ClubRole]bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if len(roleIDAllowMap) > 0 {
 			if jwtClaims := common.GetClaims(c); jwtClaims == nil ||
-				!roleIDAllowMap[jwtClaims.RoleID] {
+				!roleIDAllowMap[clubLogicDomain.ClubRole(jwtClaims.RoleID)] {
 				errInfo := errUtil.New("No Allow", zerolog.InfoLevel)
 				common.FailForbidden(c, errInfo)
 				return

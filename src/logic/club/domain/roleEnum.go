@@ -1,6 +1,6 @@
 package domain
 
-type ClubRole int16
+type ClubRole uint8
 
 const (
 	ADMIN_CLUB_ROLE  ClubRole = 1

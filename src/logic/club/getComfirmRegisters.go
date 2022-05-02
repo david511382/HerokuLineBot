@@ -18,7 +18,7 @@ type GetConfirmRegisters struct {
 }
 
 type confirmRegistersUser struct {
-	MemberID int    `json:"member_id"`
+	MemberID uint   `json:"member_id"`
 	Name     string `json:"name"`
 }
 

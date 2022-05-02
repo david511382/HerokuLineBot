@@ -8,6 +8,7 @@ require (
 	github.com/go-playground/validator/v10 v10.10.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/go-querystring v1.1.0
+	github.com/google/uuid v1.0.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/robfig/cron v1.2.0

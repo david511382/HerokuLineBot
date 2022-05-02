@@ -40,7 +40,7 @@ func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resu
 		}
 
 		jwtClaims = domain.JwtClaims{
-			RoleID:   int16(clubLogicDomain.GUEST_CLUB_ROLE),
+			RoleID:   uint8(clubLogicDomain.GUEST_CLUB_ROLE),
 			Username: claims.Name,
 			ExpTime:  expTime,
 		}
@@ -51,7 +51,7 @@ func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resu
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}
 		if data != nil {
-			jwtClaims.RoleID = int16(data.Role)
+			jwtClaims.RoleID = uint8(data.Role)
 			jwtClaims.Username = data.Name
 			jwtClaims.ID = data.ID
 		}

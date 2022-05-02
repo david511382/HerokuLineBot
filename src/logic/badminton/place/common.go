@@ -10,13 +10,13 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var MockLoad func(ids ...int) (
-	resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace,
+var MockLoad func(ids ...uint) (
+	resultPlaceIDMap map[uint]*rdsModel.ClubBadmintonPlace,
 	resultErrInfo errUtil.IError,
 )
 
 // empty for all
-func Load(ids ...int) (resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace, resultErrInfo errUtil.IError) {
+func Load(ids ...uint) (resultPlaceIDMap map[uint]*rdsModel.ClubBadmintonPlace, resultErrInfo errUtil.IError) {
 	if MockLoad != nil {
 		return MockLoad(ids...)
 	}
@@ -28,10 +28,10 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace, re
 	}
 	resultPlaceIDMap = placeIDMap
 	if resultPlaceIDMap == nil {
-		resultPlaceIDMap = make(map[int]*rdsModel.ClubBadmintonPlace)
+		resultPlaceIDMap = make(map[uint]*rdsModel.ClubBadmintonPlace)
 	}
 
-	reLoadIDs := make([]int, 0)
+	reLoadIDs := make([]uint, 0)
 	for _, id := range ids {
 		_, exist := resultPlaceIDMap[id]
 		if !exist {
@@ -40,7 +40,7 @@ func Load(ids ...int) (resultPlaceIDMap map[int]*rdsModel.ClubBadmintonPlace, re
 	}
 
 	if len(ids) == 0 || len(reLoadIDs) > 0 {
-		idPlaceMap := make(map[int]*rdsModel.ClubBadmintonPlace)
+		idPlaceMap := make(map[uint]*rdsModel.ClubBadmintonPlace)
 		if dbDatas, err := database.Club().Place.Select(place.Reqs{
 			IDs: reLoadIDs,
 		},

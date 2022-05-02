@@ -5,8 +5,8 @@ import (
 )
 
 type JwtClaims struct {
-	RoleID   int16
-	ID       int
+	RoleID   uint8
+	ID       uint
 	Username string
 	ExpTime  time.Time
 }

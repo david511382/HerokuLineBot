@@ -27,7 +27,7 @@ var (
 	guestRichMenuImg []byte
 
 	liffUrl    string
-	clubTeamID int
+	clubTeamID uint
 )
 
 func Init(cfg *bootstrap.Config) errUtil.IError {

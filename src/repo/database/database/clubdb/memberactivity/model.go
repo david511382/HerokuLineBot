@@ -28,10 +28,10 @@ func New(connectionCreator common.IConnectionCreator) *Table {
 }
 
 type Model struct {
-	ID         int  `gorm:"column:id;type:serial;primary_key;not null"`
-	MemberID   int  `gorm:"column:member_id;type:int;not null;unique_index:uniq_member_activity"`
-	ActivityID int  `gorm:"column:activity_id;type:int;not null;unique_index:uniq_member_activity"`
-	IsAttend   bool `gorm:"column:is_attend;type:boolean;not null"`
+	ID         uint `gorm:"column:id;type:int unsigned auto_increment;primary_key;not null;comment:欄位"`
+	MemberID   uint `gorm:"column:member_id;type:int unsigned;not null;unique_index:uniq_member_activity"`
+	ActivityID uint `gorm:"column:activity_id;type:int unsigned;not null;unique_index:uniq_member_activity"`
+	IsAttend   bool `gorm:"column:is_attend;type:boolean;not null;comment:欄位"`
 }
 
 func (Model) TableName() string {
@@ -39,11 +39,11 @@ func (Model) TableName() string {
 }
 
 type Reqs struct {
-	ID          *int
-	IDs         []int
-	MemberID    *int
-	ActivityID  *int
-	ActivityIDs []int
+	ID          *uint
+	IDs         []uint
+	MemberID    *uint
+	ActivityID  *uint
+	ActivityIDs []uint
 	IsAttend    *bool
 }
 

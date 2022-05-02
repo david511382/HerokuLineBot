@@ -18,7 +18,7 @@ type BadmintonActivitys struct {
 	pageIndex,
 	pageSize uint
 	placeIDs,
-	teamIDs []int
+	teamIDs []uint
 	everyWeekdays []time.Weekday
 }
 
@@ -29,7 +29,7 @@ func NewBadmintonActivitys(
 	pageIndex,
 	pageSize uint,
 	placeIDs,
-	teamIDs []int,
+	teamIDs []uint,
 	everyWeekdays []time.Weekday,
 ) *BadmintonActivitys {
 	r := &BadmintonActivitys{

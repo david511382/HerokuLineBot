@@ -24,8 +24,8 @@ import (
 type NewActivity struct {
 	context domain.ICmdHandlerContext `json:"-"`
 	domain.TimePostbackParams
-	PlaceID     int                          `json:"place_id"`
-	TeamID      int                          `json:"team_id"`
+	PlaceID     uint                         `json:"place_id"`
+	TeamID      uint                         `json:"team_id"`
 	Description string                       `json:"description"`
 	PeopleLimit *int16                       `json:"people_limit"`
 	ClubSubsidy int16                        `json:"club_subsidy"`

@@ -22,7 +22,7 @@ type NewLogistic struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Amount      int16  `json:"amount"`
-	TeamID      int    `json:"team_id"`
+	TeamID      uint   `json:"team_id"`
 }
 
 func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {

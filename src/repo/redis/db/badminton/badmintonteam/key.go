@@ -27,7 +27,7 @@ func New(write, read redis.Cmdable, baseKey string) Key {
 	}
 }
 
-func (k Key) Migration(idTeamMap map[int]*rdsModel.ClubBadmintonTeam) (resultErrInfo errUtil.IError) {
+func (k Key) Migration(idTeamMap map[uint]*rdsModel.ClubBadmintonTeam) (resultErrInfo errUtil.IError) {
 	if _, err := k.Del(); err != nil {
 		errInfo := errUtil.NewError(err)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -42,8 +42,8 @@ func (k Key) Migration(idTeamMap map[int]*rdsModel.ClubBadmintonTeam) (resultErr
 	return
 }
 
-func (k Key) Load(ids ...int) (teamIDMap map[int]*rdsModel.ClubBadmintonTeam, resultErrInfo errUtil.IError) {
-	teamIDMap = make(map[int]*rdsModel.ClubBadmintonTeam)
+func (k Key) Load(ids ...uint) (teamIDMap map[uint]*rdsModel.ClubBadmintonTeam, resultErrInfo errUtil.IError) {
+	teamIDMap = make(map[uint]*rdsModel.ClubBadmintonTeam)
 
 	redisDatas := make([]interface{}, 0)
 	if len(ids) == 0 {
@@ -59,22 +59,22 @@ func (k Key) Load(ids ...int) (teamIDMap map[int]*rdsModel.ClubBadmintonTeam, re
 			}
 		}
 
-		ids = make([]int, 0)
+		ids = make([]uint, 0)
 		for field, data := range fieldDataMap {
-			id, err := strconv.Atoi(field)
+			id64, err := strconv.ParseUint(field, 10, 32)
 			if err != nil {
 				errInfo := errUtil.NewError(err)
 				errInfo.Attr("field", field)
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			}
-			ids = append(ids, id)
+			ids = append(ids, uint(id64))
 			redisDatas = append(redisDatas, data)
 		}
 	} else {
 		fields := make([]string, 0)
 		for _, id := range ids {
-			field := strconv.Itoa(id)
+			field := strconv.FormatUint(uint64(id), 10)
 			fields = append(fields, field)
 		}
 		datas, err := k.HMGet(fields...)
@@ -110,7 +110,7 @@ func (k Key) Load(ids ...int) (teamIDMap map[int]*rdsModel.ClubBadmintonTeam, re
 	return
 }
 
-func (k Key) Set(idPlaceMap map[int]*rdsModel.ClubBadmintonTeam) (resultErrInfo errUtil.IError) {
+func (k Key) Set(idPlaceMap map[uint]*rdsModel.ClubBadmintonTeam) (resultErrInfo errUtil.IError) {
 	m := make(map[string]interface{})
 	for id, team := range idPlaceMap {
 		if js, err := json.Marshal(team); err != nil {
@@ -118,7 +118,7 @@ func (k Key) Set(idPlaceMap map[int]*rdsModel.ClubBadmintonTeam) (resultErrInfo 
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		} else {
-			field := strconv.Itoa(id)
+			field := strconv.FormatUint(uint64(id), 10)
 			m[field] = js
 		}
 	}

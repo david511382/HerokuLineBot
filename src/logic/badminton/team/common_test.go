@@ -13,16 +13,16 @@ import (
 
 func TestLoad(t *testing.T) {
 	type args struct {
-		ids []int
+		ids []uint
 	}
 	type migrations struct {
 		team                []*team.Model
 		member              []*member.Model
-		redisTeamIDPlaceMap map[int]*rdsModel.ClubBadmintonTeam
+		redisTeamIDPlaceMap map[uint]*rdsModel.ClubBadmintonTeam
 	}
 	type wants struct {
-		teamIDMap           map[int]*rdsModel.ClubBadmintonTeam
-		redisTeamIDPlaceMap map[int]*rdsModel.ClubBadmintonTeam
+		teamIDMap           map[uint]*rdsModel.ClubBadmintonTeam
+		redisTeamIDPlaceMap map[uint]*rdsModel.ClubBadmintonTeam
 	}
 	tests := []struct {
 		name       string
@@ -33,7 +33,7 @@ func TestLoad(t *testing.T) {
 		{
 			"load db",
 			args{
-				ids: []int{1},
+				ids: []uint{1},
 			},
 			migrations{
 				team: []*team.Model{
@@ -50,17 +50,17 @@ func TestLoad(t *testing.T) {
 						LineID: util.PointerOf("s"),
 					},
 				},
-				redisTeamIDPlaceMap: map[int]*rdsModel.ClubBadmintonTeam{},
+				redisTeamIDPlaceMap: map[uint]*rdsModel.ClubBadmintonTeam{},
 			},
 			wants{
-				teamIDMap: map[int]*rdsModel.ClubBadmintonTeam{
+				teamIDMap: map[uint]*rdsModel.ClubBadmintonTeam{
 					1: {
 						Name:          "name",
 						OwnerMemberID: 2,
 						OwnerLineID:   util.PointerOf("s"),
 					},
 				},
-				redisTeamIDPlaceMap: map[int]*rdsModel.ClubBadmintonTeam{
+				redisTeamIDPlaceMap: map[uint]*rdsModel.ClubBadmintonTeam{
 					1: {
 						Name:          "name",
 						OwnerMemberID: 2,
@@ -72,29 +72,30 @@ func TestLoad(t *testing.T) {
 		{
 			"load redis",
 			args{
-				ids: []int{1},
+				ids: []uint{1},
 			},
 			migrations{
 				team: []*team.Model{
 					{
-						ID:   1,
-						Name: "wrong",
+						ID:         1,
+						Name:       "wrong",
+						CreateDate: util.GetUTCTime(2013),
 					},
 				},
 				member: []*member.Model{},
-				redisTeamIDPlaceMap: map[int]*rdsModel.ClubBadmintonTeam{
+				redisTeamIDPlaceMap: map[uint]*rdsModel.ClubBadmintonTeam{
 					1: {
 						Name: "name",
 					},
 				},
 			},
 			wants{
-				teamIDMap: map[int]*rdsModel.ClubBadmintonTeam{
+				teamIDMap: map[uint]*rdsModel.ClubBadmintonTeam{
 					1: {
 						Name: "name",
 					},
 				},
-				redisTeamIDPlaceMap: map[int]*rdsModel.ClubBadmintonTeam{
+				redisTeamIDPlaceMap: map[uint]*rdsModel.ClubBadmintonTeam{
 					1: {
 						Name: "name",
 					},
@@ -104,25 +105,26 @@ func TestLoad(t *testing.T) {
 		{
 			"load all",
 			args{
-				ids: []int{},
+				ids: []uint{},
 			},
 			migrations{
 				team: []*team.Model{
 					{
-						ID:   1,
-						Name: "name",
+						ID:         1,
+						Name:       "name",
+						CreateDate: util.GetUTCTime(2013),
 					},
 				},
 				member:              []*member.Model{},
-				redisTeamIDPlaceMap: map[int]*rdsModel.ClubBadmintonTeam{},
+				redisTeamIDPlaceMap: map[uint]*rdsModel.ClubBadmintonTeam{},
 			},
 			wants{
-				teamIDMap: map[int]*rdsModel.ClubBadmintonTeam{
+				teamIDMap: map[uint]*rdsModel.ClubBadmintonTeam{
 					1: {
 						Name: "name",
 					},
 				},
-				redisTeamIDPlaceMap: map[int]*rdsModel.ClubBadmintonTeam{
+				redisTeamIDPlaceMap: map[uint]*rdsModel.ClubBadmintonTeam{
 					1: {
 						Name: "name",
 					},

@@ -12,6 +12,8 @@ import (
 )
 
 func TestActivity_Select(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		arg     Reqs
 		columns []common.IColumn
@@ -33,7 +35,7 @@ func TestActivity_Select(t *testing.T) {
 			args{
 				arg: Reqs{
 					Date: dbModel.Date{
-						FromDate: util.GetUTCTimeP(2013, 8, 2),
+						FromDate: util.GetUTCTimeP(2013, 8, 1, 16),
 					},
 				},
 				columns: []common.IColumn{
@@ -75,6 +77,8 @@ func TestActivity_Select(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			db := setupTestDb(t)
+
 			if err := db.MigrationData(tt.migrations.table...); err != nil {
 				t.Fatal(err.Error())
 			}
@@ -93,6 +97,8 @@ func TestActivity_Select(t *testing.T) {
 }
 
 func TestActivity_MinMaxID(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		arg Reqs
 	}
@@ -135,6 +141,8 @@ func TestActivity_MinMaxID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			db := setupTestDb(t)
+
 			if err := db.MigrationData(tt.migrations.table...); err != nil {
 				t.Fatal(err.Error())
 			}
@@ -157,6 +165,8 @@ func TestActivity_MinMaxID(t *testing.T) {
 }
 
 func TestActivity_Update(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		trans *gorm.DB
 		arg   UpdateReqs
@@ -179,10 +189,10 @@ func TestActivity_Update(t *testing.T) {
 				trans: nil,
 				arg: UpdateReqs{
 					Reqs: Reqs{
-						ID: util.PointerOf(8),
+						ID: util.PointerOf[uint](8),
 					},
 					MemberCount: util.PointerOf[int16](3),
-					LogisticID:  util.PointerOf(util.PointerOf(3)),
+					LogisticID:  util.PointerOf(util.PointerOf[uint](3)),
 				},
 			},
 			migrations{
@@ -196,7 +206,7 @@ func TestActivity_Update(t *testing.T) {
 					{
 						ID:          8,
 						MemberCount: 1,
-						LogisticID:  util.PointerOf(2),
+						LogisticID:  util.PointerOf[uint](2),
 						Date:        util.GetUTCTime(2013, 8, 2),
 					},
 				},
@@ -212,7 +222,7 @@ func TestActivity_Update(t *testing.T) {
 					{
 						ID:          8,
 						MemberCount: 3,
-						LogisticID:  util.PointerOf(3),
+						LogisticID:  util.PointerOf[uint](3),
 						Date:        *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 				},
@@ -224,16 +234,16 @@ func TestActivity_Update(t *testing.T) {
 				trans: nil,
 				arg: UpdateReqs{
 					Reqs: Reqs{
-						ID: util.PointerOf(8),
+						ID: util.PointerOf[uint](8),
 					},
-					LogisticID: util.PointerOf[*int](nil),
+					LogisticID: util.PointerOf[*uint](nil),
 				},
 			},
 			migrations{
 				table: []*Model{
 					{
 						ID:         8,
-						LogisticID: util.PointerOf(2),
+						LogisticID: util.PointerOf[uint](2),
 						Date:       util.GetUTCTime(2013, 8, 2),
 					},
 				},
@@ -251,6 +261,8 @@ func TestActivity_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			db := setupTestDb(t)
+
 			if err := db.MigrationData(tt.migrations.table...); err != nil {
 				t.Fatal(err.Error())
 			}

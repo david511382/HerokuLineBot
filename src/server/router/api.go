@@ -38,9 +38,9 @@ func SetupApiRouter(cfg *bootstrap.Config, router *gin.Engine) *gin.Engine {
 	apiBadminton.GET("/activitys", badmintonApi.GetActivitys)
 	// api/badminton auth
 	apiBadminton.Use(middleware.AuthorizeToken(lineTokenVerifier, true))
-	apiBadminton.Use(middleware.VerifyAuthorize(map[int16]bool{
-		int16(clubLogicDomain.ADMIN_CLUB_ROLE): true,
-		int16(clubLogicDomain.CADRE_CLUB_ROLE): true,
+	apiBadminton.Use(middleware.VerifyAuthorize(map[clubLogicDomain.ClubRole]bool{
+		clubLogicDomain.ADMIN_CLUB_ROLE: true,
+		clubLogicDomain.CADRE_CLUB_ROLE: true,
 	}))
 	apiBadminton.GET("/rental-courts", badmintonApi.GetRentalCourts)
 	apiBadminton.POST("/rental-courts", badmintonApi.AddRentalCourt)

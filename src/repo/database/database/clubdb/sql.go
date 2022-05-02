@@ -9,7 +9,7 @@ type ReqsClubJoinActivityDetail struct {
 }
 
 type RespClubJoinActivityDetail struct {
-	ActivityID                 int
+	ActivityID                 uint
 	RentalCourtDetailStartTime string
 	RentalCourtDetailEndTime   string
 	RentalCourtDetailCount     int

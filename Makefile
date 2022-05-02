@@ -2,7 +2,7 @@
 ## docker-compose
 ##########################################
 
-DOCKER_SERVICE_LIST := db adminer redis redis-commander loki grafana
+DOCKER_SERVICE_LIST := mysql adminer redis redis-commander loki grafana
 
 up: # debug 全開
 	docker-compose up -d
@@ -50,10 +50,7 @@ kdown: # 關閉
 ## test
 ##########################################
 
+# -p 設定執行續，預設不同 package 會非同步執行
 test: # 測試
-	go test ./src/pkg/util/... --count=1
-	go test ./bootstrap/... --count=1
-	go test ./src/repo/database/... --count=1
-	go test ./src/logic/... --count=1
-	go test ./src/background/... --count=1
-	go test ./src/server/... --count=1
+	go test ./src/pkg/util/... ./bootstrap/... ./src/repo/database/... --count=1
+	go test ./src/logic/... ./src/background/... ./src/server/... --count=1 -p 1

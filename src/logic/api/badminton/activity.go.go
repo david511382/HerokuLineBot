@@ -23,7 +23,7 @@ var MockGetActivitys func(
 	pageIndex,
 	pageSize uint,
 	placeIDs,
-	teamIDs []int,
+	teamIDs []uint,
 	everyWeekdays []time.Weekday,
 ) (
 	result resp.GetActivitys,
@@ -37,7 +37,7 @@ func GetActivitys(
 	pageIndex,
 	pageSize uint,
 	placeIDs,
-	teamIDs []int,
+	teamIDs []uint,
 	everyWeekdays []time.Weekday,
 ) (
 	result resp.GetActivitys,
@@ -49,10 +49,10 @@ func GetActivitys(
 
 	result.Activitys = make([]*resp.GetActivitysActivity, 0)
 
-	activityMap := make(map[int]*resp.GetActivitysActivity)
-	activityIDs := make([]int, 0)
-	idPlaceMap := make(map[int]string)
-	idTeamMap := make(map[int]string)
+	activityMap := make(map[uint]*resp.GetActivitysActivity)
+	activityIDs := make([]uint, 0)
+	idPlaceMap := make(map[uint]string)
+	idTeamMap := make(map[uint]string)
 	{
 		args, errInfo := badmintonActivityLogic.GetUnfinishedActiviysSqlReqs(
 			fromDate, toDate,
@@ -170,7 +170,7 @@ func GetActivitys(
 	}
 
 	{
-		placeIDs := make([]int, 0)
+		placeIDs := make([]uint, 0)
 		for id := range idPlaceMap {
 			placeIDs = append(placeIDs, id)
 		}
@@ -189,7 +189,7 @@ func GetActivitys(
 	}
 
 	{
-		teamIDs := make([]int, 0)
+		teamIDs := make([]uint, 0)
 		for id := range idTeamMap {
 			teamIDs = append(teamIDs, id)
 		}
@@ -207,10 +207,10 @@ func GetActivitys(
 		}
 	}
 
-	activityIDmemberIDNameMap := make(map[int]map[int]bool)
-	memberIDNameMap := make(map[int]string)
+	activityIDmemberIDNameMap := make(map[uint]map[uint]bool)
+	memberIDNameMap := make(map[uint]string)
 	{
-		activityIDs := make([]int, 0)
+		activityIDs := make([]uint, 0)
 		for activityID, v := range activityMap {
 			if v.IsShowMembers {
 				activityIDs = append(activityIDs, activityID)
@@ -231,13 +231,13 @@ func GetActivitys(
 				return
 			}
 
-			memberIDs := make([]int, 0)
+			memberIDs := make([]uint, 0)
 			for _, v := range dbDatas {
 				activityID := v.ActivityID
 				memberID := v.MemberID
 
 				if activityIDmemberIDNameMap[activityID] == nil {
-					activityIDmemberIDNameMap[activityID] = make(map[int]bool)
+					activityIDmemberIDNameMap[activityID] = make(map[uint]bool)
 				}
 				activityIDmemberIDNameMap[activityID][memberID] = false
 

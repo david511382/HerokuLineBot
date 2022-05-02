@@ -1,21 +1,26 @@
 version: "3.3"
 
 services:
-  postgres:
+  mysql:
     restart: always
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
-      - PGDATA=/var/lib/postgresql/data
+      - MYSQL_ROOT_PASSWORD=root
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - mysql:/var/lib/mysql
+      - ./deploy/docker/mysql:/docker-entrypoint-initdb.d
 
   adminer:
     restart: always
+    depends_on:
+      - mysql
+    environment:
+      - PMA_HOST=mysql
+      #- PMA_HOSTS=mysql,mult
+      #- PMA_ARBITRARY=1 # 可指定伺服器
     ports:
-      - 8882:8080
+      - 8882:80
 
   redis:
     restart: always
@@ -57,5 +62,5 @@ services:
       - "9487:80"
 
 volumes:
-  postgres:
+  mysql:
   loki:
