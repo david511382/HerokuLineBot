@@ -11,16 +11,10 @@ services:
       - mysql:/var/lib/mysql
       - ./deploy/docker/mysql:/docker-entrypoint-initdb.d
 
-  phpmyadmin:
+  adminer:
     restart: always
-    depends_on:
-      - mysql
-    environment:
-      - PMA_HOST=mysql
-      #- PMA_HOSTS=mysql,mult
-      #- PMA_ARBITRARY=1 # 可指定伺服器
     ports:
-      - 8882:80
+      - 8882:8080
 
   redis:
     restart: always

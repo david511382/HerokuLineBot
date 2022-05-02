@@ -3,8 +3,10 @@ services:
   mysql:
     image: mysql:8.0.21
 
-  phpmyadmin:
-    image: phpmyadmin:latest
+  adminer:
+    image: adminer:latest
+    depends_on:
+      - mysql
 
   redis:
     image: redis:6.2

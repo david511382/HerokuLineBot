@@ -4,7 +4,7 @@ ENV := local
 ## docker-compose
 ##########################################
 
-DOCKER_SERVICE_LIST := mysql phpmyadmin redis redis-commander loki grafana
+DOCKER_SERVICE_LIST := mysql adminer redis redis-commander loki grafana
 
 up: # debug 全開
 	docker-compose up -d
@@ -35,7 +35,7 @@ down: # 關閉
 ## k8s
 ##########################################
 
-K8S_SERVICE_LIST := mysql phpmyadmin redis rediscommander loki grafana linebot
+K8S_SERVICE_LIST := mysql adminer redis rediscommander loki grafana linebot
 
 # in shell
 kup: # debug 全開
