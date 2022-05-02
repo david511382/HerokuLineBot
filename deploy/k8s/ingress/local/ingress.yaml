@@ -13,13 +13,13 @@ spec:
     - host: domain.com
       http:
         paths:
-          - path: /adminer
+          - path: /phpmyadmin
             pathType: Prefix
             backend:
               service:
-                name: adminer
+                name: phpmyadmin
                 port:
-                  number: 8080
+                  number: 80
           - path: /commander
             pathType: Prefix
             backend:
