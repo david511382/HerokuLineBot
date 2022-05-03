@@ -15,6 +15,8 @@ import (
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtledgercourt"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtrefundledger"
 	"heroku-line-bot/src/repo/database/database/clubdb/team"
+
+	"gorm.io/gorm"
 )
 
 type Database struct {
@@ -34,9 +36,9 @@ type Database struct {
 	Team                    *team.Table
 }
 
-func NewDatabase(connect common.Connect) *Database {
+func NewDatabase(connect func() (master *gorm.DB, slave *gorm.DB, resultErr error)) *Database {
 	result := &Database{
-		BaseDatabase: common.NewBaseDatabase[Database](connect, func(connect common.Connect) Database {
+		BaseDatabase: common.NewBaseDatabase(connect, func(connect func() (master *gorm.DB, slave *gorm.DB, resultErr error)) Database {
 			return *NewDatabase(connect)
 		}),
 	}

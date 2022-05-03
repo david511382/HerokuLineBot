@@ -3,6 +3,7 @@ package memberactivity
 import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/pkg/test"
+	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database/common"
 	"heroku-line-bot/src/repo/database/conn"
 	"os"
@@ -26,12 +27,13 @@ func TestMain(m *testing.M) {
 	if connection, err := conn.Connect(cfg.ClubDb); err != nil {
 		panic(err)
 	} else {
-		db := New(common.NewMasterSlaveManager(
+		db := New(util.NewMasterSlaveManager(
 			func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
 				master = connection
 				slave = connection
 				return
 			},
+			common.DisposeConnection,
 		))
 		if err := db.MigrationTable(); err != nil {
 			panic(err)
@@ -51,11 +53,12 @@ func setupTestDb(t *testing.T) *Table {
 		t.Fatal(err.Error())
 	}
 
-	return New(common.NewMasterSlaveManager(
+	return New(util.NewMasterSlaveManager(
 		func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
 			master = connection
 			slave = connection
 			return
 		},
+		common.DisposeConnection,
 	))
 }

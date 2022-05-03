@@ -1,31 +1,33 @@
 package common
 
 import (
-	errUtil "heroku-line-bot/src/pkg/util/error"
+	"heroku-line-bot/src/pkg/util"
 
 	"gorm.io/gorm"
 )
 
-type SchemaCreator[Schema IBaseDatabase] func(connect Connect) Schema
-type Connect func() (master, slave *gorm.DB, resultErr error)
+type SchemaCreator[Schema IBaseDatabase] func(connect func() (master *gorm.DB, slave *gorm.DB, resultErr error)) Schema
 
 type IBaseDatabase interface {
 	IConnectionCreator
-	Dispose() errUtil.IError
+	Dispose() error
 }
 
 type BaseDatabase[Schema IBaseDatabase] struct {
-	*MasterSlaveManager
+	*util.MasterSlaveManager[gorm.DB]
 	schemaCreator SchemaCreator[Schema]
 }
 
 func NewBaseDatabase[Schema IBaseDatabase](
-	connectionCreator Connect,
-	schemaCreator func(connect Connect) Schema,
+	connectionCreator func() (master *gorm.DB, slave *gorm.DB, resultErr error),
+	schemaCreator func(connect func() (master *gorm.DB, slave *gorm.DB, resultErr error)) Schema,
 ) *BaseDatabase[Schema] {
 	result := &BaseDatabase[Schema]{
-		MasterSlaveManager: NewMasterSlaveManager(connectionCreator),
-		schemaCreator:      schemaCreator,
+		MasterSlaveManager: util.NewMasterSlaveManager(
+			connectionCreator,
+			DisposeConnection,
+		),
+		schemaCreator: schemaCreator,
 	}
 	return result
 }
@@ -35,8 +37,8 @@ func (d *BaseDatabase[Schema]) Begin() (
 	trans ITransaction,
 	resultErr error,
 ) {
-	connect := func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
-		dp, err := d.GetMaster()
+	connect := func() (master, slave *gorm.DB, resultErr error) {
+		dp, err := d.MasterSlaveManager.GetMaster()
 		if err != nil {
 			resultErr = err
 			return

@@ -27,7 +27,7 @@ func Club() *clubdb.Database {
 	return club
 }
 
-func getConnect(configSelector func(cfg *bootstrap.Config) bootstrap.Db) common.Connect {
+func getConnect(configSelector func(cfg *bootstrap.Config) bootstrap.Db) func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
 	return func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
 		return connect(configSelector)
 	}
@@ -77,7 +77,9 @@ func setConnect(connCfg bootstrap.DbConfig, db *gorm.DB) error {
 }
 
 func Dispose() {
-	club.Dispose()
+	if club != nil {
+		club.Dispose()
+	}
 }
 
 func IsUniqErr(err error) bool {
