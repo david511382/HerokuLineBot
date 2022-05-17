@@ -26,6 +26,10 @@ func New(errMsg string, level ...zerolog.Level) *ErrorInfo {
 }
 
 func NewError(err error, level ...zerolog.Level) *ErrorInfo {
+	if errInfo, ok := err.(*ErrorInfo); ok {
+		return errInfo
+	}
+
 	result := &ErrorInfo{
 		rawMessages:    []string{err.Error()},
 		Level:          zerolog.ErrorLevel,
