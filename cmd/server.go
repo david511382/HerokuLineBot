@@ -31,9 +31,6 @@ func run(cmd *cobra.Command, args []string) {
 		}
 	}()
 
-	if resultErrInfo = repo.Init(); resultErrInfo != nil {
-		return
-	}
 	defer repo.Dispose()
 
 	if resultErrInfo = logic.Init(); resultErrInfo != nil {

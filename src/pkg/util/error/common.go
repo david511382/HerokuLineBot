@@ -47,3 +47,29 @@ func GetCodeLine(skip int) string {
 	_, filename, line, _ := runtime.Caller(skip)
 	return fmt.Sprintf("%s:%d", filename, line)
 }
+
+func Equal(ei, e IError) bool {
+	if (ei == nil) && (e == nil) {
+		return true
+	} else if e == nil || ei == nil {
+		return false
+	}
+
+	if ei.GetLevel() != e.GetLevel() {
+		return false
+	}
+	em := e.GetAttrs()
+	eim := ei.GetAttrs()
+	delete(em, LogLineFieldName)
+	delete(eim, LogLineFieldName)
+	if len(em) != len(eim) {
+		return false
+	}
+
+	for k, v := range eim {
+		if em[k] != v {
+			return false
+		}
+	}
+	return true
+}

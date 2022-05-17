@@ -6,7 +6,7 @@ type IContext interface {
 	ILineBotContext
 	SaveParam(json string) error
 	DeleteParam() error
-	GetParam() (json string)
+	GetParam() (json *string)
 }
 
 type ILineBotContext interface {

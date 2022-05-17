@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"golang.org/x/exp/maps"
 )
 
 type ErrorInfo struct {
@@ -125,10 +126,7 @@ func (ei *ErrorInfo) GetAttrs() map[string]interface{} {
 		return nil
 	}
 
-	result := make(map[string]interface{})
-	for k, v := range ei.attrsMap {
-		result[k] = v
-	}
+	result := maps.Clone(ei.attrsMap)
 	result[MessageFieldName] = ei.RawError()
 	result[LogLineFieldName] = ei.logLine
 	return result

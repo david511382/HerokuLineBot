@@ -4,7 +4,6 @@ import (
 	"heroku-line-bot/src/pkg/service/linebot"
 	"heroku-line-bot/src/pkg/service/linebot/domain/model/reqs"
 	"heroku-line-bot/src/repo/redis"
-	commonRedis "heroku-line-bot/src/repo/redis/common"
 )
 
 type Context struct {
@@ -38,21 +37,21 @@ func (c *Context) GetUserName() string {
 }
 
 func (c *Context) SaveParam(json string) error {
-	if err := redis.Badminton.UserUsingStatus.HSet(c.userID, json); commonRedis.IsRedisError(err) {
-		return err
+	if errInfo := redis.Badminton().UserUsingStatus.HSet(c.userID, json); errInfo != nil && errInfo.IsError() {
+		return errInfo
 	}
 	return nil
 }
 
 func (c *Context) DeleteParam() error {
-	if _, err := redis.Badminton.UserUsingStatus.HDel(c.userID); commonRedis.IsRedisError(err) {
-		return err
+	if _, errInfo := redis.Badminton().UserUsingStatus.HDel(c.userID); errInfo != nil && errInfo.IsError() {
+		return errInfo
 	}
 	return nil
 }
 
-func (c *Context) GetParam() (json string) {
-	json, _ = redis.Badminton.UserUsingStatus.HGet(c.userID)
+func (c *Context) GetParam() (json *string) {
+	json, _ = redis.Badminton().UserUsingStatus.HGet(c.userID)
 	return
 }
 

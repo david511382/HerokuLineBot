@@ -27,7 +27,7 @@ func Load(ids ...uint) (resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam, re
 		return MockLoad(ids...)
 	}
 
-	teamIDMap, errInfo := redis.Badminton.BadmintonTeam.Load(ids...)
+	teamIDMap, errInfo := redis.Badminton().BadmintonTeam.Read(ids...)
 	if errInfo != nil {
 		errInfo.SetLevel(zerolog.WarnLevel)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -115,7 +115,7 @@ func Load(ids ...uint) (resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam, re
 			}
 		}
 
-		if errInfo := redis.Badminton.BadmintonTeam.Set(idTeamMap); errInfo != nil {
+		if errInfo := redis.Badminton().BadmintonTeam.HMSet(idTeamMap); errInfo != nil {
 			errInfo.SetLevel(zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}

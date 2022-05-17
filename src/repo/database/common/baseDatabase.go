@@ -9,12 +9,12 @@ import (
 type SchemaCreator[Schema IBaseDatabase] func(connect func() (master *gorm.DB, slave *gorm.DB, resultErr error)) Schema
 
 type IBaseDatabase interface {
-	IConnectionCreator
+	IConnection
 	Dispose() error
 }
 
 type BaseDatabase[Schema IBaseDatabase] struct {
-	*util.MasterSlaveManager[gorm.DB]
+	*util.MasterSlaveManager[*gorm.DB]
 	schemaCreator SchemaCreator[Schema]
 }
 

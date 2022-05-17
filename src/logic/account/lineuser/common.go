@@ -14,14 +14,14 @@ import (
 
 func Load(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 	{
-		lineIDUserMap, errInfo := redis.Badminton.LineUser.Load(lineID)
+		lineIDUserMap, errInfo := redis.Badminton().LineUser.Read(lineID)
 		if errInfo != nil {
 			errInfo.SetLevel(zerolog.InfoLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}
 
-		redisData := lineIDUserMap[lineID]
-		if redisData != nil {
+		redisData, exist := lineIDUserMap[lineID]
+		if exist {
 			result = &domain.Model{
 				ID:   redisData.ID,
 				Name: redisData.Name,
@@ -45,7 +45,7 @@ func Load(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 		result = dbData
 	}
 
-	errInfo := redis.Badminton.LineUser.Set(map[string]*lineuser.LineUser{
+	errInfo := redis.Badminton().LineUser.HMSet(map[string]*lineuser.LineUser{
 		lineID: {
 			ID:   result.ID,
 			Name: result.Name,

@@ -23,7 +23,7 @@ type IUpdateRequest interface {
 	GetUpdateFields() map[string]interface{}
 }
 
-type IConnectionCreator interface {
+type IConnection interface {
 	GetSlave() (*gorm.DB, error)
 	GetMaster() (*gorm.DB, error)
 }
@@ -33,7 +33,7 @@ type BaseTable[
 	Reqs IWhereRequest,
 	UpdateReqs IUpdateRequest,
 ] struct {
-	connection           IConnectionCreator
+	connection           IConnection
 	isRequireTimeConvert bool
 }
 
@@ -42,7 +42,7 @@ func NewBaseTable[
 	Reqs IWhereRequest,
 	UpdateReqs IUpdateRequest,
 ](
-	connection IConnectionCreator,
+	connection IConnection,
 ) *BaseTable[Table, Reqs, UpdateReqs] {
 	result := &BaseTable[Table, Reqs, UpdateReqs]{
 		connection: connection,

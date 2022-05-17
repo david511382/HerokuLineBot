@@ -112,7 +112,7 @@ func (b *confirmRegister) ConfirmDb() (resultErrInfo errUtil.IError) {
 		JoinDate: &dateP,
 	}
 	if isChangeRole {
-		arg.Role = util.PointerOf[int16](int16(domain.MEMBER_CLUB_ROLE))
+		arg.Role = util.PointerOf(int16(domain.MEMBER_CLUB_ROLE))
 	}
 	if err := db.Member.Update(arg); err != nil {
 		resultErrInfo = errUtil.NewError(err)
@@ -120,7 +120,7 @@ func (b *confirmRegister) ConfirmDb() (resultErrInfo errUtil.IError) {
 	}
 
 	if isChangeRole {
-		if errInfo := redis.Badminton.LineUser.Del(b.User.LineID); errInfo != nil {
+		if _, errInfo := redis.Badminton().LineUser.HDel(b.User.LineID); errInfo != nil {
 			errInfo.SetLevel(zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}

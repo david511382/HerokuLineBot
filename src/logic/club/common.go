@@ -10,7 +10,6 @@ import (
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
 	"heroku-line-bot/src/pkg/util"
-	commonRedis "heroku-line-bot/src/repo/redis/common"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -88,7 +87,7 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 	} else if isChangeHandler := handler != nil; isChangeHandler {
 		cmdHandler = handler
 		text = ""
-		if err := lineContext.DeleteParam(); commonRedis.IsRedisError(err) {
+		if err := lineContext.DeleteParam(); err != nil {
 			resultErrInfo = errUtil.NewError(err)
 		}
 		if errInfo := cmdHandler.CacheParams(); errInfo != nil {
@@ -128,16 +127,9 @@ func HandlerTextCmd(text string, lineContext clublinebotDomain.IContext) (result
 		}
 	}
 
-	if redisParamJson := lineContext.GetParam(); redisParamJson != "" {
-		textJsonResult := gjson.Parse(redisParamJson)
+	if redisParamJson := lineContext.GetParam(); redisParamJson != nil {
+		textJsonResult := gjson.Parse(*redisParamJson)
 		redisCmd := getCmdFromJson(textJsonResult)
-		isChangeCmd := cmdHandler != nil && redisCmd != cmd
-		if isChangeCmd {
-			// if err := lineContext.DeleteParam(); commonRedis.IsRedisError(err) {
-			// 	resultErrInfo = errUtil.NewError(err)
-			// }
-			// cmdHandler = nil
-		}
 
 		if cmdHandler == nil || !isInputTextJson {
 			if handler, err := getCmdHandler(redisCmd, lineContext); err != nil {

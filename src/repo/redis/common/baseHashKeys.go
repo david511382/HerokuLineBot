@@ -1,118 +1,71 @@
 package common
 
 import (
-	"strings"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"time"
 
-	"github.com/go-redis/redis"
+	"golang.org/x/exp/constraints"
 )
 
-type BaseHashKeys struct {
-	Base
-	KeyRoot string
+type BaseHashKeys[Key any, Field constraints.Ordered, Value any] struct {
+	BaseMulKeys[Key, *BaseHashKey[Field, Value]]
+	parser IFieldParser[Field, Value]
 }
 
-func NewBaseHashKeys(
-	read,
-	write redis.Cmdable,
+func NewBaseHashKeys[Key any, Field constraints.Ordered, Value any](
+	connection IConnection,
 	baseKey string,
-) *BaseHashKeys {
-	r := &BaseHashKeys{
-		Base:    *NewBase(read, write, ""),
-		KeyRoot: baseKey,
+	parser IKeyParser[Key, Field, Value],
+) *BaseHashKeys[Key, Field, Value] {
+	r := &BaseHashKeys[Key, Field, Value]{
+		BaseMulKeys: *NewBaseMulKeys[Key](
+			connection, baseKey,
+			parser,
+			func(key string) *BaseHashKey[Field, Value] {
+				return NewBaseHashKey[Field, Value](connection, key, parser)
+			},
+		),
+		parser: parser,
 	}
 	return r
 }
 
-func (k *BaseHashKeys) Key(fields ...string) string {
-	keyFields := []string{
-		k.KeyRoot,
-	}
-	keyFields = append(keyFields, fields...)
-
-	return strings.Join(keyFields, ":")
-}
-
-func (k *BaseHashKeys) baseKey(keyField ...string) *BaseHashKey {
-	key := k.Key(keyField...)
-	return NewBaseHashKey(k.Read, k.Write, key)
-}
-
-func (k *BaseHashKeys) HSet(keyField, field string, value interface{}) error {
+func (k *BaseHashKeys[Key, Field, Value]) HSet(keyField Key, field Field, value Value) errUtil.IError {
 	bk := k.baseKey(keyField)
 	return bk.HSet(field, value)
 }
 
-func (k *BaseHashKeys) HMSet(keyField string, fields map[string]interface{}) error {
+func (k *BaseHashKeys[Key, Field, Value]) HMSet(keyField Key, fields map[Field]Value) errUtil.IError {
 	bk := k.baseKey(keyField)
 	return bk.HMSet(fields)
 }
 
-func (k *BaseHashKeys) ExpireAt(keyField string, expireTime time.Time) (bool, error) {
+func (k *BaseHashKeys[Key, Field, Value]) ExpireAt(keyField Key, expireTime time.Time) (bool, error) {
 	bk := k.baseKey(keyField)
 	return bk.ExpireAt(expireTime)
 }
 
-func (k *BaseHashKeys) HKeys(keyField string) ([]string, error) {
+func (k *BaseHashKeys[Key, Field, Value]) HKeys(keyField Key) ([]Field, errUtil.IError) {
 	bk := k.baseKey(keyField)
 	return bk.HKeys()
 }
 
-func (k *BaseHashKeys) HGetAll(keyField string) (map[string]string, error) {
+func (k *BaseHashKeys[Key, Field, Value]) HGetAll(keyField Key) (map[Field]Value, errUtil.IError) {
 	bk := k.baseKey(keyField)
 	return bk.HGetAll()
 }
 
-func (k *BaseHashKeys) HGet(keyField, field string) (string, error) {
+func (k *BaseHashKeys[Key, Field, Value]) HGet(keyField Key, field Field) (*Value, errUtil.IError) {
 	bk := k.baseKey(keyField)
 	return bk.HGet(field)
 }
 
-func (k *BaseHashKeys) HMGet(keyField string, values ...string) ([]interface{}, error) {
+func (k *BaseHashKeys[Key, Field, Value]) HMGet(keyField Key, fields ...Field) (map[Field]Value, errUtil.IError) {
 	bk := k.baseKey(keyField)
-	return bk.HMGet(values...)
+	return bk.HMGet(fields...)
 }
 
-func (k *BaseHashKeys) HDel(keyField string, fields ...string) (int64, error) {
+func (k *BaseHashKeys[Key, Field, Value]) HDel(keyField Key, fields ...Field) (int64, errUtil.IError) {
 	bk := k.baseKey(keyField)
 	return bk.HDel(fields...)
-}
-
-func (k *BaseHashKeys) Del(fields ...string) (int64, error) {
-	var count int64
-	bks := make([]*BaseHashKey, 0)
-	if len(fields) == 0 {
-		if allKeys, err := k.Keys(":*"); err != nil {
-			return 0, err
-		} else {
-			for _, key := range allKeys {
-				bk := NewBaseHashKey(
-					k.Read,
-					k.Write,
-					key,
-				)
-				bks = append(bks, bk)
-			}
-		}
-	}
-
-	for _, field := range fields {
-		bk := k.baseKey(field)
-		bks = append(bks, bk)
-	}
-
-	for _, bk := range bks {
-		if c, err := bk.Del(); err != nil {
-			return 0, err
-		} else {
-			count += c
-		}
-	}
-
-	return count, nil
-}
-
-func (k *BaseHashKeys) Keys(pattern string) ([]string, error) {
-	bk := k.baseKey()
-	return bk.Keys(pattern)
 }

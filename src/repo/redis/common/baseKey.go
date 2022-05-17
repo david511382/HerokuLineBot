@@ -1,66 +1,144 @@
 package common
 
 import (
-	"fmt"
+	errUtil "heroku-line-bot/src/pkg/util/error"
 	"time"
-
-	"github.com/go-redis/redis"
 )
 
-type BaseKey struct {
+type BaseKey[Value any] struct {
 	Base
+	parser IValueParser[Value]
 }
 
-func NewBaseKey(
-	read,
-	write redis.Cmdable,
+func NewBaseKey[Value any](
+	connection IConnection,
 	key string,
-) *BaseKey {
-	r := &BaseKey{
-		Base: *NewBase(read, write, key),
+	parser IValueParser[Value],
+) *BaseKey[Value] {
+	r := &BaseKey[Value]{
+		Base:   *NewBase(connection, key),
+		parser: parser,
 	}
 	return r
 }
 
-func (k *BaseKey) SetNX(value interface{}, et time.Duration) error {
-	dp := k.Write.SetNX(k.Key, value, et)
+func (k *BaseKey[Value]) Migration(value Value) (resultErrInfo errUtil.IError) {
+	if _, err := k.Del(); err != nil {
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	}
+	if errInfo := k.Set(value, 0); errInfo != nil {
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		if resultErrInfo.IsError() {
+			return
+		}
+	}
+	return
+}
 
+func (k *BaseKey[Value]) SetNX(value Value, et time.Duration) (resultErrInfo errUtil.IError) {
+	conn, err := k.connection.GetMaster()
+	if err != nil {
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	}
+
+	valueStr, err := k.parser.StringifyValue(value)
+	if err != nil {
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	}
+
+	dp := conn.SetNX(k.Key, valueStr, et)
 	if err := dp.Err(); err != nil {
-		return err
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
 	}
 
 	if ok, err := dp.Result(); err != nil {
-		return err
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
 	} else if !ok {
-		return fmt.Errorf(ERROR_MSG_NOT_CHANGE)
+		errInfo := NotChangeErrInfo
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (k *BaseKey) Set(value interface{}, et time.Duration) error {
-	dp := k.Write.Set(k.Key, value, et)
+func (k *BaseKey[Value]) Set(value Value, et time.Duration) (resultErrInfo errUtil.IError) {
+	conn, err := k.connection.GetMaster()
+	if err != nil {
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	}
 
+	valueStr, err := k.parser.StringifyValue(value)
+	if err != nil {
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	}
+
+	dp := conn.Set(k.Key, valueStr, et)
 	if err := dp.Err(); err != nil {
-		return err
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
 	}
 
 	if result, err := dp.Result(); err != nil {
-		return err
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
 	} else if result != SUCCESS {
-		return fmt.Errorf(ERROR_MSG_NOT_CHANGE)
+		errInfo := errUtil.New(ERROR_MSG_NOT_CHANGE)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
 	}
 
-	return nil
+	return
 }
 
-func (k *BaseKey) Get() (string, error) {
-	dp := k.Read.Get(k.Key)
-
-	if err := dp.Err(); err != nil {
-		return "", err
+func (k *BaseKey[Value]) Get() (result *Value, resultErrInfo errUtil.IError) {
+	conn, err := k.connection.GetSlave()
+	if err != nil {
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
 	}
 
-	result, err := dp.Result()
-	return result, err
+	dp := conn.Get(k.Key)
+	if err := dp.Err(); err != nil {
+		if err.Error() == ERROR_MSG_NOT_EXIST {
+			return
+		}
+
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	}
+
+	valueStr, err := dp.Result()
+	if err != nil {
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	}
+
+	v, err := k.parser.ParseValue(valueStr)
+	if err != nil {
+		errInfo := errUtil.NewError(err)
+		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		return
+	}
+	result = &v
+	return
 }

@@ -46,7 +46,7 @@ func TestLoad(t *testing.T) {
 			if err := database.Club().Member.MigrationData(tt.migrations.member...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := redis.Badminton.LineUser.Migration(tt.migrations.redisLineUser); err != nil {
+			if err := redis.Badminton().LineUser.Migration(tt.migrations.redisLineUser); err != nil {
 				t.Fatal(err.Error())
 			}
 
@@ -60,7 +60,7 @@ func TestLoad(t *testing.T) {
 				return
 			}
 
-			if got, err := redis.Badminton.LineUser.Load(); err != nil {
+			if got, err := redis.Badminton().LineUser.Read(); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				if ok, msg := util.Comp(got, tt.wants.redisLineUser); !ok {

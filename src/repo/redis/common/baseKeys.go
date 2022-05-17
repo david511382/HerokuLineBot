@@ -1,80 +1,38 @@
 package common
 
 import (
-	"fmt"
-	"strings"
 	"time"
-
-	"github.com/go-redis/redis"
 )
 
-type BaseKeys struct {
-	Base
-	KeyRoot string
+type BaseKeys[Key any, Value any] struct {
+	BaseMulKeys[Key, *BaseKey[Value]]
+	parser IValueParser[Value]
 }
 
-func NewBaseKeys(
-	read,
-	write redis.Cmdable,
-	key string,
-) *BaseKeys {
-	r := &BaseKeys{
-		Base:    *NewBase(read, write, ""),
-		KeyRoot: key,
+func NewBaseKeys[Key any, Value any](
+	connection IConnection,
+	baseKey string,
+	parser IKeyValueParser[Key, Value],
+) *BaseKeys[Key, Value] {
+	r := &BaseKeys[Key, Value]{
+		BaseMulKeys: *NewBaseMulKeys[Key](
+			connection, baseKey,
+			parser,
+			func(key string) *BaseKey[Value] {
+				return NewBaseKey[Value](connection, key, parser)
+			},
+		),
+		parser: parser,
 	}
 	return r
 }
 
-func (k *BaseKeys) Key(fields ...string) string {
-	keyFields := []string{
-		k.KeyRoot,
-	}
-	keyFields = append(keyFields, fields...)
-
-	return strings.Join(keyFields, ":")
+func (k *BaseKeys[Key, Value]) Set(key Key, value Value, et time.Duration) error {
+	bk := k.baseKey(key)
+	return bk.Set(value, et)
 }
 
-func (k *BaseKeys) Set(field string, value interface{}, et time.Duration) error {
-	key := k.Key(field)
-	dp := k.Write.Set(key, value, et)
-
-	if err := dp.Err(); err != nil {
-		return err
-	}
-
-	if result, err := dp.Result(); err != nil {
-		return err
-	} else if result != SUCCESS {
-		return fmt.Errorf(ERROR_MSG_NOT_CHANGE)
-	}
-
-	return nil
-}
-
-func (k *BaseKeys) Get(field string) (string, error) {
-	key := k.Key(field)
-	dp := k.Read.Get(key)
-
-	if err := dp.Err(); err != nil {
-		return "", err
-	}
-
-	result, err := dp.Result()
-	return result, err
-}
-
-func (k *BaseKeys) Del(fields ...string) (int64, error) {
-	keys := []string{}
-	for _, field := range fields {
-		key := k.Key(field)
-		keys = append(keys, key)
-	}
-	dp := k.Write.Del(keys...)
-
-	if err := dp.Err(); err != nil {
-		return 0, err
-	}
-
-	result, err := dp.Result()
-	return result, err
+func (k *BaseKeys[Key, Value]) Get(key Key) (*Value, error) {
+	bk := k.baseKey(key)
+	return bk.Get()
 }

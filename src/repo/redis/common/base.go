@@ -7,28 +7,34 @@ import (
 	"github.com/go-redis/redis"
 )
 
+type IConnection interface {
+	GetSlave() (redis.Cmdable, error)
+	GetMaster() (redis.Cmdable, error)
+}
+
 type Base struct {
-	Read  redis.Cmdable
-	Write redis.Cmdable
-	Key   string
+	connection IConnection
+	Key        string
 }
 
 func NewBase(
-	read,
-	write redis.Cmdable,
+	connection IConnection,
 	key string,
 ) *Base {
 	r := &Base{
-		Read:  read,
-		Write: write,
-		Key:   key,
+		connection: connection,
+		Key:        key,
 	}
 	return r
 }
 
 func (k *Base) Ping() error {
-	dp := k.Read.Ping()
+	conn, err := k.connection.GetSlave()
+	if err != nil {
+		return err
+	}
 
+	dp := conn.Ping()
 	if err := dp.Err(); err != nil {
 		return err
 	}
@@ -36,15 +42,19 @@ func (k *Base) Ping() error {
 	if result, err := dp.Result(); err != nil {
 		return err
 	} else if result != PING_SUCCESS {
-		return fmt.Errorf(ERROR_MSG_NOT_CHANGE)
+		return fmt.Errorf(ERROR_MSG_NOT_SUCCESS)
 	}
 
 	return nil
 }
 
 func (k *Base) Exists() (int64, error) {
-	dp := k.Read.Exists(k.Key)
+	conn, err := k.connection.GetSlave()
+	if err != nil {
+		return 0, err
+	}
 
+	dp := conn.Exists(k.Key)
 	if err := dp.Err(); err != nil {
 		return 0, err
 	}
@@ -54,8 +64,12 @@ func (k *Base) Exists() (int64, error) {
 }
 
 func (k *Base) Del() (int64, error) {
-	dp := k.Write.Del(k.Key)
+	conn, err := k.connection.GetMaster()
+	if err != nil {
+		return 0, err
+	}
 
+	dp := conn.Del(k.Key)
 	if err := dp.Err(); err != nil {
 		return 0, err
 	}
@@ -65,8 +79,12 @@ func (k *Base) Del() (int64, error) {
 }
 
 func (k *Base) Expire(expireTime time.Duration) (bool, error) {
-	dp := k.Write.Expire(k.Key, expireTime)
+	conn, err := k.connection.GetMaster()
+	if err != nil {
+		return false, err
+	}
 
+	dp := conn.Expire(k.Key, expireTime)
 	if err := dp.Err(); err != nil {
 		return false, err
 	}
@@ -76,8 +94,12 @@ func (k *Base) Expire(expireTime time.Duration) (bool, error) {
 }
 
 func (k *Base) ExpireAt(expireTime time.Time) (bool, error) {
-	dp := k.Write.ExpireAt(k.Key, expireTime)
+	conn, err := k.connection.GetMaster()
+	if err != nil {
+		return false, err
+	}
 
+	dp := conn.ExpireAt(k.Key, expireTime)
 	if err := dp.Err(); err != nil {
 		return false, err
 	}
@@ -87,8 +109,12 @@ func (k *Base) ExpireAt(expireTime time.Time) (bool, error) {
 }
 
 func (k *Base) Keys(pattern string) ([]string, error) {
-	dp := k.Read.Keys(pattern)
+	conn, err := k.connection.GetSlave()
+	if err != nil {
+		return nil, err
+	}
 
+	dp := conn.Keys(pattern)
 	if err := dp.Err(); err != nil {
 		return nil, err
 	}

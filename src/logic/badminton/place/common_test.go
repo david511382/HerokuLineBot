@@ -118,7 +118,7 @@ func TestLoad(t *testing.T) {
 			if err := database.Club().Place.MigrationData(tt.migrations.place...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := redis.Badminton.BadmintonPlace.Migration(tt.migrations.redisPlaceIDMap); err != nil {
+			if err := redis.Badminton().BadmintonPlace.Migration(tt.migrations.redisPlaceIDMap); err != nil {
 				t.Fatal(err.Error())
 			}
 
@@ -132,7 +132,7 @@ func TestLoad(t *testing.T) {
 				return
 			}
 
-			if got, err := redis.Badminton.BadmintonPlace.Load(); err != nil {
+			if got, err := redis.Badminton().BadmintonPlace.Read(); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				if ok, msg := util.Comp(got, tt.wants.redisPlaceIDMap); !ok {

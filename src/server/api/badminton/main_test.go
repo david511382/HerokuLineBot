@@ -37,9 +37,6 @@ func TestMain(m *testing.M) {
 	}
 	location = loc
 
-	if errInfo := repo.Init(); errInfo != nil {
-		panic(errInfo.Error())
-	}
 	defer repo.Dispose()
 
 	r := setupRouter()

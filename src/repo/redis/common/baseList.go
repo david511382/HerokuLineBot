@@ -5,8 +5,12 @@ type BaseList struct {
 }
 
 func (k *BaseList) LRange(start, stop int64) ([]string, error) {
-	dp := k.Read.LRange(k.Key, start, stop)
+	conn, err := k.connection.GetSlave()
+	if err != nil {
+		return nil, err
+	}
 
+	dp := conn.LRange(k.Key, start, stop)
 	if err := dp.Err(); err != nil {
 		return nil, err
 	}
@@ -16,8 +20,12 @@ func (k *BaseList) LRange(start, stop int64) ([]string, error) {
 }
 
 func (k *BaseList) RPush(value interface{}) (int64, error) {
-	dp := k.Write.RPush(k.Key, value)
+	conn, err := k.connection.GetMaster()
+	if err != nil {
+		return 0, err
+	}
 
+	dp := conn.RPush(k.Key, value)
 	if err := dp.Err(); err != nil {
 		return 0, err
 	}

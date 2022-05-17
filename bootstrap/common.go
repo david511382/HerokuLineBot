@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
+	"sync"
 
 	"gopkg.in/yaml.v2"
 )
@@ -16,14 +17,22 @@ const (
 )
 
 var (
-	cfg *Config
+	lock sync.RWMutex
+	cfg  *Config
 )
 
 func Get() (*Config, error) {
-	if cfg == nil {
-		err := loadConfig()
-		if err != nil {
-			return nil, err
+	lock.RLock()
+	isNoCfg := cfg == nil
+	lock.RUnlock()
+	if isNoCfg {
+		lock.Lock()
+		defer lock.Unlock()
+		if cfg == nil {
+			err := loadConfig()
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return cfg, nil
@@ -31,6 +40,8 @@ func Get() (*Config, error) {
 
 // for test
 func Set(c *Config) {
+	lock.Lock()
+	defer lock.Unlock()
 	cfg = c
 }
 

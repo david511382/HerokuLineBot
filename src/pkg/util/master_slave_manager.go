@@ -5,16 +5,16 @@ import (
 )
 
 type MasterSlaveManager[connection any] struct {
-	read              *connection
-	write             *connection
-	connectionCreator func() (write, read *connection, resultErr error)
-	connectionCloser  func(conn *connection) error
+	read              connection
+	write             connection
+	connectionCreator func() (write, read connection, resultErr error)
+	connectionCloser  func(conn connection) error
 	sync.RWMutex
 }
 
 func NewMasterSlaveManager[connection any](
-	connectionCreator func() (write, read *connection, resultErr error),
-	connectionCloser func(conn *connection) error,
+	connectionCreator func() (write, read connection, resultErr error),
+	connectionCloser func(conn connection) error,
 ) *MasterSlaveManager[connection] {
 	result := &MasterSlaveManager[connection]{
 		connectionCreator: connectionCreator,
@@ -26,7 +26,8 @@ func NewMasterSlaveManager[connection any](
 func (d *MasterSlaveManager[connection]) connect() error {
 	d.Lock()
 	defer d.Unlock()
-	if d.read != nil && d.write != nil {
+	if !IsZero(d.read) &&
+		!IsZero(d.write) {
 		return nil
 	}
 
@@ -34,12 +35,12 @@ func (d *MasterSlaveManager[connection]) connect() error {
 	if err != nil {
 		return err
 	}
-	if d.read == nil {
+	if IsZero(d.read) {
 		d.read = read
 	} else {
 		_ = d.connectionCloser(read)
 	}
-	if d.write == nil {
+	if IsZero(d.write) {
 		d.write = write
 	} else {
 		_ = d.connectionCloser(write)
@@ -47,30 +48,30 @@ func (d *MasterSlaveManager[connection]) connect() error {
 	return nil
 }
 
-func (d *MasterSlaveManager[connection]) GetSlave() (*connection, error) {
+func (d *MasterSlaveManager[connection]) GetSlave() (connection, error) {
 	d.RLock()
-	isNoConnection := d.read == nil
+	isNoConnection := IsZero(d.read)
 	d.RUnlock()
 
 	if isNoConnection {
 		if isNoConnection {
 			if err := d.connect(); err != nil {
-				return nil, err
+				return ZeroOf[connection](), err
 			}
 		}
 	}
 	return d.read, nil
 }
 
-func (d *MasterSlaveManager[connection]) GetMaster() (*connection, error) {
+func (d *MasterSlaveManager[connection]) GetMaster() (connection, error) {
 	d.RLock()
-	isNoConnection := d.write == nil
+	isNoConnection := IsZero(d.write)
 	d.RUnlock()
 
 	if isNoConnection {
 		if isNoConnection {
 			if err := d.connect(); err != nil {
-				return nil, err
+				return ZeroOf[connection](), err
 			}
 		}
 	}
@@ -81,13 +82,13 @@ func (d *MasterSlaveManager[connection]) Dispose() error {
 	d.Lock()
 	defer d.Unlock()
 
-	if conn := d.read; conn != nil {
+	if conn := d.read; !IsZero(conn) {
 		if err := d.connectionCloser(conn); err != nil {
 			return err
 		}
 	}
 
-	if conn := d.write; conn != nil {
+	if conn := d.write; !IsZero(conn) {
 		if err := d.connectionCloser(conn); err != nil {
 			return err
 		}

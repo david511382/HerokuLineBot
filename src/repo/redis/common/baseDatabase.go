@@ -1,88 +1,97 @@
 package common
 
 import (
-	"time"
+	"heroku-line-bot/src/pkg/util"
 
 	"github.com/go-redis/redis"
 )
 
-type IDatabase interface {
-	InitModel(read, write redis.Cmdable)
+type BaseDatabase[Schema any] struct {
+	*util.MasterSlaveManager[*redis.Client]
+	schemaCreator func(connectionCreator IConnection) Schema
+	baseKey       string
 }
 
-type BaseDatabase struct {
-	read    *redis.Client
-	write   *redis.Client
-	db      IDatabase
-	baseKey string
-}
-
-func NewBaseDatabase(read, write *redis.Client, db IDatabase, baseKey string) *BaseDatabase {
-	result := &BaseDatabase{
-		read:    read,
-		write:   write,
-		db:      db,
-		baseKey: baseKey,
+func NewBaseDatabase[Schema any](
+	connectionCreator func() (master, slave *redis.Client, resultErr error),
+	schemaCreator func(connectionCreator IConnection) Schema,
+	baseKey string,
+) *BaseDatabase[Schema] {
+	result := &BaseDatabase[Schema]{
+		MasterSlaveManager: util.NewMasterSlaveManager(
+			connectionCreator,
+			func(conn *redis.Client) error {
+				return conn.Close()
+			},
+		),
+		schemaCreator: schemaCreator,
+		baseKey:       baseKey,
 	}
 	return result
 }
 
-func (db *BaseDatabase) Init() {
-	db.db.InitModel(db.read, db.write)
+func (d *BaseDatabase[Schema]) GetSlave() (redis.Cmdable, error) {
+	return d.MasterSlaveManager.GetSlave()
 }
 
-func (db *BaseDatabase) GetBaseKey() string {
-	return db.baseKey
+func (d *BaseDatabase[Schema]) GetMaster() (redis.Cmdable, error) {
+	return d.MasterSlaveManager.GetMaster()
 }
 
-func (db *BaseDatabase) SetConnection(maxConnAge time.Duration) {
-	if db.read != nil {
-		db.setConnection(db.read, maxConnAge)
-	}
-	if db.write != nil {
-		db.setConnection(db.write, maxConnAge)
-	}
+func (d *BaseDatabase[Schema]) GetBaseKey() string {
+	return d.baseKey
 }
 
-func (db *BaseDatabase) setConnection(connection *redis.Client, maxConnAge time.Duration) {
-	connection.Options().MaxConnAge = maxConnAge
-}
-
-func (db *BaseDatabase) Dispose() error {
-	if db.read != nil {
-		if err := db.read.Close(); err != nil {
-			return err
-		}
-	}
-
-	if db.write != nil {
-		if err := db.write.Close(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (db *BaseDatabase) Transaction() (
-	redisDb *BaseDatabase,
-	commitF, rollbackF func() error,
+func (d *BaseDatabase[Schema]) Transaction() (
+	db Schema,
+	commitFn func() error,
 ) {
-	pipe := db.write.TxPipeline()
+	commitFn = func() error { return nil }
 
-	redisDb = NewBaseDatabase(db.read, db.write, db.db, db.baseKey)
-	redisDb.db.InitModel(db.read, pipe)
-
-	commitF = func() error {
-		if _, err := pipe.Exec(); err != nil {
-			return err
+	fn := func() (master, slave redis.Cmdable, resultErr error) {
+		writeConn, err := d.MasterSlaveManager.GetMaster()
+		if err != nil {
+			resultErr = err
+			return
+		}
+		readConn, err := d.MasterSlaveManager.GetSlave()
+		if err != nil {
+			resultErr = err
+			return
 		}
 
-		return nil
+		pipe := writeConn.TxPipeline()
+		master = pipe
+		slave = readConn
+
+		commitFn = func() error {
+			if _, err := pipe.Exec(); err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		return
 	}
-	rollbackF = func() error {
-		return pipe.Close()
-	}
+	db = d.schemaCreator(NewCmdableDatabase(fn))
 
 	return
+}
+
+type CmdableDatabase struct {
+	*util.MasterSlaveManager[redis.Cmdable]
+}
+
+func NewCmdableDatabase(
+	connect func() (write, read redis.Cmdable, resultErr error),
+) *CmdableDatabase {
+	return &CmdableDatabase{
+		MasterSlaveManager: util.NewMasterSlaveManager(
+			connect,
+			func(conn redis.Cmdable) error {
+				return nil
+			},
+		),
+	}
 }

@@ -21,7 +21,7 @@ type Table struct {
 	]
 }
 
-func New(connectionCreator common.IConnectionCreator) *Table {
+func New(connectionCreator common.IConnection) *Table {
 	result := &Table{}
 	result.BaseTable = *common.NewBaseTable[Model, Reqs, UpdateReqs](connectionCreator)
 	return result

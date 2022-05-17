@@ -5,7 +5,12 @@ type BaseSets struct {
 }
 
 func (k *BaseSets) SMembers() ([]string, error) {
-	dp := k.Write.SMembers(k.Key)
+	conn, err := k.connection.GetMaster()
+	if err != nil {
+		return nil, err
+	}
+
+	dp := conn.SMembers(k.Key)
 	if err := dp.Err(); err != nil {
 		return nil, err
 	}
@@ -15,8 +20,12 @@ func (k *BaseSets) SMembers() ([]string, error) {
 }
 
 func (k *BaseSets) SAdd(values ...string) (int64, error) {
-	dp := k.Write.SAdd(k.Key, values)
+	conn, err := k.connection.GetMaster()
+	if err != nil {
+		return 0, err
+	}
 
+	dp := conn.SAdd(k.Key, values)
 	if err := dp.Err(); err != nil {
 		return 0, err
 	}
