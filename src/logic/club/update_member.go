@@ -1,6 +1,7 @@
 package club
 
 import (
+	"errors"
 	"heroku-line-bot/src/logic/club/domain"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
@@ -8,6 +9,7 @@ import (
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
+	dbDomain "heroku-line-bot/src/repo/database/domain"
 )
 
 type UpdateMember struct {
@@ -108,6 +110,7 @@ func (b *UpdateMember) Do(text string) (resultErrInfo errUtil.IError) {
 			}
 		}()
 
+		replyMsg := "完成"
 		lineID := b.context.GetUserID()
 		if err := db.Member.Update(member.UpdateReqs{
 			Reqs: member.Reqs{
@@ -115,12 +118,16 @@ func (b *UpdateMember) Do(text string) (resultErrInfo errUtil.IError) {
 			},
 			Name: b.Name,
 		}); err != nil {
-			resultErrInfo = errUtil.NewError(err)
-			return
+			if errors.Is(err, dbDomain.DB_NO_AFFECTED_ERROR) {
+				replyMsg = "未變更"
+			} else {
+				resultErrInfo = errUtil.NewError(err)
+				return
+			}
 		}
 
 		replyMessges := []interface{}{
-			linebot.GetTextMessage("完成"),
+			linebot.GetTextMessage(replyMsg),
 		}
 		if err := b.context.Reply(replyMessges); err != nil {
 			resultErrInfo = errUtil.NewError(err)
