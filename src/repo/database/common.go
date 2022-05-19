@@ -7,6 +7,7 @@ import (
 	"heroku-line-bot/src/repo/database/conn"
 	"heroku-line-bot/src/repo/database/database/clubdb"
 	"strings"
+	"sync"
 	"time"
 
 	"gorm.io/gorm"
@@ -14,17 +15,26 @@ import (
 
 var (
 	club *clubdb.Database
+	lock sync.RWMutex
 )
 
 func Club() *clubdb.Database {
-	if club == nil {
-		club = clubdb.NewDatabase(
-			getConnect(func(cfg *bootstrap.Config) bootstrap.Db {
-				return cfg.ClubDb
-			}),
-		)
+	lock.RLock()
+	isNoValue := club == nil
+	lock.RUnlock()
+	if isNoValue {
+		lock.Lock()
+		defer lock.Unlock()
+		if club == nil {
+			club = clubdb.NewDatabase(
+				getConnect(func(cfg *bootstrap.Config) bootstrap.Db {
+					return cfg.ClubDb
+				}),
+			)
+		}
 	}
-	return club
+	copy := *club
+	return &copy
 }
 
 func getConnect(configSelector func(cfg *bootstrap.Config) bootstrap.Db) func() (master *gorm.DB, slave *gorm.DB, resultErr error) {

@@ -5,6 +5,7 @@ import (
 	"heroku-line-bot/src/repo/redis/common"
 	"heroku-line-bot/src/repo/redis/conn"
 	"heroku-line-bot/src/repo/redis/db/badminton"
+	"sync"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -12,18 +13,27 @@ import (
 
 var (
 	badmintonDb *badminton.Database
+	lock        sync.RWMutex
 )
 
 func Badminton() *badminton.Database {
-	if badmintonDb == nil {
-		badmintonDb = badminton.NewDatabase(
-			getConnect(func(cfg *bootstrap.Config) bootstrap.Db {
-				return cfg.ClubRedis
-			}),
-			common.CLUB_BASE_KEY,
-		)
+	lock.RLock()
+	isNoValue := badmintonDb == nil
+	lock.RUnlock()
+	if isNoValue {
+		lock.Lock()
+		defer lock.Unlock()
+		if badmintonDb == nil {
+			badmintonDb = badminton.NewDatabase(
+				getConnect(func(cfg *bootstrap.Config) bootstrap.Db {
+					return cfg.ClubRedis
+				}),
+				common.CLUB_BASE_KEY,
+			)
+		}
 	}
-	return badmintonDb
+	copy := *badmintonDb
+	return &copy
 }
 
 func getConnect(configSelector func(cfg *bootstrap.Config) bootstrap.Db) func() (master, slave *redis.Client, resultErr error) {

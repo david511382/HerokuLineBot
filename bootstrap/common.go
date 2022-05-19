@@ -35,14 +35,8 @@ func Get() (*Config, error) {
 			}
 		}
 	}
-	return cfg, nil
-}
-
-// for test
-func Set(c *Config) {
-	lock.Lock()
-	defer lock.Unlock()
-	cfg = c
+	copy := *cfg
+	return &copy, nil
 }
 
 func loadConfig() error {

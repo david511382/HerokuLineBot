@@ -17,11 +17,6 @@ func GetTestSchemaName(name string) string {
 	return testName
 }
 
-func SetupTest(t *testing.T) {
-	newCfg := SetupTestCfg(t)
-	bootstrap.Set(newCfg)
-}
-
 func SetupTestCfg(t *testing.T) *bootstrap.Config {
 	cfg, errInfo := bootstrap.Get()
 	if errInfo != nil {
@@ -41,8 +36,6 @@ func SetupTestCfg(t *testing.T) *bootstrap.Config {
 			}
 		})
 	}
-
-	newCfg := *cfg
-	newCfg.ClubDb.Database = testName
-	return &newCfg
+	cfg.ClubDb.Database = testName
+	return cfg
 }
