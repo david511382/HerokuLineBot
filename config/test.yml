@@ -3,6 +3,8 @@ var:
   log_dir: ""
   # default Asia/Taipei
   time_zone: "Asia/Taipei"
+  # 方便管理與測試 redis
+  redis_key_root: "club:"
 
 server:
   host: "0.0.0.0"

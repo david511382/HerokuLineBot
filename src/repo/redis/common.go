@@ -2,7 +2,6 @@ package redis
 
 import (
 	"heroku-line-bot/bootstrap"
-	"heroku-line-bot/src/repo/redis/common"
 	"heroku-line-bot/src/repo/redis/conn"
 	"heroku-line-bot/src/repo/redis/db/badminton"
 	"sync"
@@ -24,11 +23,15 @@ func Badminton() *badminton.Database {
 		lock.Lock()
 		defer lock.Unlock()
 		if badmintonDb == nil {
+			keyRoot := ""
+			if cfg, err := bootstrap.Get(); err == nil {
+				keyRoot = cfg.Var.RedisKeyRoot
+			}
 			badmintonDb = badminton.NewDatabase(
 				getConnect(func(cfg *bootstrap.Config) bootstrap.Db {
 					return cfg.ClubRedis
 				}),
-				common.CLUB_BASE_KEY,
+				keyRoot,
 			)
 		}
 	}

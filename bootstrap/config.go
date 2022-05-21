@@ -23,9 +23,10 @@ type Config struct {
 }
 
 type Var struct {
-	UseDebug bool   `yaml:"use_debug"`
-	LogDir   string `yaml:"log_dir"`
-	TimeZone string `yaml:"time_zone"`
+	UseDebug     bool   `yaml:"use_debug"`
+	LogDir       string `yaml:"log_dir"`
+	TimeZone     string `yaml:"time_zone"`
+	RedisKeyRoot string `yaml:"redis_key_root"`
 }
 
 type Server struct {
