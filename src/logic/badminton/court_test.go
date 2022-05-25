@@ -1,24 +1,31 @@
-package court
+package badminton
 
 import (
-	"heroku-line-bot/src/logic/badminton/court/domain"
+	"heroku-line-bot/bootstrap"
+	"heroku-line-bot/src/logic/badminton/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
 	incomeLogicDomain "heroku-line-bot/src/logic/income/domain"
 	"heroku-line-bot/src/pkg/errorcode"
 	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/test"
 	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/income"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourt"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtdetail"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtledger"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtledgercourt"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtrefundledger"
+	"heroku-line-bot/src/repo/redis"
+	"heroku-line-bot/src/repo/redis/db/badminton"
 	"sort"
 	"testing"
 )
 
-func TestGetCourts(t *testing.T) {
+func TestCourtGetCourts(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		fromDate util.DateTime
 		toDate   util.DateTime
@@ -470,26 +477,49 @@ func TestGetCourts(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club().RentalCourt.MigrationData(tt.migrations.rentalCourts...); err != nil {
+			cfg := test.SetupTestCfg(t, test.REPO_DB, test.REPO_REDIS)
+			db := clubdb.NewDatabase(
+				database.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubDb
+					},
+				),
+			)
+			if err := db.RentalCourt.MigrationData(tt.migrations.rentalCourts...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club().RentalCourtLedgerCourt.MigrationData(tt.migrations.rentalCourtLedgerCourts...); err != nil {
+			if err := db.RentalCourtLedgerCourt.MigrationData(tt.migrations.rentalCourtLedgerCourts...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club().RentalCourtLedger.MigrationData(tt.migrations.rentalCourtLedgers...); err != nil {
+			if err := db.RentalCourtLedger.MigrationData(tt.migrations.rentalCourtLedgers...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club().RentalCourtRefundLedger.MigrationData(tt.migrations.rentalCourtRefundLedgers...); err != nil {
+			if err := db.RentalCourtRefundLedger.MigrationData(tt.migrations.rentalCourtRefundLedgers...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club().Income.MigrationData(tt.migrations.incomes...); err != nil {
+			if err := db.Income.MigrationData(tt.migrations.incomes...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club().RentalCourtDetail.MigrationData(tt.migrations.rentalCourtDetail...); err != nil {
+			if err := db.RentalCourtDetail.MigrationData(tt.migrations.rentalCourtDetail...); err != nil {
 				t.Fatal(err.Error())
 			}
+			rds := badminton.NewDatabase(
+				redis.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubRedis
+					},
+				),
+				cfg.Var.RedisKeyRoot,
+			)
 
-			gotTeamPlaceDateCourtsMap, gotResultErrInfo := GetCourts(tt.args.fromDate, tt.args.toDate, tt.args.teamID, tt.args.placeID)
+			l := NewBadmintonCourtLogic(db, rds)
+			gotTeamPlaceDateCourtsMap, gotResultErrInfo := l.GetCourts(tt.args.fromDate, tt.args.toDate, tt.args.teamID, tt.args.placeID)
 			if gotResultErrInfo != nil {
 				t.Errorf("GetCourts() error = %v", gotResultErrInfo.Error())
 				return
@@ -519,7 +549,9 @@ func TestGetCourts(t *testing.T) {
 	}
 }
 
-func TestAddCourt(t *testing.T) {
+func TestCourtAddCourt(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		placeID         uint
 		teamID          uint
@@ -781,28 +813,51 @@ func TestAddCourt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club().RentalCourt.MigrationData(tt.migrations.rentalCourts...); err != nil {
+			cfg := test.SetupTestCfg(t, test.REPO_DB, test.REPO_REDIS)
+			db := clubdb.NewDatabase(
+				database.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubDb
+					},
+				),
+			)
+			if err := db.RentalCourt.MigrationData(tt.migrations.rentalCourts...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club().RentalCourtLedgerCourt.MigrationData(tt.migrations.rentalCourtLedgerCourts...); err != nil {
+			if err := db.RentalCourtLedgerCourt.MigrationData(tt.migrations.rentalCourtLedgerCourts...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club().RentalCourtLedger.MigrationData(tt.migrations.rentalCourtLedgers...); err != nil {
+			if err := db.RentalCourtLedger.MigrationData(tt.migrations.rentalCourtLedgers...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club().Income.MigrationData(tt.migrations.incomes...); err != nil {
+			if err := db.Income.MigrationData(tt.migrations.incomes...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club().RentalCourtDetail.MigrationData(tt.migrations.rentalCourtDetail...); err != nil {
+			if err := db.RentalCourtDetail.MigrationData(tt.migrations.rentalCourtDetail...); err != nil {
 				t.Fatal(err.Error())
 			}
+			rds := badminton.NewDatabase(
+				redis.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubRedis
+					},
+				),
+				cfg.Var.RedisKeyRoot,
+			)
 
-			gotResultErrInfo := AddCourt(tt.args.placeID, tt.args.teamID, tt.args.pricePerHour, tt.args.courtDetail, tt.args.despositMoney, tt.args.balanceMoney, tt.args.despositPayDate, tt.args.balancePayDate, tt.args.rentalDates)
+			l := NewBadmintonCourtLogic(db, rds)
+			gotResultErrInfo := l.AddCourt(tt.args.placeID, tt.args.teamID, tt.args.pricePerHour, tt.args.courtDetail, tt.args.despositMoney, tt.args.balanceMoney, tt.args.despositPayDate, tt.args.balancePayDate, tt.args.rentalDates)
 			if ok, msg := util.Comp(errorcode.GetErrorMsg(gotResultErrInfo), tt.wants.wantErrMsg); !ok {
 				t.Fatal(msg)
 			}
 
-			if dbDatas, err := database.Club().RentalCourt.Select(rentalcourt.Reqs{}); err != nil {
+			if dbDatas, err := db.RentalCourt.Select(rentalcourt.Reqs{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -812,7 +867,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club().RentalCourtLedgerCourt.Select(rentalcourtledgercourt.Reqs{}); err != nil {
+			if dbDatas, err := db.RentalCourtLedgerCourt.Select(rentalcourtledgercourt.Reqs{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -822,7 +877,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club().RentalCourtLedger.Select(rentalcourtledger.Reqs{}); err != nil {
+			if dbDatas, err := db.RentalCourtLedger.Select(rentalcourtledger.Reqs{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -832,7 +887,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club().Income.Select(income.Reqs{}); err != nil {
+			if dbDatas, err := db.Income.Select(income.Reqs{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {
@@ -842,7 +897,7 @@ func TestAddCourt(t *testing.T) {
 					t.Fatal(msg)
 				}
 			}
-			if dbDatas, err := database.Club().RentalCourtDetail.Select(rentalcourtdetail.Reqs{}); err != nil {
+			if dbDatas, err := db.RentalCourtDetail.Select(rentalcourtdetail.Reqs{}); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				sort.Slice(dbDatas, func(i, j int) bool {

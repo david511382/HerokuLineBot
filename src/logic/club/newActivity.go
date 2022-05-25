@@ -2,8 +2,8 @@ package club
 
 import (
 	"fmt"
-	courtDomain "heroku-line-bot/src/logic/badminton/court/domain"
-	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
+	badmintonLogic "heroku-line-bot/src/logic/badminton"
+	badmintonLogicDomain "heroku-line-bot/src/logic/badminton/domain"
 	"heroku-line-bot/src/logic/club/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
 	"heroku-line-bot/src/pkg/global"
@@ -16,6 +16,7 @@ import (
 	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/activity"
 	"heroku-line-bot/src/repo/database/database/clubdb/place"
+	"heroku-line-bot/src/repo/redis"
 	"strconv"
 	"strings"
 	"time"
@@ -24,12 +25,12 @@ import (
 type NewActivity struct {
 	context domain.ICmdHandlerContext `json:"-"`
 	domain.TimePostbackParams
-	PlaceID     uint                         `json:"place_id"`
-	TeamID      uint                         `json:"team_id"`
-	Description string                       `json:"description"`
-	PeopleLimit *int16                       `json:"people_limit"`
-	ClubSubsidy int16                        `json:"club_subsidy"`
-	Courts      []*courtDomain.ActivityCourt `json:"courts"`
+	PlaceID     uint                                  `json:"place_id"`
+	TeamID      uint                                  `json:"team_id"`
+	Description string                                `json:"description"`
+	PeopleLimit *int16                                `json:"people_limit"`
+	ClubSubsidy int16                                 `json:"club_subsidy"`
+	Courts      []*badmintonLogicDomain.ActivityCourt `json:"courts"`
 }
 
 func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
@@ -41,7 +42,7 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 		},
 		PlaceID:     1,
 		Description: "7人出團",
-		Courts: []*courtDomain.ActivityCourt{
+		Courts: []*badmintonLogicDomain.ActivityCourt{
 			{
 				FromTime:     commonLogic.GetTime(1, 1, 1, 18),
 				ToTime:       commonLogic.GetTime(1, 1, 1, 20, 30),
@@ -74,7 +75,8 @@ func (b *NewActivity) GetRequireAttrInfo(rawAttr string) (attrNameText string, v
 	case "ICmdLogic.place_id":
 		attrNameText = "地點"
 
-		if dbDatas, errInfo := badmintonPlaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
+		placeLogic := badmintonLogic.NewBadmintonPlaceLogic(database.Club(), redis.Badminton())
+		if dbDatas, errInfo := placeLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
 			for _, v := range dbDatas {
 				valueText = v.Name
 				return
@@ -392,7 +394,8 @@ func (b *NewActivity) getPlaceTimeTemplate() (result []interface{}) {
 	result = []interface{}{}
 
 	place := "無球館"
-	if dbDatas, errInfo := badmintonPlaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
+	placeLogic := badmintonLogic.NewBadmintonPlaceLogic(database.Club(), redis.Badminton())
+	if dbDatas, errInfo := placeLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
 		for _, v := range dbDatas {
 			place = v.Name
 		}
@@ -445,7 +448,8 @@ func (b *NewActivity) getLineComponents(actions domain.NewActivityLineTemplate) 
 	)
 
 	place := "無球館"
-	if dbDatas, errInfo := badmintonPlaceLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
+	placeLogic := badmintonLogic.NewBadmintonPlaceLogic(database.Club(), redis.Badminton())
+	if dbDatas, errInfo := placeLogic.Load(b.PlaceID); errInfo == nil || !errInfo.IsError() {
 		for _, v := range dbDatas {
 			place = v.Name
 		}
@@ -521,10 +525,10 @@ func (b *NewActivity) getCourtsStr() string {
 }
 
 func (b *NewActivity) ParseCourts(courtsStr string) (resultErrInfo errUtil.IError) {
-	b.Courts = make([]*courtDomain.ActivityCourt, 0)
+	b.Courts = make([]*badmintonLogicDomain.ActivityCourt, 0)
 	courtsStrs := strings.Split(courtsStr, ",")
 	for _, courtsStr := range courtsStrs {
-		court := &courtDomain.ActivityCourt{}
+		court := &badmintonLogicDomain.ActivityCourt{}
 		timeStr := ""
 		if _, err := fmt.Sscanf(
 			courtsStr,

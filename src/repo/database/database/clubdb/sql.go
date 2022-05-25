@@ -15,19 +15,10 @@ type RespClubJoinActivityDetail struct {
 	RentalCourtDetailCount     int
 }
 
-var MockJoinActivityDetail func(arg ReqsClubJoinActivityDetail) (
-	response []*RespClubJoinActivityDetail,
-	resultErr error,
-)
-
 func (d *Database) JoinActivityDetail(arg ReqsClubJoinActivityDetail) (
 	response []*RespClubJoinActivityDetail,
 	resultErr error,
 ) {
-	if MockJoinActivityDetail != nil {
-		return MockJoinActivityDetail(arg)
-	}
-
 	response = make([]*RespClubJoinActivityDetail, 0)
 
 	dp, err := d.GetSlave()

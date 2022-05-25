@@ -1,10 +1,13 @@
 package badminton
 
 import (
-	apiLogic "heroku-line-bot/src/logic/api/badminton"
+	apiLogic "heroku-line-bot/src/logic/api"
+	badmintonLogic "heroku-line-bot/src/logic/badminton"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/redis"
 	"heroku-line-bot/src/server/common"
 	"heroku-line-bot/src/server/domain/reqs"
 	"heroku-line-bot/src/server/domain/resp"
@@ -12,6 +15,47 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+func NewGetActivitysHandler(badmintonActivityApiLogic apiLogic.IBadmintonActivityApiLogic) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reqs := reqs.GetActivitys{}
+		if err := c.ShouldBindWith(&reqs, common.NewArrayQueryBinding()); err != nil {
+			errInfo := errUtil.NewError(err)
+			common.FailRequest(c, errInfo)
+			return
+		}
+		locationConverter := util.NewLocationConverter(global.TimeUtilObj.GetLocation(), false)
+		locationConverter.Convert(&reqs)
+
+		result := resp.Base{
+			Message: "完成",
+			Data:    resp.GetActivitys{},
+		}
+
+		fromDate := util.NewDateTimePOf(reqs.FromDate)
+		toDate := util.NewDateTimePOf(reqs.ToDate)
+		everyWeekdays := make([]time.Weekday, 0)
+		for _, weekday := range reqs.EveryWeekdays {
+			everyWeekdays = append(everyWeekdays, time.Weekday(weekday))
+		}
+
+		response, errInfo := badmintonActivityApiLogic.GetActivitys(
+			fromDate, toDate,
+			reqs.PageIndex,
+			reqs.PageSize,
+			reqs.PlaceIDs,
+			reqs.TeamIDs,
+			everyWeekdays,
+		)
+		if errInfo != nil && errInfo.IsError() {
+			common.FailInternal(c, errInfo)
+			return
+		}
+
+		result.Data = response
+		common.Success(c, result)
+	}
+}
 
 // GetActivitys 活動列表
 // @Tags Badminton
@@ -28,40 +72,14 @@ import (
 // @Security ApiKeyAuth
 // @Router /badminton/activitys [get]
 func GetActivitys(c *gin.Context) {
-	reqs := reqs.GetActivitys{}
-	if err := c.ShouldBindWith(&reqs, common.NewArrayQueryBinding()); err != nil {
-		errInfo := errUtil.NewError(err)
-		common.FailRequest(c, errInfo)
-		return
-	}
-	locationConverter := util.NewLocationConverter(global.TimeUtilObj.GetLocation(), false)
-	locationConverter.Convert(&reqs)
-
-	result := resp.Base{
-		Message: "完成",
-		Data:    resp.GetActivitys{},
-	}
-
-	fromDate := util.NewDateTimePOf(reqs.FromDate)
-	toDate := util.NewDateTimePOf(reqs.ToDate)
-	everyWeekdays := make([]time.Weekday, 0)
-	for _, weekday := range reqs.EveryWeekdays {
-		everyWeekdays = append(everyWeekdays, time.Weekday(weekday))
-	}
-
-	response, errInfo := apiLogic.GetActivitys(
-		fromDate, toDate,
-		reqs.PageIndex,
-		reqs.PageSize,
-		reqs.PlaceIDs,
-		reqs.TeamIDs,
-		everyWeekdays,
+	db := database.Club()
+	rds := redis.Badminton()
+	badmintonActivityApiLogic := apiLogic.NewBadmintonActivityApiLogic(
+		db,
+		rds,
+		badmintonLogic.NewBadmintonTeamLogic(db, rds),
+		badmintonLogic.NewBadmintonActivityLogic(db),
+		badmintonLogic.NewBadmintonPlaceLogic(db, rds),
 	)
-	if errInfo != nil && errInfo.IsError() {
-		common.FailInternal(c, errInfo)
-		return
-	}
-
-	result.Data = response
-	common.Success(c, result)
+	NewGetActivitysHandler(badmintonActivityApiLogic)(c)
 }

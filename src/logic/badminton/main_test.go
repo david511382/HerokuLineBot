@@ -1,4 +1,4 @@
-package place
+package badminton
 
 import (
 	"heroku-line-bot/bootstrap"

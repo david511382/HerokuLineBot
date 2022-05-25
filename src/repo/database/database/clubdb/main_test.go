@@ -24,9 +24,9 @@ func TestMain(m *testing.M) {
 }
 
 func setupTestDb(t *testing.T) *Database {
-	cfg := test.SetupTestCfg(t)
+	cfg := test.SetupTestCfg(t, test.REPO_DB)
 
-	return NewDatabase(func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
+	db := NewDatabase(func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
 		connection, err := conn.Connect(cfg.ClubDb)
 		if err != nil {
 			resultErr = err
@@ -36,4 +36,8 @@ func setupTestDb(t *testing.T) *Database {
 		slave = connection
 		return
 	})
+	t.Cleanup(func() {
+		_ = db.Dispose()
+	})
+	return db
 }

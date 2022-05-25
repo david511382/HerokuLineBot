@@ -40,32 +40,37 @@ func Badminton() *badminton.Database {
 }
 
 func getConnect(configSelector func(cfg *bootstrap.Config) bootstrap.Db) func() (master, slave *redis.Client, resultErr error) {
-	return func() (master, slave *redis.Client, resultErr error) {
-		return connect(configSelector)
-	}
+	return GetConnectFn(
+		bootstrap.Get,
+		configSelector,
+	)
 }
 
-func connect(configSelector func(cfg *bootstrap.Config) bootstrap.Db) (master, slave *redis.Client, resultErr error) {
-	cfg, err := bootstrap.Get()
-	if err != nil {
-		resultErr = err
+func GetConnectFn(
+	configGetterFn func() (*bootstrap.Config, error),
+	configSelector func(cfg *bootstrap.Config) bootstrap.Db,
+) func() (master, slave *redis.Client, resultErr error) {
+	return func() (master *redis.Client, slave *redis.Client, resultErr error) {
+		cfg, err := configGetterFn()
+		if err != nil {
+			resultErr = err
+			return
+		}
+
+		dbCfg := configSelector(cfg)
+		master, resultErr = conn.Connect(dbCfg)
+		if resultErr != nil {
+			return
+		}
+		setConnect(cfg.RedisConfig, master)
+
+		slave, resultErr = conn.Connect(dbCfg)
+		if resultErr != nil {
+			return
+		}
+		setConnect(cfg.RedisConfig, slave)
 		return
 	}
-
-	dbCfg := configSelector(cfg)
-
-	master, resultErr = conn.Connect(dbCfg)
-	if resultErr != nil {
-		return
-	}
-	setConnect(cfg.RedisConfig, master)
-
-	slave, resultErr = conn.Connect(dbCfg)
-	if resultErr != nil {
-		return
-	}
-	setConnect(cfg.RedisConfig, slave)
-	return
 }
 
 func setConnect(connCfg bootstrap.DbConfig, connection *redis.Client) {

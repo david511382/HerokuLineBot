@@ -3,9 +3,12 @@ package background
 import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/background/activitycreator"
+	badmintonLogic "heroku-line-bot/src/logic/badminton"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/redis"
 	"strconv"
 	"strings"
 
@@ -25,9 +28,13 @@ func Init() errUtil.IError {
 
 	cr = cron.NewWithLocation(global.TimeUtilObj.GetLocation())
 	cfg := totalCfg.Backgrounds
+	clubDb := database.Club()
+	badmintonRds := redis.Badminton()
+	badmintonCourtLogic := badmintonLogic.NewBadmintonCourtLogic(clubDb, badmintonRds)
+	badmintonTeamLogic := badmintonLogic.NewBadmintonTeamLogic(clubDb, badmintonRds)
 	backgrounds = []*Background{
 		{
-			bg: &activitycreator.BackGround{},
+			bg: activitycreator.New(clubDb, badmintonRds, badmintonCourtLogic, badmintonTeamLogic),
 		},
 	}
 

@@ -2,7 +2,7 @@ package club
 
 import (
 	"fmt"
-	accountLineuserLogicDomain "heroku-line-bot/src/logic/account/lineuser/domain"
+	accountLogicDomain "heroku-line-bot/src/logic/account/domain"
 	"heroku-line-bot/src/logic/club/domain"
 	incomeLogicDomain "heroku-line-bot/src/logic/income/domain"
 	"heroku-line-bot/src/pkg/errorcode"
@@ -25,15 +25,15 @@ import (
 type submitActivity struct {
 	context domain.ICmdHandlerContext `json:"-"`
 	NewActivity
-	JoinedMembers  []*submitActivityJoinedMembers    `json:"joined_members"`
-	JoinedGuests   []*submitActivityJoinedMembers    `json:"joined_guests"`
-	ActivityID     uint                              `json:"activity_id"`
-	CurrentUser    *accountLineuserLogicDomain.Model `json:"current_user"`
-	HasLoad        bool                              `json:"has_load"`
-	Rsl4Consume    int16                             `json:"rsl4_consume"`
-	AttendIndex    *int                              `json:"attend_index,omitempty"`
-	PayIndex       *int                              `json:"pay_index,omitempty"`
-	IsJoinedMember bool                              `json:"is_joined_member_index"`
+	JoinedMembers  []*submitActivityJoinedMembers `json:"joined_members"`
+	JoinedGuests   []*submitActivityJoinedMembers `json:"joined_guests"`
+	ActivityID     uint                           `json:"activity_id"`
+	CurrentUser    *accountLogicDomain.Model      `json:"current_user"`
+	HasLoad        bool                           `json:"has_load"`
+	Rsl4Consume    int16                          `json:"rsl4_consume"`
+	AttendIndex    *int                           `json:"attend_index,omitempty"`
+	PayIndex       *int                           `json:"pay_index,omitempty"`
+	IsJoinedMember bool                           `json:"is_joined_member_index"`
 }
 
 type submitActivityJoinedMembers struct {

@@ -3,18 +3,19 @@ package club
 import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/logger"
-	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
-	accountLineuserLogicDomain "heroku-line-bot/src/logic/account/lineuser/domain"
+	accountLogic "heroku-line-bot/src/logic/account"
+	accountLogicDomain "heroku-line-bot/src/logic/account/domain"
 	"heroku-line-bot/src/logic/club/domain"
 	clublinebotDomain "heroku-line-bot/src/logic/clublinebot/domain"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
 	"heroku-line-bot/src/pkg/util"
+	errUtil "heroku-line-bot/src/pkg/util/error"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/redis"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
-
-	errUtil "heroku-line-bot/src/pkg/util/error"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -282,9 +283,10 @@ func getJoinCount(totalCount int, limit *int16) (joinedCount, waitingCount int) 
 	return
 }
 
-func autoRegiste(context domain.ICmdHandlerContext) (resultUser accountLineuserLogicDomain.Model, isNewRegiste bool, resultErrInfo errUtil.IError) {
+func autoRegiste(context domain.ICmdHandlerContext) (resultUser accountLogicDomain.Model, isNewRegiste bool, resultErrInfo errUtil.IError) {
 	lineID := context.GetUserID()
-	user, errInfo := accountLineuserLogic.Load(lineID)
+	lineUserLogic := accountLogic.NewLineUserLogic(database.Club(), redis.Badminton())
+	user, errInfo := lineUserLogic.Load(lineID)
 	if errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
@@ -305,7 +307,7 @@ func autoRegiste(context domain.ICmdHandlerContext) (resultUser accountLineuserL
 			}
 		}
 
-		user, errInfo = accountLineuserLogic.Load(lineID)
+		user, errInfo = lineUserLogic.Load(lineID)
 		if errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {

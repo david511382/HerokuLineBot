@@ -1,9 +1,12 @@
-package activity
+package badminton
 
 import (
+	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/test"
 	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/activity"
 	"sort"
 	"testing"
@@ -11,6 +14,8 @@ import (
 )
 
 func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		fromDate      *util.DateTime
 		toDate        *util.DateTime
@@ -172,11 +177,23 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club().Activity.MigrationData(tt.migrations.activity...); err != nil {
+			cfg := test.SetupTestCfg(t, test.REPO_DB, test.REPO_REDIS)
+			db := clubdb.NewDatabase(
+				database.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubDb
+					},
+				),
+			)
+			if err := db.Activity.MigrationData(tt.migrations.activity...); err != nil {
 				t.Fatal(err.Error())
 			}
 
-			gotResultArgs, gotResultErrInfo := GetUnfinishedActiviysSqlReqs(tt.args.fromDate, tt.args.toDate, tt.args.teamIDs, tt.args.placeIDs, tt.args.everyWeekdays)
+			l := NewBadmintonActivityLogic(db)
+			gotResultArgs, gotResultErrInfo := l.GetUnfinishedActiviysSqlReqs(tt.args.fromDate, tt.args.toDate, tt.args.teamIDs, tt.args.placeIDs, tt.args.everyWeekdays)
 			if gotResultErrInfo != nil {
 				t.Errorf("GetUnfinishedActiviysSqlReqs() error = %v", gotResultErrInfo.Error())
 				return

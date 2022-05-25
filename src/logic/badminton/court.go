@@ -1,9 +1,7 @@
-package court
+package badminton
 
 import (
-	"heroku-line-bot/src/logic/badminton/court/domain"
-	badmintonplaceLogic "heroku-line-bot/src/logic/badminton/place"
-	badmintonteamLogic "heroku-line-bot/src/logic/badminton/team"
+	"heroku-line-bot/src/logic/badminton/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
 	incomeLogicDomain "heroku-line-bot/src/logic/income/domain"
 	dbModel "heroku-line-bot/src/model/database"
@@ -12,25 +10,44 @@ import (
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/income"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourt"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtdetail"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtledger"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtledgercourt"
 	"heroku-line-bot/src/repo/database/database/clubdb/rentalcourtrefundledger"
+	"heroku-line-bot/src/repo/redis/db/badminton"
 	"time"
 )
 
-var MockGetCourts func(
-	fromDate, toDate util.DateTime,
-	teamID,
-	placeID *uint,
-) (
-	teamPlaceDateCourtsMap map[uint]map[uint][]*DateCourt,
-	resultErrInfo errUtil.IError,
-)
+type IBadmintonCourtLogic interface {
+	GetCourts(
+		fromDate, toDate util.DateTime,
+		teamID,
+		placeID *uint,
+	) (
+		teamPlaceDateCourtsMap map[uint]map[uint][]*DateCourt,
+		resultErrInfo errUtil.IError,
+	)
+}
 
-func GetCourts(
+type BadmintonCourtLogic struct {
+	clubDb       *clubdb.Database
+	badmintonRds *badminton.Database
+}
+
+func NewBadmintonCourtLogic(
+	clubDb *clubdb.Database,
+	badmintonRds *badminton.Database,
+) *BadmintonCourtLogic {
+	return &BadmintonCourtLogic{
+		clubDb:       clubDb,
+		badmintonRds: badmintonRds,
+	}
+}
+
+func (l *BadmintonCourtLogic) GetCourts(
 	fromDate, toDate util.DateTime,
 	teamID,
 	placeID *uint,
@@ -38,16 +55,12 @@ func GetCourts(
 	teamPlaceDateCourtsMap map[uint]map[uint][]*DateCourt,
 	resultErrInfo errUtil.IError,
 ) {
-	if MockGetCourts != nil {
-		return MockGetCourts(fromDate, toDate, teamID, placeID)
-	}
-
 	teamPlaceDateCourtsMap = make(map[uint]map[uint][]*DateCourt)
 
 	courtIDTeamDetailIDCourtsMap := make(map[uint]map[uint]map[uint][]*Court)
 	courtIDs := make([]uint, 0)
 	courtIDMap := make(map[uint]*rentalcourt.Model)
-	if dbDatas, err := database.Club().RentalCourt.Select(rentalcourt.Reqs{
+	if dbDatas, err := l.clubDb.RentalCourt.Select(rentalcourt.Reqs{
 		Date: dbModel.Date{
 			FromDate: fromDate.TimeP(),
 			ToDate:   toDate.TimeP(),
@@ -72,7 +85,7 @@ func GetCourts(
 	ledgerIDs := make([]uint, 0)
 	ledgerCourtMap := make(map[uint][]uint)
 	courtLedgerMap := make(map[uint][]uint)
-	if dbDatas, err := database.Club().RentalCourtLedgerCourt.Select(rentalcourtledgercourt.Reqs{
+	if dbDatas, err := l.clubDb.RentalCourtLedgerCourt.Select(rentalcourtledgercourt.Reqs{
 		TeamID:         teamID,
 		RentalCourtIDs: courtIDs,
 	}); err != nil {
@@ -99,7 +112,7 @@ func GetCourts(
 	detailIDMap := make(map[uint]*CourtDetail)
 	incomeIDMap := make(map[uint]*income.Model)
 	balanceLedgerIDMap := make(map[uint]*rentalcourtledger.Model)
-	if dbDatas, err := database.Club().RentalCourtLedger.Select(rentalcourtledger.Reqs{
+	if dbDatas, err := l.clubDb.RentalCourtLedger.Select(rentalcourtledger.Reqs{
 		IDs: ledgerIDs,
 	}); err != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
@@ -124,7 +137,7 @@ func GetCourts(
 	}
 
 	ledgerCourtRefundMap := make(map[uint]map[uint][]*rentalcourtrefundledger.Model)
-	if dbDatas, err := database.Club().RentalCourtRefundLedger.Select(rentalcourtrefundledger.Reqs{
+	if dbDatas, err := l.clubDb.RentalCourtRefundLedger.Select(rentalcourtrefundledger.Reqs{
 		RentlCourtLedgerIDs: ledgerIDs,
 	}); err != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
@@ -156,7 +169,7 @@ func GetCourts(
 	for detailID := range detailIDMap {
 		detailIDs = append(detailIDs, detailID)
 	}
-	if dbDatas, err := database.Club().RentalCourtDetail.Select(rentalcourtdetail.Reqs{
+	if dbDatas, err := l.clubDb.RentalCourtDetail.Select(rentalcourtdetail.Reqs{
 		IDs: detailIDs,
 	}); err != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
@@ -190,7 +203,7 @@ func GetCourts(
 		incomeIDs = append(incomeIDs, incomeID)
 	}
 	if len(incomeIDs) > 0 {
-		if dbDatas, err := database.Club().Income.Select(income.Reqs{
+		if dbDatas, err := l.clubDb.Income.Select(income.Reqs{
 			IDs: incomeIDs,
 		}); err != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errUtil.NewError(err))
@@ -319,7 +332,7 @@ func GetCourts(
 	return
 }
 
-func VerifyAddCourt(
+func (l *BadmintonCourtLogic) VerifyAddCourt(
 	placeID,
 	teamID uint,
 	pricePerHour int,
@@ -364,7 +377,7 @@ func VerifyAddCourt(
 		}
 	}
 
-	if resultPlaceIDMap, errInfo := badmintonplaceLogic.Load(placeID); errInfo != nil {
+	if resultPlaceIDMap, errInfo := NewBadmintonPlaceLogic(l.clubDb, l.badmintonRds).Load(placeID); errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else if resultPlaceIDMap[placeID] == nil {
@@ -373,7 +386,7 @@ func VerifyAddCourt(
 		return
 	}
 
-	if resultTeamIDMap, errInfo := badmintonteamLogic.Load(teamID); errInfo != nil {
+	if resultTeamIDMap, errInfo := NewBadmintonTeamLogic(l.clubDb, l.badmintonRds).Load(teamID); errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		return
 	} else if resultTeamIDMap[teamID] == nil {
@@ -385,7 +398,7 @@ func VerifyAddCourt(
 	return
 }
 
-func AddCourt(
+func (l *BadmintonCourtLogic) AddCourt(
 	placeID,
 	teamID uint,
 	pricePerHour int,
@@ -432,7 +445,7 @@ func AddCourt(
 				endDate = t
 			}
 		}
-		dbDatas, err := database.Club().RentalCourt.Select(rentalcourt.Reqs{
+		dbDatas, err := l.clubDb.RentalCourt.Select(rentalcourt.Reqs{
 			Dates:   dates,
 			PlaceID: &placeID,
 		},
@@ -463,7 +476,7 @@ func AddCourt(
 	var rentalCourtDetailID *uint
 	{
 		from, to := courtDetail.GetTime()
-		dbDatas, err := database.Club().RentalCourtDetail.Select(rentalcourtdetail.Reqs{
+		dbDatas, err := l.clubDb.RentalCourtDetail.Select(rentalcourtdetail.Reqs{
 			StartTime: util.PointerOf(string(from)),
 			EndTime:   util.PointerOf(string(to)),
 			Count:     &courtDetail.Count,
@@ -563,7 +576,7 @@ func AddCourt(
 	}
 
 	{
-		db, transaction, err := database.Club().Begin()
+		db, transaction, err := l.clubDb.Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

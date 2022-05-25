@@ -1,37 +1,59 @@
 package api
 
 import (
-	badmintonActivityLogic "heroku-line-bot/src/logic/badminton/activity"
-	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
-	badmintonTeamLogic "heroku-line-bot/src/logic/badminton/team"
+	badmintonLogic "heroku-line-bot/src/logic/badminton"
 	commonLogic "heroku-line-bot/src/logic/common"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
-	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/activity"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
 	"heroku-line-bot/src/repo/database/database/clubdb/memberactivity"
+	"heroku-line-bot/src/repo/redis/db/badminton"
 	"heroku-line-bot/src/server/domain/resp"
 	"sort"
 	"time"
 )
 
-var MockGetActivitys func(
-	fromDate,
-	toDate *util.DateTime,
-	pageIndex,
-	pageSize uint,
-	placeIDs,
-	teamIDs []uint,
-	everyWeekdays []time.Weekday,
-) (
-	result resp.GetActivitys,
-	resultErrInfo errUtil.IError,
-)
+type IBadmintonActivityApiLogic interface {
+	GetActivitys(
+		fromDate,
+		toDate *util.DateTime,
+		pageIndex,
+		pageSize uint,
+		placeIDs,
+		teamIDs []uint,
+		everyWeekdays []time.Weekday,
+	) (
+		result resp.GetActivitys,
+		resultErrInfo errUtil.IError,
+	)
+}
+
+type BadmintonActivityApiLogic struct {
+	clubDb                 *clubdb.Database
+	badmintonTeamLogic     badmintonLogic.IBadmintonTeamLogic
+	badmintonActivityLogic badmintonLogic.IBadmintonActivityLogic
+	badmintonPlaceLogic    badmintonLogic.IBadmintonPlaceLogic
+}
+
+func NewBadmintonActivityApiLogic(
+	clubDb *clubdb.Database,
+	badmintonRds *badminton.Database,
+	badmintonTeamLogic badmintonLogic.IBadmintonTeamLogic,
+	badmintonActivityLogic badmintonLogic.IBadmintonActivityLogic,
+	badmintonPlaceLogic badmintonLogic.IBadmintonPlaceLogic,
+) *BadmintonActivityApiLogic {
+	return &BadmintonActivityApiLogic{
+		clubDb:                 clubDb,
+		badmintonTeamLogic:     badmintonTeamLogic,
+		badmintonActivityLogic: badmintonActivityLogic,
+		badmintonPlaceLogic:    badmintonPlaceLogic,
+	}
+}
 
 // pageIndex: 1開始
-func GetActivitys(
+func (l *BadmintonActivityApiLogic) GetActivitys(
 	fromDate,
 	toDate *util.DateTime,
 	pageIndex,
@@ -43,10 +65,6 @@ func GetActivitys(
 	result resp.GetActivitys,
 	resultErrInfo errUtil.IError,
 ) {
-	if MockGetActivitys != nil {
-		return MockGetActivitys(fromDate, toDate, pageIndex, pageSize, placeIDs, teamIDs, everyWeekdays)
-	}
-
 	result.Activitys = make([]*resp.GetActivitysActivity, 0)
 
 	activityMap := make(map[uint]*resp.GetActivitysActivity)
@@ -54,7 +72,7 @@ func GetActivitys(
 	idPlaceMap := make(map[uint]string)
 	idTeamMap := make(map[uint]string)
 	{
-		args, errInfo := badmintonActivityLogic.GetUnfinishedActiviysSqlReqs(
+		args, errInfo := l.badmintonActivityLogic.GetUnfinishedActiviysSqlReqs(
 			fromDate, toDate,
 			teamIDs, placeIDs, everyWeekdays,
 		)
@@ -68,7 +86,7 @@ func GetActivitys(
 		dbActivityDatas := make([]*activity.Model, 0)
 		for _, arg := range args {
 			{
-				dbDatas, err := database.Club().Activity.Select(
+				dbDatas, err := l.clubDb.Activity.Select(
 					*arg,
 					activity.COLUMN_ID,
 					activity.COLUMN_Date,
@@ -134,38 +152,24 @@ func GetActivitys(
 	}
 
 	{
-		dbDatas, err := database.Club().JoinActivityDetail(clubdb.ReqsClubJoinActivityDetail{
-			Activity: &activity.Reqs{
+		activityID_detailMap, errInfo := l.badmintonActivityLogic.GetActivityDetail(
+			&activity.Reqs{
 				IDs: activityIDs,
 			},
-		})
-		if err != nil {
-			errInfo := errUtil.NewError(err)
+		)
+		if errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-			return
+			if errInfo.IsError() {
+				return
+			}
 		}
 
-		for _, v := range dbDatas {
-			activityID := v.ActivityID
-
-			startTime, err := commonLogic.HourMinTime(v.RentalCourtDetailStartTime).Time()
-			if err != nil {
-				errInfo := errUtil.NewError(err)
-				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-				return
-			}
-			endTime, err := commonLogic.HourMinTime(v.RentalCourtDetailEndTime).Time()
-			if err != nil {
-				errInfo := errUtil.NewError(err)
-				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-				return
-			}
-			court := &resp.GetActivitysCourt{
-				FromTime: startTime,
-				ToTime:   endTime,
-				Count:    v.RentalCourtDetailCount,
-			}
-			activityMap[activityID].Courts = append(activityMap[activityID].Courts, court)
+		for activityID, detail := range activityID_detailMap {
+			activityMap[activityID].Courts = append(activityMap[activityID].Courts, &resp.GetActivitysCourt{
+				FromTime: detail.From,
+				ToTime:   detail.To,
+				Count:    int(detail.Count),
+			})
 		}
 	}
 
@@ -175,7 +179,7 @@ func GetActivitys(
 			placeIDs = append(placeIDs, id)
 		}
 
-		dbDatas, errInfo := badmintonPlaceLogic.Load(placeIDs...)
+		dbDatas, errInfo := l.badmintonPlaceLogic.Load(placeIDs...)
 		if errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {
@@ -194,7 +198,7 @@ func GetActivitys(
 			teamIDs = append(teamIDs, id)
 		}
 
-		dbDatas, errInfo := badmintonTeamLogic.Load(teamIDs...)
+		dbDatas, errInfo := l.badmintonTeamLogic.Load(teamIDs...)
 		if errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {
@@ -218,7 +222,7 @@ func GetActivitys(
 		}
 
 		if len(activityIDs) > 0 {
-			dbDatas, err := database.Club().MemberActivity.Select(
+			dbDatas, err := l.clubDb.MemberActivity.Select(
 				memberactivity.Reqs{
 					ActivityIDs: activityIDs,
 				},
@@ -245,7 +249,7 @@ func GetActivitys(
 			}
 
 			if len(memberIDs) > 0 {
-				dbDatas, err := database.Club().Member.Select(
+				dbDatas, err := l.clubDb.Member.Select(
 					member.Reqs{
 						IDs: memberIDs,
 					},

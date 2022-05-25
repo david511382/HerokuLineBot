@@ -48,12 +48,9 @@ func TestMain(m *testing.M) {
 }
 
 func setupTestDb(t *testing.T) (IConnection, string) {
-	cfg, errInfo := bootstrap.Get()
-	if errInfo != nil {
-		t.Fatal(errInfo.Error())
-	}
+	cfg := test.SetupTestCfg(t, test.REPO_REDIS)
+	baseKey := cfg.Var.RedisKeyRoot
 
-	testName := test.GetTestSchemaName(t.Name())
 	conn := NewBaseDatabase(
 		func() (master *redis.Client, slave *redis.Client, resultErr error) {
 			connection, err := conn.Connect(cfg.ClubRedis)
@@ -66,12 +63,12 @@ func setupTestDb(t *testing.T) (IConnection, string) {
 			return
 		},
 		func(connectionCreator IConnection) interface{} { return nil },
-		testName,
+		baseKey,
 	)
 	t.Cleanup(func() {
 		conn.Dispose()
 	})
-	return conn, testName
+	return conn, baseKey
 }
 
 type testParser[Key any, Field any, Value any] struct {

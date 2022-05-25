@@ -1,13 +1,15 @@
 package common
 
 import (
-	accountLineuserLogic "heroku-line-bot/src/logic/account/lineuser"
+	accountLogic "heroku-line-bot/src/logic/account"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	"heroku-line-bot/src/logic/clublinebot"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomainReqs "heroku-line-bot/src/pkg/service/linebot/domain/model/reqs"
 	errUtil "heroku-line-bot/src/pkg/util/error"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/redis"
 	"heroku-line-bot/src/server/domain"
 	"time"
 
@@ -45,7 +47,8 @@ func (l lineTokenVerifier) Parse(token string) (jwtClaims domain.JwtClaims, resu
 			ExpTime:  expTime,
 		}
 
-		data, errInfo := accountLineuserLogic.Load(claims.Sub)
+		lineUserLogic := accountLogic.NewLineUserLogic(database.Club(), redis.Badminton())
+		data, errInfo := lineUserLogic.Load(claims.Sub)
 		if errInfo != nil {
 			errInfo := errUtil.NewError(err, zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

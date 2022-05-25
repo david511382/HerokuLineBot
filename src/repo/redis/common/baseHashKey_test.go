@@ -66,9 +66,6 @@ func TestBaseHashKey_HSet(t *testing.T) {
 				baseKey,
 				defaultParser,
 			)
-			t.Cleanup(func() {
-				migrationKey.Delete()
-			})
 			if errInfo := migrationKey.Migration(tt.migrations.redisData); errInfo != nil {
 				t.Fatal(errInfo.Error())
 			}
@@ -160,9 +157,6 @@ func TestBaseHashKey_HMSet(t *testing.T) {
 				baseKey,
 				defaultParser,
 			)
-			t.Cleanup(func() {
-				migrationKey.Delete()
-			})
 			if errInfo := migrationKey.Migration(tt.migrations.redisData); errInfo != nil {
 				t.Fatal(errInfo.Error())
 			}
@@ -262,9 +256,6 @@ func TestBaseHashKey_HKeys(t *testing.T) {
 				baseKey,
 				defaultParser,
 			)
-			t.Cleanup(func() {
-				migrationKey.Delete()
-			})
 			if errInfo := migrationKey.Migration(tt.migrations.redisData); errInfo != nil {
 				t.Fatal(errInfo.Error())
 			}
@@ -385,9 +376,6 @@ func TestBaseHashKey_HGetAll(t *testing.T) {
 				baseKey,
 				defaultParser,
 			)
-			t.Cleanup(func() {
-				migrationKey.Delete()
-			})
 			if errInfo := migrationKey.Migration(tt.migrations.redisData); errInfo != nil {
 				t.Fatal(errInfo.Error())
 			}
@@ -486,9 +474,6 @@ func TestBaseHashKey_HGet(t *testing.T) {
 				baseKey,
 				defaultParser,
 			)
-			t.Cleanup(func() {
-				migrationKey.Delete()
-			})
 			if errInfo := migrationKey.Migration(tt.migrations.redisData); errInfo != nil {
 				t.Fatal(errInfo.Error())
 			}
@@ -593,9 +578,6 @@ func TestBaseHashKey_HMGet(t *testing.T) {
 				baseKey,
 				defaultParser,
 			)
-			t.Cleanup(func() {
-				migrationKey.Delete()
-			})
 			if errInfo := migrationKey.Migration(tt.migrations.redisData); errInfo != nil {
 				t.Fatal(errInfo.Error())
 			}
@@ -679,9 +661,6 @@ func TestBaseHashKey_HDel(t *testing.T) {
 				baseKey,
 				defaultParser,
 			)
-			t.Cleanup(func() {
-				migrationKey.Delete()
-			})
 			if errInfo := migrationKey.Migration(tt.migrations.redisData); errInfo != nil {
 				t.Fatal(errInfo.Error())
 			}

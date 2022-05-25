@@ -1,9 +1,12 @@
 package wsjob
 
 import (
-	apiLogic "heroku-line-bot/src/logic/api/badminton"
+	apiLogic "heroku-line-bot/src/logic/api"
+	badmintonLogic "heroku-line-bot/src/logic/badminton"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/redis"
 	"heroku-line-bot/src/server/domain/reqs"
 	"heroku-line-bot/src/server/domain/resp"
 	"time"
@@ -12,6 +15,8 @@ import (
 )
 
 type BadmintonActivitys struct {
+	badmintonActivityApiLogic *apiLogic.BadmintonActivityApiLogic
+
 	BaseScheduleWsConnJob
 	fromDate,
 	toDate *util.DateTime
@@ -32,7 +37,17 @@ func NewBadmintonActivitys(
 	teamIDs []uint,
 	everyWeekdays []time.Weekday,
 ) *BadmintonActivitys {
+	db := database.Club()
+	rds := redis.Badminton()
 	r := &BadmintonActivitys{
+		badmintonActivityApiLogic: apiLogic.NewBadmintonActivityApiLogic(
+			db,
+			rds,
+			badmintonLogic.NewBadmintonTeamLogic(db, rds),
+			badmintonLogic.NewBadmintonActivityLogic(db),
+			badmintonLogic.NewBadmintonPlaceLogic(db, rds),
+		),
+
 		fromDate:      fromDate,
 		toDate:        toDate,
 		pageIndex:     pageIndex,
@@ -51,7 +66,7 @@ func (w *BadmintonActivitys) RunJob() (result resp.Base, resultErrInfo errUtil.I
 		Data:    resp.GetActivitys{},
 	}
 
-	response, errInfo := apiLogic.GetActivitys(
+	response, errInfo := w.badmintonActivityApiLogic.GetActivitys(
 		w.fromDate, w.toDate,
 		w.pageIndex,
 		w.pageSize,

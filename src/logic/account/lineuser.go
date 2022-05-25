@@ -1,20 +1,35 @@
-package lineuser
+package account
 
 import (
-	"heroku-line-bot/src/logic/account/lineuser/domain"
+	"heroku-line-bot/src/logic/account/domain"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	errUtil "heroku-line-bot/src/pkg/util/error"
-	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
-	"heroku-line-bot/src/repo/redis"
+	"heroku-line-bot/src/repo/redis/db/badminton"
 	"heroku-line-bot/src/repo/redis/db/badminton/lineuser"
 
 	"github.com/rs/zerolog"
 )
 
-func Load(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
+type LineUserLogic struct {
+	clubDb       *clubdb.Database
+	badmintonRds *badminton.Database
+}
+
+func NewLineUserLogic(
+	clubDb *clubdb.Database,
+	badmintonRds *badminton.Database,
+) *LineUserLogic {
+	return &LineUserLogic{
+		clubDb:       clubDb,
+		badmintonRds: badmintonRds,
+	}
+}
+
+func (l *LineUserLogic) Load(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 	{
-		lineIDUserMap, errInfo := redis.Badminton().LineUser.Read(lineID)
+		lineIDUserMap, errInfo := l.badmintonRds.LineUser.Read(lineID)
 		if errInfo != nil {
 			errInfo.SetLevel(zerolog.InfoLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -32,7 +47,7 @@ func Load(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 	}
 
 	{
-		dbData, errInfo := GetDb(lineID)
+		dbData, errInfo := l.GetDb(lineID)
 		if errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {
@@ -45,7 +60,7 @@ func Load(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 		result = dbData
 	}
 
-	errInfo := redis.Badminton().LineUser.HMSet(map[string]*lineuser.LineUser{
+	errInfo := l.badmintonRds.LineUser.HMSet(map[string]*lineuser.LineUser{
 		lineID: {
 			ID:   result.ID,
 			Name: result.Name,
@@ -60,8 +75,8 @@ func Load(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
 	return
 }
 
-func GetDb(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
-	if dbDatas, err := database.Club().Member.Select(
+func (l *LineUserLogic) GetDb(lineID string) (result *domain.Model, resultErrInfo errUtil.IError) {
+	if dbDatas, err := l.clubDb.Member.Select(
 		member.Reqs{
 			LineID: &lineID,
 		},

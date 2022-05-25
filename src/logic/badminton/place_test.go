@@ -1,15 +1,21 @@
-package place
+package badminton
 
 import (
+	"heroku-line-bot/bootstrap"
 	rdsModel "heroku-line-bot/src/model/redis"
+	"heroku-line-bot/src/pkg/test"
 	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/place"
 	"heroku-line-bot/src/repo/redis"
+	"heroku-line-bot/src/repo/redis/db/badminton"
 	"testing"
 )
 
-func TestLoad(t *testing.T) {
+func TestPlaceLoad(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		ids []uint
 	}
@@ -115,14 +121,37 @@ func TestLoad(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club().Place.MigrationData(tt.migrations.place...); err != nil {
+			cfg := test.SetupTestCfg(t, test.REPO_DB, test.REPO_REDIS)
+			db := clubdb.NewDatabase(
+				database.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubDb
+					},
+				),
+			)
+			if err := db.Place.MigrationData(tt.migrations.place...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := redis.Badminton().BadmintonPlace.Migration(tt.migrations.redisPlaceIDMap); err != nil {
+			rds := badminton.NewDatabase(
+				redis.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubRedis
+					},
+				),
+				cfg.Var.RedisKeyRoot,
+			)
+			if err := rds.BadmintonPlace.Migration(tt.migrations.redisPlaceIDMap); err != nil {
 				t.Fatal(err.Error())
 			}
 
-			gotResultPlaceIDMap, errInfo := Load(tt.args.ids...)
+			l := NewBadmintonPlaceLogic(db, rds)
+			gotResultPlaceIDMap, errInfo := l.Load(tt.args.ids...)
 			if errInfo != nil {
 				t.Error(errInfo.Error())
 				return
@@ -132,7 +161,7 @@ func TestLoad(t *testing.T) {
 				return
 			}
 
-			if got, err := redis.Badminton().BadmintonPlace.Read(); err != nil {
+			if got, err := rds.BadmintonPlace.Read(); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				if ok, msg := util.Comp(got, tt.wants.redisPlaceIDMap); !ok {

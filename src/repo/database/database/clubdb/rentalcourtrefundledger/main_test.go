@@ -2,7 +2,6 @@ package rentalcourtrefundledger
 
 import (
 	"heroku-line-bot/bootstrap"
-	"heroku-line-bot/src/pkg/test"
 	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database/common"
 	"heroku-line-bot/src/repo/database/conn"
@@ -46,19 +45,6 @@ func TestMain(m *testing.M) {
 }
 
 func setupTestDb(t *testing.T) *Table {
-	cfg := test.SetupTestCfg(t)
-
-	connection, err := conn.Connect(cfg.ClubDb)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-
-	return New(util.NewMasterSlaveManager(
-		func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
-			master = connection
-			slave = connection
-			return
-		},
-		common.DisposeConnection,
-	))
+	db := common.SetupTestDb(t)
+	return New(db)
 }

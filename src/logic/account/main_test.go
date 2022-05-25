@@ -1,4 +1,4 @@
-package team
+package account
 
 import (
 	"heroku-line-bot/bootstrap"

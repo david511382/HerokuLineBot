@@ -3,9 +3,8 @@ package activitycreator
 import (
 	"fmt"
 	"heroku-line-bot/bootstrap"
-	badmintonCourtLogic "heroku-line-bot/src/logic/badminton/court"
-	badmintonCourtLogicDomain "heroku-line-bot/src/logic/badminton/court/domain"
-	badmintonteamLogic "heroku-line-bot/src/logic/badminton/team"
+	badmintonLogic "heroku-line-bot/src/logic/badminton"
+	badmintonLogicDomain "heroku-line-bot/src/logic/badminton/domain"
 	clubLogic "heroku-line-bot/src/logic/club"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	clubLineBotLogic "heroku-line-bot/src/logic/clublinebot"
@@ -16,13 +15,32 @@ import (
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb"
+	"heroku-line-bot/src/repo/redis/db/badminton"
 	"time"
 
 	"github.com/rs/zerolog"
 )
 
 // 自動開場
-type BackGround struct{}
+type BackGround struct {
+	badmintonCourtLogic badmintonLogic.IBadmintonCourtLogic
+	badmintonTeamLogic  badmintonLogic.IBadmintonTeamLogic
+	clubDb              *clubdb.Database
+}
+
+func New(
+	clubDb *clubdb.Database,
+	badmintonRds *badminton.Database,
+	badmintonCourtLogic badmintonLogic.IBadmintonCourtLogic,
+	badmintonTeamLogic badmintonLogic.IBadmintonTeamLogic,
+) *BackGround {
+	return &BackGround{
+		badmintonCourtLogic: badmintonCourtLogic,
+		badmintonTeamLogic:  badmintonTeamLogic,
+		clubDb:              clubDb,
+	}
+}
 
 func (b *BackGround) Init(cfg bootstrap.Backgrounds) (name string, backgroundCfg bootstrap.Background, resultErrInfo errUtil.IError) {
 	return "ActivityCreator", cfg.ActivityCreator, nil
@@ -35,7 +53,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 		}
 	}()
 
-	teamSettingMap, errInfo := badmintonteamLogic.Load()
+	teamSettingMap, errInfo := b.badmintonTeamLogic.Load()
 	if errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
@@ -46,7 +64,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 		return
 	}
 	currentDate := *util.NewDateTimePOf(&runTime)
-	newActivityHandlers, errInfo := calDateActivity(teamSettingMap, currentDate)
+	newActivityHandlers, errInfo := b.calDateActivity(teamSettingMap, currentDate)
 	if errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
@@ -59,7 +77,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 
 	newActivityTeamSettingMap := make(map[uint]*rdsModel.ClubBadmintonTeam)
 	{
-		db, transaction, err := database.Club().Begin()
+		db, transaction, err := b.clubDb.Begin()
 		if err != nil {
 			errInfo := errUtil.NewError(err)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -96,7 +114,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	return
 }
 
-func calDateActivity(teamSettingMap map[uint]*rdsModel.ClubBadmintonTeam, currentDate util.DateTime) (
+func (b *BackGround) calDateActivity(teamSettingMap map[uint]*rdsModel.ClubBadmintonTeam, currentDate util.DateTime) (
 	resultActivityHandlers []*clubLogic.NewActivity,
 	resultErrInfo errUtil.IError,
 ) {
@@ -108,7 +126,7 @@ func calDateActivity(teamSettingMap map[uint]*rdsModel.ClubBadmintonTeam, curren
 		}
 
 		createActivityDate := currentDate.Next(int(*settting.ActivityCreateDays))
-		teamPlaceDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(createActivityDate, createActivityDate, &teamID, nil)
+		teamPlaceDateCourtsMap, errInfo := b.badmintonCourtLogic.GetCourts(createActivityDate, createActivityDate, &teamID, nil)
 		if errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {
@@ -128,7 +146,7 @@ func calDateActivity(teamSettingMap map[uint]*rdsModel.ClubBadmintonTeam, curren
 
 func calActivitys(
 	teamID uint,
-	placeDateCourtsMap map[uint][]*badmintonCourtLogic.DateCourt,
+	placeDateCourtsMap map[uint][]*badmintonLogic.DateCourt,
 	rdsSetting *rdsModel.ClubBadmintonTeam,
 ) (
 	newActivityHandlers []*clubLogic.NewActivity,
@@ -136,11 +154,11 @@ func calActivitys(
 	newActivityHandlers = make([]*clubLogic.NewActivity, 0)
 
 	for place, dateCourts := range placeDateCourtsMap {
-		dateDateCourtsMap := make(map[util.DateInt][]*badmintonCourtLogic.DateCourt)
+		dateDateCourtsMap := make(map[util.DateInt][]*badmintonLogic.DateCourt)
 		for _, dateCourt := range dateCourts {
 			dateInt := dateCourt.Date.Int()
 			if dateDateCourtsMap[dateInt] == nil {
-				dateDateCourtsMap[dateInt] = make([]*badmintonCourtLogic.DateCourt, 0)
+				dateDateCourtsMap[dateInt] = make([]*badmintonLogic.DateCourt, 0)
 			}
 			dateDateCourtsMap[dateInt] = append(dateDateCourtsMap[dateInt], dateCourt)
 		}
@@ -156,7 +174,7 @@ func calActivitys(
 				Description: "",
 				ClubSubsidy: 0,
 				PeopleLimit: rdsSetting.PeopleLimit,
-				Courts:      make([]*badmintonCourtLogicDomain.ActivityCourt, 0),
+				Courts:      make([]*badmintonLogicDomain.ActivityCourt, 0),
 			}
 			if v := rdsSetting.Description; v != nil {
 				newActivityHandler.Description = *v
@@ -177,7 +195,7 @@ func calActivitys(
 						if v.IsRefund() {
 							continue
 						}
-						newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonCourtLogicDomain.ActivityCourt{
+						newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonLogicDomain.ActivityCourt{
 							FromTime:     v.From,
 							ToTime:       v.To,
 							Count:        v.Count,
@@ -235,13 +253,13 @@ func notifyGroup(teamSettingMap map[uint]*rdsModel.ClubBadmintonTeam) (resultErr
 	return
 }
 
-func combineCourts(courts []*badmintonCourtLogicDomain.ActivityCourt) []*badmintonCourtLogicDomain.ActivityCourt {
-	newCourts := make([]*badmintonCourtLogicDomain.ActivityCourt, 0)
+func combineCourts(courts []*badmintonLogicDomain.ActivityCourt) []*badmintonLogicDomain.ActivityCourt {
+	newCourts := make([]*badmintonLogicDomain.ActivityCourt, 0)
 
 	priceRangesMap := parseCourtsToTimeRanges(courts)
 	for price, ranges := range priceRangesMap {
 		for _, v := range commonLogic.CombineMinuteTimeRanges(ranges) {
-			newCourts = append(newCourts, &badmintonCourtLogicDomain.ActivityCourt{
+			newCourts = append(newCourts, &badmintonLogicDomain.ActivityCourt{
 				FromTime:     v.From,
 				ToTime:       v.To,
 				Count:        uint8(v.Count),
@@ -253,7 +271,7 @@ func combineCourts(courts []*badmintonCourtLogicDomain.ActivityCourt) []*badmint
 	return newCourts
 }
 
-func parseCourtsToTimeRanges(courts []*badmintonCourtLogicDomain.ActivityCourt) (priceRangesMap map[float64][]*commonLogic.TimeRangeValue) {
+func parseCourtsToTimeRanges(courts []*badmintonLogicDomain.ActivityCourt) (priceRangesMap map[float64][]*commonLogic.TimeRangeValue) {
 	priceRangesMap = make(map[float64][]*commonLogic.TimeRangeValue)
 
 	for _, court := range courts {

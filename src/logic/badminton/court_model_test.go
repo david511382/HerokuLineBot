@@ -1,4 +1,4 @@
-package court
+package badminton
 
 import (
 	commonLogic "heroku-line-bot/src/logic/common"

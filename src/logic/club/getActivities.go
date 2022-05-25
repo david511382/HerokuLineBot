@@ -2,8 +2,8 @@ package club
 
 import (
 	"fmt"
-	accountLineuserLogicDomain "heroku-line-bot/src/logic/account/lineuser/domain"
-	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
+	accountLogicDomain "heroku-line-bot/src/logic/account/domain"
+	badmintonLogic "heroku-line-bot/src/logic/badminton"
 	"heroku-line-bot/src/logic/club/domain"
 	"heroku-line-bot/src/pkg/service/linebot"
 	linebotDomain "heroku-line-bot/src/pkg/service/linebot/domain"
@@ -15,6 +15,7 @@ import (
 	"heroku-line-bot/src/repo/database/database/clubdb/activity"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
 	"heroku-line-bot/src/repo/database/database/clubdb/memberactivity"
+	"heroku-line-bot/src/repo/redis"
 	"sort"
 	"strconv"
 	"time"
@@ -23,11 +24,11 @@ import (
 type GetActivities struct {
 	context               domain.ICmdHandlerContext `json:"-"`
 	activities            []*getActivitiesActivity
-	JoinActivityID        uint                             `json:"join_activity_id"`
-	TeamID                uint                             `json:"team_id"`
-	LeaveActivityID       uint                             `json:"leave_activity_id"`
-	currentUser           accountLineuserLogicDomain.Model `json:"-"`
-	ListMembersActivityID uint                             `json:"list_members_activity_id"`
+	JoinActivityID        uint                     `json:"join_activity_id"`
+	TeamID                uint                     `json:"team_id"`
+	LeaveActivityID       uint                     `json:"leave_activity_id"`
+	currentUser           accountLogicDomain.Model `json:"-"`
+	ListMembersActivityID uint                     `json:"list_members_activity_id"`
 }
 
 type getActivitiesActivity struct {
@@ -117,7 +118,8 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 	for id := range idPlaceMap {
 		placeIDs = append(placeIDs, id)
 	}
-	if dbDatas, errInfo := badmintonPlaceLogic.Load(placeIDs...); errInfo != nil {
+	placeLogic := badmintonLogic.NewBadmintonPlaceLogic(database.Club(), redis.Badminton())
+	if dbDatas, errInfo := placeLogic.Load(placeIDs...); errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		if resultErrInfo.IsError() {
 			return
@@ -251,7 +253,8 @@ func (b *GetActivities) listMembers() (resultErrInfo errUtil.IError) {
 		date = v.Date
 		peopleLimit = v.PeopleLimit
 
-		if dbDatas, errInfo := badmintonPlaceLogic.Load(v.PlaceID); errInfo != nil {
+		placeLogic := badmintonLogic.NewBadmintonPlaceLogic(database.Club(), redis.Badminton())
+		if dbDatas, errInfo := placeLogic.Load(v.PlaceID); errInfo != nil {
 			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -408,7 +411,8 @@ func (b *GetActivities) leaveActivity() (resultErrInfo errUtil.IError) {
 		peopleLimit = v.PeopleLimit
 		activityDate = &v.Date
 
-		if dbDatas, errInfo := badmintonPlaceLogic.Load(v.PlaceID); errInfo != nil {
+		placeLogic := badmintonLogic.NewBadmintonPlaceLogic(database.Club(), redis.Badminton())
+		if dbDatas, errInfo := placeLogic.Load(v.PlaceID); errInfo != nil {
 			errInfo := errUtil.NewError(err)
 			if resultErrInfo == nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)

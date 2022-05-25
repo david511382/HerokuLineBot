@@ -1,34 +1,40 @@
 package badminton
 
 import (
-	apiLogic "heroku-line-bot/src/logic/api/badminton"
+	"heroku-line-bot/bootstrap"
+	apiLogic "heroku-line-bot/src/logic/api"
+	badmintonLogic "heroku-line-bot/src/logic/badminton"
+	"heroku-line-bot/src/pkg/test"
+	"heroku-line-bot/src/pkg/test/mock"
 	"heroku-line-bot/src/pkg/util"
-	errUtil "heroku-line-bot/src/pkg/util/error"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb"
+	"heroku-line-bot/src/repo/redis"
+	"heroku-line-bot/src/repo/redis/db/badminton"
+	"heroku-line-bot/src/server/common"
 	"heroku-line-bot/src/server/domain/reqs"
 	"heroku-line-bot/src/server/domain/resp"
+	"heroku-line-bot/src/server/middleware"
+	"heroku-line-bot/src/server/validation"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
 )
 
 func TestGetActivitys(t *testing.T) {
+	t.Parallel()
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+
 	type args struct {
 		reqs reqs.GetActivitys
 	}
 	type migrations struct {
-		mockGetActivitys func(
-			fromDate,
-			toDate *util.DateTime,
-			pageIndex,
-			pageSize uint,
-			placeIDs,
-			teamIDs []uint,
-			everyWeekdays []time.Weekday,
-		) (
-			result resp.GetActivitys,
-			resultErrInfo errUtil.IError,
-		)
-		requestSetter func(req *http.Request) error
+		badmintonActivityApiLogicFn func() apiLogic.IBadmintonActivityApiLogic
+		requestSetter               func(req *http.Request) error
 	}
 	type wants struct {
 		resp *resp.Base
@@ -60,43 +66,24 @@ func TestGetActivitys(t *testing.T) {
 				},
 			},
 			migrations{
-				mockGetActivitys: func(fromDate, toDate *util.DateTime, pageIndex, pageSize uint, placeIDs, teamIDs []uint, everyWeekdays []time.Weekday) (result resp.GetActivitys, resultErrInfo errUtil.IError) {
-					if ok, msg := util.Comp(fromDate, util.NewDateTimeP(location, 2013, 8, 2)); !ok {
-						resultErrInfo = errUtil.Append(resultErrInfo, errUtil.New(msg))
-						return
-					}
-					if ok, msg := util.Comp(toDate, util.NewDateTimeP(location, 2013, 8, 3)); !ok {
-						resultErrInfo = errUtil.Append(resultErrInfo, errUtil.New(msg))
-						return
-					}
-					if ok, msg := util.Comp(pageSize, uint(1)); !ok {
-						resultErrInfo = errUtil.Append(resultErrInfo, errUtil.New(msg))
-						return
-					}
-					if ok, msg := util.Comp(pageIndex, uint(2)); !ok {
-						resultErrInfo = errUtil.Append(resultErrInfo, errUtil.New(msg))
-						return
-					}
-					if ok, msg := util.Comp(placeIDs, []uint{1, 2, 2}); !ok {
-						resultErrInfo = errUtil.Append(resultErrInfo, errUtil.New(msg))
-						return
-					}
-					if ok, msg := util.Comp(teamIDs, []uint{3, 3, 4}); !ok {
-						resultErrInfo = errUtil.Append(resultErrInfo, errUtil.New(msg))
-						return
-					}
-					if ok, msg := util.Comp(everyWeekdays, []time.Weekday{time.Friday, time.Saturday, time.Saturday}); !ok {
-						resultErrInfo = errUtil.Append(resultErrInfo, errUtil.New(msg))
-						return
-					}
-
-					result = resp.GetActivitys{
+				badmintonActivityApiLogicFn: func() apiLogic.IBadmintonActivityApiLogic {
+					mockObj := mock.NewMockIBadmintonActivityApiLogic(mockCtl)
+					returnValue := resp.GetActivitys{
 						Page: resp.Page{
 							DataCount: 1,
 						},
 						Activitys: []*resp.GetActivitysActivity{},
 					}
-					return
+					mockObj.EXPECT().GetActivitys(
+						util.NewDateTimeP(location, 2013, 8, 2),
+						util.NewDateTimeP(location, 2013, 8, 3),
+						uint(2),
+						uint(1),
+						[]uint{1, 2, 2},
+						[]uint{3, 3, 4},
+						[]time.Weekday{time.Friday, time.Saturday, time.Saturday},
+					).Return(returnValue, nil)
+					return mockObj
 				},
 			},
 			wants{
@@ -115,17 +102,66 @@ func TestGetActivitys(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ts := *testServer
+			cfg := test.SetupTestCfg(t, test.REPO_DB, test.REPO_REDIS)
+			db := clubdb.NewDatabase(
+				database.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubDb
+					},
+				),
+			)
+			rds := badminton.NewDatabase(
+				redis.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubRedis
+					},
+				),
+				cfg.Var.RedisKeyRoot,
+			)
+			var iBadmintonActivityApiLogic apiLogic.IBadmintonActivityApiLogic
+			if fn := tt.migrations.badmintonActivityApiLogicFn; fn != nil {
+				iBadmintonActivityApiLogic = fn()
+			} else {
+				iBadmintonActivityApiLogic = apiLogic.NewBadmintonActivityApiLogic(
+					db,
+					rds,
+					badmintonLogic.NewBadmintonTeamLogic(db, rds),
+					badmintonLogic.NewBadmintonActivityLogic(db),
+					badmintonLogic.NewBadmintonPlaceLogic(db, rds),
+				)
+			}
+			var r *gin.Engine
+			{
+				r = gin.New()
+				// Recovery middleware recovers from any panics and writes a 500 if there was one.
+				r.Use(gin.Recovery())
+				r.Use(gin.Logger())
 
+				// 客製參數驗證
+				validation.RegisterValidation()
+
+				jsonTokenVerifier := common.NewJsonTokenVerifier()
+
+				// api
+				api := r.Group("/api")
+				api.Use(middleware.AuthorizeToken(jsonTokenVerifier, false))
+
+				// api/badminton
+				apiBadminton := api.Group("/badminton")
+				apiBadminton.GET("/activitys", NewGetActivitysHandler(iBadmintonActivityApiLogic))
+			}
+			ts := util.NewTestServer(r)
 			if tt.migrations.requestSetter != nil {
 				ts.SetRequest(tt.migrations.requestSetter)
 			}
-			apiLogic.MockGetActivitys = tt.migrations.mockGetActivitys
-			defer func() {
-				apiLogic.MockGetActivitys = nil
-			}()
 
-			response := testServer.Get(uri, tt.args.reqs)
+			response := ts.Get(uri, tt.args.reqs)
 			wantCode := http.StatusOK
 			if tt.wants.code != nil {
 				wantCode = *tt.wants.code

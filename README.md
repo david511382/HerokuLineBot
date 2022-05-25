@@ -45,6 +45,11 @@ token:`{"RoleID":1}`
 make test
 ```
 
+### mock
+```
+mockgen -source="./src/logic/badminton/team.go" -destination="./src/pkg/test/mock/badminton_team.go" -package=mock
+```
+
 ## db migration
 
 ### postgre

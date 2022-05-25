@@ -1,12 +1,12 @@
-package team
+package badminton
 
 import (
 	rdsModel "heroku-line-bot/src/model/redis"
 	errUtil "heroku-line-bot/src/pkg/util/error"
-	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
 	"heroku-line-bot/src/repo/database/database/clubdb/team"
-	"heroku-line-bot/src/repo/redis"
+	"heroku-line-bot/src/repo/redis/db/badminton"
 
 	"github.com/rs/zerolog"
 )
@@ -16,18 +16,28 @@ const (
 	DEFAULT_CREATE_DAYS int16 = 6
 )
 
-var MockLoad func(ids ...uint) (
-	resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam,
-	resultErrInfo errUtil.IError,
-)
+type IBadmintonTeamLogic interface {
+	Load(ids ...uint) (resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam, resultErrInfo errUtil.IError)
+}
+
+type BadmintonTeamLogic struct {
+	clubDb       *clubdb.Database
+	badmintonRds *badminton.Database
+}
+
+func NewBadmintonTeamLogic(
+	clubDb *clubdb.Database,
+	badmintonRds *badminton.Database,
+) *BadmintonTeamLogic {
+	return &BadmintonTeamLogic{
+		clubDb:       clubDb,
+		badmintonRds: badmintonRds,
+	}
+}
 
 // empty for all
-func Load(ids ...uint) (resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam, resultErrInfo errUtil.IError) {
-	if MockLoad != nil {
-		return MockLoad(ids...)
-	}
-
-	teamIDMap, errInfo := redis.Badminton().BadmintonTeam.Read(ids...)
+func (l *BadmintonTeamLogic) Load(ids ...uint) (resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam, resultErrInfo errUtil.IError) {
+	teamIDMap, errInfo := l.badmintonRds.BadmintonTeam.Read(ids...)
 	if errInfo != nil {
 		errInfo.SetLevel(zerolog.WarnLevel)
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -49,7 +59,7 @@ func Load(ids ...uint) (resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam, re
 		idTeamMap := make(map[uint]*rdsModel.ClubBadmintonTeam)
 		ownerMemberIDTeamIDsMap := make(map[uint][]uint)
 		{
-			dbDatas, err := database.Club().Team.Select(team.Reqs{
+			dbDatas, err := l.clubDb.Team.Select(team.Reqs{
 				IDs: reLoadIDs,
 			},
 				team.COLUMN_ID,
@@ -96,7 +106,7 @@ func Load(ids ...uint) (resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam, re
 			for ownerMemberID := range ownerMemberIDTeamIDsMap {
 				ownerMemberIDs = append(ownerMemberIDs, ownerMemberID)
 			}
-			dbDatas, err := database.Club().Member.Select(member.Reqs{
+			dbDatas, err := l.clubDb.Member.Select(member.Reqs{
 				IDs: ownerMemberIDs,
 			},
 				member.COLUMN_ID,
@@ -115,7 +125,7 @@ func Load(ids ...uint) (resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam, re
 			}
 		}
 
-		if errInfo := redis.Badminton().BadmintonTeam.HMSet(idTeamMap); errInfo != nil {
+		if errInfo := l.badmintonRds.BadmintonTeam.HMSet(idTeamMap); errInfo != nil {
 			errInfo.SetLevel(zerolog.WarnLevel)
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 		}

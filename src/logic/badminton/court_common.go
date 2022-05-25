@@ -1,8 +1,6 @@
-package court
+package badminton
 
-import (
-	"heroku-line-bot/src/logic/badminton/court/domain"
-)
+import "heroku-line-bot/src/logic/badminton/domain"
 
 func GetStatus(isPay, isRefund bool) domain.RentalCourtsStatus {
 	if isRefund {

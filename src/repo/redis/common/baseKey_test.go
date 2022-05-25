@@ -56,7 +56,7 @@ func TestBaseKey_SetNX(t *testing.T) {
 			"timeout",
 			args{
 				value: "v",
-				et:    time.Millisecond,
+				et:    time.Millisecond * 100,
 			},
 			migrations{
 				redisData: nil,
@@ -101,9 +101,6 @@ func TestBaseKey_SetNX(t *testing.T) {
 				baseKey,
 				defaultParser,
 			)
-			t.Cleanup(func() {
-				migrationKey.Del()
-			})
 			if p := tt.migrations.redisData; p != nil {
 				if errInfo := migrationKey.Migration(*p); errInfo != nil {
 					t.Fatal(errInfo.Error())
@@ -212,9 +209,6 @@ func TestBaseKey_Set(t *testing.T) {
 				baseKey,
 				defaultParser,
 			)
-			t.Cleanup(func() {
-				migrationKey.Del()
-			})
 			if p := tt.migrations.redisData; p != nil {
 				if errInfo := migrationKey.Migration(*p); errInfo != nil {
 					t.Fatal(errInfo.Error())
@@ -309,9 +303,6 @@ func TestBaseKey_Get(t *testing.T) {
 				baseKey,
 				defaultParser,
 			)
-			t.Cleanup(func() {
-				migrationKey.Del()
-			})
 			if p := tt.migrations.redisData; p != nil {
 				if errInfo := migrationKey.Migration(*p); errInfo != nil {
 					t.Fatal(errInfo.Error())

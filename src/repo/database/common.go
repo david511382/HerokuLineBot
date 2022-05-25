@@ -38,31 +38,37 @@ func Club() *clubdb.Database {
 }
 
 func getConnect(configSelector func(cfg *bootstrap.Config) bootstrap.Db) func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
-	return func() (master *gorm.DB, slave *gorm.DB, resultErr error) {
-		return connect(configSelector)
-	}
+	return GetConnectFn(
+		bootstrap.Get,
+		configSelector,
+	)
 }
 
-func connect(configSelector func(cfg *bootstrap.Config) bootstrap.Db) (master, slave *gorm.DB, resultErr error) {
-	cfg, err := bootstrap.Get()
-	if err != nil {
-		resultErr = err
-		return
-	}
+func GetConnectFn(
+	configGetterFn func() (*bootstrap.Config, error),
+	configSelector func(cfg *bootstrap.Config) bootstrap.Db,
+) func() (master, slave *gorm.DB, resultErr error) {
+	return func() (master, slave *gorm.DB, resultErr error) {
+		cfg, err := configGetterFn()
+		if err != nil {
+			resultErr = err
+			return
+		}
 
-	dbCfg := configSelector(cfg)
-	master, resultErr = conn.Connect(dbCfg)
-	if resultErr != nil {
-		return
-	}
-	setConnect(cfg.DbConfig, master)
+		dbCfg := configSelector(cfg)
+		master, resultErr = conn.Connect(dbCfg)
+		if resultErr != nil {
+			return
+		}
+		setConnect(cfg.DbConfig, master)
 
-	slave, resultErr = conn.Connect(dbCfg)
-	if resultErr != nil {
+		slave, resultErr = conn.Connect(dbCfg)
+		if resultErr != nil {
+			return
+		}
+		setConnect(cfg.DbConfig, slave)
 		return
 	}
-	setConnect(cfg.DbConfig, slave)
-	return
 }
 
 func setConnect(connCfg bootstrap.DbConfig, db *gorm.DB) error {

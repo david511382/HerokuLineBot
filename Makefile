@@ -54,5 +54,11 @@ kdown: # 關閉
 
 # -p 設定執行續，預設不同 package 會非同步執行
 test: # 測試
-	go test ./src/pkg/util/... ./bootstrap/... ./src/repo/... --count=1
-	go test ./src/logic/... ./src/background/... ./src/server/... --count=1 -p 1
+	go test \
+	./src/pkg/util/... \
+	./bootstrap/... \
+	./src/repo/... \
+	./src/logic/... \
+	./src/background/... \
+	./src/server/... \
+	--count=1

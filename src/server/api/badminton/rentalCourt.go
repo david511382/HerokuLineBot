@@ -1,14 +1,14 @@
 package badminton
 
 import (
-	badmintonCourtLogic "heroku-line-bot/src/logic/badminton/court"
-	badmintoncourtLogic "heroku-line-bot/src/logic/badminton/court"
-	badmintonCourtLogicDomain "heroku-line-bot/src/logic/badminton/court/domain"
-	badmintonPlaceLogic "heroku-line-bot/src/logic/badminton/place"
+	badmintonLogic "heroku-line-bot/src/logic/badminton"
+	badmintonLogicDomain "heroku-line-bot/src/logic/badminton/domain"
 	"heroku-line-bot/src/pkg/errorcode"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
+	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/redis"
 	"heroku-line-bot/src/server/common"
 	"heroku-line-bot/src/server/domain/reqs"
 	"heroku-line-bot/src/server/domain/resp"
@@ -53,6 +53,7 @@ func GetRentalCourts(c *gin.Context) {
 	if reqs.TeamID == 0 {
 		reqs.TeamID = 1
 	}
+	badmintonCourtLogic := badmintonLogic.NewBadmintonCourtLogic(database.Club(), redis.Badminton())
 	teamPlaceDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(
 		*util.NewDateTimePOf(&reqs.FromDate),
 		*util.NewDateTimePOf(&reqs.ToDate),
@@ -74,6 +75,7 @@ func GetRentalCourts(c *gin.Context) {
 	for placeID := range teamPlaceDateCourtsMap[reqs.TeamID] {
 		placeIDs = append(placeIDs, placeID)
 	}
+	badmintonPlaceLogic := badmintonLogic.NewBadmintonPlaceLogic(database.Club(), redis.Badminton())
 	idPlaceMap, errInfo := badmintonPlaceLogic.Load(placeIDs...)
 	if errInfo != nil && errInfo.IsError() {
 		common.FailInternal(c, errInfo)
@@ -100,8 +102,8 @@ func GetRentalCourts(c *gin.Context) {
 					status := unit.GetStatus()
 					reasonMessage := ""
 					switch status {
-					case badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_CANCEL,
-						badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND:
+					case badmintonLogicDomain.RENTAL_COURTS_STATUS_CANCEL,
+						badmintonLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND:
 						reasonMessage = "取消"
 					}
 
@@ -113,12 +115,12 @@ func GetRentalCourts(c *gin.Context) {
 						Cost:     unit.Cost(court.PricePerHour).Value(),
 					}
 					switch status {
-					case badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_PAY:
+					case badmintonLogicDomain.RENTAL_COURTS_STATUS_NOT_PAY:
 						if notPayDateIntCourtsMap[courtDateInt] == nil {
 							notPayDateIntCourtsMap[courtDateInt] = make([]*resp.GetRentalCourtsCourtInfo, 0)
 						}
 						notPayDateIntCourtsMap[courtDateInt] = append(notPayDateIntCourtsMap[courtDateInt], &info)
-					case badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND:
+					case badmintonLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND:
 						if notRefundDateIntCourtsMap[courtDateInt] == nil {
 							notRefundDateIntCourtsMap[courtDateInt] = make([]*resp.GetRentalCourtsCourtInfo, 0)
 						}
@@ -153,19 +155,19 @@ func GetRentalCourts(c *gin.Context) {
 			return courts[i].FromTime.Before(courts[j].FromTime)
 		})
 		sort.SliceStable(courts, func(i, j int) bool {
-			jStatus := badmintonCourtLogicDomain.RentalCourtsStatus(courts[j].Status)
-			if jStatus == badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_CANCEL {
+			jStatus := badmintonLogicDomain.RentalCourtsStatus(courts[j].Status)
+			if jStatus == badmintonLogicDomain.RENTAL_COURTS_STATUS_CANCEL {
 				return true
 			}
-			iStatus := badmintonCourtLogicDomain.RentalCourtsStatus(courts[i].Status)
-			if iStatus == badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_CANCEL {
+			iStatus := badmintonLogicDomain.RentalCourtsStatus(courts[i].Status)
+			if iStatus == badmintonLogicDomain.RENTAL_COURTS_STATUS_CANCEL {
 				return false
 			}
 
-			if jStatus == badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND {
+			if jStatus == badmintonLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND {
 				return true
 			}
-			if iStatus == badmintonCourtLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND {
+			if iStatus == badmintonLogicDomain.RENTAL_COURTS_STATUS_NOT_REFUND {
 				return false
 			}
 
@@ -268,7 +270,8 @@ func AddRentalCourt(c *gin.Context) {
 		return
 	}
 
-	courtDetail := badmintoncourtLogic.CourtDetail{
+	badmintonCourtLogic := badmintonLogic.NewBadmintonCourtLogic(database.Club(), redis.Badminton())
+	courtDetail := badmintonLogic.CourtDetail{
 		TimeRange: util.TimeRange{
 			From: reqs.CourtFromTime,
 			To:   reqs.CourtToTime,
@@ -278,7 +281,7 @@ func AddRentalCourt(c *gin.Context) {
 	depsitDate := util.NewDateTimePOf(reqs.DespositDate)
 	balanceDate := util.NewDateTimePOf(reqs.BalanceDate)
 	{
-		errInfo := badmintoncourtLogic.VerifyAddCourt(
+		errInfo := badmintonCourtLogic.VerifyAddCourt(
 			reqs.PlaceID,
 			reqs.TeamID,
 			reqs.PricePerHour,
@@ -304,7 +307,7 @@ func AddRentalCourt(c *gin.Context) {
 			}
 		}
 	}
-	if errInfo := badmintoncourtLogic.AddCourt(
+	if errInfo := badmintonCourtLogic.AddCourt(
 		reqs.PlaceID,
 		reqs.TeamID,
 		reqs.PricePerHour,

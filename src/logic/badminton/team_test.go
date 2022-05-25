@@ -1,17 +1,23 @@
-package team
+package badminton
 
 import (
+	"heroku-line-bot/bootstrap"
 	rdsModel "heroku-line-bot/src/model/redis"
 	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/test"
 	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/member"
 	"heroku-line-bot/src/repo/database/database/clubdb/team"
 	"heroku-line-bot/src/repo/redis"
+	"heroku-line-bot/src/repo/redis/db/badminton"
 	"testing"
 )
 
-func TestLoad(t *testing.T) {
+func TestTeamLoad(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		ids []uint
 	}
@@ -134,17 +140,40 @@ func TestLoad(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club().Team.MigrationData(tt.migrations.team...); err != nil {
+			cfg := test.SetupTestCfg(t, test.REPO_DB, test.REPO_REDIS)
+			db := clubdb.NewDatabase(
+				database.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubDb
+					},
+				),
+			)
+			if err := db.Team.MigrationData(tt.migrations.team...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := database.Club().Member.MigrationData(tt.migrations.member...); err != nil {
+			if err := db.Member.MigrationData(tt.migrations.member...); err != nil {
 				t.Fatal(err.Error())
 			}
-			if err := redis.Badminton().BadmintonTeam.Migration(tt.migrations.redisTeamIDPlaceMap); err != nil {
+			rds := badminton.NewDatabase(
+				redis.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubRedis
+					},
+				),
+				cfg.Var.RedisKeyRoot,
+			)
+			if err := rds.BadmintonTeam.Migration(tt.migrations.redisTeamIDPlaceMap); err != nil {
 				t.Fatal(err.Error())
 			}
 
-			gotResultTeamIDMap, errInfo := Load(tt.args.ids...)
+			l := NewBadmintonTeamLogic(db, rds)
+			gotResultTeamIDMap, errInfo := l.Load(tt.args.ids...)
 			if errInfo != nil {
 				t.Error(errInfo.Error())
 				return
@@ -154,7 +183,7 @@ func TestLoad(t *testing.T) {
 				return
 			}
 
-			if got, err := redis.Badminton().BadmintonTeam.Read(); err != nil {
+			if got, err := rds.BadmintonTeam.Read(); err != nil {
 				t.Fatal(err.Error())
 			} else {
 				if ok, msg := util.Comp(got, tt.wants.redisTeamIDPlaceMap); !ok {

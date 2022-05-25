@@ -1,26 +1,35 @@
 package activitycreator
 
 import (
-	badmintonCourtLogic "heroku-line-bot/src/logic/badminton/court"
-	badmintonCourtLogicDomain "heroku-line-bot/src/logic/badminton/court/domain"
-	badmintonteamLogic "heroku-line-bot/src/logic/badminton/team"
+	"heroku-line-bot/bootstrap"
+	badmintonLogic "heroku-line-bot/src/logic/badminton"
+	badmintonLogicDomain "heroku-line-bot/src/logic/badminton/domain"
 	clubLogic "heroku-line-bot/src/logic/club"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
 	rdsModel "heroku-line-bot/src/model/redis"
 	"heroku-line-bot/src/pkg/global"
+	"heroku-line-bot/src/pkg/test"
+	"heroku-line-bot/src/pkg/test/mock"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
+	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/activity"
+	"heroku-line-bot/src/repo/redis"
+	"heroku-line-bot/src/repo/redis/db/badminton"
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/golang/mock/gomock"
 )
 
 func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
-		courts []*badmintonCourtLogicDomain.ActivityCourt
+		courts []*badmintonLogicDomain.ActivityCourt
 	}
 	tests := []struct {
 		name               string
@@ -30,7 +39,7 @@ func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
 		{
 			"standard",
 			args{
-				courts: []*badmintonCourtLogicDomain.ActivityCourt{
+				courts: []*badmintonLogicDomain.ActivityCourt{
 					{
 						FromTime:     commonLogic.GetTime(2013, 8, 2, 2),
 						ToTime:       commonLogic.GetTime(2013, 8, 2, 3),
@@ -130,9 +139,11 @@ func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
 }
 
 func Test_calActivitys(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		teamID             uint
-		placeDateCourtsMap map[uint][]*badmintonCourtLogic.DateCourt
+		placeDateCourtsMap map[uint][]*badmintonLogic.DateCourt
 		rdsSetting         *rdsModel.ClubBadmintonTeam
 	}
 	tests := []struct {
@@ -143,15 +154,15 @@ func Test_calActivitys(t *testing.T) {
 		{
 			"refund",
 			args{
-				placeDateCourtsMap: map[uint][]*badmintonCourtLogic.DateCourt{
+				placeDateCourtsMap: map[uint][]*badmintonLogic.DateCourt{
 					1: {
 						{
 							Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-							Courts: []*badmintonCourtLogic.Court{
+							Courts: []*badmintonLogic.Court{
 								{
-									CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{
-										DbCourtDetail: badmintonCourtLogic.DbCourtDetail{
-											CourtDetail: badmintonCourtLogic.CourtDetail{
+									CourtDetailPrice: badmintonLogic.CourtDetailPrice{
+										DbCourtDetail: badmintonLogic.DbCourtDetail{
+											CourtDetail: badmintonLogic.CourtDetail{
 												TimeRange: util.TimeRange{
 													From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
 													To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
@@ -161,12 +172,12 @@ func Test_calActivitys(t *testing.T) {
 										},
 										PricePerHour: 10,
 									},
-									Balance:        badmintonCourtLogic.LedgerIncome{},
+									Balance:        badmintonLogic.LedgerIncome{},
 									BalanceCourIDs: []uint{},
-									Refunds: []*badmintonCourtLogic.RefundMulCourtIncome{
+									Refunds: []*badmintonLogic.RefundMulCourtIncome{
 										{
-											DbCourtDetail: badmintonCourtLogic.DbCourtDetail{
-												CourtDetail: badmintonCourtLogic.CourtDetail{
+											DbCourtDetail: badmintonLogic.DbCourtDetail{
+												CourtDetail: badmintonLogic.CourtDetail{
 													TimeRange: util.TimeRange{
 														From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
 														To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
@@ -181,11 +192,11 @@ func Test_calActivitys(t *testing.T) {
 						},
 						{
 							Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-							Courts: []*badmintonCourtLogic.Court{
+							Courts: []*badmintonLogic.Court{
 								{
-									CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{
-										DbCourtDetail: badmintonCourtLogic.DbCourtDetail{
-											CourtDetail: badmintonCourtLogic.CourtDetail{
+									CourtDetailPrice: badmintonLogic.CourtDetailPrice{
+										DbCourtDetail: badmintonLogic.DbCourtDetail{
+											CourtDetail: badmintonLogic.CourtDetail{
 												TimeRange: util.TimeRange{
 													From: commonLogic.NewHourMinTime(2, 0).ForceTime(),
 													To:   commonLogic.NewHourMinTime(4, 0).ForceTime(),
@@ -195,9 +206,9 @@ func Test_calActivitys(t *testing.T) {
 										},
 										PricePerHour: 10,
 									},
-									Balance:        badmintonCourtLogic.LedgerIncome{},
+									Balance:        badmintonLogic.LedgerIncome{},
 									BalanceCourIDs: []uint{},
-									Refunds:        []*badmintonCourtLogic.RefundMulCourtIncome{},
+									Refunds:        []*badmintonLogic.RefundMulCourtIncome{},
 								},
 							},
 						},
@@ -218,7 +229,7 @@ func Test_calActivitys(t *testing.T) {
 					ClubSubsidy: 8,
 					Description: "",
 					PeopleLimit: util.PointerOf[int16](2),
-					Courts: []*badmintonCourtLogicDomain.ActivityCourt{
+					Courts: []*badmintonLogicDomain.ActivityCourt{
 						{
 							FromTime:     commonLogic.NewHourMinTime(1, 0).ForceTime(),
 							ToTime:       commonLogic.NewHourMinTime(3, 0).ForceTime(),
@@ -255,23 +266,17 @@ func Test_calActivitys(t *testing.T) {
 }
 
 func TestBackGround_Run(t *testing.T) {
+	t.Parallel()
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+
 	type args struct {
 		runTime time.Time
 	}
 	type migrations struct {
-		activity      []*activity.Model
-		mockGetCourts func(
-			fromDate, toDate util.DateTime,
-			teamID,
-			placeID *uint,
-		) (
-			teamPlaceDateCourtsMap map[uint]map[uint][]*badmintonCourtLogic.DateCourt,
-			resultErrInfo errUtil.IError,
-		)
-		mockTeamLoad func(ids ...uint) (
-			resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam,
-			resultErrInfo errUtil.IError,
-		)
+		activity              []*activity.Model
+		badmintonCourtLogicFn func() badmintonLogic.IBadmintonCourtLogic
+		badmintonTeamLogicFn  func() badmintonLogic.IBadmintonTeamLogic
 	}
 	type wants struct {
 		activity []*activity.Model
@@ -289,46 +294,60 @@ func TestBackGround_Run(t *testing.T) {
 			},
 			migrations{
 				activity: []*activity.Model{},
-				mockGetCourts: func(
-					fromDate, toDate util.DateTime,
-					teamID,
-					placeID *uint,
-				) (
-					teamPlaceDateCourtsMap map[uint]map[uint][]*badmintonCourtLogic.DateCourt,
-					resultErrInfo errUtil.IError,
-				) {
-					teamPlaceDateCourtsMap = map[uint]map[uint][]*badmintonCourtLogic.DateCourt{
-						1: {
-							1: {},
-						},
-					}
-					util.TimeSlice(fromDate.Time(), toDate.Next(1).Time(),
-						util.DATE_TIME_TYPE.Next1,
-						func(runTime, next time.Time) (isContinue bool) {
-							teamPlaceDateCourtsMap[1][1] = append(teamPlaceDateCourtsMap[1][1], &badmintonCourtLogic.DateCourt{
-								ID:   0,
-								Date: *util.NewDateTimePOf(&runTime),
-								Courts: []*badmintonCourtLogic.Court{
-									{
-										CourtDetailPrice: badmintonCourtLogic.CourtDetailPrice{},
-										Desposit:         nil,
-										Balance:          badmintonCourtLogic.LedgerIncome{},
-										BalanceCourIDs:   []uint{},
-										Refunds:          []*badmintonCourtLogic.RefundMulCourtIncome{},
-									},
+				badmintonCourtLogicFn: func() badmintonLogic.IBadmintonCourtLogic {
+					mockObj := mock.NewMockIBadmintonCourtLogic(mockCtl)
+					var (
+						fromDate, toDate util.DateTime
+						teamID,
+						placeID *uint
+					)
+					mockObj.EXPECT().GetCourts(
+						gomock.AssignableToTypeOf(fromDate),
+						gomock.AssignableToTypeOf(toDate),
+						gomock.AssignableToTypeOf(teamID),
+						gomock.AssignableToTypeOf(placeID),
+					).DoAndReturn(
+						func(
+							fromDate, toDate util.DateTime,
+							teamID,
+							placeID *uint,
+						) (
+							teamPlaceDateCourtsMap map[uint]map[uint][]*badmintonLogic.DateCourt,
+							resultErrInfo errUtil.IError,
+						) {
+							teamPlaceDateCourtsMap = map[uint]map[uint][]*badmintonLogic.DateCourt{
+								1: {
+									1: {},
 								},
-							})
-							return true
+							}
+							util.TimeSlice(fromDate.Time(), toDate.Next(1).Time(),
+								util.DATE_TIME_TYPE.Next1,
+								func(runTime, next time.Time) (isContinue bool) {
+									teamPlaceDateCourtsMap[1][1] = append(teamPlaceDateCourtsMap[1][1], &badmintonLogic.DateCourt{
+										ID:   0,
+										Date: *util.NewDateTimePOf(&runTime),
+										Courts: []*badmintonLogic.Court{
+											{
+												CourtDetailPrice: badmintonLogic.CourtDetailPrice{},
+												Desposit:         nil,
+												Balance:          badmintonLogic.LedgerIncome{},
+												BalanceCourIDs:   []uint{},
+												Refunds:          []*badmintonLogic.RefundMulCourtIncome{},
+											},
+										},
+									})
+									return true
+								},
+							)
+
+							return
 						},
 					)
-
-					return
+					return mockObj
 				},
-				mockTeamLoad: func(ids ...uint) (
-					resultTeamIDMap map[uint]*rdsModel.ClubBadmintonTeam,
-					resultErrInfo errUtil.IError,
-				) {
-					resultTeamIDMap = map[uint]*rdsModel.ClubBadmintonTeam{
+				badmintonTeamLogicFn: func() badmintonLogic.IBadmintonTeamLogic {
+					badmintonTeamLogic := mock.NewMockIBadmintonTeamLogic(mockCtl)
+					resultTeamIDMap := map[uint]*rdsModel.ClubBadmintonTeam{
 						1: {
 							Name:               "",
 							OwnerMemberID:      1,
@@ -337,7 +356,8 @@ func TestBackGround_Run(t *testing.T) {
 							ActivityCreateDays: util.PointerOf[int16](6),
 						},
 					}
-					return
+					badmintonTeamLogic.EXPECT().Load().Return(resultTeamIDMap, nil)
+					return badmintonTeamLogic
 				},
 			},
 			wants{
@@ -363,24 +383,52 @@ func TestBackGround_Run(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := database.Club().Activity.MigrationData(tt.migrations.activity...); err != nil {
+			cfg := test.SetupTestCfg(t, test.REPO_DB, test.REPO_REDIS)
+			db := clubdb.NewDatabase(
+				database.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubDb
+					},
+				),
+			)
+			if err := db.Activity.MigrationData(tt.migrations.activity...); err != nil {
 				t.Fatal(err.Error())
 			}
-			badmintonCourtLogic.MockGetCourts = tt.migrations.mockGetCourts
-			badmintonteamLogic.MockLoad = tt.migrations.mockTeamLoad
-			defer func() {
-				badmintonCourtLogic.MockGetCourts = nil
-				badmintonteamLogic.MockLoad = nil
-			}()
+			rds := badminton.NewDatabase(
+				redis.GetConnectFn(
+					func() (*bootstrap.Config, error) {
+						return cfg, nil
+					},
+					func(cfg *bootstrap.Config) bootstrap.Db {
+						return cfg.ClubRedis
+					},
+				),
+				cfg.Var.RedisKeyRoot,
+			)
+			var iBadmintonCourtLogic badmintonLogic.IBadmintonCourtLogic
+			if fn := tt.migrations.badmintonCourtLogicFn; fn != nil {
+				iBadmintonCourtLogic = fn()
+			} else {
+				iBadmintonCourtLogic = badmintonLogic.NewBadmintonCourtLogic(db, rds)
+			}
+			var iBadmintonTeamLogic badmintonLogic.IBadmintonTeamLogic
+			if fn := tt.migrations.badmintonTeamLogicFn; fn != nil {
+				iBadmintonTeamLogic = fn()
+			} else {
+				iBadmintonTeamLogic = badmintonLogic.NewBadmintonTeamLogic(db, rds)
+			}
 
-			b := BackGround{}
+			b := New(db, rds, iBadmintonCourtLogic, iBadmintonTeamLogic)
 			errInfo := b.Run(tt.args.runTime)
 			if errInfo != nil {
 				t.Error(errInfo.Error())
 				return
 			}
 
-			if gotDbDatas, err := database.Club().Activity.Select(activity.Reqs{}); err != nil {
+			if gotDbDatas, err := db.Activity.Select(activity.Reqs{}); err != nil {
 				t.Error(errInfo.Error())
 				return
 			} else {
