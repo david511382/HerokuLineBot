@@ -55,8 +55,8 @@ func GetRentalCourts(c *gin.Context) {
 	}
 	badmintonCourtLogic := badmintonLogic.NewBadmintonCourtLogic(database.Club(), redis.Badminton())
 	teamPlaceDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(
-		*util.NewDateTimePOf(&reqs.FromDate),
-		*util.NewDateTimePOf(&reqs.ToDate),
+		util.Date().Of(reqs.FromDate),
+		util.Date().Of(reqs.ToDate),
 		&reqs.TeamID,
 		nil,
 	)
@@ -180,7 +180,7 @@ func GetRentalCourts(c *gin.Context) {
 	for _, dateInt := range dateInts {
 		courts := dateIntCourtsMap[dateInt]
 		resultCourt := &resp.GetRentalCourtsDayCourts{
-			Date:            dateInt.In(global.TimeUtilObj.GetLocation()),
+			Date:            dateInt.Time(global.TimeUtilObj.GetLocation()).Time(),
 			Courts:          make([]*resp.GetRentalCourtsDayCourtsInfo, 0),
 			IsMultiplePlace: len(dateIntPlaceMap[dateInt]) > 1,
 		}
@@ -218,7 +218,7 @@ func getGetRentalCourtsPayInfo(dateIntCourtsMap map[util.DateInt][]*resp.GetRent
 	for _, dateInt := range dateInts {
 		courts := dateIntCourtsMap[dateInt]
 		resultCourt := &resp.GetRentalCourtsPayInfoDay{
-			Date:   dateInt.In(global.TimeUtilObj.GetLocation()),
+			Date:   dateInt.Time(global.TimeUtilObj.GetLocation()).Time(),
 			Courts: make([]*resp.GetRentalCourtsCourtInfo, 0),
 		}
 		cost := util.NewFloat(0)
@@ -261,8 +261,8 @@ func AddRentalCourt(c *gin.Context) {
 		Message: "完成",
 	}
 
-	fromDate := *util.NewDateTimePOf(&reqs.FromDate)
-	toDate := *util.NewDateTimePOf(&reqs.ToDate)
+	fromDate := util.Date().Of(reqs.FromDate)
+	toDate := util.Date().Of(reqs.ToDate)
 	rentalDates := addRentalCourtGetRentalDates(fromDate, toDate, reqs.EveryWeekday, reqs.ExcludeDates)
 	if len(rentalDates) == 0 {
 		errInfo := errUtil.NewErrorMsg("No Dates")
@@ -278,8 +278,8 @@ func AddRentalCourt(c *gin.Context) {
 		},
 		Count: uint8(reqs.CourtCount),
 	}
-	depsitDate := util.NewDateTimePOf(reqs.DespositDate)
-	balanceDate := util.NewDateTimePOf(reqs.BalanceDate)
+	depsitDate := util.Date().POf(reqs.DespositDate)
+	balanceDate := util.Date().POf(reqs.BalanceDate)
 	{
 		errInfo := badmintonCourtLogic.VerifyAddCourt(
 			reqs.PlaceID,
@@ -331,15 +331,15 @@ func AddRentalCourt(c *gin.Context) {
 }
 
 func addRentalCourtGetRentalDates(
-	fromDate, toDate util.DateTime,
+	fromDate, toDate util.DefinedTime[util.DateInt],
 	everyWeekday *int,
 	excludeDates []*time.Time,
-) (rentalDates []util.DateTime) {
-	rentalDates = make([]util.DateTime, 0)
+) (rentalDates []util.DefinedTime[util.DateInt]) {
+	rentalDates = make([]util.DefinedTime[util.DateInt], 0)
 
 	excludeDateIntMap := make(map[util.DateInt]bool)
 	for _, v := range excludeDates {
-		dateInt := util.NewDateTimePOf(v).Int()
+		dateInt := util.Date().Of(*v).Int()
 		excludeDateIntMap[dateInt] = true
 	}
 
@@ -354,14 +354,14 @@ func addRentalCourtGetRentalDates(
 		}
 	} else {
 		util.TimeSlice(fromDate.Time(), toDate.Time(),
-			util.DATE_TIME_TYPE.Next1,
+			util.Date().Next1,
 			func(runTime, next time.Time) (isContinue bool) {
 				isContinue = true
-				dateInt := util.NewDateTimePOf(&runTime).Int()
+				dateInt := util.Date().Of(runTime).Int()
 				if excludeDateIntMap[dateInt] {
 					return
 				}
-				rentalDates = append(rentalDates, *util.NewDateTimePOf(&runTime))
+				rentalDates = append(rentalDates, util.Date().Of(runTime))
 				return
 			},
 		)

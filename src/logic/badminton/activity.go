@@ -11,7 +11,7 @@ import (
 
 type IBadmintonActivityLogic interface {
 	GetUnfinishedActiviysSqlReqs(
-		fromDate, toDate *util.DateTime,
+		fromDate, toDate *util.DefinedTime[util.DateInt],
 		teamIDs,
 		placeIDs []uint,
 		everyWeekdays []time.Weekday,
@@ -39,7 +39,7 @@ func NewBadmintonActivityLogic(clubDb *clubdb.Database) *BadmintonActivityLogic 
 }
 
 func (l *BadmintonActivityLogic) GetUnfinishedActiviysSqlReqs(
-	fromDate, toDate *util.DateTime,
+	fromDate, toDate *util.DefinedTime[util.DateInt],
 	teamIDs,
 	placeIDs []uint,
 	everyWeekdays []time.Weekday,
@@ -54,10 +54,10 @@ func (l *BadmintonActivityLogic) GetUnfinishedActiviysSqlReqs(
 		PlaceIDs: placeIDs,
 	}
 	if fromDate != nil {
-		arg.FromDate = fromDate.TimeP()
+		arg.FromDate = util.PointerOf(fromDate.Time())
 	}
 	if toDate != nil {
-		arg.ToDate = toDate.TimeP()
+		arg.ToDate = util.PointerOf(toDate.Time())
 	}
 	if isNotSpecifyingTeam := len(teamIDs) == 0; isNotSpecifyingTeam {
 		args = append(args, arg)
@@ -84,10 +84,10 @@ func (l *BadmintonActivityLogic) GetUnfinishedActiviysSqlReqs(
 				}
 
 				if startDate == nil {
-					startDate = util.NewDateTimePOf(&minTime)
+					startDate = util.PointerOf(util.Date().Of(minTime))
 				}
 				if endtDate == nil {
-					endtDate = util.NewDateTimePOf(&maxDate)
+					endtDate = util.PointerOf(util.Date().Of(maxDate))
 				}
 			}
 
@@ -96,7 +96,7 @@ func (l *BadmintonActivityLogic) GetUnfinishedActiviysSqlReqs(
 			arg.Dates = make([]*time.Time, 0)
 			dates := util.GetDatesInWeekdays(*startDate, *endtDate, everyWeekdays...)
 			for _, v := range dates {
-				arg.Dates = append(arg.Dates, v.TimeP())
+				arg.Dates = append(arg.Dates, util.PointerOf(v.Time()))
 			}
 
 			if isEmpty := len(arg.Dates) == 0; isEmpty {

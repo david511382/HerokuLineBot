@@ -31,8 +31,8 @@ func TestGetActivitys(t *testing.T) {
 	defer mockCtl.Finish()
 
 	type args struct {
-		fromDate      *util.DateTime
-		toDate        *util.DateTime
+		fromDate      *util.DefinedTime[util.DateInt]
+		toDate        *util.DefinedTime[util.DateInt]
 		pageIndex     uint
 		pageSize      uint
 		placeIDs      []uint
@@ -59,8 +59,8 @@ func TestGetActivitys(t *testing.T) {
 		{
 			"place team weekday",
 			args{
-				fromDate:      util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-				toDate:        util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
+				fromDate:      util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:        util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
 				placeIDs:      []uint{52, 82},
 				teamIDs:       []uint{13, 14},
 				everyWeekdays: []time.Weekday{time.Friday, time.Sunday},
@@ -138,14 +138,14 @@ func TestGetActivitys(t *testing.T) {
 						},
 					)
 					mockObj.EXPECT().GetUnfinishedActiviysSqlReqs(
-						gomock.AssignableToTypeOf(util.NewDateTimePOf(&time.Time{})),
-						gomock.AssignableToTypeOf(util.NewDateTimePOf(&time.Time{})),
+						gomock.AssignableToTypeOf(util.Date().POf(nil)),
+						gomock.AssignableToTypeOf(util.Date().POf(nil)),
 						gomock.AssignableToTypeOf([]uint{}),
 						gomock.AssignableToTypeOf([]uint{}),
 						gomock.AssignableToTypeOf([]time.Weekday{}),
 					).DoAndReturn(
 						func(
-							fromDate *util.DateTime, toDate *util.DateTime, teamIDs []uint, placeIDs []uint, everyWeekdays []time.Weekday,
+							fromDate *util.DefinedTime[util.DateInt], toDate *util.DefinedTime[util.DateInt], teamIDs []uint, placeIDs []uint, everyWeekdays []time.Weekday,
 						) ([]*activity.Reqs, errUtil.IError) {
 							return origin.GetUnfinishedActiviysSqlReqs(
 								fromDate, toDate, teamIDs, placeIDs, everyWeekdays,
@@ -263,7 +263,7 @@ func TestGetActivitys(t *testing.T) {
 							PlaceName:  "e",
 							TeamID:     14,
 							TeamName:   "b",
-							Date:       util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2).Time(),
+							Date:       util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 2).Time(),
 							Courts: []*resp.GetActivitysCourt{
 								{
 									FromTime: commonLogic.NewHourMinTime(1, 0).ForceTime(),
@@ -289,7 +289,7 @@ func TestGetActivitys(t *testing.T) {
 							PlaceName:  "s",
 							TeamID:     13,
 							TeamName:   "a",
-							Date:       util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 4).Time(),
+							Date:       util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 4).Time(),
 							Courts: []*resp.GetActivitysCourt{
 								{
 									FromTime: commonLogic.NewHourMinTime(1, 0).ForceTime(),

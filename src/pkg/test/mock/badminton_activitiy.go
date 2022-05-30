@@ -38,7 +38,7 @@ func (m *MockIBadmintonActivityApiLogic) EXPECT() *MockIBadmintonActivityApiLogi
 }
 
 // GetActivitys mocks base method.
-func (m *MockIBadmintonActivityApiLogic) GetActivitys(fromDate, toDate *util.DateTime, pageIndex, pageSize uint, placeIDs, teamIDs []uint, everyWeekdays []time.Weekday) (resp.GetActivitys, error.IError) {
+func (m *MockIBadmintonActivityApiLogic) GetActivitys(fromDate, toDate *util.DefinedTime[util.DateInt], pageIndex, pageSize uint, placeIDs, teamIDs []uint, everyWeekdays []time.Weekday) (resp.GetActivitys, error.IError) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetActivitys", fromDate, toDate, pageIndex, pageSize, placeIDs, teamIDs, everyWeekdays)
 	ret0, _ := ret[0].(resp.GetActivitys)

@@ -23,7 +23,7 @@ import (
 
 type IBadmintonCourtLogic interface {
 	GetCourts(
-		fromDate, toDate util.DateTime,
+		fromDate, toDate util.DefinedTime[util.DateInt],
 		teamID,
 		placeID *uint,
 	) (
@@ -48,7 +48,7 @@ func NewBadmintonCourtLogic(
 }
 
 func (l *BadmintonCourtLogic) GetCourts(
-	fromDate, toDate util.DateTime,
+	fromDate, toDate util.DefinedTime[util.DateInt],
 	teamID,
 	placeID *uint,
 ) (
@@ -62,8 +62,8 @@ func (l *BadmintonCourtLogic) GetCourts(
 	courtIDMap := make(map[uint]*rentalcourt.Model)
 	if dbDatas, err := l.clubDb.RentalCourt.Select(rentalcourt.Reqs{
 		Date: dbModel.Date{
-			FromDate: fromDate.TimeP(),
-			ToDate:   toDate.TimeP(),
+			FromDate: util.PointerOf(fromDate.Time()),
+			ToDate:   util.PointerOf(toDate.Time()),
 		},
 		PlaceID: placeID,
 	}); err != nil {
@@ -230,7 +230,7 @@ func (l *BadmintonCourtLogic) GetCourts(
 			dbIncome := incomeIDMap[incomeID]
 			ledgerIncome.Income = &Income{
 				ID:      incomeID,
-				PayDate: util.DateTime(dbIncome.Date),
+				PayDate: util.DefinedTime[util.DateInt](dbIncome.Date),
 				Money:   int(dbIncome.Income),
 			}
 		}
@@ -241,7 +241,7 @@ func (l *BadmintonCourtLogic) GetCourts(
 			dbIncome := incomeIDMap[incomeID]
 			depositIncome = &Income{
 				ID:      incomeID,
-				PayDate: util.DateTime(dbIncome.Date),
+				PayDate: util.DefinedTime[util.DateInt](dbIncome.Date),
 				Money:   int(dbIncome.Income),
 			}
 		}
@@ -278,7 +278,7 @@ func (l *BadmintonCourtLogic) GetCourts(
 						dbIncome := incomeIDMap[incomeID]
 						income = &Income{
 							ID:      incomeID,
-							PayDate: util.DateTime(dbIncome.Date),
+							PayDate: util.DefinedTime[util.DateInt](dbIncome.Date),
 							Money:   int(dbIncome.Income),
 						}
 					}
@@ -307,7 +307,7 @@ func (l *BadmintonCourtLogic) GetCourts(
 	for courtID, teamDetailIDCourtsMap := range courtIDTeamDetailIDCourtsMap {
 		dbCourt := courtIDMap[courtID]
 		placeID := dbCourt.PlaceID
-		date := *util.NewDateTimePOf(&dbCourt.Date)
+		date := util.Date().Of(dbCourt.Date)
 
 		for teamID, detailIDCourtsMap := range teamDetailIDCourtsMap {
 			dateCourt := &DateCourt{
@@ -340,8 +340,8 @@ func (l *BadmintonCourtLogic) VerifyAddCourt(
 	despositMoney,
 	balanceMoney *int,
 	despositPayDate,
-	balancePayDate *util.DateTime,
-	rentalDates []util.DateTime,
+	balancePayDate *util.DefinedTime[util.DateInt],
+	rentalDates []util.DefinedTime[util.DateInt],
 ) (resultErrInfo errUtil.IError) {
 	if len(rentalDates) == 0 {
 		errInfo := errorcode.ERROR_MSG_NO_DATES.New()
@@ -406,8 +406,8 @@ func (l *BadmintonCourtLogic) AddCourt(
 	despositMoney,
 	balanceMoney *int,
 	despositPayDate,
-	balancePayDate *util.DateTime,
-	rentalDates []util.DateTime,
+	balancePayDate *util.DefinedTime[util.DateInt],
+	rentalDates []util.DefinedTime[util.DateInt],
 ) (resultErrInfo errUtil.IError) {
 	if len(rentalDates) == 0 {
 		return
@@ -433,7 +433,7 @@ func (l *BadmintonCourtLogic) AddCourt(
 		dates := make([]*time.Time, 0)
 		requireDateIntMap := make(map[util.DateInt]bool)
 		for _, v := range rentalDates {
-			dates = append(dates, v.TimeP())
+			dates = append(dates, util.PointerOf(v.Time()))
 			requireDateIntMap[v.Int()] = true
 
 			t := v.Time()
@@ -458,13 +458,13 @@ func (l *BadmintonCourtLogic) AddCourt(
 		}
 		for _, v := range dbDatas {
 			rentalCourtIDs = append(rentalCourtIDs, &v.ID)
-			dateInt := util.NewDateTimePOf(&v.Date).Int()
+			dateInt := util.Date().Of(v.Date).Int()
 			delete(requireDateIntMap, dateInt)
 		}
 
 		for requireDateInt := range requireDateIntMap {
 			rentalCourtInsertData := &rentalcourt.Model{
-				Date:    requireDateInt.In(global.TimeUtilObj.GetLocation()),
+				Date:    requireDateInt.Time(global.TimeUtilObj.GetLocation()).Time(),
 				PlaceID: placeID,
 			}
 			rentalCourtIDs = append(rentalCourtIDs, &rentalCourtInsertData.ID)
@@ -545,7 +545,7 @@ func (l *BadmintonCourtLogic) AddCourt(
 			EndDate:      endDate,
 		}
 		if balancePayDate != nil {
-			rentalCourtLedgerInsertData.PayDate = balancePayDate.TimeP()
+			rentalCourtLedgerInsertData.PayDate = util.PointerOf(balancePayDate.Time())
 		}
 		rentalCourtLedgerInsertDatas = append(rentalCourtLedgerInsertDatas, rentalCourtLedgerInsertData)
 		getRentalCourtLedgerInsertDataAfterDetailIncomeFunc = func(

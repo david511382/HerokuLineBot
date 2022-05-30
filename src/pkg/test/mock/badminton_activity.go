@@ -54,7 +54,7 @@ func (mr *MockIBadmintonActivityLogicMockRecorder) GetActivityDetail(activityReq
 }
 
 // GetUnfinishedActiviysSqlReqs mocks base method.
-func (m *MockIBadmintonActivityLogic) GetUnfinishedActiviysSqlReqs(fromDate, toDate *util.DateTime, teamIDs, placeIDs []uint, everyWeekdays []time.Weekday) ([]*activity.Reqs, error.IError) {
+func (m *MockIBadmintonActivityLogic) GetUnfinishedActiviysSqlReqs(fromDate, toDate *util.DefinedTime[util.DateInt], teamIDs, placeIDs []uint, everyWeekdays []time.Weekday) ([]*activity.Reqs, error.IError) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUnfinishedActiviysSqlReqs", fromDate, toDate, teamIDs, placeIDs, everyWeekdays)
 	ret0, _ := ret[0].([]*activity.Reqs)

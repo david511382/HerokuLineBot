@@ -17,8 +17,8 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		fromDate      *util.DateTime
-		toDate        *util.DateTime
+		fromDate      *util.DefinedTime[util.DateInt]
+		toDate        *util.DefinedTime[util.DateInt]
 		teamIDs       []uint
 		placeIDs      []uint
 		everyWeekdays []time.Weekday
@@ -151,8 +151,8 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 		{
 			name: "weekday",
 			args: args{
-				fromDate: util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-				toDate:   util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
+				fromDate: util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:   util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
 				teamIDs:  nil,
 				placeIDs: nil,
 				everyWeekdays: []time.Weekday{

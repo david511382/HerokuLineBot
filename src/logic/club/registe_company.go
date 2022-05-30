@@ -656,7 +656,7 @@ func (b *registeCompany) GetNotifyRegisterContents(name string) ([]interface{}, 
 
 	pathValueMap := make(map[string]interface{})
 	pathValueMap["ICmdLogic.member_id"] = b.MemberID
-	pathValueMap["ICmdLogic.date"] = util.DateOf(global.TimeUtilObj.Now())
+	pathValueMap["ICmdLogic.date"] = util.Date().Of(global.TimeUtilObj.Now())
 	cmd := domain.CONFIRM_REGISTER_TEXT_CMD
 	if js, errInfo := NewSignal().
 		GetCmdInputMode(&cmd).

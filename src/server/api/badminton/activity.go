@@ -32,8 +32,8 @@ func NewGetActivitysHandler(badmintonActivityApiLogic apiLogic.IBadmintonActivit
 			Data:    resp.GetActivitys{},
 		}
 
-		fromDate := util.NewDateTimePOf(reqs.FromDate)
-		toDate := util.NewDateTimePOf(reqs.ToDate)
+		fromDate := util.Date().POf(reqs.FromDate)
+		toDate := util.Date().POf(reqs.ToDate)
 		everyWeekdays := make([]time.Weekday, 0)
 		for _, weekday := range reqs.EveryWeekdays {
 			everyWeekdays = append(everyWeekdays, time.Weekday(weekday))

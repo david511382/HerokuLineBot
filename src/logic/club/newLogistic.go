@@ -30,7 +30,7 @@ func (b *NewLogistic) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 	*b = NewLogistic{
 		context: context,
 		TimePostbackParams: domain.TimePostbackParams{
-			Date: *util.NewDateTimePOf(&nowTime),
+			Date: util.Date().Of(nowTime),
 		},
 		Name:        domain.BALL_NAME,
 		Description: "買球 https://shopee.tw/product/4013408/4461135276",
@@ -74,7 +74,7 @@ func (b *NewLogistic) LoadRequireInputTextParam(attr, text string) (resultErrInf
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
-		b.Date = *util.NewDateTimePOf(&t)
+		b.Date = util.Date().Of(t)
 	case "ICmdLogic.name":
 		b.Name = text
 	case "ICmdLogic.description":

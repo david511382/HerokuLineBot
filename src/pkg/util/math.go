@@ -2,10 +2,17 @@ package util
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
 	"github.com/shopspring/decimal"
+	"golang.org/x/exp/constraints"
+)
+
+const (
+	DOT   = "."
+	COMMA = ","
 )
 
 func UnlimitSum(a1, r float64) float64 {
@@ -21,11 +28,6 @@ func UnlimitSum(a1, r float64) float64 {
 }
 
 func FloatString(value float64, floatExponent int32) string {
-	const (
-		DOT   = "."
-		COMMA = ","
-	)
-
 	format := "%"
 	if floatExponent <= 0 {
 		format += "0" + DOT + strconv.Itoa(int(-floatExponent))
@@ -70,4 +72,37 @@ func FloatString(value float64, floatExponent int32) string {
 	result = symbol + result
 
 	return result
+}
+
+func StringThousandComma(numStr string) string {
+	splitNum := strings.Split(numStr, ".")
+	catchInt := splitNum[0]
+	if len(catchInt) <= 3 {
+		return numStr
+	}
+
+	count := 0
+	comma := ""
+
+	for i := len(catchInt) - 1; i >= 0; i-- {
+		count++
+		comma = comma + string(catchInt[i])
+		if count%3 == 0 {
+			comma = comma + ","
+		}
+	}
+
+	turnBack := ""
+	for i := len(comma) - 1; i >= 0; i-- {
+		turnBack = turnBack + string(comma[i])
+	}
+	splitNum[0] = strings.Trim(turnBack, ",")
+
+	newStr := strings.Join(splitNum, ".")
+	return newStr
+}
+
+// 去除 i 後 cut 位數
+func IntCut[T constraints.Integer](i T, cut int) T {
+	return i / T(math.Pow10(cut))
 }

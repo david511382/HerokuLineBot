@@ -8,7 +8,7 @@ import (
 type Activity struct {
 	ID          int
 	TeamID      int
-	Date        util.DateTime
+	Date        util.DefinedTime[util.DateInt]
 	PlaceID     int
 	Courts      []*domain.ActivityCourt
 	MemberCount int16

@@ -11,9 +11,9 @@ type CmdBase struct {
 }
 
 type TimePostbackParams struct {
-	Date     util.DateTime `json:"date"`
-	DateTime time.Time     `json:"date_time"`
-	Time     time.Time     `json:"time"`
+	Date     util.DefinedTime[util.DateInt] `json:"date"`
+	DateTime time.Time                      `json:"date_time"`
+	Time     time.Time                      `json:"time"`
 }
 
 type KeyValueEditComponentOption struct {

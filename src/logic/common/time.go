@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TimeInt(t time.Time, tt util.TimeType) int {
+func TimeInt(t time.Time, tt util.TimeType) int64 {
 	t = t.In(global.TimeUtilObj.GetLocation())
 	return util.TimeInt(t, tt)
 }

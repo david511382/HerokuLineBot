@@ -27,8 +27,8 @@ func TestCourtGetCourts(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		fromDate util.DateTime
-		toDate   util.DateTime
+		fromDate util.DefinedTime[util.DateInt]
+		toDate   util.DefinedTime[util.DateInt]
 		teamID   *uint
 		placeID  *uint
 	}
@@ -52,8 +52,8 @@ func TestCourtGetCourts(t *testing.T) {
 		{
 			"team place",
 			args{
-				fromDate: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-				toDate:   *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				fromDate: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:   util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 				teamID:   util.PointerOf[uint](1),
 				placeID:  util.PointerOf[uint](1),
 			},
@@ -143,7 +143,7 @@ func TestCourtGetCourts(t *testing.T) {
 						1: {
 							{
 								ID:   1,
-								Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+								Date: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 								Courts: []*Court{
 									{
 										CourtDetailPrice: CourtDetailPrice{
@@ -177,8 +177,8 @@ func TestCourtGetCourts(t *testing.T) {
 		{
 			"refund",
 			args{
-				fromDate: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-				toDate:   *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				fromDate: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:   util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 			},
 			migrations{
 				rentalCourts: []*rentalcourt.Model{
@@ -342,7 +342,7 @@ func TestCourtGetCourts(t *testing.T) {
 						1: {
 							{
 								ID:   1,
-								Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+								Date: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 								Courts: []*Court{
 									{
 										CourtDetailPrice: CourtDetailPrice{
@@ -364,7 +364,7 @@ func TestCourtGetCourts(t *testing.T) {
 											ID: 11,
 											Income: &Income{
 												ID:      1,
-												PayDate: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+												PayDate: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 												Money:   -4,
 											},
 										},
@@ -373,7 +373,7 @@ func TestCourtGetCourts(t *testing.T) {
 												ID: 1,
 												Income: &Income{
 													ID:      3,
-													PayDate: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+													PayDate: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 													Money:   2,
 												},
 												DbCourtDetail: DbCourtDetail{
@@ -446,7 +446,7 @@ func TestCourtGetCourts(t *testing.T) {
 											ID: 13,
 											Income: &Income{
 												ID:      2,
-												PayDate: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+												PayDate: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 												Money:   -4,
 											},
 										},
@@ -559,9 +559,9 @@ func TestCourtAddCourt(t *testing.T) {
 		courtDetail     CourtDetail
 		despositMoney   *int
 		balanceMoney    *int
-		despositPayDate *util.DateTime
-		balancePayDate  *util.DateTime
-		rentalDates     []util.DateTime
+		despositPayDate *util.DefinedTime[util.DateInt]
+		balancePayDate  *util.DefinedTime[util.DateInt]
+		rentalDates     []util.DefinedTime[util.DateInt]
 	}
 	type migrations struct {
 		rentalCourts            []*rentalcourt.Model
@@ -587,7 +587,7 @@ func TestCourtAddCourt(t *testing.T) {
 		{
 			"pay",
 			args{
-				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
+				rentalDates:  []util.DefinedTime[util.DateInt]{util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
 				placeID:      1,
 				teamID:       1,
 				pricePerHour: 10,
@@ -600,8 +600,8 @@ func TestCourtAddCourt(t *testing.T) {
 				},
 				despositMoney:   util.PointerOf(5),
 				balanceMoney:    util.PointerOf(15),
-				despositPayDate: util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 1),
-				balancePayDate:  util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
+				despositPayDate: util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 1),
+				balancePayDate:  util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 			},
 			migrations{
 				rentalCourts:            []*rentalcourt.Model{},
@@ -672,7 +672,7 @@ func TestCourtAddCourt(t *testing.T) {
 		{
 			"wrong balance error",
 			args{
-				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
+				rentalDates:  []util.DefinedTime[util.DateInt]{util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
 				placeID:      1,
 				teamID:       1,
 				pricePerHour: 10,
@@ -704,7 +704,7 @@ func TestCourtAddCourt(t *testing.T) {
 		{
 			"wrong desposit balance error",
 			args{
-				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
+				rentalDates:  []util.DefinedTime[util.DateInt]{util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
 				placeID:      1,
 				teamID:       1,
 				pricePerHour: 10,
@@ -717,8 +717,8 @@ func TestCourtAddCourt(t *testing.T) {
 				},
 				despositMoney:   util.PointerOf(5),
 				balanceMoney:    util.PointerOf(20),
-				despositPayDate: util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-				balancePayDate:  util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				despositPayDate: util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				balancePayDate:  util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 			},
 			migrations{
 				rentalCourts:            []*rentalcourt.Model{},
@@ -739,7 +739,7 @@ func TestCourtAddCourt(t *testing.T) {
 		{
 			"exist",
 			args{
-				rentalDates:  []util.DateTime{*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
+				rentalDates:  []util.DefinedTime[util.DateInt]{util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2)},
 				placeID:      1,
 				teamID:       1,
 				pricePerHour: 10,

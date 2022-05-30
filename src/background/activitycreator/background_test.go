@@ -157,7 +157,7 @@ func Test_calActivitys(t *testing.T) {
 				placeDateCourtsMap: map[uint][]*badmintonLogic.DateCourt{
 					1: {
 						{
-							Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+							Date: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 							Courts: []*badmintonLogic.Court{
 								{
 									CourtDetailPrice: badmintonLogic.CourtDetailPrice{
@@ -191,7 +191,7 @@ func Test_calActivitys(t *testing.T) {
 							},
 						},
 						{
-							Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+							Date: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 							Courts: []*badmintonLogic.Court{
 								{
 									CourtDetailPrice: badmintonLogic.CourtDetailPrice{
@@ -223,7 +223,7 @@ func Test_calActivitys(t *testing.T) {
 			[]*clubLogic.NewActivity{
 				{
 					TimePostbackParams: clubLogicDomain.TimePostbackParams{
-						Date: *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+						Date: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 					PlaceID:     1,
 					ClubSubsidy: 8,
@@ -290,14 +290,14 @@ func TestBackGround_Run(t *testing.T) {
 		{
 			"activity create days",
 			args{
-				runTime: util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2).Time(),
+				runTime: util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 2).Time(),
 			},
 			migrations{
 				activity: []*activity.Model{},
 				badmintonCourtLogicFn: func() badmintonLogic.IBadmintonCourtLogic {
 					mockObj := mock.NewMockIBadmintonCourtLogic(mockCtl)
 					var (
-						fromDate, toDate util.DateTime
+						fromDate, toDate util.DefinedTime[util.DateInt]
 						teamID,
 						placeID *uint
 					)
@@ -308,7 +308,7 @@ func TestBackGround_Run(t *testing.T) {
 						gomock.AssignableToTypeOf(placeID),
 					).DoAndReturn(
 						func(
-							fromDate, toDate util.DateTime,
+							fromDate, toDate util.DefinedTime[util.DateInt],
 							teamID,
 							placeID *uint,
 						) (
@@ -321,11 +321,11 @@ func TestBackGround_Run(t *testing.T) {
 								},
 							}
 							util.TimeSlice(fromDate.Time(), toDate.Next(1).Time(),
-								util.DATE_TIME_TYPE.Next1,
+								util.Date().Next1,
 								func(runTime, next time.Time) (isContinue bool) {
 									teamPlaceDateCourtsMap[1][1] = append(teamPlaceDateCourtsMap[1][1], &badmintonLogic.DateCourt{
 										ID:   0,
-										Date: *util.NewDateTimePOf(&runTime),
+										Date: util.Date().Of(runTime),
 										Courts: []*badmintonLogic.Court{
 											{
 												CourtDetailPrice: badmintonLogic.CourtDetailPrice{},
@@ -365,7 +365,7 @@ func TestBackGround_Run(t *testing.T) {
 					{
 						ID:            1,
 						TeamID:        1,
-						Date:          util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 8).Time(),
+						Date:          util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 8).Time(),
 						PlaceID:       1,
 						CourtsAndTime: "",
 						MemberCount:   0,

@@ -183,43 +183,43 @@ func TestAddRentalCourts(t *testing.T) {
 
 func Test_addRentalCourtGetRentalDates(t *testing.T) {
 	type args struct {
-		fromDate     util.DateTime
-		toDate       util.DateTime
+		fromDate     util.DefinedTime[util.DateInt]
+		toDate       util.DefinedTime[util.DateInt]
 		everyWeekday *int
 		excludeDates []*time.Time
 	}
 	tests := []struct {
 		name            string
 		args            args
-		wantRentalDates []util.DateTime
+		wantRentalDates []util.DefinedTime[util.DateInt]
 	}{
 		{
 			"hour exclude date",
 			args{
-				fromDate:     *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 1),
-				toDate:       *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
+				fromDate:     util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 1),
+				toDate:       util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 				everyWeekday: nil,
 				excludeDates: []*time.Time{
 					util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 1, 23),
 					util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 3),
 				},
 			},
-			[]util.DateTime{
-				*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+			[]util.DefinedTime[util.DateInt]{
+				util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 			},
 		},
 		{
 			"everyweekdate exclude date",
 			args{
-				fromDate:     *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-				toDate:       *util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 9),
+				fromDate:     util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:       util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 9),
 				everyWeekday: util.PointerOf(5),
 				excludeDates: []*time.Time{
 					util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 				},
 			},
-			[]util.DateTime{
-				*util.NewDateTimeP(global.TimeUtilObj.GetLocation(), 2013, 8, 9),
+			[]util.DefinedTime[util.DateInt]{
+				util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 9),
 			},
 		},
 	}

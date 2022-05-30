@@ -3,6 +3,7 @@ package validation
 import (
 	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/server/domain/reqs"
+	"time"
 
 	"github.com/go-playground/validator/v10" //需使用Gin使用的版本
 )
@@ -10,11 +11,17 @@ import (
 // 結構驗證
 func timeValidation(sl validator.StructLevel) {
 	if condiction, ok := sl.Current().Interface().(reqs.FromTo); ok {
-		if condiction.FromTime == nil ||
-			condiction.FromTime.IsZero() ||
-			condiction.ToTime == nil ||
-			condiction.ToTime.IsZero() ||
-			!condiction.FromTime.After(*condiction.ToTime) {
+		if util.CompareWithNil(
+			condiction.FromTime, condiction.ToTime,
+			func(a, b time.Time) bool {
+				if a.IsZero() ||
+					b.IsZero() {
+					return true
+				}
+				return !util.Date().Of(a).After(util.Date().Of(b))
+			},
+			true, true, true,
+		) {
 			return
 		}
 
@@ -41,11 +48,17 @@ func timeValidation(sl validator.StructLevel) {
 		// Error #01: Key: 'FromTo.FromTime' Error:Field validation for 'FromTime' failed on the 'DateRange' tag
 		sl.ReportError(condiction.FromTime, "FromTime", "", "MustFromBefore", "")
 	} else if condiction, ok := sl.Current().Interface().(reqs.FromBefore); ok {
-		if condiction.FromTime == nil ||
-			condiction.FromTime.IsZero() ||
-			condiction.BeforeTime == nil ||
-			condiction.BeforeTime.IsZero() ||
-			condiction.FromTime.Before(*condiction.BeforeTime) {
+		if util.CompareWithNil(
+			condiction.FromTime, condiction.BeforeTime,
+			func(a, b time.Time) bool {
+				if a.IsZero() ||
+					b.IsZero() {
+					return true
+				}
+				return util.Date().Of(a).Before(util.Date().Of(b))
+			},
+			true, true, true,
+		) {
 			return
 		}
 
@@ -54,11 +67,17 @@ func timeValidation(sl validator.StructLevel) {
 		// Error #01: Key: 'FromTo.FromTime' Error:Field validation for 'FromTime' failed on the 'DateRange' tag
 		sl.ReportError(condiction.FromTime, "FromTime", "", "FromBefore", "")
 	} else if condiction, ok := sl.Current().Interface().(reqs.FromToDate); ok {
-		if condiction.FromDate == nil ||
-			condiction.FromDate.IsZero() ||
-			condiction.ToDate == nil ||
-			condiction.ToDate.IsZero() ||
-			!util.DateOfP(condiction.FromDate).After(util.DateOfP(condiction.ToDate)) {
+		if util.CompareWithNil(
+			condiction.FromDate, condiction.ToDate,
+			func(a, b time.Time) bool {
+				if a.IsZero() ||
+					b.IsZero() {
+					return true
+				}
+				return !util.Date().Of(a).After(util.Date().Of(b))
+			},
+			true, true, true,
+		) {
 			return
 		}
 
@@ -67,7 +86,7 @@ func timeValidation(sl validator.StructLevel) {
 		// Error #01: Key: 'FromTo.FromTime' Error:Field validation for 'FromTime' failed on the 'DateRange' tag
 		sl.ReportError(condiction.FromDate, "FromDate", "", "FromTo", "")
 	} else if condiction, ok := sl.Current().Interface().(reqs.MustFromToDate); ok {
-		if !util.DateOf(condiction.FromDate).After(util.DateOf(condiction.ToDate)) {
+		if !util.Date().Of(condiction.FromDate).After(util.Date().Of(condiction.ToDate)) {
 			return
 		}
 
@@ -76,7 +95,7 @@ func timeValidation(sl validator.StructLevel) {
 		// Error #01: Key: 'MustFromTo.FromTime' Error:Field validation for 'FromTime' failed on the 'DateRange' tag
 		sl.ReportError(condiction.FromDate, "FromDate", "", "MustFromTo", "")
 	} else if condiction, ok := sl.Current().Interface().(reqs.MustFromBeforeDate); ok {
-		if util.DateOf(condiction.FromDate).Before(util.DateOf(condiction.BeforeDate)) {
+		if util.Date().Of(condiction.FromDate).Before(util.Date().Of(condiction.BeforeDate)) {
 			return
 		}
 
@@ -85,11 +104,17 @@ func timeValidation(sl validator.StructLevel) {
 		// Error #01: Key: 'FromTo.FromTime' Error:Field validation for 'FromTime' failed on the 'DateRange' tag
 		sl.ReportError(condiction.FromDate, "FromDate", "", "MustFromBefore", "")
 	} else if condiction, ok := sl.Current().Interface().(reqs.FromBeforeDate); ok {
-		if condiction.FromDate == nil ||
-			condiction.FromDate.IsZero() ||
-			condiction.BeforeDate == nil ||
-			condiction.BeforeDate.IsZero() ||
-			util.DateOfP(condiction.FromDate).Before(util.DateOfP(condiction.BeforeDate)) {
+		if util.CompareWithNil(
+			condiction.FromDate, condiction.BeforeDate,
+			func(a, b time.Time) bool {
+				if a.IsZero() ||
+					b.IsZero() {
+					return true
+				}
+				return util.Date().Of(a).Before(util.Date().Of(b))
+			},
+			true, true, true,
+		) {
 			return
 		}
 

@@ -63,7 +63,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	if teamSettingMap == nil {
 		return
 	}
-	currentDate := *util.NewDateTimePOf(&runTime)
+	currentDate := util.Date().Of(runTime)
 	newActivityHandlers, errInfo := b.calDateActivity(teamSettingMap, currentDate)
 	if errInfo != nil {
 		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
@@ -114,7 +114,7 @@ func (b *BackGround) Run(runTime time.Time) (resultErrInfo errUtil.IError) {
 	return
 }
 
-func (b *BackGround) calDateActivity(teamSettingMap map[uint]*rdsModel.ClubBadmintonTeam, currentDate util.DateTime) (
+func (b *BackGround) calDateActivity(teamSettingMap map[uint]*rdsModel.ClubBadmintonTeam, currentDate util.DefinedTime[util.DateInt]) (
 	resultActivityHandlers []*clubLogic.NewActivity,
 	resultErrInfo errUtil.IError,
 ) {
@@ -167,7 +167,7 @@ func calActivitys(
 			totalCourtCount := 0
 			newActivityHandler := &clubLogic.NewActivity{
 				TimePostbackParams: clubLogicDomain.TimePostbackParams{
-					Date: dateInt.DateTime(global.TimeUtilObj.GetLocation()),
+					Date: dateInt.Time(global.TimeUtilObj.GetLocation()),
 				},
 				PlaceID:     place,
 				TeamID:      teamID,

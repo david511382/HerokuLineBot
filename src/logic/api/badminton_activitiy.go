@@ -18,7 +18,7 @@ import (
 type IBadmintonActivityApiLogic interface {
 	GetActivitys(
 		fromDate,
-		toDate *util.DateTime,
+		toDate *util.DefinedTime[util.DateInt],
 		pageIndex,
 		pageSize uint,
 		placeIDs,
@@ -55,7 +55,7 @@ func NewBadmintonActivityApiLogic(
 // pageIndex: 1開始
 func (l *BadmintonActivityApiLogic) GetActivitys(
 	fromDate,
-	toDate *util.DateTime,
+	toDate *util.DefinedTime[util.DateInt],
 	pageIndex,
 	pageSize uint,
 	placeIDs,

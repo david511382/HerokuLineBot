@@ -113,7 +113,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 		b.NewActivity = NewActivity{
 			context: context,
 			TimePostbackParams: domain.TimePostbackParams{
-				Date: *util.NewDateTimePOf(&v.Date),
+				Date: util.Date().Of(v.Date),
 			},
 			PlaceID:     v.PlaceID,
 			Description: v.Description,

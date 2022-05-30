@@ -58,7 +58,7 @@ func (b *CourtDetailPrice) Cost() util.Float {
 
 type DateCourt struct {
 	ID     uint
-	Date   util.DateTime
+	Date   util.DefinedTime[util.DateInt]
 	Courts []*Court
 }
 
@@ -159,7 +159,7 @@ func (c *CourtUnit) GetStatus() (status domain.RentalCourtsStatus) {
 	return
 }
 
-func (c *CourtUnit) GetRefundDate() (refundDate *util.DateTime) {
+func (c *CourtUnit) GetRefundDate() (refundDate *util.DefinedTime[util.DateInt]) {
 	isRefund := c.IsRefund()
 	if isRefund {
 		isPay := c.RefundIncome != nil
@@ -195,6 +195,6 @@ type LedgerIncome struct {
 
 type Income struct {
 	ID      uint
-	PayDate util.DateTime
+	PayDate util.DefinedTime[util.DateInt]
 	Money   int
 }

@@ -341,3 +341,18 @@ func compV(aV, bV reflect.Value) (bool, string) {
 	}
 	return true, ""
 }
+
+func CompareWithNil[Result any, T any](
+	a, b *T,
+	compareFn func(a, b T) Result,
+	aNilResult, bNilResult, bothNilResult Result,
+) Result {
+	if a == nil && b == nil {
+		return bothNilResult
+	} else if a == nil {
+		return aNilResult
+	} else if b == nil {
+		return bNilResult
+	}
+	return compareFn(*a, *b)
+}

@@ -38,7 +38,7 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 	*b = NewActivity{
 		context: context,
 		TimePostbackParams: domain.TimePostbackParams{
-			Date: *util.NewDateTimePOf(&nowTime),
+			Date: util.Date().Of(nowTime),
 		},
 		PlaceID:     1,
 		Description: "7人出團",
@@ -117,7 +117,7 @@ func (b *NewActivity) LoadRequireInputTextParam(attr, text string) (resultErrInf
 			resultErrInfo = errUtil.NewError(err)
 			return
 		}
-		b.Date = util.DateTime(t)
+		b.Date = util.DefinedTime[util.DateInt](t)
 	case "ICmdLogic.place_id":
 		if dbDatas, err := database.Club().Place.Select(
 			place.Reqs{

@@ -37,7 +37,7 @@ func (m *MockIBadmintonCourtLogic) EXPECT() *MockIBadmintonCourtLogicMockRecorde
 }
 
 // GetCourts mocks base method.
-func (m *MockIBadmintonCourtLogic) GetCourts(fromDate, toDate util.DateTime, teamID, placeID *uint) (map[uint]map[uint][]*badminton.DateCourt, error.IError) {
+func (m *MockIBadmintonCourtLogic) GetCourts(fromDate, toDate util.DefinedTime[util.DateInt], teamID, placeID *uint) (map[uint]map[uint][]*badminton.DateCourt, error.IError) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCourts", fromDate, toDate, teamID, placeID)
 	ret0, _ := ret[0].(map[uint]map[uint][]*badminton.DateCourt)

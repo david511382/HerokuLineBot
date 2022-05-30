@@ -21,14 +21,14 @@ func CombineMinuteTimeRanges(ranges []*TimeRangeValue) (timeRangeCountMap map[st
 			target:      timeRange,
 		}
 
-		fromClockInt := ClockInt(timeRange.From, util.MINUTE_TIME_TYPE)
+		fromClockInt := ClockInt(timeRange.From, util.TIME_TYPE_MINUTE)
 		if len(toIntMap[fromClockInt]) > 0 {
 			for _, index := range toIntMap[fromClockInt] {
 				idNodeMap[index].toSideMap[i] = idNodeMap[i]
 				idNodeMap[i].fromSideMap[index] = idNodeMap[index]
 			}
 		}
-		toClockInt := ClockInt(timeRange.To, util.MINUTE_TIME_TYPE)
+		toClockInt := ClockInt(timeRange.To, util.TIME_TYPE_MINUTE)
 		if len(fromIntMap[toClockInt]) > 0 {
 			for _, index := range fromIntMap[toClockInt] {
 				idNodeMap[index].fromSideMap[i] = idNodeMap[i]
@@ -79,8 +79,8 @@ func CombineMinuteTimeRanges(ranges []*TimeRangeValue) (timeRangeCountMap map[st
 			newCourt.Value = newCourt.Hours()
 		}
 
-		fromClockInt := ClockInt(newCourt.From, util.MINUTE_TIME_TYPE)
-		toClockInt := ClockInt(newCourt.To, util.MINUTE_TIME_TYPE)
+		fromClockInt := ClockInt(newCourt.From, util.TIME_TYPE_MINUTE)
+		toClockInt := ClockInt(newCourt.To, util.TIME_TYPE_MINUTE)
 		timeKey := fmt.Sprintf("%s-%s", strconv.Itoa(fromClockInt), strconv.Itoa(toClockInt))
 
 		if timeRangeCountMap[timeKey] != nil {

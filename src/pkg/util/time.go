@@ -23,50 +23,6 @@ var WeekDayName = []string{
 	"六",
 }
 
-func TimePOf(t time.Time) *time.Time {
-	return &t
-}
-
-func SecOf(t time.Time) time.Time {
-	y, m, d := t.Date()
-	return *GetTimePLoc(t.Location(), y, int(m), d, t.Hour(), t.Minute(), t.Second())
-}
-
-func MinOf(t time.Time) time.Time {
-	y, m, d := t.Date()
-	return *GetTimePLoc(t.Location(), y, int(m), d, t.Hour(), t.Minute())
-}
-
-func HourOf(t time.Time) time.Time {
-	y, m, d := t.Date()
-	return *GetTimePLoc(t.Location(), y, int(m), d, t.Hour())
-}
-
-func DateOf(t time.Time) time.Time {
-	y, m, d := t.Date()
-	return *GetTimePLoc(t.Location(), y, int(m), d)
-}
-
-func DateOfP(t *time.Time) time.Time {
-	y, m, d := t.Date()
-	return *GetTimePLoc(t.Location(), y, int(m), d)
-}
-
-func DatePOf(t time.Time) *time.Time {
-	y, m, d := t.Date()
-	return GetTimePLoc(t.Location(), y, int(m), d)
-}
-
-func MonthOf(t time.Time) time.Time {
-	y, m, _ := t.Date()
-	return *GetTimePLoc(t.Location(), y, int(m))
-}
-
-func YearOf(t time.Time) time.Time {
-	y, _, _ := t.Date()
-	return *GetTimePLoc(t.Location(), y)
-}
-
 func GetTimeIn(t time.Time, loc *time.Location) time.Time {
 	y, m, d := t.Date()
 	return *GetTimePLoc(loc, y, int(m), d, t.Hour(), t.Minute(), t.Second())
@@ -100,24 +56,24 @@ func GetWeekDayName(weekDay time.Weekday) string {
 	return WeekDayName[weekDay]
 }
 
-func GetDatesInWeekdays(fromDate, toDate DateTime, weekdays ...time.Weekday) (result []DateTime) {
-	result = make([]DateTime, 0)
+func GetDatesInWeekdays(fromDate, toDate DefinedTime[DateInt], weekdays ...time.Weekday) (result []DefinedTime[DateInt]) {
+	result = make([]DefinedTime[DateInt], 0)
 	if len(weekdays) == 0 {
 		return
 	}
 
 	fromWeekday := fromDate.Time().Weekday()
 	for _, weekday := range weekdays {
-		var firstDate DateTime
+		var firstDate DefinedTime[DateInt]
 		{
 			if fromWeekday > weekday {
-				firstDate = DateTime(WEEK_TIME_TYPE.Next1(
+				firstDate = DefinedTime[DateInt](Week().Next1(
 					fromDate.Next(
 						int(weekday - fromWeekday),
 					).Time(),
 				))
 			} else {
-				firstDate = DateTime(
+				firstDate = DefinedTime[DateInt](
 					fromDate.Next(
 						int(weekday - fromWeekday),
 					).Time(),
@@ -129,9 +85,9 @@ func GetDatesInWeekdays(fromDate, toDate DateTime, weekdays ...time.Weekday) (re
 		}
 
 		TimeSlice(firstDate.Time(), toDate.Next(1).Time(),
-			WEEK_TIME_TYPE.Next1,
+			Week().Next1,
 			func(runTime, next time.Time) (isContinue bool) {
-				result = append(result, *NewDateTimePOf(&runTime))
+				result = append(result, Date().Of(runTime))
 				return true
 			},
 		)
