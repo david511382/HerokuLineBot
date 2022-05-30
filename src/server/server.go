@@ -20,7 +20,7 @@ func Init() errUtil.IError {
 		return errUtil.NewError(err)
 	}
 
-	serverRouter = router.SystemRouter(cfg)
+	serverRouter = router.EntryRouter(cfg)
 	serverAddr = cfg.Server.Addr()
 	return nil
 }
