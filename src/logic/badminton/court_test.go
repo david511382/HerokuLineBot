@@ -227,20 +227,34 @@ func TestCourtGetCourts(t *testing.T) {
 						StartDate:           commonLogic.GetTime(2013, 8, 2),
 						EndDate:             commonLogic.GetTime(2013, 8, 2),
 					},
+
+					// team 2 refund all
+					{
+						ID:                  14,
+						RentalCourtDetailID: 1,
+						IncomeID:            nil,
+						TeamID:              2,
+						DepositIncomeID:     nil,
+						PlaceID:             1,
+						PricePerHour:        2,
+						PayDate:             nil,
+						StartDate:           commonLogic.GetTime(2013, 8, 2),
+						EndDate:             commonLogic.GetTime(2013, 8, 2),
+					},
 				},
 				rentalCourtRefundLedgers: []*rentalcourtrefundledger.Model{
 					// 2 3
 					{
 						ID:                  1,
 						RentalCourtLedgerID: 11,
-						RentalCourtDetailID: 3,
+						RentalCourtDetailID: util.PointerOf[uint](3),
 						RentalCourtID:       1,
 						IncomeID:            util.PointerOf[uint](3),
 					},
 					{
 						ID:                  2,
 						RentalCourtLedgerID: 11,
-						RentalCourtDetailID: 3,
+						RentalCourtDetailID: util.PointerOf[uint](3),
 						RentalCourtID:       1,
 						IncomeID:            nil,
 					},
@@ -248,7 +262,16 @@ func TestCourtGetCourts(t *testing.T) {
 					{
 						ID:                  3,
 						RentalCourtLedgerID: 13,
-						RentalCourtDetailID: 4,
+						RentalCourtDetailID: util.PointerOf[uint](4),
+						RentalCourtID:       1,
+						IncomeID:            nil,
+					},
+
+					// team 2 refund all
+					{
+						ID:                  4,
+						RentalCourtLedgerID: 14,
+						RentalCourtDetailID: nil,
 						RentalCourtID:       1,
 						IncomeID:            nil,
 					},
@@ -278,6 +301,13 @@ func TestCourtGetCourts(t *testing.T) {
 						RentalCourtID:       1,
 						RentalCourtLedgerID: 2,
 						TeamID:              1,
+					},
+
+					// team 2 refund all
+					{
+						RentalCourtID:       1,
+						RentalCourtLedgerID: 14,
+						TeamID:              2,
 					},
 				},
 				rentalCourtDetail: []*rentalcourtdetail.Model{
@@ -460,6 +490,53 @@ func TestCourtGetCourts(t *testing.T) {
 														TimeRange: util.TimeRange{
 															From: commonLogic.NewHourMinTime(3, 0).ForceTime(),
 															To:   commonLogic.NewHourMinTime(4, 0).ForceTime(),
+														},
+														Count: 1,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					2: {
+						1: {
+							{
+								ID:   1,
+								Date: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+								Courts: []*Court{
+									{
+										CourtDetailPrice: CourtDetailPrice{
+											DbCourtDetail: DbCourtDetail{
+												ID: 1,
+												CourtDetail: CourtDetail{
+													TimeRange: util.TimeRange{
+														From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+														To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+													},
+													Count: 1,
+												},
+											},
+											PricePerHour: 2,
+										},
+										Desposit:       nil,
+										BalanceCourIDs: []uint{1},
+										Balance: LedgerIncome{
+											ID:     14,
+											Income: nil,
+										},
+										Refunds: []*RefundMulCourtIncome{
+											{
+												ID:     4,
+												Income: nil,
+												DbCourtDetail: DbCourtDetail{
+													ID: 1,
+													CourtDetail: CourtDetail{
+														TimeRange: util.TimeRange{
+															From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+															To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
 														},
 														Count: 1,
 													},

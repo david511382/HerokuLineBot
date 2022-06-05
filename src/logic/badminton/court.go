@@ -146,7 +146,18 @@ func (l *BadmintonCourtLogic) GetCourts(
 		for _, v := range dbDatas {
 			ledgerID := v.RentalCourtLedgerID
 			courtID := v.RentalCourtID
-			detailID := v.RentalCourtDetailID
+			var detailID uint
+			if v.RentalCourtDetailID == nil {
+				v, exist := balanceLedgerIDMap[ledgerID]
+				if !exist {
+					errInfo := errUtil.New("沒對應 ledger")
+					resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+					return
+				}
+				detailID = v.RentalCourtDetailID
+			} else {
+				detailID = *v.RentalCourtDetailID
+			}
 
 			if v.IncomeID != nil {
 				incomeID := *v.IncomeID
@@ -265,7 +276,13 @@ func (l *BadmintonCourtLogic) GetCourts(
 				refundLedgers := ledgerCourtRefundMap[ledgerID][courtID]
 				for _, refundLedger := range refundLedgers {
 					refundLedgerID := refundLedger.ID
-					detailID := refundLedger.RentalCourtDetailID
+					var detailID uint
+					if refundLedger.RentalCourtDetailID == nil {
+						detailID = balanceLedgerIDMap[ledgerID].RentalCourtDetailID
+					} else {
+						detailID = *refundLedger.RentalCourtDetailID
+					}
+
 					dbDetailP := detailIDMap[detailID]
 					dbDetail := DbCourtDetail{
 						ID:          detailID,

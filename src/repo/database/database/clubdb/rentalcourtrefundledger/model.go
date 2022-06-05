@@ -31,7 +31,7 @@ func New(connectionCreator common.IConnection) *Table {
 type Model struct {
 	ID                  uint  `gorm:"column:id;type:int unsigned auto_increment;primary_key;not null;comment:欄位"`
 	RentalCourtLedgerID uint  `gorm:"column:rental_court_ledger_id;type:int unsigned;not null;index:idx_rentalcourtledgerid"`
-	RentalCourtDetailID uint  `gorm:"column:rental_court_detail_id;type:int unsigned;not null;comment:欄位"`
+	RentalCourtDetailID *uint "gorm:\"column:rental_court_detail_id;type:int unsigned;comment:場地ID\""
 	RentalCourtID       uint  `gorm:"column:rental_court_id;type:int unsigned;not null;comment:欄位"`
 	IncomeID            *uint `gorm:"column:income_id;type:int unsigned"`
 }
