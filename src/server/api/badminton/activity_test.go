@@ -75,8 +75,8 @@ func TestGetActivitys(t *testing.T) {
 						Activitys: []*resp.GetActivitysActivity{},
 					}
 					mockObj.EXPECT().GetActivitys(
-						util.Date().NewP(location, 2013, 8, 2),
-						util.Date().NewP(location, 2013, 8, 3),
+						util.GetTimePLoc(location, 2013, 8, 2),
+						util.GetTimePLoc(location, 2013, 8, 3),
 						uint(2),
 						uint(1),
 						[]uint{1, 2, 2},

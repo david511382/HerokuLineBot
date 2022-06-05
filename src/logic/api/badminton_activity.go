@@ -18,7 +18,7 @@ import (
 type IBadmintonActivityApiLogic interface {
 	GetActivitys(
 		fromDate,
-		toDate *util.DefinedTime[util.DateInt],
+		toDate *time.Time,
 		pageIndex,
 		pageSize uint,
 		placeIDs,
@@ -55,7 +55,7 @@ func NewBadmintonActivityApiLogic(
 // pageIndex: 1開始
 func (l *BadmintonActivityApiLogic) GetActivitys(
 	fromDate,
-	toDate *util.DefinedTime[util.DateInt],
+	toDate *time.Time,
 	pageIndex,
 	pageSize uint,
 	placeIDs,
@@ -152,11 +152,13 @@ func (l *BadmintonActivityApiLogic) GetActivitys(
 	}
 
 	{
-		activityID_detailMap, errInfo := l.badmintonActivityLogic.GetActivityDetail(
+		activityID_detailsMap := make(map[uint][]*badmintonLogic.CourtDetail)
+		_, errInfo := l.badmintonActivityLogic.GetActivityDetail(
 			&activity.Reqs{
 				IDs: activityIDs,
 			},
-		)
+			activityID_detailsMap,
+		).Run()
 		if errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if errInfo.IsError() {
@@ -164,12 +166,14 @@ func (l *BadmintonActivityApiLogic) GetActivitys(
 			}
 		}
 
-		for activityID, detail := range activityID_detailMap {
-			activityMap[activityID].Courts = append(activityMap[activityID].Courts, &resp.GetActivitysCourt{
-				FromTime: detail.From,
-				ToTime:   detail.To,
-				Count:    int(detail.Count),
-			})
+		for activityID, details := range activityID_detailsMap {
+			for _, detail := range details {
+				activityMap[activityID].Courts = append(activityMap[activityID].Courts, &resp.GetActivitysCourt{
+					FromTime: detail.From,
+					ToTime:   detail.To,
+					Count:    int(detail.Count),
+				})
+			}
 		}
 	}
 

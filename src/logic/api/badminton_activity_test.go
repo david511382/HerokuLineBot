@@ -10,6 +10,7 @@ import (
 	"heroku-line-bot/src/pkg/test/mock"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
+	"heroku-line-bot/src/pkg/util/flow"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/activity"
@@ -23,6 +24,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"golang.org/x/exp/maps"
 )
 
 func TestGetActivitys(t *testing.T) {
@@ -31,8 +33,8 @@ func TestGetActivitys(t *testing.T) {
 	defer mockCtl.Finish()
 
 	type args struct {
-		fromDate      *util.DefinedTime[util.DateInt]
-		toDate        *util.DefinedTime[util.DateInt]
+		fromDate      *time.Time
+		toDate        *time.Time
 		pageIndex     uint
 		pageSize      uint
 		placeIDs      []uint
@@ -59,8 +61,8 @@ func TestGetActivitys(t *testing.T) {
 		{
 			"place team weekday",
 			args{
-				fromDate:      util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-				toDate:        util.Date().NewP(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
+				fromDate:      util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:        util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
 				placeIDs:      []uint{52, 82},
 				teamIDs:       []uint{13, 14},
 				everyWeekdays: []time.Weekday{time.Friday, time.Sunday},
@@ -108,44 +110,62 @@ func TestGetActivitys(t *testing.T) {
 							52, 82,
 						},
 					}
-					returnValue := map[uint]*badmintonLogic.CourtDetail{
+					returnValue := map[uint][]*badmintonLogic.CourtDetail{
 						52: {
-							TimeRange: util.TimeRange{
-								From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
-								To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+							{
+								TimeRange: util.TimeRange{
+									From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+									To:   commonLogic.NewHourMinTime(3, 0).ForceTime(),
+								},
+								Count: 13,
 							},
-							Count: 13,
 						},
 						82: {
-							TimeRange: util.TimeRange{
-								From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
-								To:   commonLogic.NewHourMinTime(4, 0).ForceTime(),
+							{
+								TimeRange: util.TimeRange{
+									From: commonLogic.NewHourMinTime(1, 0).ForceTime(),
+									To:   commonLogic.NewHourMinTime(4, 0).ForceTime(),
+								},
+								Count: 14,
 							},
-							Count: 14,
 						},
 					}
-					mockObj.EXPECT().GetActivityDetail(gomock.AssignableToTypeOf(wantArg)).DoAndReturn(
-						func(arg *activity.Reqs) (map[uint]*badmintonLogic.CourtDetail, errUtil.IError) {
-							sort.Slice(arg.IDs, func(i, j int) bool {
-								return arg.IDs[i] < arg.IDs[j]
-							})
-							if ok, msg := util.Comp(arg, wantArg); !ok {
-								errInfo := errUtil.New(msg)
-								return nil, errInfo
-							}
-
-							return returnValue, nil
+					mockObj.EXPECT().GetActivityDetail(
+						gomock.AssignableToTypeOf(wantArg),
+						gomock.AssignableToTypeOf(returnValue),
+					).DoAndReturn(
+						func(arg *activity.Reqs, respActivityID_detailsMap map[uint][]*badmintonLogic.CourtDetail) flow.IStep {
+							return flow.Flow("",
+								flow.Step{
+									Fun: func() (resultErrInfo errUtil.IError) {
+										sort.Slice(arg.IDs, func(i, j int) bool {
+											return arg.IDs[i] < arg.IDs[j]
+										})
+										if ok, msg := util.Comp(arg, wantArg); !ok {
+											errInfo := errUtil.New(msg)
+											return errInfo
+										}
+										return
+									},
+								},
+								flow.Step{
+									Fun: func() (resultErrInfo errUtil.IError) {
+										maps.Copy(respActivityID_detailsMap, returnValue)
+										return
+									},
+								},
+							)
 						},
 					)
 					mockObj.EXPECT().GetUnfinishedActiviysSqlReqs(
-						gomock.AssignableToTypeOf(util.Date().POf(nil)),
-						gomock.AssignableToTypeOf(util.Date().POf(nil)),
+						gomock.AssignableToTypeOf(&time.Time{}),
+						gomock.AssignableToTypeOf(&time.Time{}),
 						gomock.AssignableToTypeOf([]uint{}),
 						gomock.AssignableToTypeOf([]uint{}),
 						gomock.AssignableToTypeOf([]time.Weekday{}),
 					).DoAndReturn(
 						func(
-							fromDate *util.DefinedTime[util.DateInt], toDate *util.DefinedTime[util.DateInt], teamIDs []uint, placeIDs []uint, everyWeekdays []time.Weekday,
+							fromDate *time.Time, toDate *time.Time, teamIDs []uint, placeIDs []uint, everyWeekdays []time.Weekday,
 						) ([]*activity.Reqs, errUtil.IError) {
 							return origin.GetUnfinishedActiviysSqlReqs(
 								fromDate, toDate, teamIDs, placeIDs, everyWeekdays,

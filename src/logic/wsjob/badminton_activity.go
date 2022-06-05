@@ -19,7 +19,7 @@ type BadmintonActivitys struct {
 
 	BaseScheduleWsConnJob
 	fromDate,
-	toDate *util.DefinedTime[util.DateInt]
+	toDate *time.Time
 	pageIndex,
 	pageSize uint
 	placeIDs,
@@ -30,7 +30,7 @@ type BadmintonActivitys struct {
 func NewBadmintonActivitys(
 	c *gin.Context,
 	fromDate,
-	toDate *util.DefinedTime[util.DateInt],
+	toDate *time.Time,
 	pageIndex,
 	pageSize uint,
 	placeIDs,
@@ -99,8 +99,8 @@ func (w *BadmintonActivitys) UpdateReqs(reqsBs []byte) (resultErrInfo errUtil.IE
 	for _, weekday := range reqs.EveryWeekdays {
 		everyWeekdays = append(everyWeekdays, time.Weekday(weekday))
 	}
-	w.fromDate = fromDate
-	w.toDate = toDate
+	w.fromDate = fromDate.TimeP()
+	w.toDate = toDate.TimeP()
 	w.pageIndex = reqs.PageIndex
 	w.pageSize = reqs.PageSize
 	w.placeIDs = reqs.PlaceIDs

@@ -1,156 +1,72 @@
 package badminton
 
 import (
-	commonLogic "heroku-line-bot/src/logic/common"
+	"fmt"
+	"heroku-line-bot/src/logic/badminton/domain"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
-	"heroku-line-bot/src/repo/database/database/clubdb"
-	"heroku-line-bot/src/repo/database/database/clubdb/activity"
+	"strings"
 	"time"
 )
 
-type IBadmintonActivityLogic interface {
-	GetUnfinishedActiviysSqlReqs(
-		fromDate, toDate *util.DefinedTime[util.DateInt],
-		teamIDs,
-		placeIDs []uint,
-		everyWeekdays []time.Weekday,
-	) (
-		resultArgs []*activity.Reqs,
-		resultErrInfo errUtil.IError,
-	)
-
-	GetActivityDetail(
-		activityReqs *activity.Reqs,
-	) (
-		activityID_detailMap map[uint]*CourtDetail,
-		resultErrInfo errUtil.IError,
-	)
-}
-
-type BadmintonActivityLogic struct {
-	clubDb *clubdb.Database
-}
-
-func NewBadmintonActivityLogic(clubDb *clubdb.Database) *BadmintonActivityLogic {
-	return &BadmintonActivityLogic{
-		clubDb: clubDb,
-	}
-}
-
-func (l *BadmintonActivityLogic) GetUnfinishedActiviysSqlReqs(
-	fromDate, toDate *util.DefinedTime[util.DateInt],
-	teamIDs,
-	placeIDs []uint,
-	everyWeekdays []time.Weekday,
+func ParseActivityDbCourts(
+	courtsStr string,
 ) (
-	resultArgs []*activity.Reqs,
+	respCourts []*domain.ActivityCourt,
 	resultErrInfo errUtil.IError,
 ) {
-	resultArgs = make([]*activity.Reqs, 0)
-
-	args := make([]*activity.Reqs, 0)
-	arg := &activity.Reqs{
-		PlaceIDs: placeIDs,
-	}
-	if fromDate != nil {
-		arg.FromDate = util.PointerOf(fromDate.Time())
-	}
-	if toDate != nil {
-		arg.ToDate = util.PointerOf(toDate.Time())
-	}
-	if isNotSpecifyingTeam := len(teamIDs) == 0; isNotSpecifyingTeam {
-		args = append(args, arg)
-	}
-	for _, teamID := range teamIDs {
-		copyArg := *arg
-		copyArg.TeamID = util.PointerOf(teamID)
-		args = append(args, &copyArg)
-	}
-
-	for _, arg := range args {
-		if len(everyWeekdays) > 0 {
-			startDate := fromDate
-			endtDate := toDate
-			if startDate == nil || endtDate == nil {
-				noDateArg := *arg
-				noDateArg.FromDate = nil
-				noDateArg.ToDate = nil
-				maxDate, minTime, err := l.clubDb.Activity.MinMaxDate(noDateArg)
-				if err != nil {
-					errInfo := errUtil.NewError(err)
-					resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-					return
-				}
-
-				if startDate == nil {
-					startDate = util.PointerOf(util.Date().Of(minTime))
-				}
-				if endtDate == nil {
-					endtDate = util.PointerOf(util.Date().Of(maxDate))
-				}
-			}
-
-			arg.FromDate = nil
-			arg.ToDate = nil
-			arg.Dates = make([]*time.Time, 0)
-			dates := util.GetDatesInWeekdays(*startDate, *endtDate, everyWeekdays...)
-			for _, v := range dates {
-				arg.Dates = append(arg.Dates, util.PointerOf(v.Time()))
-			}
-
-			if isEmpty := len(arg.Dates) == 0; isEmpty {
-				continue
-			}
+	courtsStrs := strings.Split(courtsStr, ",")
+	for _, courtsStr := range courtsStrs {
+		court := &domain.ActivityCourt{}
+		timeStr := ""
+		if _, err := fmt.Sscanf(
+			courtsStr,
+			"%d-%f-%s",
+			&court.Count,
+			&court.PricePerHour,
+			&timeStr); err != nil {
+			resultErrInfo = errUtil.NewError(err)
+			return
 		}
-
-		resultArgs = append(resultArgs, arg)
-	}
-
-	return
-}
-
-func (l *BadmintonActivityLogic) GetActivityDetail(
-	activityReqs *activity.Reqs,
-) (
-	activityID_detailMap map[uint]*CourtDetail,
-	resultErrInfo errUtil.IError,
-) {
-	activityID_detailMap = make(map[uint]*CourtDetail)
-
-	dbDatas, err := l.clubDb.JoinActivityDetail(clubdb.ReqsClubJoinActivityDetail{
-		Activity: activityReqs,
-	})
-	if err != nil {
-		errInfo := errUtil.NewError(err)
-		resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-		return
-	}
-
-	for _, v := range dbDatas {
-		activityID := v.ActivityID
-
-		startTime, err := commonLogic.HourMinTime(v.RentalCourtDetailStartTime).Time()
-		if err != nil {
-			errInfo := errUtil.NewError(err)
+		times := strings.Split(timeStr, "~")
+		if len(times) != 2 {
+			errInfo := errUtil.New("時間格式錯誤")
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		}
-		endTime, err := commonLogic.HourMinTime(v.RentalCourtDetailEndTime).Time()
-		if err != nil {
-			errInfo := errUtil.NewError(err)
-			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+		fromTimeStr := times[0]
+		toTimeStr := times[1]
+		if t, err := time.Parse(util.TIME_HOUR_MIN_FORMAT, fromTimeStr); err != nil {
+			resultErrInfo = errUtil.NewError(err)
 			return
+		} else {
+			court.FromTime = t
+		}
+		if t, err := time.Parse(util.TIME_HOUR_MIN_FORMAT, toTimeStr); err != nil {
+			resultErrInfo = errUtil.NewError(err)
+			return
+		} else {
+			court.ToTime = t
 		}
 
-		activityID_detailMap[activityID] = &CourtDetail{
-			TimeRange: util.TimeRange{
-				From: startTime,
-				To:   endTime,
-			},
-			Count: uint8(v.RentalCourtDetailCount),
-		}
+		respCourts = append(respCourts, court)
 	}
-
 	return
+}
+
+func FormatActivityDbCourts(
+	courts []*domain.ActivityCourt,
+) string {
+	courtStrs := []string{}
+	for _, court := range courts {
+		courtStr := fmt.Sprintf(
+			"%d-%.1f-%s~%s",
+			court.Count,
+			court.PricePerHour,
+			court.FromTime.Format(util.TIME_HOUR_MIN_FORMAT),
+			court.ToTime.Format(util.TIME_HOUR_MIN_FORMAT),
+		)
+		courtStrs = append(courtStrs, courtStr)
+	}
+	return strings.Join(courtStrs, ",")
 }

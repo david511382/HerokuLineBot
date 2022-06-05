@@ -163,9 +163,11 @@ func (b *NewActivity) LoadRequireInputTextParam(attr, text string) (resultErrInf
 		b.ClubSubsidy = int16(i)
 	case "ICmdLogic.courts":
 		if isJson := strings.ContainsAny(text, "{"); !isJson {
-			if errInfo := b.ParseCourts(text); errInfo != nil {
+			if courts, errInfo := badmintonLogic.ParseActivityDbCourts(text); errInfo != nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
+			} else {
+				b.Courts = courts
 			}
 		}
 	default:
@@ -358,7 +360,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 }
 
 func (b *NewActivity) InsertActivity(db *clubdb.Database) (resultErrInfo errUtil.IError) {
-	courtsStr := b.getCourtsStr()
+	courtsStr := badmintonLogic.FormatActivityDbCourts(b.Courts)
 	if db == nil {
 		dbConn, transaction, err := database.Club().Begin()
 		if err != nil {
@@ -507,63 +509,6 @@ func (b *NewActivity) getCourtHours() util.Float {
 		totalHours = totalHours.Plus(hours)
 	}
 	return totalHours
-}
-
-func (b *NewActivity) getCourtsStr() string {
-	courtStrs := []string{}
-	for _, court := range b.Courts {
-		courtStr := fmt.Sprintf(
-			"%d-%.1f-%s~%s",
-			court.Count,
-			court.PricePerHour,
-			court.FromTime.Format(util.TIME_HOUR_MIN_FORMAT),
-			court.ToTime.Format(util.TIME_HOUR_MIN_FORMAT),
-		)
-		courtStrs = append(courtStrs, courtStr)
-	}
-	return strings.Join(courtStrs, ",")
-}
-
-func (b *NewActivity) ParseCourts(courtsStr string) (resultErrInfo errUtil.IError) {
-	b.Courts = make([]*badmintonLogicDomain.ActivityCourt, 0)
-	courtsStrs := strings.Split(courtsStr, ",")
-	for _, courtsStr := range courtsStrs {
-		court := &badmintonLogicDomain.ActivityCourt{}
-		timeStr := ""
-		if _, err := fmt.Sscanf(
-			courtsStr,
-			"%d-%f-%s",
-			&court.Count,
-			&court.PricePerHour,
-			&timeStr); err != nil {
-			resultErrInfo = errUtil.NewError(err)
-			return
-		}
-		times := strings.Split(timeStr, "~")
-		if len(times) != 2 {
-			errInfo := errUtil.New("時間格式錯誤")
-			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-			return
-		}
-		fromTimeStr := times[0]
-		toTimeStr := times[1]
-		if t, err := time.Parse(util.TIME_HOUR_MIN_FORMAT, fromTimeStr); err != nil {
-			resultErrInfo = errUtil.NewError(err)
-			return
-		} else {
-			court.FromTime = t
-		}
-		if t, err := time.Parse(util.TIME_HOUR_MIN_FORMAT, toTimeStr); err != nil {
-			resultErrInfo = errUtil.NewError(err)
-			return
-		} else {
-			court.ToTime = t
-		}
-
-		b.Courts = append(b.Courts, court)
-	}
-
-	return nil
 }
 
 func (b *NewActivity) getCourtTimeRange() (minTime, maxTime *time.Time) {

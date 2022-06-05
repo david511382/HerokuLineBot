@@ -3,6 +3,7 @@ package club
 import (
 	"fmt"
 	accountLogicDomain "heroku-line-bot/src/logic/account/domain"
+	badmintonLogic "heroku-line-bot/src/logic/badminton"
 	"heroku-line-bot/src/logic/club/domain"
 	incomeLogicDomain "heroku-line-bot/src/logic/income/domain"
 	"heroku-line-bot/src/pkg/errorcode"
@@ -121,9 +122,11 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 			ClubSubsidy: v.ClubSubsidy,
 			TeamID:      v.TeamID,
 		}
-		if errInfo := b.NewActivity.ParseCourts(v.CourtsAndTime); errInfo != nil {
+		if courts, errInfo := badmintonLogic.ParseActivityDbCourts(v.CourtsAndTime); errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
+		} else {
+			b.NewActivity.Courts = courts
 		}
 
 		memberActivityArg := memberactivity.Reqs{
