@@ -67,7 +67,7 @@ func TestDatabase_JoinActivityDetail(t *testing.T) {
 					{
 						ID:      1,
 						PlaceID: 1,
-						TeamID:  1,
+						TeamID:  2,
 						Date:    *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 					},
 				},

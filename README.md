@@ -79,3 +79,4 @@ SELECT SETVAL('team_id_seq', (SELECT MAX(id) FROM team));
 ## 羽球業務邏輯
 
 1. 訂金跟尾款必須付同樣日期的場地
+2. 一個球隊一天一個球館只能有一個活動

@@ -14,12 +14,7 @@ const (
 	COLUMN_Date          common.ColumnName = "date"
 	COLUMN_PlaceID       common.ColumnName = "place_id"
 	COLUMN_CourtsAndTime common.ColumnName = "courts_and_time"
-	COLUMN_MemberCount   common.ColumnName = "member_count"
-	COLUMN_GuestCount    common.ColumnName = "guest_count"
-	COLUMN_MemberFee     common.ColumnName = "member_fee"
-	COLUMN_GuestFee      common.ColumnName = "guest_fee"
 	COLUMN_ClubSubsidy   common.ColumnName = "club_subsidy"
-	COLUMN_LogisticID    common.ColumnName = "logistic_id"
 	COLUMN_Description   common.ColumnName = "description"
 	COLUMN_PeopleLimit   common.ColumnName = "people_limit"
 )
@@ -39,17 +34,12 @@ func New(connectionCreator common.IConnection) *Table {
 }
 
 type Model struct {
-	ID            uint      `gorm:"column:id;type:int unsigned auto_increment;primary_key;not null;comment:欄位"`
-	TeamID        uint      `gorm:"column:team_id;type:int unsigned;not null;comment:欄位"`
-	Date          time.Time `gorm:"column:date;type:date;not null;index"`
-	PlaceID       uint      `gorm:"column:place_id;type:int unsigned;not null;comment:欄位"`
+	ID            uint      "gorm:\"column:id;type:int unsigned auto_increment;primary_key;not null;comment:流水號\""
+	TeamID        uint      "gorm:\"column:team_id;type:int unsigned;not null;uniqueIndex:`idx-team-date-place`,priority:1;comment:隊伍ID\""
+	Date          time.Time "gorm:\"column:date;type:date;not null;uniqueIndex:`idx-team-date-place`,priority:2;index:`idx-date`;comment:日期\""
+	PlaceID       uint      "gorm:\"column:place_id;type:int unsigned;not null;uniqueIndex:`idx-team-date-place`,priority:3;comment:球場ID\""
 	CourtsAndTime string    `gorm:"column:courts_and_time;type:varchar(256);not null;comment:欄位"`
-	MemberCount   int16     `gorm:"column:member_count;type:smallint;not null;comment:欄位"`
-	GuestCount    int16     `gorm:"column:guest_count;type:smallint;not null;comment:欄位"`
-	MemberFee     int16     `gorm:"column:member_fee;type:smallint;not null;comment:欄位"`
-	GuestFee      int16     `gorm:"column:guest_fee;type:smallint;not null;comment:欄位"`
 	ClubSubsidy   int16     `gorm:"column:club_subsidy;type:smallint;not null;comment:欄位"`
-	LogisticID    *uint     `gorm:"column:logistic_id;type:int unsigned;"`
 	Description   string    `gorm:"column:description;type:varchar(64);not null;comment:欄位"`
 	PeopleLimit   *int16    `gorm:"column:people_limit;type:smallint"`
 }
@@ -118,30 +108,9 @@ func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {
 
 type UpdateReqs struct {
 	Reqs
-
-	LogisticID **uint
-	MemberCount,
-	GuestCount,
-	MemberFee,
-	GuestFee *int16
 }
 
 func (arg UpdateReqs) GetUpdateFields() map[string]interface{} {
 	fields := make(map[string]interface{})
-	if p := arg.LogisticID; p != nil {
-		fields[COLUMN_LogisticID.Name()] = *p
-	}
-	if p := arg.MemberCount; p != nil {
-		fields[COLUMN_MemberCount.Name()] = *p
-	}
-	if p := arg.GuestCount; p != nil {
-		fields[COLUMN_GuestCount.Name()] = *p
-	}
-	if p := arg.MemberFee; p != nil {
-		fields[COLUMN_MemberFee.Name()] = *p
-	}
-	if p := arg.GuestFee; p != nil {
-		fields[COLUMN_GuestFee.Name()] = *p
-	}
 	return fields
 }
