@@ -50,7 +50,6 @@ func (Model) TableName() string {
 
 type Reqs struct {
 	dbModel.Date
-	Dates               []*time.Time
 	PlaceID             *uint
 	PlaceIDs            []uint
 	ClubSubsidyNotEqual *int16
@@ -87,7 +86,7 @@ func (arg Reqs) WhereArg(dp *gorm.DB) *gorm.DB {
 	if p := arg.Date.Date; p != nil {
 		dp = dp.Where(COLUMN_Date.TableName(tableName).FullName()+" = ?", p)
 	}
-	if p := arg.Dates; len(p) > 0 {
+	if p := arg.Date.Dates; len(p) > 0 {
 		dp = dp.Where(COLUMN_Date.TableName(tableName).FullName()+" IN (?)", p)
 	}
 	if p := arg.FromDate; p != nil {

@@ -126,7 +126,7 @@ func (b *BackGround) calDateActivity(teamSettingMap map[uint]*rdsModel.ClubBadmi
 		}
 
 		createActivityDate := currentDate.Next(int(*settting.ActivityCreateDays))
-		teamPlaceDateCourtsMap, errInfo := b.badmintonCourtLogic.GetCourts(createActivityDate, createActivityDate, &teamID, nil)
+		teamPlaceDateCourtsMap, errInfo := b.badmintonCourtLogic.GetCourts(createActivityDate.TimeP(), createActivityDate.TimeP(), nil, &teamID, nil)
 		if errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			if resultErrInfo.IsError() {

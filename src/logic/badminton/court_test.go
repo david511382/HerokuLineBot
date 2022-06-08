@@ -21,14 +21,16 @@ import (
 	"heroku-line-bot/src/repo/redis/db/badminton"
 	"sort"
 	"testing"
+	"time"
 )
 
 func TestCourtGetCourts(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		fromDate util.DefinedTime[util.DateInt]
-		toDate   util.DefinedTime[util.DateInt]
+		fromDate *time.Time
+		toDate   *time.Time
+		dates    []*time.Time
 		teamID   *uint
 		placeID  *uint
 	}
@@ -52,8 +54,8 @@ func TestCourtGetCourts(t *testing.T) {
 		{
 			"team place",
 			args{
-				fromDate: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-				toDate:   util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				fromDate: util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:   util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 				teamID:   util.PointerOf[uint](1),
 				placeID:  util.PointerOf[uint](1),
 			},
@@ -177,8 +179,8 @@ func TestCourtGetCourts(t *testing.T) {
 		{
 			"refund",
 			args{
-				fromDate: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-				toDate:   util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				fromDate: util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+				toDate:   util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
 			},
 			migrations{
 				rentalCourts: []*rentalcourt.Model{
@@ -596,7 +598,7 @@ func TestCourtGetCourts(t *testing.T) {
 			)
 
 			l := NewBadmintonCourtLogic(db, rds)
-			gotTeamPlaceDateCourtsMap, gotResultErrInfo := l.GetCourts(tt.args.fromDate, tt.args.toDate, tt.args.teamID, tt.args.placeID)
+			gotTeamPlaceDateCourtsMap, gotResultErrInfo := l.GetCourts(tt.args.fromDate, tt.args.toDate, tt.args.dates, tt.args.teamID, tt.args.placeID)
 			if gotResultErrInfo != nil {
 				t.Errorf("GetCourts() error = %v", gotResultErrInfo.Error())
 				return

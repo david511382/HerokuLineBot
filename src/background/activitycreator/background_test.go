@@ -12,7 +12,6 @@ import (
 	"heroku-line-bot/src/pkg/test"
 	"heroku-line-bot/src/pkg/test/mock"
 	"heroku-line-bot/src/pkg/util"
-	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
 	"heroku-line-bot/src/repo/database/database/clubdb/activity"
@@ -297,35 +296,22 @@ func TestBackGround_Run(t *testing.T) {
 				badmintonCourtLogicFn: func() badmintonLogic.IBadmintonCourtLogic {
 					mockObj := mock.NewMockIBadmintonCourtLogic(mockCtl)
 					var (
-						fromDate, toDate util.DefinedTime[util.DateInt]
 						teamID,
 						placeID *uint
 					)
 					mockObj.EXPECT().GetCourts(
-						gomock.AssignableToTypeOf(fromDate),
-						gomock.AssignableToTypeOf(toDate),
+						util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
+						util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
+						gomock.AssignableToTypeOf([]*time.Time{}),
 						gomock.AssignableToTypeOf(teamID),
 						gomock.AssignableToTypeOf(placeID),
-					).DoAndReturn(
-						func(
-							fromDate, toDate util.DefinedTime[util.DateInt],
-							teamID,
-							placeID *uint,
-						) (
-							teamPlaceDateCourtsMap map[uint]map[uint][]*badmintonLogic.DateCourt,
-							resultErrInfo errUtil.IError,
-						) {
-							teamPlaceDateCourtsMap = map[uint]map[uint][]*badmintonLogic.DateCourt{
+					).Return(
+						map[uint]map[uint][]*badmintonLogic.DateCourt{
+							1: {
 								1: {
-									1: {},
-								},
-							}
-							util.TimeSlice(fromDate.Time(), toDate.Next(1).Time(),
-								util.Date().Next1,
-								func(runTime, next time.Time) (isContinue bool) {
-									teamPlaceDateCourtsMap[1][1] = append(teamPlaceDateCourtsMap[1][1], &badmintonLogic.DateCourt{
+									{
 										ID:   0,
-										Date: util.Date().Of(runTime),
+										Date: util.Date().New(global.TimeUtilObj.GetLocation(), 2013, 8, 8),
 										Courts: []*badmintonLogic.Court{
 											{
 												CourtDetailPrice: badmintonLogic.CourtDetailPrice{},
@@ -335,13 +321,11 @@ func TestBackGround_Run(t *testing.T) {
 												Refunds:          []*badmintonLogic.RefundMulCourtIncome{},
 											},
 										},
-									})
-									return true
+									},
 								},
-							)
-
-							return
+							},
 						},
+						nil,
 					)
 					return mockObj
 				},

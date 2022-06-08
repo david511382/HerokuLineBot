@@ -6,9 +6,9 @@ package mock
 
 import (
 	badminton "heroku-line-bot/src/logic/badminton"
-	util "heroku-line-bot/src/pkg/util"
 	error "heroku-line-bot/src/pkg/util/error"
 	reflect "reflect"
+	time "time"
 
 	gomock "github.com/golang/mock/gomock"
 )
@@ -37,16 +37,16 @@ func (m *MockIBadmintonCourtLogic) EXPECT() *MockIBadmintonCourtLogicMockRecorde
 }
 
 // GetCourts mocks base method.
-func (m *MockIBadmintonCourtLogic) GetCourts(fromDate, toDate util.DefinedTime[util.DateInt], teamID, placeID *uint) (map[uint]map[uint][]*badminton.DateCourt, error.IError) {
+func (m *MockIBadmintonCourtLogic) GetCourts(fromDate, toDate *time.Time, dates []*time.Time, teamID, placeID *uint) (map[uint]map[uint][]*badminton.DateCourt, error.IError) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCourts", fromDate, toDate, teamID, placeID)
+	ret := m.ctrl.Call(m, "GetCourts", fromDate, toDate, dates, teamID, placeID)
 	ret0, _ := ret[0].(map[uint]map[uint][]*badminton.DateCourt)
 	ret1, _ := ret[1].(error.IError)
 	return ret0, ret1
 }
 
 // GetCourts indicates an expected call of GetCourts.
-func (mr *MockIBadmintonCourtLogicMockRecorder) GetCourts(fromDate, toDate, teamID, placeID interface{}) *gomock.Call {
+func (mr *MockIBadmintonCourtLogicMockRecorder) GetCourts(fromDate, toDate, dates, teamID, placeID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCourts", reflect.TypeOf((*MockIBadmintonCourtLogic)(nil).GetCourts), fromDate, toDate, teamID, placeID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCourts", reflect.TypeOf((*MockIBadmintonCourtLogic)(nil).GetCourts), fromDate, toDate, dates, teamID, placeID)
 }

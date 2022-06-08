@@ -23,7 +23,8 @@ import (
 
 type IBadmintonCourtLogic interface {
 	GetCourts(
-		fromDate, toDate util.DefinedTime[util.DateInt],
+		fromDate, toDate *time.Time,
+		dates []*time.Time,
 		teamID,
 		placeID *uint,
 	) (
@@ -48,7 +49,8 @@ func NewBadmintonCourtLogic(
 }
 
 func (l *BadmintonCourtLogic) GetCourts(
-	fromDate, toDate util.DefinedTime[util.DateInt],
+	fromDate, toDate *time.Time,
+	dates []*time.Time,
 	teamID,
 	placeID *uint,
 ) (
@@ -62,8 +64,9 @@ func (l *BadmintonCourtLogic) GetCourts(
 	courtIDMap := make(map[uint]*rentalcourt.Model)
 	if dbDatas, err := l.clubDb.RentalCourt.Select(rentalcourt.Reqs{
 		Date: dbModel.Date{
-			FromDate: util.PointerOf(fromDate.Time()),
-			ToDate:   util.PointerOf(toDate.Time()),
+			FromDate: fromDate,
+			ToDate:   toDate,
+			Dates:    dates,
 		},
 		PlaceID: placeID,
 	}); err != nil {
@@ -463,7 +466,9 @@ func (l *BadmintonCourtLogic) AddCourt(
 			}
 		}
 		dbDatas, err := l.clubDb.RentalCourt.Select(rentalcourt.Reqs{
-			Dates:   dates,
+			Date: dbModel.Date{
+				Dates: dates,
+			},
 			PlaceID: &placeID,
 		},
 			rentalcourt.COLUMN_ID,

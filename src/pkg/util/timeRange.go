@@ -60,7 +60,16 @@ func (tr *TimeRange) CompareTime(t *time.Time) int {
 }
 
 // from = t || from < t && t <= to
-func (tr TimeRange) IsContain(t time.Time) bool {
+func (tr TimeRange) IsContainTime(t time.Time) bool {
+	tp := TimePRange{
+		From: &tr.From,
+		To:   &tr.To,
+	}
+	return tp.IsContainTime(t)
+}
+
+// from = t || from < t && t <= to
+func (tr TimeRange) IsContain(t TimeRange) bool {
 	tp := TimePRange{
 		From: &tr.From,
 		To:   &tr.To,
@@ -109,7 +118,7 @@ func (tr *TimePRange) CompareTime(t *time.Time) int {
 }
 
 // from = t || from < t && t <= to
-func (tr TimePRange) IsContain(t time.Time) bool {
+func (tr TimePRange) IsContainTime(t time.Time) bool {
 	fromCompare := compareTime(tr.From, &t)
 	if fromCompare == 1 {
 		return false
@@ -118,6 +127,12 @@ func (tr TimePRange) IsContain(t time.Time) bool {
 	}
 	toCompare := compareTime(tr.To, &t)
 	return toCompare != -1
+}
+
+// from = t || from < t && t <= to
+func (tr TimePRange) IsContain(t TimeRange) bool {
+	return tr.IsContainTime(t.From) &&
+		tr.IsContainTime(t.To)
 }
 
 type IData interface {
@@ -293,7 +308,7 @@ func (trds *TimeRangeDatas) loadDataRange(
 	isContain bool,
 	resultErrInfo *errUtil.ErrorInfo,
 ) {
-	isContain = dataRange.IsContain(splitTime)
+	isContain = dataRange.IsContainTime(splitTime)
 	if !isContain {
 		(*newDatas) = append((*newDatas), dataRange)
 		return

@@ -3,6 +3,7 @@ package badminton
 import (
 	"heroku-line-bot/bootstrap"
 	"heroku-line-bot/src/logic/badminton/domain"
+	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/test"
 	"heroku-line-bot/src/pkg/util"
@@ -141,9 +142,11 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 			wants: wants{
 				args: []*activity.Reqs{
 					{
-						Dates: []*time.Time{
-							util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-							util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 4),
+						Date: dbModel.Date{
+							Dates: []*time.Time{
+								util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+								util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 4),
+							},
 						},
 					},
 				},
@@ -167,9 +170,11 @@ func TestGetUnfinishedActiviysSqlReqs(t *testing.T) {
 			wants: wants{
 				args: []*activity.Reqs{
 					{
-						Dates: []*time.Time{
-							util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
-							util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 4),
+						Date: dbModel.Date{
+							Dates: []*time.Time{
+								util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 2),
+								util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 8, 4),
+							},
 						},
 					},
 				},

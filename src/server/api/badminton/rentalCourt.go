@@ -55,8 +55,9 @@ func GetRentalCourts(c *gin.Context) {
 	}
 	badmintonCourtLogic := badmintonLogic.NewBadmintonCourtLogic(database.Club(), redis.Badminton())
 	teamPlaceDateCourtsMap, errInfo := badmintonCourtLogic.GetCourts(
-		util.Date().Of(reqs.FromDate),
-		util.Date().Of(reqs.ToDate),
+		util.Date().Of(reqs.FromDate).TimeP(),
+		util.Date().Of(reqs.ToDate).TimeP(),
+		nil,
 		&reqs.TeamID,
 		nil,
 	)
