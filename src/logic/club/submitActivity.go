@@ -280,8 +280,7 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 
 	if b.context.IsConfirmed() {
 		if errInfo := b.Submit(); errInfo != nil {
-			switch errorcode.GetErrorMsg(errInfo) {
-			case errorcode.ERROR_MSG_NO_ACTIVITY:
+			if errorcode.IsContain(errInfo, errorcode.ERROR_MSG_NO_ACTIVITY) {
 				replyMessges := []interface{}{
 					linebot.GetTextMessage("活動不存在"),
 				}
@@ -296,11 +295,11 @@ func (b *submitActivity) Do(text string) (resultErrInfo errUtil.IError) {
 				}
 
 				return
-			default:
-				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
-				if resultErrInfo.IsError() {
-					return
-				}
+			}
+
+			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
+			if resultErrInfo.IsError() {
+				return
 			}
 		}
 

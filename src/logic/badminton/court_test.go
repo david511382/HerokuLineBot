@@ -745,7 +745,7 @@ func TestCourtAddCourt(t *testing.T) {
 						Count:     1,
 					},
 				},
-				wantErrMsg: errorcode.ERROR_MSG_EMPTY,
+				wantErrMsg: errorcode.ERROR_MSG_SUCCESS,
 			},
 		},
 		{
@@ -886,7 +886,7 @@ func TestCourtAddCourt(t *testing.T) {
 						Count:     1,
 					},
 				},
-				wantErrMsg: errorcode.ERROR_MSG_EMPTY,
+				wantErrMsg: errorcode.ERROR_MSG_SUCCESS,
 			},
 		},
 	}
@@ -932,8 +932,17 @@ func TestCourtAddCourt(t *testing.T) {
 
 			l := NewBadmintonCourtLogic(db, rds)
 			gotResultErrInfo := l.AddCourt(tt.args.placeID, tt.args.teamID, tt.args.pricePerHour, tt.args.courtDetail, tt.args.despositMoney, tt.args.balanceMoney, tt.args.despositPayDate, tt.args.balancePayDate, tt.args.rentalDates)
-			if ok, msg := util.Comp(errorcode.GetErrorMsg(gotResultErrInfo), tt.wants.wantErrMsg); !ok {
-				t.Fatal(msg)
+			if tt.wants.wantErrMsg == errorcode.ERROR_MSG_SUCCESS {
+				if gotResultErrInfo != nil {
+					t.Error(gotResultErrInfo.Error())
+					return
+				}
+			} else if gotResultErrInfo == nil {
+				t.Error("no result")
+				return
+			} else if !errorcode.IsContain(gotResultErrInfo, tt.wants.wantErrMsg) {
+				t.Error(gotResultErrInfo.Error())
+				return
 			}
 
 			if dbDatas, err := db.RentalCourt.Select(rentalcourt.Reqs{}); err != nil {

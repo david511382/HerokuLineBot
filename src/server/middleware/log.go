@@ -9,6 +9,7 @@ import (
 	"heroku-line-bot/src/server/domain"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -62,7 +63,11 @@ func Logger() gin.HandlerFunc {
 		}
 		resultErrInfo.Attr("Path", path)
 		resultErrInfo.Attr("Proto", c.Request.Proto)
-		resultErrInfo.Attr("Status", c.Writer.Status())
+		status := c.Writer.Status()
+		resultErrInfo.Attr("Status", status)
+		if status == http.StatusInternalServerError {
+			resultErrInfo.SetLevel(zerolog.WarnLevel)
+		}
 		resultErrInfo.Attr("Duration", nowTime.Sub(start).String())
 		resultErrInfo.Attr("UserAgent", c.Request.UserAgent())
 		if responseValue, isExist := c.Get(domain.KEY_RESPONSE_CONTEXT); isExist {
@@ -72,6 +77,11 @@ func Logger() gin.HandlerFunc {
 			bs, err := json.Marshal(claims)
 			if err == nil {
 				resultErrInfo.Attr("Claims", string(bs))
+			}
+		}
+		if value, isExist := c.Get(domain.KEY_RESPONSE_ERROR); isExist {
+			if err, ok := value.(error); ok {
+				resultErrInfo.Attr("Error", err.Error())
 			}
 		}
 

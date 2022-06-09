@@ -27,10 +27,7 @@ func NewGetActivitysHandler(badmintonActivityApiLogic apiLogic.IBadmintonActivit
 		locationConverter := util.NewLocationConverter(global.TimeUtilObj.GetLocation(), false)
 		locationConverter.Convert(&reqs)
 
-		result := resp.Base{
-			Message: "完成",
-			Data:    resp.GetActivitys{},
-		}
+		result := resp.GetActivitys{}
 
 		fromDate := reqs.FromDate
 		toDate := reqs.ToDate
@@ -52,7 +49,7 @@ func NewGetActivitysHandler(badmintonActivityApiLogic apiLogic.IBadmintonActivit
 			return
 		}
 
-		result.Data = response
+		result = response
 		common.Success(c, result)
 	}
 }
