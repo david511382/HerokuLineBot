@@ -1,7 +1,6 @@
 package badminton
 
 import (
-	"heroku-line-bot/src/logic/badminton/domain"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/pkg/util/flow"
@@ -115,7 +114,7 @@ func (l *BadmintonActivityLogic) GetActivityDetail(
 	respActivityID_detailsMap map[uint][]*CourtDetail,
 ) flow.IStep {
 	var (
-		activity_courtsMap = make(map[uint][]*domain.ActivityCourt)
+		activity_courtsMap = make(map[uint]ActivityCourts)
 	)
 	return flow.Flow("GetActivityDetail",
 		flow.Step{
@@ -139,7 +138,7 @@ func (l *BadmintonActivityLogic) GetActivityDetail(
 				}
 
 				for _, v := range dbDatas {
-					courts, errInfo := ParseActivityDbCourts(v.CourtsAndTime)
+					courts, errInfo := DbActivityCourtsStr(v.CourtsAndTime).ParseCourts()
 					if errInfo != nil {
 						resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 						if resultErrInfo.IsError() {

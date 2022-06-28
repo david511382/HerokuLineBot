@@ -3,7 +3,6 @@ package activitycreator
 import (
 	"heroku-line-bot/bootstrap"
 	badmintonLogic "heroku-line-bot/src/logic/badminton"
-	badmintonLogicDomain "heroku-line-bot/src/logic/badminton/domain"
 	clubLogic "heroku-line-bot/src/logic/club"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
@@ -28,7 +27,7 @@ func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		courts []*badmintonLogicDomain.ActivityCourt
+		courts badmintonLogic.ActivityCourts
 	}
 	tests := []struct {
 		name               string
@@ -38,7 +37,7 @@ func TestBackGround_parseCourtsToTimeRanges(t *testing.T) {
 		{
 			"standard",
 			args{
-				courts: []*badmintonLogicDomain.ActivityCourt{
+				courts: badmintonLogic.ActivityCourts{
 					{
 						FromTime:     commonLogic.GetTime(2013, 8, 2, 2),
 						ToTime:       commonLogic.GetTime(2013, 8, 2, 3),
@@ -228,7 +227,7 @@ func Test_calActivitys(t *testing.T) {
 					ClubSubsidy: 8,
 					Description: "",
 					PeopleLimit: util.PointerOf[int16](2),
-					Courts: []*badmintonLogicDomain.ActivityCourt{
+					Courts: badmintonLogic.ActivityCourts{
 						{
 							FromTime:     commonLogic.NewHourMinTime(1, 0).ForceTime(),
 							ToTime:       commonLogic.NewHourMinTime(3, 0).ForceTime(),

@@ -2,7 +2,6 @@ package badminton
 
 import (
 	"heroku-line-bot/bootstrap"
-	"heroku-line-bot/src/logic/badminton/domain"
 	dbModel "heroku-line-bot/src/model/database"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/test"
@@ -244,22 +243,20 @@ func TestBadmintonActivityLogic_GetActivityDetail(t *testing.T) {
 				activity: []*activity.Model{
 					{
 						ID: 1,
-						CourtsAndTime: FormatActivityDbCourts(
-							[]*domain.ActivityCourt{
-								{
-									FromTime:     *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 9, 9, 1, 2),
-									ToTime:       *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 9, 9, 3, 4),
-									Count:        5,
-									PricePerHour: 6,
-								},
-								{
-									FromTime:     *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 9, 9, 7, 8),
-									ToTime:       *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 9, 9, 9, 10),
-									Count:        11,
-									PricePerHour: 12,
-								},
+						CourtsAndTime: ActivityCourts{
+							{
+								FromTime:     *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 9, 9, 1, 2),
+								ToTime:       *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 9, 9, 3, 4),
+								Count:        5,
+								PricePerHour: 6,
 							},
-						),
+							{
+								FromTime:     *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 9, 9, 7, 8),
+								ToTime:       *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 9, 9, 9, 10),
+								Count:        11,
+								PricePerHour: 12,
+							},
+						}.FormatDbCourts().String(),
 						Date: *util.GetTimePLoc(global.TimeUtilObj.GetLocation(), 2013, 9, 9),
 					},
 				},

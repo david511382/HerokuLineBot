@@ -3,7 +3,6 @@ package club
 import (
 	"fmt"
 	badmintonLogic "heroku-line-bot/src/logic/badminton"
-	badmintonLogicDomain "heroku-line-bot/src/logic/badminton/domain"
 	"heroku-line-bot/src/logic/club/domain"
 	commonLogic "heroku-line-bot/src/logic/common"
 	"heroku-line-bot/src/pkg/global"
@@ -25,12 +24,12 @@ import (
 type NewActivity struct {
 	context domain.ICmdHandlerContext `json:"-"`
 	domain.TimePostbackParams
-	PlaceID     uint                                  `json:"place_id"`
-	TeamID      uint                                  `json:"team_id"`
-	Description string                                `json:"description"`
-	PeopleLimit *int16                                `json:"people_limit"`
-	ClubSubsidy int16                                 `json:"club_subsidy"`
-	Courts      []*badmintonLogicDomain.ActivityCourt `json:"courts"`
+	PlaceID     uint                          `json:"place_id"`
+	TeamID      uint                          `json:"team_id"`
+	Description string                        `json:"description"`
+	PeopleLimit *int16                        `json:"people_limit"`
+	ClubSubsidy int16                         `json:"club_subsidy"`
+	Courts      badmintonLogic.ActivityCourts `json:"courts"`
 }
 
 func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo errUtil.IError) {
@@ -42,7 +41,7 @@ func (b *NewActivity) Init(context domain.ICmdHandlerContext) (resultErrInfo err
 		},
 		PlaceID:     1,
 		Description: "7人出團",
-		Courts: []*badmintonLogicDomain.ActivityCourt{
+		Courts: badmintonLogic.ActivityCourts{
 			{
 				FromTime:     commonLogic.GetTime(1, 1, 1, 18),
 				ToTime:       commonLogic.GetTime(1, 1, 1, 20, 30),
@@ -163,7 +162,7 @@ func (b *NewActivity) LoadRequireInputTextParam(attr, text string) (resultErrInf
 		b.ClubSubsidy = int16(i)
 	case "ICmdLogic.courts":
 		if isJson := strings.ContainsAny(text, "{"); !isJson {
-			if courts, errInfo := badmintonLogic.ParseActivityDbCourts(text); errInfo != nil {
+			if courts, errInfo := badmintonLogic.DbActivityCourtsStr(text).ParseCourts(); errInfo != nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 				return
 			} else {
@@ -360,7 +359,7 @@ func (b *NewActivity) Do(text string) (resultErrInfo errUtil.IError) {
 }
 
 func (b *NewActivity) InsertActivity(db *clubdb.Database) (resultErrInfo errUtil.IError) {
-	courtsStr := badmintonLogic.FormatActivityDbCourts(b.Courts)
+	courtsStr := b.Courts.FormatDbCourts()
 	if db == nil {
 		dbConn, transaction, err := database.Club().Begin()
 		if err != nil {
@@ -378,7 +377,7 @@ func (b *NewActivity) InsertActivity(db *clubdb.Database) (resultErrInfo errUtil
 	data := &activity.Model{
 		Date:          b.Date.Time(),
 		PlaceID:       b.PlaceID,
-		CourtsAndTime: courtsStr,
+		CourtsAndTime: courtsStr.String(),
 		ClubSubsidy:   b.ClubSubsidy,
 		Description:   b.Description,
 		PeopleLimit:   b.PeopleLimit,

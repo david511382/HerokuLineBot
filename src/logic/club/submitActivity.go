@@ -122,7 +122,7 @@ func (b *submitActivity) init() (resultErrInfo errUtil.IError) {
 			ClubSubsidy: v.ClubSubsidy,
 			TeamID:      v.TeamID,
 		}
-		if courts, errInfo := badmintonLogic.ParseActivityDbCourts(v.CourtsAndTime); errInfo != nil {
+		if courts, errInfo := badmintonLogic.DbActivityCourtsStr(v.CourtsAndTime).ParseCourts(); errInfo != nil {
 			resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			return
 		} else {

@@ -2,22 +2,52 @@ package badminton
 
 import (
 	"fmt"
-	"heroku-line-bot/src/logic/badminton/domain"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"strings"
 	"time"
 )
 
-func ParseActivityDbCourts(
-	courtsStr string,
-) (
-	respCourts []*domain.ActivityCourt,
+type ActivityCourt struct {
+	FromTime     time.Time `json:"from_time"`
+	ToTime       time.Time `json:"to_time"`
+	Count        uint8     `json:"count"`
+	PricePerHour float64   `json:"price_per_hour"`
+}
+
+func (b *ActivityCourt) Cost() util.Float {
+	return b.TotalHours().MulFloat(b.PricePerHour)
+}
+
+func (b *ActivityCourt) Hours() util.Float {
+	return util.NewFloat(b.ToTime.Sub(b.FromTime).Hours())
+}
+
+func (b *ActivityCourt) TotalHours() util.Float {
+	return b.Hours().MulFloat(float64(b.Count))
+}
+
+func (b *ActivityCourt) Time() string {
+	return fmt.Sprintf(
+		"%s~%s",
+		b.FromTime.Format(util.TIME_HOUR_MIN_FORMAT),
+		b.ToTime.Format(util.TIME_HOUR_MIN_FORMAT),
+	)
+}
+
+type DbActivityCourtsStr string
+
+func (courtsStr DbActivityCourtsStr) String() string {
+	return string(courtsStr)
+}
+
+func (courtsStr DbActivityCourtsStr) ParseCourts() (
+	respCourts ActivityCourts,
 	resultErrInfo errUtil.IError,
 ) {
-	courtsStrs := strings.Split(courtsStr, ",")
+	courtsStrs := strings.Split(courtsStr.String(), ",")
 	for _, courtsStr := range courtsStrs {
-		court := &domain.ActivityCourt{}
+		court := &ActivityCourt{}
 		timeStr := ""
 		if _, err := fmt.Sscanf(
 			courtsStr,
@@ -54,9 +84,9 @@ func ParseActivityDbCourts(
 	return
 }
 
-func FormatActivityDbCourts(
-	courts []*domain.ActivityCourt,
-) string {
+type ActivityCourts []*ActivityCourt
+
+func (courts ActivityCourts) FormatDbCourts() DbActivityCourtsStr {
 	courtStrs := []string{}
 	for _, court := range courts {
 		courtStr := fmt.Sprintf(
@@ -68,5 +98,5 @@ func FormatActivityDbCourts(
 		)
 		courtStrs = append(courtStrs, courtStr)
 	}
-	return strings.Join(courtStrs, ",")
+	return DbActivityCourtsStr(strings.Join(courtStrs, ","))
 }

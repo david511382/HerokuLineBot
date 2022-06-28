@@ -1,7 +1,6 @@
 package badminton
 
 import (
-	"heroku-line-bot/src/logic/badminton/domain"
 	"heroku-line-bot/src/pkg/util"
 )
 
@@ -10,7 +9,7 @@ type Activity struct {
 	TeamID      int
 	Date        util.DefinedTime[util.DateInt]
 	PlaceID     int
-	Courts      []*domain.ActivityCourt
+	Courts      ActivityCourts
 	MemberCount int16
 	GuestCount  int16
 	MemberFee   int16

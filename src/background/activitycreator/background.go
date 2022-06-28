@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"heroku-line-bot/bootstrap"
 	badmintonLogic "heroku-line-bot/src/logic/badminton"
-	badmintonLogicDomain "heroku-line-bot/src/logic/badminton/domain"
 	clubLogic "heroku-line-bot/src/logic/club"
 	clubLogicDomain "heroku-line-bot/src/logic/club/domain"
 	clubLineBotLogic "heroku-line-bot/src/logic/clublinebot"
@@ -174,7 +173,7 @@ func calActivitys(
 				Description: "",
 				ClubSubsidy: 0,
 				PeopleLimit: rdsSetting.PeopleLimit,
-				Courts:      make([]*badmintonLogicDomain.ActivityCourt, 0),
+				Courts:      make(badmintonLogic.ActivityCourts, 0),
 			}
 			if v := rdsSetting.Description; v != nil {
 				newActivityHandler.Description = *v
@@ -195,7 +194,7 @@ func calActivitys(
 						if v.IsRefund() {
 							continue
 						}
-						newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonLogicDomain.ActivityCourt{
+						newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonLogic.ActivityCourt{
 							FromTime:     v.From,
 							ToTime:       v.To,
 							Count:        v.Count,
@@ -253,13 +252,13 @@ func notifyGroup(teamSettingMap map[uint]*rdsModel.ClubBadmintonTeam) (resultErr
 	return
 }
 
-func combineCourts(courts []*badmintonLogicDomain.ActivityCourt) []*badmintonLogicDomain.ActivityCourt {
-	newCourts := make([]*badmintonLogicDomain.ActivityCourt, 0)
+func combineCourts(courts badmintonLogic.ActivityCourts) badmintonLogic.ActivityCourts {
+	newCourts := make(badmintonLogic.ActivityCourts, 0)
 
 	priceRangesMap := parseCourtsToTimeRanges(courts)
 	for price, ranges := range priceRangesMap {
 		for _, v := range commonLogic.CombineMinuteTimeRanges(ranges) {
-			newCourts = append(newCourts, &badmintonLogicDomain.ActivityCourt{
+			newCourts = append(newCourts, &badmintonLogic.ActivityCourt{
 				FromTime:     v.From,
 				ToTime:       v.To,
 				Count:        uint8(v.Count),
@@ -271,7 +270,7 @@ func combineCourts(courts []*badmintonLogicDomain.ActivityCourt) []*badmintonLog
 	return newCourts
 }
 
-func parseCourtsToTimeRanges(courts []*badmintonLogicDomain.ActivityCourt) (priceRangesMap map[float64][]*commonLogic.TimeRangeValue) {
+func parseCourtsToTimeRanges(courts badmintonLogic.ActivityCourts) (priceRangesMap map[float64][]*commonLogic.TimeRangeValue) {
 	priceRangesMap = make(map[float64][]*commonLogic.TimeRangeValue)
 
 	for _, court := range courts {

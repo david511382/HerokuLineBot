@@ -210,7 +210,7 @@ func (b *GetActivities) init() (resultErrInfo errUtil.IError) {
 			JoinedMembers: activityIDMap[v.ID],
 			ActivityID:    v.ID,
 		}
-		if courts, errInfo := badmintonLogic.ParseActivityDbCourts(v.CourtsAndTime); errInfo != nil {
+		if courts, errInfo := badmintonLogic.DbActivityCourtsStr(v.CourtsAndTime).ParseCourts(); errInfo != nil {
 			if resultErrInfo == nil {
 				resultErrInfo = errUtil.Append(resultErrInfo, errInfo)
 			} else {
