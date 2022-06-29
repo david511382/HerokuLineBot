@@ -131,7 +131,9 @@ func GetRentalCourts(c *gin.Context) {
 						GetRentalCourtsCourtInfo: info,
 						Status:                   int(status),
 						ReasonMessage:            reasonMessage,
-						RefundTime:               unit.GetRefundDate().TimeP(),
+					}
+					if unit.GetRefundDate() != nil {
+						rInfo.RefundTime = unit.GetRefundDate().TimeP()
 					}
 					if dateIntCourtsMap[courtDateInt] == nil {
 						dateIntCourtsMap[courtDateInt] = make([]*resp.GetRentalCourtsDayCourtsInfo, 0)
