@@ -5,7 +5,6 @@ import (
 	apiLogic "heroku-line-bot/src/logic/api"
 	badmintonLogic "heroku-line-bot/src/logic/badminton"
 	"heroku-line-bot/src/pkg/test"
-	"heroku-line-bot/src/pkg/test/mock"
 	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
@@ -67,7 +66,7 @@ func TestGetActivitys(t *testing.T) {
 			},
 			migrations{
 				badmintonActivityApiLogicFn: func() apiLogic.IBadmintonActivityApiLogic {
-					mockObj := mock.NewMockIBadmintonActivityApiLogic(mockCtl)
+					mockObj := apiLogic.NewMockIBadmintonActivityApiLogic(mockCtl)
 					returnValue := resp.GetActivitys{
 						Page: resp.Page{
 							DataCount: 1,

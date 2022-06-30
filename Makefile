@@ -62,3 +62,10 @@ test: # 測試
 	./src/background/... \
 	./src/server/... \
 	--count=1
+
+mock: # 更新 mock
+	mockgen -source="./src/logic/badminton/team.go" -destination="./src/logic/badminton/team_mock.go" -package=badminton
+	mockgen -source="./src/logic/badminton/place.go" -destination="./src/logic/badminton/place_mock.go" -package=badminton
+	mockgen -source="./src/logic/badminton/court.go" -destination="./src/logic/badminton/court_mock.go" -package=badminton
+	mockgen -source="./src/logic/badminton/activity_logic.go" -destination="./src/logic/badminton/activity_logic_mock.go" -package=badminton
+	mockgen -source="./src/logic/api/badminton_activity.go" -destination="./src/logic/api/badminton_activity_mock.go" -package=api

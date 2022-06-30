@@ -9,7 +9,6 @@ import (
 	rdsModel "heroku-line-bot/src/model/redis"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/test"
-	"heroku-line-bot/src/pkg/test/mock"
 	"heroku-line-bot/src/pkg/util"
 	"heroku-line-bot/src/repo/database"
 	"heroku-line-bot/src/repo/database/database/clubdb"
@@ -293,7 +292,7 @@ func TestBackGround_Run(t *testing.T) {
 			migrations{
 				activity: []*activity.Model{},
 				badmintonCourtLogicFn: func() badmintonLogic.IBadmintonCourtLogic {
-					mockObj := mock.NewMockIBadmintonCourtLogic(mockCtl)
+					mockObj := badmintonLogic.NewMockIBadmintonCourtLogic(mockCtl)
 					var (
 						teamID,
 						placeID *uint
@@ -329,7 +328,7 @@ func TestBackGround_Run(t *testing.T) {
 					return mockObj
 				},
 				badmintonTeamLogicFn: func() badmintonLogic.IBadmintonTeamLogic {
-					badmintonTeamLogic := mock.NewMockIBadmintonTeamLogic(mockCtl)
+					badmintonTeamLogic := badmintonLogic.NewMockIBadmintonTeamLogic(mockCtl)
 					resultTeamIDMap := map[uint]*rdsModel.ClubBadmintonTeam{
 						1: {
 							Name:               "",

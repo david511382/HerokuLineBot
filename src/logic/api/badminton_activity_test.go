@@ -7,7 +7,6 @@ import (
 	rdsModel "heroku-line-bot/src/model/redis"
 	"heroku-line-bot/src/pkg/global"
 	"heroku-line-bot/src/pkg/test"
-	"heroku-line-bot/src/pkg/test/mock"
 	"heroku-line-bot/src/pkg/util"
 	errUtil "heroku-line-bot/src/pkg/util/error"
 	"heroku-line-bot/src/pkg/util/flow"
@@ -104,7 +103,7 @@ func TestGetActivitys(t *testing.T) {
 					},
 				},
 				badmintonActivityLogicFn: func(origin badmintonLogic.IBadmintonActivityLogic) badmintonLogic.IBadmintonActivityLogic {
-					mockObj := mock.NewMockIBadmintonActivityLogic(mockCtl)
+					mockObj := badmintonLogic.NewMockIBadmintonActivityLogic(mockCtl)
 					wantArg := &activity.Reqs{
 						IDs: []uint{
 							52, 82,
@@ -175,7 +174,7 @@ func TestGetActivitys(t *testing.T) {
 					return mockObj
 				},
 				badmintonPlaceLogicFn: func() badmintonLogic.IBadmintonPlaceLogic {
-					mockObj := mock.NewMockIBadmintonPlaceLogic(mockCtl)
+					mockObj := badmintonLogic.NewMockIBadmintonPlaceLogic(mockCtl)
 					wantArg := []uint{52, 82}
 					returnValue := map[uint]*rdsModel.ClubBadmintonPlace{
 						52: {
@@ -200,7 +199,7 @@ func TestGetActivitys(t *testing.T) {
 					return mockObj
 				},
 				badmintonTeamLogicFn: func() badmintonLogic.IBadmintonTeamLogic {
-					badmintonTeamLogic := mock.NewMockIBadmintonTeamLogic(mockCtl)
+					badmintonTeamLogic := badmintonLogic.NewMockIBadmintonTeamLogic(mockCtl)
 					wantArg := []uint{13, 14}
 					resultTeamIDMap := map[uint]*rdsModel.ClubBadmintonTeam{
 						13: {
