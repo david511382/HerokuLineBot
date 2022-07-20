@@ -11,14 +11,14 @@ import (
 // 結構驗證
 func timeValidation(sl validator.StructLevel) {
 	if condiction, ok := sl.Current().Interface().(reqs.FromTo); ok {
-		if util.CompareWithNil(
+		if util.CompareNilableToResult(
 			condiction.FromTime, condiction.ToTime,
-			func(a, b time.Time) bool {
+			func(a, b *time.Time) bool {
 				if a.IsZero() ||
 					b.IsZero() {
 					return true
 				}
-				return !util.Date().Of(a).After(util.Date().Of(b))
+				return !util.Date().Of(*a).After(util.Date().Of(*b))
 			},
 			true, true, true,
 		) {
@@ -48,14 +48,14 @@ func timeValidation(sl validator.StructLevel) {
 		// Error #01: Key: 'FromTo.FromTime' Error:Field validation for 'FromTime' failed on the 'DateRange' tag
 		sl.ReportError(condiction.FromTime, "FromTime", "", "MustFromBefore", "")
 	} else if condiction, ok := sl.Current().Interface().(reqs.FromBefore); ok {
-		if util.CompareWithNil(
+		if util.CompareNilableToResult(
 			condiction.FromTime, condiction.BeforeTime,
-			func(a, b time.Time) bool {
+			func(a, b *time.Time) bool {
 				if a.IsZero() ||
 					b.IsZero() {
 					return true
 				}
-				return util.Date().Of(a).Before(util.Date().Of(b))
+				return util.Date().Of(*a).Before(util.Date().Of(*b))
 			},
 			true, true, true,
 		) {
@@ -67,14 +67,14 @@ func timeValidation(sl validator.StructLevel) {
 		// Error #01: Key: 'FromTo.FromTime' Error:Field validation for 'FromTime' failed on the 'DateRange' tag
 		sl.ReportError(condiction.FromTime, "FromTime", "", "FromBefore", "")
 	} else if condiction, ok := sl.Current().Interface().(reqs.FromToDate); ok {
-		if util.CompareWithNil(
+		if util.CompareNilableToResult(
 			condiction.FromDate, condiction.ToDate,
-			func(a, b time.Time) bool {
+			func(a, b *time.Time) bool {
 				if a.IsZero() ||
 					b.IsZero() {
 					return true
 				}
-				return !util.Date().Of(a).After(util.Date().Of(b))
+				return !util.Date().Of(*a).After(util.Date().Of(*b))
 			},
 			true, true, true,
 		) {
@@ -104,14 +104,14 @@ func timeValidation(sl validator.StructLevel) {
 		// Error #01: Key: 'FromTo.FromTime' Error:Field validation for 'FromTime' failed on the 'DateRange' tag
 		sl.ReportError(condiction.FromDate, "FromDate", "", "MustFromBefore", "")
 	} else if condiction, ok := sl.Current().Interface().(reqs.FromBeforeDate); ok {
-		if util.CompareWithNil(
+		if util.CompareNilableToResult(
 			condiction.FromDate, condiction.BeforeDate,
-			func(a, b time.Time) bool {
+			func(a, b *time.Time) bool {
 				if a.IsZero() ||
 					b.IsZero() {
 					return true
 				}
-				return util.Date().Of(a).Before(util.Date().Of(b))
+				return util.Date().Of(*a).Before(util.Date().Of(*b))
 			},
 			true, true, true,
 		) {

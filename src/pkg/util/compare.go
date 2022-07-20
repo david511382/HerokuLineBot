@@ -342,17 +342,74 @@ func compV(aV, bV reflect.Value) (bool, string) {
 	return true, ""
 }
 
-func CompareWithNil[Result any, T any](
-	a, b *T,
+func CompareNilableToResult[Result any, T any](
+	a, b T,
 	compareFn func(a, b T) Result,
 	aNilResult, bNilResult, bothNilResult Result,
 ) Result {
-	if a == nil && b == nil {
-		return bothNilResult
-	} else if a == nil {
-		return aNilResult
-	} else if b == nil {
-		return bNilResult
+	var result Result
+	CompareNilable(
+		a, b,
+		func() {
+			result = aNilResult
+		},
+		func() {
+			result = bNilResult
+		},
+		func() {
+			result = compareFn(a, b)
+		},
+		func() {
+			result = bothNilResult
+		},
+	)
+
+	return result
+}
+
+func CompareNilableParseToResult[Result any, T any](
+	a, b T,
+	compareFn func(a, b T) Result,
+	bothNilResult Result,
+	getAResultFn func() Result,
+	getBResultFn func() Result,
+) Result {
+	var result Result
+	CompareNilable(
+		a, b,
+		func() {
+			result = getBResultFn()
+		},
+		func() {
+			result = getAResultFn()
+		},
+		func() {
+			result = compareFn(a, b)
+		},
+		func() {
+			result = bothNilResult
+		},
+	)
+
+	return result
+}
+
+func CompareNilable[T any](
+	a, b T,
+	aNilFn func(),
+	bNilFn func(),
+	norNilFn func(),
+	bothNilFn func(),
+) {
+	aIsZero := IsZero(a)
+	bIsZero := IsZero(b)
+	if aIsZero && bIsZero {
+		bothNilFn()
+	} else if aIsZero {
+		aNilFn()
+	} else if bIsZero {
+		bNilFn()
+	} else {
+		norNilFn()
 	}
-	return compareFn(*a, *b)
 }
