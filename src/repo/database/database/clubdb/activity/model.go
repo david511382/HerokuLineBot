@@ -35,9 +35,9 @@ func New(connectionCreator common.IConnection) *Table {
 
 type Model struct {
 	ID            uint      "gorm:\"column:id;type:int unsigned auto_increment;primary_key;not null;comment:流水號\""
-	TeamID        uint      "gorm:\"column:team_id;type:int unsigned;not null;uniqueIndex:`idx-team-date-place`,priority:1;comment:隊伍ID\""
-	Date          time.Time "gorm:\"column:date;type:date;not null;uniqueIndex:`idx-team-date-place`,priority:2;index:`idx-date`;comment:日期\""
-	PlaceID       uint      "gorm:\"column:place_id;type:int unsigned;not null;uniqueIndex:`idx-team-date-place`,priority:3;comment:球場ID\""
+	TeamID        uint      "gorm:\"column:team_id;type:int unsigned;not null;uniqueIndex:`uniq-team-date-place`,priority:1;comment:隊伍ID\""
+	Date          time.Time "gorm:\"column:date;type:date;not null;uniqueIndex:`uniq-team-date-place`,priority:2;index:`idx-date`;comment:日期\""
+	PlaceID       uint      "gorm:\"column:place_id;type:int unsigned;not null;uniqueIndex:`uniq-team-date-place`,priority:3;comment:球場ID\""
 	CourtsAndTime string    `gorm:"column:courts_and_time;type:varchar(256);not null;comment:欄位"`
 	ClubSubsidy   int16     `gorm:"column:club_subsidy;type:smallint;not null;comment:欄位"`
 	Description   string    `gorm:"column:description;type:varchar(64);not null;comment:欄位"`
