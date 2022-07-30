@@ -1,7 +1,8 @@
+import { Response } from '../../models/resp/base'
+import { GetRentalCourts as Data } from '../../models/resp/rental-courts'
 import { GetBackendUrl } from '../env/Http'
-import type { GetRentalCourts as Response } from '../../models/resp/rental-courts'
 
-export async function GetRentalCourts(fromDate : Date, toDate : Date, init?: RequestInit | undefined) :Promise<Response> {
+export async function GetRentalCourts(fromDate: Date, toDate: Date, init?: RequestInit | undefined): Promise<Response<Data>> {
   const url = `${GetBackendUrl()}/api/badminton/rental-courts`
   const urlParams = new URLSearchParams();
   urlParams.set("from_date", fromDate.toISOString())
