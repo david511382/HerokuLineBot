@@ -1,4 +1,4 @@
-import { GetToken } from '../../data/cookie/Liff'
+import { GetToken } from '../cookie/Liff'
 
 export function GetAuthRequestInit(init?: RequestInit | undefined): RequestInit {
   let token = GetToken()
