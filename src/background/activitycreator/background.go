@@ -191,7 +191,7 @@ func calActivitys(
 					pricePerHour := courtDetail.PricePerHour
 					units := court.Parts()
 					for _, v := range units {
-						if v.IsRefund() {
+						if v.IsCancelCourt() {
 							continue
 						}
 						newActivityHandler.Courts = append(newActivityHandler.Courts, &badmintonLogic.ActivityCourt{

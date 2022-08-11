@@ -93,28 +93,40 @@ type CourtUnit struct {
 }
 
 func (c *CourtUnit) IsRefund() bool {
+	return c.RefundIncome != nil
+}
+
+func (c *CourtUnit) IsCancelCourt() bool {
 	return c.RefundID != nil
 }
 
 func (c *CourtUnit) GetStatus() (status domain.RentalCourtsStatus) {
 	isPay := c.isPay
+	isCancelCourt := c.IsCancelCourt()
 	isRefund := c.IsRefund()
-	if isRefund {
-		status = GetStatus(isPay, isRefund)
-	} else {
-		status = GetStatus(isPay, isRefund)
-	}
 
-	return
+	if isCancelCourt {
+		if isPay {
+			if isRefund {
+				// 訂場已取消已退款
+				return domain.RENTAL_COURTS_STATUS_CANCEL
+			} else {
+				// 訂場已取消還沒退款
+				return domain.RENTAL_COURTS_STATUS_NOT_REFUND
+			}
+		}
+	} else if !isPay {
+		// 訂場沒付款
+		return domain.RENTAL_COURTS_STATUS_NOT_PAY
+	}
+	// 訂場已付款
+	return domain.RENTAL_COURTS_STATUS_OK
 }
 
 func (c *CourtUnit) GetRefundDate() (refundDate *util.DefinedTime[util.DateInt]) {
 	isRefund := c.IsRefund()
 	if isRefund {
-		isPay := c.RefundIncome != nil
-		if isPay {
-			refundDate = &c.RefundIncome.PayDate
-		}
+		refundDate = &c.RefundIncome.PayDate
 	}
 
 	return
