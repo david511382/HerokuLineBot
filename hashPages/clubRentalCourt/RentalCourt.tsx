@@ -9,7 +9,7 @@ import type {
     GetRentalCourtsPayInfoDay,
     GetRentalCourtsCourtInfo,
 } from '../../models/resp/rental-courts'
-import { GetRentalCourts } from '../../data/api/RentalCourts'
+import { GetRentalCourts } from '../../service/badminton/RentalCourts'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import Button from '@material-ui/core/Button'
